@@ -158,11 +158,13 @@ docs/                     Architecture, API and product spec
 **Implemented:** auth & tenancy · catalog (categories, brands, units, products) ·
 inventory ledger & adjustments · customers · suppliers · **purchases & goods receipt** ·
 **expenses** · POS checkout · **sale returns & refunds** · **reports center**
-(sales summary, sales-by-product, profit, inventory valuation, low stock, dues) · dashboard.
+(sales summary, sales-by-product, profit, inventory valuation, low stock, dues) · dashboard ·
+**accounting** (chart of accounts + balanced double-entry journals, general ledger, trial balance) ·
+**cash register sessions** (open/close with expected-vs-actual reconciliation).
 
-**Next:** accounting ledger & journals · cash register sessions · loyalty & promotions ·
-scheduled/exported reports · notifications · subscription-limit enforcement ·
-real-time (Reverb) updates · and the Next.js frontend + offline PWA.
+**Next:** loyalty & promotions · scheduled/exported reports · notifications ·
+subscription-limit enforcement · real-time (Reverb) updates · and the Next.js
+frontend + offline PWA.
 
 ## License
 

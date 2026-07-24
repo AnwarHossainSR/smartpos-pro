@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BrandController;
+use App\Http\Controllers\Api\V1\CashRegisterController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
+use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -106,5 +109,25 @@ Route::prefix('v1')->group(function () {
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
         });
+
+        // Accounting — chart of accounts
+        Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');
+        Route::post('accounts', [AccountController::class, 'store'])->middleware('permission:accounting.create');
+        Route::put('accounts/{account}', [AccountController::class, 'update'])->middleware('permission:accounting.update');
+
+        // Accounting — double-entry journals & reports
+        Route::get('journals', [JournalController::class, 'index'])->middleware('permission:accounting.view');
+        Route::get('journals/trial-balance', [JournalController::class, 'trialBalance'])->middleware('permission:accounting.view');
+        Route::get('journals/{journal}', [JournalController::class, 'show'])->middleware('permission:accounting.view');
+        Route::post('journals', [JournalController::class, 'store'])->middleware('permission:accounting.create');
+        Route::get('accounts/{account}/ledger', [JournalController::class, 'generalLedger'])->middleware('permission:accounting.view');
+
+        // Cash register sessions
+        Route::get('cash-registers', [CashRegisterController::class, 'index'])->middleware('permission:accounting.view');
+        Route::post('cash-registers', [CashRegisterController::class, 'store'])->middleware('permission:accounting.create');
+        Route::post('cash-registers/{cashRegister}/open', [CashRegisterController::class, 'open'])->middleware('permission:accounting.create');
+        Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
+        Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
+        Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
     });
 });
