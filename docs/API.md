@@ -203,3 +203,34 @@ All require `reports.view`; all accept `?from=&to=` (and `branch_id` where relev
 | `GET /reports/inventory-valuation` | stock value (qty × avg cost) per warehouse |
 | `GET /reports/low-stock` | products at/below minimum stock level |
 | `GET /reports/dues` | customer receivables & supplier payables |
+
+## Accounting (chart of accounts + double-entry journals)
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /accounts` (`?type=&search=`) · `POST /accounts` · `PUT /accounts/{account}` | `accounting.*` | account types: cash, bank, mobile_banking, wallet, income, expense, asset, liability, equity |
+| `POST /journals` | `accounting.create` | posts a **balanced** entry; unbalanced debits≠credits → `422` |
+| `GET /journals` (`?from=&to=`) · `GET /journals/{journal}` | `accounting.view` | |
+| `GET /journals/trial-balance` | `accounting.view` | balance per account |
+| `GET /accounts/{account}/ledger` (`?from=&to=`) | `accounting.view` | per-account general ledger |
+
+Journal posting adjusts balances by each account's normal side (debit-normal: assets & expenses; credit-normal: liabilities, income, equity):
+```json
+{
+  "description": "Cash sale",
+  "lines": [
+    { "account_id": 1, "type": "debit",  "amount": 100 },
+    { "account_id": 2, "type": "credit", "amount": 100 }
+  ]
+}
+```
+
+## Cash register sessions
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /cash-registers` · `POST /cash-registers` | `accounting.*` | registers per branch |
+| `POST /cash-registers/{cashRegister}/open` | `accounting.create` | body `{ opening_cash }`; one open session per register |
+| `POST /cash-register-sessions/{session}/movement` | `accounting.create` | body `{ type: in\|out, amount, reason }` |
+| `POST /cash-register-sessions/{session}/close` | `accounting.create` | body `{ actual_cash, note }`; computes `expected_cash` and `difference` |
+| `GET /cash-register-sessions/{session}` | `accounting.view` | session + transactions |
