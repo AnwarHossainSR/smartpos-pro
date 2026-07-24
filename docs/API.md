@@ -234,3 +234,29 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | `POST /cash-register-sessions/{session}/movement` | `accounting.create` | body `{ type: in\|out, amount, reason }` |
 | `POST /cash-register-sessions/{session}/close` | `accounting.create` | body `{ actual_cash, note }`; computes `expected_cash` and `difference` |
 | `GET /cash-register-sessions/{session}` | `accounting.view` | session + transactions |
+
+## Team — users, roles & permissions
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /users` (`?search=&branch_id=&status=`) · `GET /users/{user}` | `users.view` | |
+| `POST /users` | `users.create` | invites a member (`roles: []`); no password → `status: invited` |
+| `PUT /users/{user}` | `users.update` | update profile, status, branch and roles |
+| `DELETE /users/{user}` | `users.delete` | cannot delete self or the owner |
+| `GET /roles` · `POST /roles` · `PUT /roles/{role}` · `DELETE /roles/{role}` | `roles.*` | roles carry a `permissions` slug list; system roles are protected |
+| `GET /permissions` | `roles.view` | full permission catalog grouped by module |
+
+## Notifications
+
+| Method & path | Notes |
+| --- | --- |
+| `GET /notifications` (`?unread=`) | user-addressed + tenant-broadcast (null user) |
+| `GET /notifications/unread-count` | `{ unread: n }` |
+| `POST /notifications/{notification}/read` · `POST /notifications/read-all` | mark read |
+
+## Settings
+
+| Method & path | Permission |
+| --- | --- |
+| `GET /settings/business` · `PUT /settings/business` | `settings.view` / `settings.update` |
+| `POST /settings/onboarding/complete` | `settings.update` |

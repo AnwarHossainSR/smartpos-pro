@@ -11,13 +11,17 @@ use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
+use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\UnitController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -129,5 +133,30 @@ Route::prefix('v1')->group(function () {
         Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
         Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
         Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
+
+        // Team — users
+        Route::get('users', [UserController::class, 'index'])->middleware('permission:users.view');
+        Route::get('users/{user}', [UserController::class, 'show'])->middleware('permission:users.view');
+        Route::post('users', [UserController::class, 'store'])->middleware('permission:users.create');
+        Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+
+        // Team — roles & permissions
+        Route::get('permissions', [RoleController::class, 'permissions'])->middleware('permission:roles.view');
+        Route::get('roles', [RoleController::class, 'index'])->middleware('permission:roles.view');
+        Route::post('roles', [RoleController::class, 'store'])->middleware('permission:roles.create');
+        Route::put('roles/{role}', [RoleController::class, 'update'])->middleware('permission:roles.update');
+        Route::delete('roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
+
+        // Notifications (available to any authenticated tenant user)
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
+        Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+        // Settings — business profile
+        Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
+        Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
+        Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
     });
 });
