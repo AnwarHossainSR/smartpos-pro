@@ -5,12 +5,14 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CashRegisterController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
+use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PurchaseController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -158,5 +161,21 @@ Route::prefix('v1')->group(function () {
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
+
+        // Coupons & promotions
+        Route::get('coupons', [CouponController::class, 'index'])->middleware('permission:coupons.view');
+        Route::post('coupons', [CouponController::class, 'store'])->middleware('permission:coupons.create');
+        Route::post('coupons/validate', [CouponController::class, 'validateCode'])->middleware('permission:pos.create');
+        Route::put('coupons/{coupon}', [CouponController::class, 'update'])->middleware('permission:coupons.update');
+        Route::delete('coupons/{coupon}', [CouponController::class, 'destroy'])->middleware('permission:coupons.delete');
+
+        // Loyalty points
+        Route::get('customers/{customer}/loyalty', [LoyaltyController::class, 'show'])->middleware('permission:loyalty.view');
+        Route::post('customers/{customer}/loyalty/redeem', [LoyaltyController::class, 'redeem'])->middleware('permission:loyalty.manage');
+        Route::post('customers/{customer}/loyalty/adjust', [LoyaltyController::class, 'adjust'])->middleware('permission:loyalty.manage');
+
+        // Subscription & plan usage
+        Route::get('subscription/plans', [SubscriptionController::class, 'plans'])->middleware('permission:subscriptions.view');
+        Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
     });
 });

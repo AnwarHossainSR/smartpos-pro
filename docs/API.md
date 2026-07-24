@@ -260,3 +260,32 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | --- | --- |
 | `GET /settings/business` · `PUT /settings/business` | `settings.view` / `settings.update` |
 | `POST /settings/onboarding/complete` | `settings.update` |
+
+## Loyalty points
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /customers/{customer}/loyalty` | `loyalty.view` | balance + recent history |
+| `POST /customers/{customer}/loyalty/redeem` | `loyalty.manage` | `{ points }`; rejects redeeming beyond balance |
+| `POST /customers/{customer}/loyalty/adjust` | `loyalty.manage` | `{ points }` (signed) |
+
+Points are also **earned automatically** on completed sales when the business sets a
+`loyalty_earn_rate` (points per currency unit) in `settings/business` — off by default.
+
+## Coupons
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /coupons` · `POST /coupons` · `PUT /coupons/{coupon}` · `DELETE /coupons/{coupon}` | `coupons.*` | percentage or fixed; min-purchase, max-discount, usage limit, date window |
+| `POST /coupons/validate` | `pos.create` | `{ code, cart_total }` → `{ valid, discount }` or `{ valid:false, reason }` |
+
+## Subscription & plan limits
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /subscription/plans` | `subscriptions.view` | active plan catalogue (Free → Enterprise) |
+| `GET /subscription/current` | `subscriptions.view` | current subscription + live usage-vs-limits |
+
+Plan limits are enforced on creation: e.g. `POST /products` and `POST /users` return
+`422 { errors: { plan: [...] } }` when the tenant's plan limit is reached. A `null` limit
+means unlimited.

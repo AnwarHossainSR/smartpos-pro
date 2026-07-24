@@ -7,6 +7,7 @@ use App\Http\Requests\Catalog\StoreProductRequest;
 use App\Http\Requests\Catalog\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -37,6 +38,8 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): ProductResource
     {
+        app(PlanLimitService::class)->ensureCanCreate('products');
+
         $data = $request->validated();
         $opening = $data['opening_stock'] ?? null;
         unset($data['opening_stock']);

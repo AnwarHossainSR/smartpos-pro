@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Billing\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -29,6 +30,8 @@ class UserController extends Controller
     /** Invite/create a team member and assign roles. */
     public function store(StoreUserRequest $request): UserResource
     {
+        app(PlanLimitService::class)->ensureCanCreate('users');
+
         $data = $request->validated();
         $roles = $data['roles'] ?? [];
         unset($data['roles']);
