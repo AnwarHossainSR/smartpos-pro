@@ -161,10 +161,11 @@ inventory ledger & adjustments · customers · suppliers · **purchases & goods 
 (sales summary, sales-by-product, profit, inventory valuation, low stock, dues) · dashboard ·
 **accounting** (chart of accounts + balanced double-entry journals, general ledger, trial balance) ·
 **cash register sessions** (open/close reconciliation) ·
-**team management** (users, roles & permissions) · **notifications** · **business settings**.
+**team management** (users, roles & permissions) · **notifications** · **business settings** ·
+**loyalty points** · **coupons/promotions** · **subscription plans & limit enforcement**.
 
-**Next:** loyalty & promotions · scheduled/exported reports · subscription-limit
-enforcement · real-time (Reverb) updates · and the Next.js frontend + offline PWA.
+**Next:** scheduled/exported reports · super-admin SaaS panel · real-time (Reverb)
+updates · and the Next.js frontend + offline PWA.
 
 ## License
 

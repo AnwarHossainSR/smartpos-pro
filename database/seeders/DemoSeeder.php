@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Plan;
 use App\Models\Product;
+use App\Models\Subscription;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
@@ -44,6 +46,16 @@ class DemoSeeder extends Seeder
         $context->set($owner->tenant_id);
         $branch = $owner->branch;
         $warehouse = Warehouse::where('business_id', $owner->business_id)->first();
+
+        // Put the demo business on the Professional plan.
+        if ($plan = Plan::where('slug', 'professional')->first()) {
+            Subscription::create([
+                'tenant_id' => $owner->tenant_id,
+                'plan_id' => $plan->id,
+                'status' => 'active',
+                'current_period_ends_at' => now()->addMonth(),
+            ]);
+        }
 
         // Staff users across the default roles.
         $roles = ['admin', 'branch_manager', 'cashier', 'accountant', 'viewer'];

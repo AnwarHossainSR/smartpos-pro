@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use App\Services\Inventory\StockLedgerService;
+use App\Services\Loyalty\LoyaltyService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -102,8 +103,35 @@ class SaleService
                 Customer::whereKey($sale->customer_id)->increment('balance', $due);
             }
 
+            $this->awardLoyalty($sale, $cashier, $affectsStock);
+
             return $sale->load('items', 'payments', 'customer');
         });
+    }
+
+    /**
+     * Award loyalty points on a completed sale to the attached customer, using the
+     * business's `loyalty_earn_rate` setting (points per currency unit). Disabled
+     * (no points) when the rate is unset/zero, so it is opt-in per business.
+     */
+    protected function awardLoyalty(Sale $sale, User $cashier, bool $completed): void
+    {
+        if (! $completed || ! $sale->customer_id) {
+            return;
+        }
+
+        $rate = (float) data_get($cashier->business?->settings, 'loyalty_earn_rate', 0);
+
+        if ($rate <= 0) {
+            return;
+        }
+
+        $points = (int) floor((float) $sale->total * $rate);
+
+        if ($points > 0 && ($customer = Customer::find($sale->customer_id))) {
+            app(LoyaltyService::class)
+                ->earn($customer, $points, $sale->id, $cashier->id, "Earned on {$sale->invoice_number}");
+        }
     }
 
     /**
