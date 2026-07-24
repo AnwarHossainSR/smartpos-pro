@@ -1,12 +1,20 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\ExpenseCategoryController;
+use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\PurchaseController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
+use App\Http\Controllers\Api\V1\SaleReturnController;
+use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\UnitController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -22,12 +30,25 @@ Route::prefix('v1')->group(function () {
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
 
-        // Catalog
+        // Catalog — categories
         Route::get('categories', [CategoryController::class, 'index'])->middleware('permission:products.view');
         Route::post('categories', [CategoryController::class, 'store'])->middleware('permission:products.create');
         Route::put('categories/{category}', [CategoryController::class, 'update'])->middleware('permission:products.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->middleware('permission:products.delete');
 
+        // Catalog — brands
+        Route::get('brands', [BrandController::class, 'index'])->middleware('permission:products.view');
+        Route::post('brands', [BrandController::class, 'store'])->middleware('permission:products.create');
+        Route::put('brands/{brand}', [BrandController::class, 'update'])->middleware('permission:products.update');
+        Route::delete('brands/{brand}', [BrandController::class, 'destroy'])->middleware('permission:products.delete');
+
+        // Catalog — units
+        Route::get('units', [UnitController::class, 'index'])->middleware('permission:products.view');
+        Route::post('units', [UnitController::class, 'store'])->middleware('permission:products.create');
+        Route::put('units/{unit}', [UnitController::class, 'update'])->middleware('permission:products.update');
+        Route::delete('units/{unit}', [UnitController::class, 'destroy'])->middleware('permission:products.delete');
+
+        // Catalog — products
         Route::get('products', [ProductController::class, 'index'])->middleware('permission:products.view');
         Route::get('products/{product}', [ProductController::class, 'show'])->middleware('permission:products.view');
         Route::post('products', [ProductController::class, 'store'])->middleware('permission:products.create');
@@ -45,9 +66,45 @@ Route::prefix('v1')->group(function () {
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+        // Suppliers
+        Route::get('suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
+        Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
+        Route::post('suppliers', [SupplierController::class, 'store'])->middleware('permission:suppliers.create');
+        Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+
+        // Purchases
+        Route::get('purchases', [PurchaseController::class, 'index'])->middleware('permission:purchases.view');
+        Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchases.view');
+        Route::post('purchases', [PurchaseController::class, 'store'])->middleware(['permission:purchases.create', 'idempotency']);
+
+        // Expenses
+        Route::get('expense-categories', [ExpenseCategoryController::class, 'index'])->middleware('permission:expenses.view');
+        Route::post('expense-categories', [ExpenseCategoryController::class, 'store'])->middleware('permission:expenses.create');
+        Route::get('expenses', [ExpenseController::class, 'index'])->middleware('permission:expenses.view');
+        Route::post('expenses', [ExpenseController::class, 'store'])->middleware('permission:expenses.create');
+        Route::put('expenses/{expense}', [ExpenseController::class, 'update'])->middleware('permission:expenses.update');
+        Route::post('expenses/{expense}/approve', [ExpenseController::class, 'approve'])->middleware('permission:expenses.approve');
+        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->middleware('permission:expenses.delete');
+
         // Sales / POS
         Route::get('sales', [SaleController::class, 'index'])->middleware('permission:sales.view');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view');
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
+
+        // Sale returns / refunds
+        Route::get('sale-returns', [SaleReturnController::class, 'index'])->middleware('permission:sales.view');
+        Route::get('sale-returns/{saleReturn}', [SaleReturnController::class, 'show'])->middleware('permission:sales.view');
+        Route::post('sales/{sale}/returns', [SaleReturnController::class, 'store'])->middleware(['permission:sales.refund', 'idempotency']);
+
+        // Reports
+        Route::middleware('permission:reports.view')->prefix('reports')->group(function () {
+            Route::get('sales-summary', [ReportController::class, 'salesSummary']);
+            Route::get('sales-by-product', [ReportController::class, 'salesByProduct']);
+            Route::get('profit', [ReportController::class, 'profit']);
+            Route::get('inventory-valuation', [ReportController::class, 'inventoryValuation']);
+            Route::get('low-stock', [ReportController::class, 'lowStock']);
+            Route::get('dues', [ReportController::class, 'dues']);
+        });
     });
 });
