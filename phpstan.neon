@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - app
+    excludePaths:
+        - app/Http/Middleware/Idempotency.php # dynamic response body typing
+    ignoreErrors:
+        - '#Unsafe usage of new static#'

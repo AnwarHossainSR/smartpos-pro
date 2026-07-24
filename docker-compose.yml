@@ -1,0 +1,72 @@
+# SmartPOS Pro — local development stack.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartpos-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: smartpos
+      DB_USERNAME: smartpos
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: smartpos-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartpos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smartpos
+      POSTGRES_USER: smartpos
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartpos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartpos-queue
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - redis
+
+volumes:
+  pgdata:
