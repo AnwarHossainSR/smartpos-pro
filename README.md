@@ -155,10 +155,14 @@ docs/                     Architecture, API and product spec
 
 ## Roadmap
 
-This backend is a foundation. Modelled but not yet exposed via controllers, and planned
-next: purchases & goods-receipt flow, accounting ledger & journals, expenses, cash
-register sessions, loyalty & promotions, reporting center, notifications, subscription
-limits enforcement, real-time (Reverb) updates, and the Next.js frontend + offline PWA.
+**Implemented:** auth & tenancy · catalog (categories, brands, units, products) ·
+inventory ledger & adjustments · customers · suppliers · **purchases & goods receipt** ·
+**expenses** · POS checkout · **sale returns & refunds** · **reports center**
+(sales summary, sales-by-product, profit, inventory valuation, low stock, dues) · dashboard.
+
+**Next:** accounting ledger & journals · cash register sessions · loyalty & promotions ·
+scheduled/exported reports · notifications · subscription-limit enforcement ·
+real-time (Reverb) updates · and the Next.js frontend + offline PWA.
 
 ## License
 

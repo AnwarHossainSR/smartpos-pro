@@ -135,3 +135,71 @@ Requires `sales.view`. Returns the sale with items, payments, customer and cashi
 Standard Laravel JSON errors: `401` unauthenticated, `403` missing tenant/permission,
 `404` not found (also for cross-tenant access), `422` validation with
 `{ "message", "errors": { field: [ ... ] } }`.
+
+---
+
+# Modules added after the foundation
+
+## Brands · Units
+
+| Method & path | Permission |
+| --- | --- |
+| `GET/POST /brands`, `PUT/DELETE /brands/{brand}` | `products.*` |
+| `GET/POST /units`, `PUT/DELETE /units/{unit}` | `products.*` |
+
+## Suppliers
+
+| Method & path | Permission |
+| --- | --- |
+| `GET /suppliers` (`?search=&has_due=`) | `suppliers.view` |
+| `GET /suppliers/{supplier}` | `suppliers.view` |
+| `POST /suppliers` · `PUT /suppliers/{supplier}` · `DELETE /suppliers/{supplier}` | `suppliers.create/update/delete` |
+
+## Purchases
+
+### `POST /purchases`
+Requires `purchases.create`. Idempotency-Key aware. When `status = received`, each line
+increments stock through the ledger, refreshes the product's cost, and increases the
+supplier's payable balance by any unpaid amount.
+```json
+{
+  "warehouse_id": 1, "supplier_id": 2, "status": "received",
+  "items": [{ "product_id": 1, "quantity": 100, "unit_cost": 2.5 }],
+  "payments": [{ "method": "cash", "amount": 100 }]
+}
+```
+`GET /purchases` (`?search=&supplier_id=&status=&payment_status=`) · `GET /purchases/{purchase}` — `purchases.view`.
+
+## Expenses
+
+| Method & path | Permission |
+| --- | --- |
+| `GET/POST /expense-categories` | `expenses.view/create` |
+| `GET /expenses` (`?search=&expense_category_id=&branch_id=&status=&from=&to=`) | `expenses.view` |
+| `POST /expenses` · `PUT /expenses/{expense}` | `expenses.create/update` |
+| `POST /expenses/{expense}/approve` | `expenses.approve` |
+| `DELETE /expenses/{expense}` | `expenses.delete` |
+
+## Sale returns / refunds
+
+### `POST /sales/{sale}/returns`
+Requires `sales.refund`. Returned quantities flow back into stock via the ledger; the
+refund reduces any outstanding customer due first. Over-returning beyond the sold (net of
+prior returns) quantity is rejected with `422`.
+```json
+{ "items": [{ "sale_item_id": 10, "quantity": 2 }], "refund_method": "cash" }
+```
+`GET /sale-returns` (`?sale_id=`) · `GET /sale-returns/{saleReturn}` — `sales.view`.
+
+## Reports
+
+All require `reports.view`; all accept `?from=&to=` (and `branch_id` where relevant).
+
+| Path | Returns |
+| --- | --- |
+| `GET /reports/sales-summary` | invoices, gross/net sales, discounts, tax, paid, due |
+| `GET /reports/sales-by-product` | top products by quantity, revenue and profit |
+| `GET /reports/profit` | revenue, COGS, gross profit, margin % |
+| `GET /reports/inventory-valuation` | stock value (qty × avg cost) per warehouse |
+| `GET /reports/low-stock` | products at/below minimum stock level |
+| `GET /reports/dues` | customer receivables & supplier payables |
