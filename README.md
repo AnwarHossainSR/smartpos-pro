@@ -153,6 +153,18 @@ docs/                     Architecture, API and product spec
 - [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) — the full product vision this
   foundation is built toward.
 
+## Task-driven development
+
+Work is broken into small, module-wise tasks in
+[`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md), with live status in
+[`docs/PROGRESS.md`](docs/PROGRESS.md). Two Claude Code skills drive it:
+
+- **`/implement-task <id>`** — implements one task end to end (code + tests, updates
+  progress, commits to the dev branch, opens/updates the PR). E.g. `/implement-task 44`.
+- **`/project-status`** — reports what's done vs. left and suggests the next tasks.
+
+Conventions the skills follow live in [`CLAUDE.md`](CLAUDE.md).
+
 ## Roadmap
 
 **Implemented:** auth & tenancy · catalog (categories, brands, units, products) ·
