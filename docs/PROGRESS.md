@@ -15,8 +15,8 @@ _Last updated: 2026-07-27_
 | 1 · Backend foundation & modules | 27 | 0 | 0 | 27 |
 | 2 · Backend, remaining | 0 | 0 | 10 | 10 |
 | 3 · Frontend | 23 | 0 | 0 | 23 |
-| 4 · Quality & delivery | 0 | 0 | 4 | 4 |
-| **Total** | **50** | **0** | **14** | **64** |
+| 4 · Quality & delivery | 4 | 0 | 0 | 4 |
+| **Total** | **54** | **0** | **10** | **64** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -97,7 +97,7 @@ _Last updated: 2026-07-27_
 
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
-| T61 | E2E tests (Playwright): POS checkout | ⬜ | | |
-| T62 | Frontend component/unit tests | ⬜ | | |
-| T63 | Richer demo seed data | ⬜ | | |
-| T64 | Deployment guides & infra hardening | ⬜ | | |
+| T61 | E2E tests (Playwright): POS checkout | ✅ | #6 | playwright.config.ts + e2e/pos-checkout.spec.ts |
+| T62 | Frontend component/unit tests | ✅ | #6 | Vitest + Testing Library; 26 tests across utils/stores/components |
+| T63 | Richer demo seed data | ✅ | #6 | RichDemoSeeder: branch2, returns, journals, coupons, loyalty |
+| T64 | Deployment guides & infra hardening | ✅ | #6 | docs/DEPLOYMENT.md: nginx, PHP-FPM, PM2, supervisor, security headers |
