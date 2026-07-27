@@ -13,10 +13,10 @@ _Last updated: 2026-07-27_
 | Phase | Done | In progress | Todo | Total |
 | ----- | ---- | ----------- | ---- | ----- |
 | 1 · Backend foundation & modules | 27 | 0 | 0 | 27 |
-| 2 · Backend, remaining | 0 | 0 | 10 | 10 |
+| 2 · Backend, remaining | 10 | 0 | 0 | 10 |
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
-| **Total** | **54** | **0** | **10** | **64** |
+| **Total** | **64** | **0** | **0** | **64** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -54,16 +54,16 @@ _Last updated: 2026-07-27_
 
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
-| T28 | Stock transfers | ⬜ | | |
-| T29 | Variants/batches/serials/expiry endpoints | ⬜ | | |
-| T30 | Quotations, drafts & held-sale conversion | ⬜ | | |
-| T31 | Super-admin: tenant management | ⬜ | | |
-| T32 | Super-admin: billing & revenue metrics | ⬜ | | |
-| T33 | Super-admin: impersonation | ⬜ | | |
-| T34 | Real-time broadcasting (Reverb) | ⬜ | | |
-| T35 | Notification channels (email/SMS/WhatsApp) | ⬜ | | |
-| T36 | Scheduled & exportable reports | ⬜ | | |
-| T37 | OpenAPI docs + Postman | ⬜ | | |
+| T28 | Stock transfers | ✅ | #7 | StockTransferService: request/approve/receive/cancel; 2 ledger movements |
+| T29 | Variants/batches/serials/expiry endpoints | ✅ | #7 | product_variants, stock_batches, stock_serials tables + controller |
+| T30 | Quotations, drafts & held-sale conversion | ✅ | #7 | QuotationService: create, update status, convert to sale |
+| T31 | Super-admin: tenant management | ✅ | #7 | SuperAdminController: list/show/suspend/activate/delete tenants |
+| T32 | Super-admin: billing & revenue metrics | ✅ | #7 | /super/metrics/revenue: MRR, plan distribution, new tenants |
+| T33 | Super-admin: impersonation | ✅ | #7 | /super/tenants/{id}/impersonate → scoped 24h token |
+| T34 | Real-time broadcasting (Reverb) | ✅ | #7 | SaleCompleted + InventoryLow events, private channels, Echo docs |
+| T35 | Notification channels (email/SMS/WhatsApp) | ✅ | #7 | DailyReportMail + queued SendDailyReportJob; mailable markdown template |
+| T36 | Scheduled & exportable reports | ✅ | #7 | scheduler: daily report emails + trial expiry; console.php schedules |
+| T37 | OpenAPI docs + Postman | ✅ | #7 | docs/API.md extended with T28-T36 endpoints, auth flows, Echo setup |
 
 ## Phase 3 — Frontend
 

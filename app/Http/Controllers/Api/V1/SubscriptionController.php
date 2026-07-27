@@ -20,16 +20,17 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    /** The current tenant's subscription, plan and live usage-vs-limits snapshot. */
+    /** The current tenant's active subscription with plan. */
     public function current(): JsonResponse
     {
-        $subscription = Subscription::with('plan')->latest('id')->first();
+        $subscription = Subscription::with('plan')->where('status', 'active')->latest('id')->first();
 
-        return response()->json([
-            'data' => [
-                'subscription' => $subscription,
-                'usage' => $this->limits->usage(),
-            ],
-        ]);
+        return response()->json(['data' => $subscription]);
+    }
+
+    /** Live per-feature usage vs plan limits. */
+    public function usage(): JsonResponse
+    {
+        return response()->json(['data' => $this->limits->usage()]);
     }
 }
