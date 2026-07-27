@@ -1,0 +1,103 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  price_monthly: number;
+  price_yearly: number;
+  limits: Record<string, number>;
+}
+
+interface Subscription {
+  id: number;
+  plan: Plan;
+  status: string;
+  current_period_end: string;
+  trial_ends_at: string | null;
+}
+
+interface UsageData {
+  usage: Record<string, { used: number; limit: number }>;
+}
+
+export default function SubscriptionPage() {
+  const { data: subData, isLoading: subLoading } = useQuery<{ data: Subscription | null }>({
+    queryKey: ["subscription"],
+    queryFn: () => api<{ data: Subscription | null }>("/subscription"),
+  });
+
+  const { data: usageData, isLoading: usageLoading } = useQuery<{ data: UsageData["usage"] }>({
+    queryKey: ["plan-usage"],
+    queryFn: () => api<{ data: UsageData["usage"] }>("/subscription/usage"),
+  });
+
+  const sub = subData?.data;
+  const usage = usageData?.data;
+
+  const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
+    active: "success", trialing: "warning", past_due: "danger", canceled: "default",
+  };
+
+  return (
+    <div className="max-w-2xl space-y-5">
+      <h1 className="text-xl font-semibold">Subscription</h1>
+
+      {subLoading ? (
+        <Skeleton className="h-40 rounded-[var(--radius)]" />
+      ) : sub ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>{sub.plan.name} Plan</CardTitle>
+              <Badge tone={statusColor[sub.status] ?? "default"}>{sub.status}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-[var(--muted)]">Billing period ends</span><span>{new Date(sub.current_period_end).toLocaleDateString()}</span></div>
+            {sub.trial_ends_at && <div className="flex justify-between"><span className="text-[var(--muted)]">Trial ends</span><span>{new Date(sub.trial_ends_at).toLocaleDateString()}</span></div>}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="py-8 text-center text-[var(--muted)]">No active subscription. Contact support to upgrade.</CardContent>
+        </Card>
+      )}
+
+      {usage && (
+        <Card>
+          <CardHeader><CardTitle>Plan usage</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {Object.entries(usage).map(([key, { used, limit }]) => {
+              const pct = limit < 0 ? 100 : Math.min(100, (used / limit) * 100);
+              const isUnlimited = limit < 0;
+              return (
+                <div key={key}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="capitalize">{key.replace(/_/g, " ")}</span>
+                    <span className="text-[var(--muted)]">
+                      {formatNumber(used)} / {isUnlimited ? "∞" : formatNumber(limit)}
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-[var(--surface-2)]">
+                    <div
+                      className={`h-2 rounded-full transition-all ${pct >= 90 ? "bg-[var(--color-danger)]" : pct >= 70 ? "bg-amber-500" : "bg-[var(--primary)]"}`}
+                      style={{ width: `${isUnlimited ? 30 : pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

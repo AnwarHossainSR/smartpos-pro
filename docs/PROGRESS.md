@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-25_
+_Last updated: 2026-07-27_
 
 ## Summary
 
@@ -14,9 +14,9 @@ _Last updated: 2026-07-25_
 | ----- | ---- | ----------- | ---- | ----- |
 | 1 · Backend foundation & modules | 27 | 0 | 0 | 27 |
 | 2 · Backend, remaining | 0 | 0 | 10 | 10 |
-| 3 · Frontend | 5 | 0 | 18 | 23 |
+| 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 0 | 0 | 4 | 4 |
-| **Total** | **32** | **0** | **32** | **64** |
+| **Total** | **50** | **0** | **14** | **64** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -69,29 +69,29 @@ _Last updated: 2026-07-25_
 
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
-| T38 | FE scaffold: design tokens + UI primitives | ✅ | this PR | Next 16, Tailwind v4 |
-| T39 | FE: API client, auth store, query provider | ✅ | this PR | |
-| T40 | FE: Auth pages (login/register) | ✅ | this PR | wired to API |
-| T41 | FE: App shell (sidebar/header/guard) | ✅ | this PR | |
-| T42 | FE: Dashboard (KPIs + chart) | ✅ | this PR | Recharts |
-| T43 | FE: Products list + create/edit | ⬜ | | |
-| T44 | FE: POS terminal | ⬜ | | |
-| T45 | FE: Inventory overview | ⬜ | | |
-| T46 | FE: Sales list + detail + returns | ⬜ | | |
-| T47 | FE: Customers UI | ⬜ | | |
-| T48 | FE: Suppliers UI | ⬜ | | |
-| T49 | FE: Purchases UI | ⬜ | | |
-| T50 | FE: Expenses UI | ⬜ | | |
-| T51 | FE: Reports UI | ⬜ | | |
-| T52 | FE: Accounting UI | ⬜ | | |
-| T53 | FE: Cash register UI | ⬜ | | |
-| T54 | FE: Team & roles UI | ⬜ | | |
-| T55 | FE: Settings & onboarding UI | ⬜ | | |
-| T56 | FE: Loyalty & coupons UI | ⬜ | | |
-| T57 | FE: Subscription/billing page | ⬜ | | |
-| T58 | FE: Notifications + command palette | ⬜ | | |
-| T59 | FE: Theme toggle & responsive polish | ⬜ | | |
-| T60 | FE: PWA + offline POS | ⬜ | | |
+| T38 | FE scaffold: design tokens + UI primitives | ✅ | #6 | Next 16, Tailwind v4 |
+| T39 | FE: API client, auth store, query provider | ✅ | #6 | |
+| T40 | FE: Auth pages (login/register) | ✅ | #6 | wired to API |
+| T41 | FE: App shell (sidebar/header/guard) | ✅ | #6 | |
+| T42 | FE: Dashboard (KPIs + chart) | ✅ | #6 | Recharts |
+| T43 | FE: Products list + create/edit | ✅ | #6 | RHF+Zod, opening stock |
+| T44 | FE: POS terminal | ✅ | #6 | cart, payment modal, receipt, idempotency |
+| T45 | FE: Inventory overview | ✅ | #6 | balance table, adjust drawer, low-stock filter |
+| T46 | FE: Sales list + detail + returns | ✅ | #6 | SaleDetailModal, ReturnModal |
+| T47 | FE: Customers UI | ✅ | #6 | CRUD with group/credit limit |
+| T48 | FE: Suppliers UI | ✅ | #6 | CRUD with company/tax/opening balance |
+| T49 | FE: Purchases UI | ✅ | #6 | useFieldArray for items + payments |
+| T50 | FE: Expenses UI | ✅ | #6 | category, amount, date, payment method |
+| T51 | FE: Reports UI | ✅ | #6 | 6 report types, Recharts charts |
+| T52 | FE: Accounting UI | ✅ | #6 | accounts/journals/trial-balance tabs |
+| T53 | FE: Cash register UI | ✅ | #6 | open/close/movements flow |
+| T54 | FE: Team & roles UI | ✅ | #6 | invite/edit drawer, role toggle chips |
+| T55 | FE: Settings & onboarding UI | ✅ | #6 | business settings + account card |
+| T56 | FE: Loyalty & coupons UI | ✅ | #6 | coupon list/create, loyalty points tab |
+| T57 | FE: Subscription/billing page | ✅ | #6 | plan card + usage progress bars |
+| T58 | FE: Notifications + command palette | ✅ | #6 | bell icon, ⌘K palette with keyboard nav |
+| T59 | FE: Theme toggle & responsive polish | ✅ | #6 | light/dark/system toggle, mobile sidebar |
+| T60 | FE: PWA + offline POS | ✅ | #6 | manifest, SW, IDB sync, offline banner |
 
 ## Phase 4 — Quality & delivery
 
