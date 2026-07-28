@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('type'); // cash, bank, mobile_banking, wallet, income, expense, asset, liability, equity
+            $table->string('normal_side')->nullable(); // debit or credit
             $table->string('account_number')->nullable();
             $table->decimal('opening_balance', 16, 2)->default(0);
             $table->decimal('balance', 16, 2)->default(0);

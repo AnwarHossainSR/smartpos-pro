@@ -122,12 +122,12 @@ class RichDemoSeeder extends Seeder
             Expense::create([
                 'tenant_id' => $owner->tenant_id,
                 'branch_id' => $branch1->id,
-                'category_id' => $expCats->random()->id,
+                'expense_category_id' => $expCats->random()->id,
                 'user_id' => $owner->id,
                 'amount' => fake()->randomFloat(2, 50, 2000),
                 'note' => fake()->sentence(4),
                 'payment_method' => fake()->randomElement(['cash', 'bank', 'card']),
-                'expense_date' => now()->subDays(fake()->numberBetween(1, 30)),
+                'spent_at' => now()->subDays(fake()->numberBetween(1, 30)),
             ]);
         }
 
@@ -169,8 +169,8 @@ class RichDemoSeeder extends Seeder
                 'total_credit' => $amount,
             ]);
             JournalLine::insert([
-                ['journal_entry_id' => $entry->id, 'account_id' => $acctMap['5000'], 'debit' => $amount, 'credit' => 0, 'description' => 'Rent expense'],
-                ['journal_entry_id' => $entry->id, 'account_id' => $acctMap['1001'], 'debit' => 0, 'credit' => $amount, 'description' => 'Paid from bank'],
+                ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['5000'], 'debit' => $amount, 'credit' => 0, 'description' => 'Rent expense'],
+                ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['1001'], 'debit' => 0, 'credit' => $amount, 'description' => 'Paid from bank'],
             ]);
         }
 
@@ -186,17 +186,17 @@ class RichDemoSeeder extends Seeder
             'total_credit' => $salary,
         ]);
         JournalLine::insert([
-            ['journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['5001'], 'debit' => $salary, 'credit' => 0, 'description' => 'Salary'],
-            ['journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['1000'], 'debit' => 0, 'credit' => $salary, 'description' => 'Cash payment'],
+            ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['5001'], 'debit' => $salary, 'credit' => 0, 'description' => 'Salary'],
+            ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['1000'], 'debit' => 0, 'credit' => $salary, 'description' => 'Cash payment'],
         ]);
 
         // ------------------------------------------------------------------
         // 5. Demo coupons
         // ------------------------------------------------------------------
         $coupons = [
-            ['code' => 'WELCOME10', 'type' => 'percentage', 'value' => 10,   'min_order_amount' => 0,   'max_uses' => 100, 'is_active' => true],
-            ['code' => 'SAVE20',    'type' => 'fixed',      'value' => 20,   'min_order_amount' => 100, 'max_uses' => 50,  'is_active' => true],
-            ['code' => 'SUMMER50',  'type' => 'percentage', 'value' => 50,   'min_order_amount' => 200, 'max_uses' => 20,  'is_active' => false, 'valid_until' => now()->subDay()],
+            ['code' => 'WELCOME10', 'type' => 'percentage', 'value' => 10,   'min_purchase' => 0,   'usage_limit' => 100, 'is_active' => true],
+            ['code' => 'SAVE20',    'type' => 'fixed',      'value' => 20,   'min_purchase' => 100, 'usage_limit' => 50,  'is_active' => true],
+            ['code' => 'SUMMER50',  'type' => 'percentage', 'value' => 50,   'min_purchase' => 200, 'usage_limit' => 20,  'is_active' => false, 'expires_at' => now()->subDay()],
         ];
 
         foreach ($coupons as $c) {

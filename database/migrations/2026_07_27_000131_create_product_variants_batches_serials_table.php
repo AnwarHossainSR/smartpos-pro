@@ -27,16 +27,19 @@ return new class extends Migration
         });
 
         // Product variants (combination of attribute values)
-        Schema::create('product_variants', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->string('sku')->nullable();
-            $table->string('barcode')->nullable();
-            $table->decimal('purchase_price', 12, 4)->nullable();
-            $table->decimal('selling_price', 12, 4)->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        // This migration should not recreate the table if it already exists (earlier migration creates it).
+        if (!Schema::hasTable('product_variants')) {
+            Schema::create('product_variants', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+                $table->string('sku')->nullable();
+                $table->string('barcode')->nullable();
+                $table->decimal('purchase_price', 12, 4)->nullable();
+                $table->decimal('selling_price', 12, 4)->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
 
         // Which attribute values make up each variant
         Schema::create('product_variant_attributes', function (Blueprint $table) {

@@ -13,12 +13,12 @@ class JournalLine extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'tenant_id', 'journal_entry_id', 'account_id', 'type', 'amount', 'description',
+        'tenant_id', 'journal_entry_id', 'account_id', 'type', 'amount', 'debit', 'credit', 'description',
     ];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2'];
+        return ['amount' => 'decimal:2', 'debit' => 'decimal:2', 'credit' => 'decimal:2'];
     }
 
     public function account(): BelongsTo

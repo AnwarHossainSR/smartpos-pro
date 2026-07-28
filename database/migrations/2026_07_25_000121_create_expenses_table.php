@@ -12,8 +12,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
+            $table->string('slug')->nullable();
             $table->timestamps();
             $table->index(['tenant_id']);
+            $table->unique(['tenant_id', 'slug']);
         });
 
         Schema::create('expenses', function (Blueprint $table) {
