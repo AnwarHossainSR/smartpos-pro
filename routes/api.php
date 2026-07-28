@@ -15,16 +15,21 @@ use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductVariantController;
 use App\Http\Controllers\Api\V1\PurchaseController;
+use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -39,6 +44,8 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
+
+        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('permission:inventory.view');
 
         // Catalog — categories
         Route::get('categories', [CategoryController::class, 'index'])->middleware('permission:products.view');
@@ -177,5 +184,46 @@ Route::prefix('v1')->group(function () {
         // Subscription & plan usage
         Route::get('subscription/plans', [SubscriptionController::class, 'plans'])->middleware('permission:subscriptions.view');
         Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
+        Route::get('subscription', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
+        Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware('permission:subscriptions.view');
+
+        // T28 — Stock transfers
+        Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');
+        Route::post('stock-transfers', [StockTransferController::class, 'store'])->middleware('permission:inventory.adjust');
+        Route::get('stock-transfers/{stockTransfer}', [StockTransferController::class, 'show'])->middleware('permission:inventory.view');
+        Route::post('stock-transfers/{stockTransfer}/approve', [StockTransferController::class, 'approve'])->middleware('permission:inventory.adjust');
+        Route::post('stock-transfers/{stockTransfer}/receive', [StockTransferController::class, 'receive'])->middleware('permission:inventory.adjust');
+        Route::post('stock-transfers/{stockTransfer}/cancel', [StockTransferController::class, 'cancel'])->middleware('permission:inventory.adjust');
+
+        // T29 — Variants, batches, serials
+        Route::get('products/{product}/variants', [ProductVariantController::class, 'variants'])->middleware('permission:inventory.view');
+        Route::get('stock/batches', [ProductVariantController::class, 'batches'])->middleware('permission:inventory.view');
+        Route::post('stock/batches', [ProductVariantController::class, 'storeBatch'])->middleware('permission:inventory.adjust');
+        Route::get('stock/serials', [ProductVariantController::class, 'serials'])->middleware('permission:inventory.view');
+        Route::post('stock/serials', [ProductVariantController::class, 'storeSerial'])->middleware('permission:inventory.adjust');
+
+        // T30 — Quotations
+        Route::get('quotations', [QuotationController::class, 'index'])->middleware('permission:sales.view');
+        Route::post('quotations', [QuotationController::class, 'store'])->middleware('permission:sales.create');
+        Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->middleware('permission:sales.view');
+        Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('permission:sales.update');
+        Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy'])->middleware('permission:sales.delete');
+        Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convert'])->middleware('permission:pos.create');
+    });
+
+    // T31-T33 — Super-admin (separate guard, no tenant scope)
+    Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
+        Route::get('tenants', [SuperAdminController::class, 'tenants']);
+        Route::get('tenants/{tenant}', [SuperAdminController::class, 'showTenant']);
+        Route::post('tenants/{tenant}/suspend', [SuperAdminController::class, 'suspendTenant']);
+        Route::post('tenants/{tenant}/activate', [SuperAdminController::class, 'activateTenant']);
+        Route::delete('tenants/{tenant}', [SuperAdminController::class, 'deleteTenant']);
+
+        // T32
+        Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
+
+        // T33
+        Route::post('tenants/{tenant}/impersonate', [SuperAdminController::class, 'impersonate']);
+        Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
     });
 });

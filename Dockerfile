@@ -1,5 +1,5 @@
-# ---- SmartPOS Pro API (Laravel 13 / PHP 8.4) ----
-FROM php:8.4-fpm-alpine
+# ---- SmartPOS Pro API (Laravel 13 / PHP 8.5) ----
+FROM php:8.5.9RC1-fpm-trixie
 
 RUN apk add --no-cache \
         git curl libpng-dev libzip-dev icu-dev postgresql-dev oniguruma-dev bash \

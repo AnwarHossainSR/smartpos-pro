@@ -33,8 +33,12 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('journal_entry_id')->constrained()->cascadeOnDelete();
             $table->foreignId('account_id')->constrained()->cascadeOnDelete();
-            $table->string('type'); // debit, credit
-            $table->decimal('amount', 16, 2);
+            // Support both historical debit/credit columns used by seeders
+            // and `type`/`amount` style used by application code.
+            $table->decimal('debit', 16, 2)->default(0);
+            $table->decimal('credit', 16, 2)->default(0);
+            $table->string('type')->nullable(); // debit, credit
+            $table->decimal('amount', 16, 2)->nullable();
             $table->string('description')->nullable();
             $table->timestamp('created_at')->useCurrent();
 

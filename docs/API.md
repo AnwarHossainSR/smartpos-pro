@@ -289,3 +289,128 @@ Points are also **earned automatically** on completed sales when the business se
 Plan limits are enforced on creation: e.g. `POST /products` and `POST /users` return
 `422 { errors: { plan: [...] } }` when the tenant's plan limit is reached. A `null` limit
 means unlimited.
+
+## Stock transfers (T28)
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /stock-transfers` | `inventory.view` | list with `?status=pending\|approved\|in_transit\|received\|cancelled` |
+| `POST /stock-transfers` | `inventory.adjust` | create pending transfer |
+| `GET /stock-transfers/{id}` | `inventory.view` | detail with items |
+| `POST /stock-transfers/{id}/approve` | `inventory.adjust` | approve → moves stock out of source |
+| `POST /stock-transfers/{id}/receive` | `inventory.adjust` | receive → moves stock into destination |
+| `POST /stock-transfers/{id}/cancel` | `inventory.adjust` | cancel (pending only) |
+
+**Create transfer body:**
+```json
+{
+  "from_warehouse_id": 1,
+  "to_warehouse_id": 2,
+  "note": "Monthly replenishment",
+  "items": [
+    { "product_id": 12, "quantity": 50, "unit_cost": 8.50 }
+  ]
+}
+```
+
+## Product variants, batches & serials (T29)
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /products/{id}/variants` | `inventory.view` | list variants with attribute values |
+| `GET /stock/batches` | `inventory.view` | batch list with `?product_id=&warehouse_id=&expiring_before=` |
+| `POST /stock/batches` | `inventory.adjust` | create batch record |
+| `GET /stock/serials` | `inventory.view` | serial list with `?product_id=&status=in_stock\|sold\|returned\|damaged` |
+| `POST /stock/serials` | `inventory.adjust` | register new serial number |
+
+## Quotations (T30)
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /quotations` | `sales.view` | paginated, `?status=draft\|sent\|accepted\|converted` |
+| `POST /quotations` | `sales.create` | create draft quotation |
+| `GET /quotations/{id}` | `sales.view` | detail with items, customer |
+| `PUT /quotations/{id}` | `sales.update` | update status / note / terms |
+| `DELETE /quotations/{id}` | `sales.delete` | soft-delete |
+| `POST /quotations/{id}/convert` | `pos.create` | convert to confirmed sale |
+
+**Create quotation body:**
+```json
+{
+  "branch_id": 1,
+  "customer_id": 5,
+  "valid_until": "2026-08-31",
+  "items": [
+    { "product_id": 3, "quantity": 2, "unit_price": 29.99 }
+  ]
+}
+```
+
+**Convert to sale body:**
+```json
+{
+  "warehouse_id": 1,
+  "payments": [{ "method": "cash", "amount": 59.98 }]
+}
+```
+
+## Super-admin API (T31–T33)
+
+Base path: `/api/v1/super` · Requires: `is_super_admin = true` on the authenticated user.
+
+| Method & path | Notes |
+| --- | --- |
+| `GET /super/tenants` | list all tenants with user/business counts |
+| `GET /super/tenants/{id}` | detail + subscription + live usage |
+| `POST /super/tenants/{id}/suspend` | set status = suspended |
+| `POST /super/tenants/{id}/activate` | set status = active |
+| `DELETE /super/tenants/{id}` | soft-delete tenant |
+| `GET /super/metrics/revenue` | MRR, plan distribution, recent subscriptions |
+| `POST /super/tenants/{id}/impersonate` | issues a 24h scoped token for the tenant's owner |
+| `POST /super/impersonation/stop` | revokes the current impersonation token |
+
+**Impersonation flow:**
+1. `POST /super/tenants/42/impersonate` → `{ token, expires_at }`
+2. Use the returned token as `Authorization: Bearer <token>` for subsequent requests
+3. `POST /super/impersonation/stop` to revoke when done
+
+## Real-time events (T34 — Laravel Reverb)
+
+Subscribe to private channels with the Sanctum token:
+
+| Channel | Event | Payload |
+| --- | --- | --- |
+| `private-tenant.{tenant_id}` | `sale.completed` | `{ id, total, payment_status, sold_at }` |
+| `private-tenant.{tenant_id}` | `inventory.low` | `{ product_id, warehouse_id, quantity }` |
+| `private-branch.{branch_id}` | `sale.completed` | same as above |
+
+**Laravel Echo setup (JavaScript):**
+```javascript
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+window.Pusher = Pusher;
+
+const echo = new Echo({
+  broadcaster: 'reverb',
+  key: process.env.NEXT_PUBLIC_REVERB_APP_KEY,
+  wsHost: process.env.NEXT_PUBLIC_REVERB_HOST,
+  wsPort: 443,
+  wssPort: 443,
+  forceTLS: true,
+  authEndpoint: `${process.env.NEXT_PUBLIC_API_URL}/broadcasting/auth`,
+  auth: { headers: { Authorization: `Bearer ${token}` } },
+});
+
+echo.private(`tenant.${tenantId}`)
+  .listen('.sale.completed', (data) => console.log('New sale', data))
+  .listen('.inventory.low', (data) => console.warn('Low stock', data));
+```
+
+## Scheduled tasks (T36)
+
+| Schedule | Task |
+| --- | --- |
+| Daily 07:00 UTC | Send `DailyReportMail` to every active tenant's owner |
+| Hourly | Auto-expire trialing tenants whose `trial_ends_at` has passed |
+
+Enable via cron: `* * * * * php /var/www/smartpos/artisan schedule:run >> /dev/null 2>&1`
