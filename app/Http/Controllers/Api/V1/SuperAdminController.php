@@ -7,10 +7,8 @@ use App\Models\Sale;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Super-admin endpoints: tenant management, billing metrics, impersonation.

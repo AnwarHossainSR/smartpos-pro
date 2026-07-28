@@ -27,6 +27,7 @@ class SendDailyReportJob implements ShouldQueue
     use SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 60;
 
     public function __construct(public readonly int $tenantId) {}
@@ -36,12 +37,16 @@ class SendDailyReportJob implements ShouldQueue
         $context->set($this->tenantId);
 
         $tenant = Tenant::find($this->tenantId);
-        if (! $tenant || $tenant->status !== 'active') return;
+        if (! $tenant || $tenant->status !== 'active') {
+            return;
+        }
 
         $owner = User::where('tenant_id', $this->tenantId)
             ->whereHas('roles', fn ($q) => $q->where('slug', 'owner'))
             ->first();
-        if (! $owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $yesterday = now()->subDay()->startOfDay();
 

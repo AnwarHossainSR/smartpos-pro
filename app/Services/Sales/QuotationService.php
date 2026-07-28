@@ -5,6 +5,7 @@ namespace App\Services\Sales;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -55,7 +56,7 @@ class QuotationService
      *
      * @param  array{warehouse_id:int, payments?:array}  $payload
      */
-    public function convertToSale(Quotation $quotation, array $payload, User $user): \App\Models\Sale
+    public function convertToSale(Quotation $quotation, array $payload, User $user): Sale
     {
         if (! in_array($quotation->status, ['draft', 'sent', 'accepted'])) {
             throw ValidationException::withMessages(['status' => 'Only draft/sent/accepted quotations can be converted.']);

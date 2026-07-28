@@ -90,7 +90,9 @@ class RichDemoSeeder extends Seeder
 
         foreach ($completedSales->take(3) as $sale) {
             $firstItem = $sale->items->first();
-            if (! $firstItem || $firstItem->quantity < 1) continue;
+            if (! $firstItem || $firstItem->quantity < 1) {
+                continue;
+            }
 
             try {
                 $returnService->create(
@@ -139,11 +141,11 @@ class RichDemoSeeder extends Seeder
             ['name' => 'Bank',          'type' => 'asset',    'account_number' => '1001', 'normal_side' => 'debit'],
             ['name' => 'Accounts Rec.', 'type' => 'asset',    'account_number' => '1100', 'normal_side' => 'debit'],
             ['name' => 'Inventory',     'type' => 'asset',    'account_number' => '1200', 'normal_side' => 'debit'],
-            ['name' => 'Accounts Pay.', 'type' => 'liability','account_number' => '2000', 'normal_side' => 'credit'],
+            ['name' => 'Accounts Pay.', 'type' => 'liability', 'account_number' => '2000', 'normal_side' => 'credit'],
             ['name' => 'Owner Equity',  'type' => 'equity',   'account_number' => '3000', 'normal_side' => 'credit'],
             ['name' => 'Sales Revenue', 'type' => 'revenue',  'account_number' => '4000', 'normal_side' => 'credit'],
             ['name' => 'Rent Expense',  'type' => 'expense',  'account_number' => '5000', 'normal_side' => 'debit'],
-            ['name' => 'Salary Expense','type' => 'expense',  'account_number' => '5001', 'normal_side' => 'debit'],
+            ['name' => 'Salary Expense', 'type' => 'expense',  'account_number' => '5001', 'normal_side' => 'debit'],
             ['name' => 'Utility Exp.', 'type' => 'expense',   'account_number' => '5002', 'normal_side' => 'debit'],
         ];
 
@@ -209,7 +211,7 @@ class RichDemoSeeder extends Seeder
         // ------------------------------------------------------------------
         // 6. Loyalty points for customers with purchases
         // ------------------------------------------------------------------
-        if (class_exists(\App\Models\LoyaltyTransaction::class)) {
+        if (class_exists(LoyaltyTransaction::class)) {
             $customersWithSales = Sale::where('branch_id', $branch1Id)
                 ->whereNotNull('customer_id')
                 ->distinct()

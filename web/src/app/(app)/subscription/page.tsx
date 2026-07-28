@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 interface Plan {
   id: number;
@@ -28,19 +28,19 @@ interface UsageData {
   usage: Record<string, { used: number; limit: number }>;
 }
 
+interface SubscriptionResponse {
+  subscription: Subscription | null;
+  usage: UsageData["usage"];
+}
+
 export default function SubscriptionPage() {
-  const { data: subData, isLoading: subLoading } = useQuery<{ data: Subscription | null }>({
+  const { data: subData, isLoading: subLoading } = useQuery<{ data: SubscriptionResponse }>({
     queryKey: ["subscription"],
-    queryFn: () => api<{ data: Subscription | null }>("/subscription"),
+    queryFn: () => api<{ data: SubscriptionResponse }> ("/subscription"),
   });
 
-  const { data: usageData, isLoading: usageLoading } = useQuery<{ data: UsageData["usage"] }>({
-    queryKey: ["plan-usage"],
-    queryFn: () => api<{ data: UsageData["usage"] }>("/subscription/usage"),
-  });
-
-  const sub = subData?.data;
-  const usage = usageData?.data;
+  const sub = subData?.data.subscription;
+  const usage = subData?.data.usage;
 
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     active: "success", trialing: "warning", past_due: "danger", canceled: "default",
