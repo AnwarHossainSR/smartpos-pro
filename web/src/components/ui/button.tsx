@@ -9,7 +9,9 @@ const variants: Record<Variant, string> = {
   secondary: "bg-[var(--surface-2)] text-[var(--fg)] hover:bg-[var(--border)]",
   outline: "border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]",
   ghost: "hover:bg-[var(--surface-2)] text-[var(--fg)]",
-  danger: "bg-[var(--color-danger)] text-white hover:opacity-90",
+  // Fixed red rather than the theme-reactive --danger token: --danger is tuned to read as
+  // *text* on --bg (bright in dark mode), which fails AA as a solid fill under white text.
+  danger: "bg-red-600 text-white hover:bg-red-700",
 };
 
 const sizes: Record<Size, string> = {

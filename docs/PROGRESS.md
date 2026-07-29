@@ -111,7 +111,7 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | -- | ---- | ------ | -- | ----- |
 | T65 | Token architecture + 6 palettes (light+dark) | ✅ | | Semantic tokens in globals.css, data-theme driven, AA-checked |
 | T66 | Theme store + palette switcher UI | ✅ | | palette in theme store; header swatch + Settings→Appearance grid; no-flash inline script in layout head |
-| T67 | Sidebar + shell restyle | ⬜ | | |
+| T67 | Sidebar + shell restyle | ✅ | | sidebar on --sidebar-* tokens; fixed 2 latent primary-fg contrast bugs (logo badges) + danger button AA |
 | T68 | Table + list-page pattern upgrade | ⬜ | | |
 | T69 | i18n foundation | ⬜ | | |
 | T70 | Locale switcher UI + per-script fonts | ⬜ | | |

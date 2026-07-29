@@ -11,7 +11,7 @@ export function AuthShell({
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--primary)] text-xl font-bold text-white">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--primary)] text-xl font-bold text-[var(--primary-fg)]">
             S
           </div>
           <h1 className="text-2xl font-semibold">{title}</h1>

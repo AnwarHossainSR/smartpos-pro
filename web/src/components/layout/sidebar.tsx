@@ -37,16 +37,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const content = (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col text-[var(--sidebar-fg)]">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-5">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] font-bold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] font-bold text-[var(--primary-fg)]">
             S
           </div>
           <span className="text-lg font-semibold">SmartPOS</span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="md:hidden rounded p-1 hover:bg-[var(--surface-2)]">
+          <button onClick={onClose} className="md:hidden rounded p-1 hover:bg-white/10">
             <X className="h-5 w-5" />
           </button>
         )}
@@ -62,8 +62,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-[var(--primary)] text-[var(--primary-fg)]"
-                  : "text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg)]",
+                  ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)]"
+                  : "text-[var(--sidebar-muted)] hover:bg-white/10 hover:text-[var(--sidebar-fg)]",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -78,15 +78,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r border-[var(--border)] bg-[var(--surface)] md:block">
-        {content}
-      </aside>
+      <aside className="hidden w-60 shrink-0 bg-[var(--sidebar-bg)] md:block">{content}</aside>
 
       {/* Mobile sidebar */}
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-          <aside className="relative h-full w-64 bg-[var(--surface)] shadow-xl">
+          <aside className="relative h-full w-64 bg-[var(--sidebar-bg)] shadow-xl">
             {content}
           </aside>
         </div>
