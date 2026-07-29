@@ -126,3 +126,53 @@ small — one task = one coherent, reviewable slice.
 ### T62 · Frontend component/unit tests
 ### T63 · Richer demo seed data (multi-branch, returns, journals)
 ### T64 · Deployment guides & infra hardening (AWS, Cloudflare, Sentry, PostHog)
+
+## Phase 5 — Design system refresh + i18n & currency  (`web`)
+
+Full plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
+
+### T65 · Token architecture + finalize 6 palettes (light+dark)
+- **Scope:** semantic token set (`--bg/--surface/--sidebar-*/--primary/...`) driven by
+  `data-theme` attribute in `globals.css`; 6 curated palettes (Amber Retail, Indigo, Emerald,
+  Ocean, Violet, Rose), each light + dark.
+- **Done when:** palettes render; text/UI contrast passes WCAG AA; no visual break on
+  existing pages.
+### T66 · Theme store + palette switcher UI, no-flash hydration
+- **Scope:** `useThemeStore` gains `palette`; swatch picker in Settings → Appearance + header
+  quick toggle; inline hydration script so `data-theme` is set before first paint.
+- **Done when:** switch persists across reload; no SSR/CSR flash.
+### T67 · Sidebar + shell restyle to dark `--sidebar-*` tokens
+- **Scope:** sidebar and app shell re-themed to the new dark-sidebar tokens independent of
+  page light/dark mode.
+- **Done when:** matches new look; keyboard/active nav states intact.
+### T68 · Table + list-page pattern upgrade
+- **Scope:** reusable `DataTable` (zebra rows, sticky header, hover, right-aligned numeric
+  cols, bulk-select checkbox column, row actions) + toolbar (search + filters +
+  import/export buttons); applied to Products first.
+- **Done when:** `DataTable` component exists and Products list uses it end to end.
+### T69 · i18n foundation
+- **Scope:** `src/i18n/` (`config.ts`, `provider.tsx`, `messages/en.json`), `t(key, vars?)`
+  with interpolation, locale store persisted to `localStorage` + cookie, `<html lang/dir>`
+  driven by locale.
+- **Done when:** English strings route through `t()`; switching locale re-renders live.
+### T70 · Locale switcher UI + per-script fonts
+- **Scope:** locale picker in header + Settings → Localization; `next/font/google` fonts for
+  Bangla/Japanese/Arabic scripts applied via `:lang()`/`data-lang`.
+- **Done when:** correct font per active language; picker works in both locations.
+### T71 · RTL support
+- **Scope:** audit hardcoded directional Tailwind classes → logical utilities
+  (`ms-*/me-*/start/end/text-start`); `dir="rtl"` for Arabic; direction-aware icon flips.
+- **Done when:** `ar` mirrors correctly across app pages.
+### T72 · Translation catalogs
+- **Scope:** `de.json`, `bn.json`, `ar.json`, `ja.json` mirroring `en.json` keys for all
+  shipped UI strings.
+- **Done when:** no missing-key fallback gaps in shipped screens.
+### T73 · Currency/locale-aware formatting
+- **Scope:** tenant `currency` + `locale` settings (Settings → Localization), locale-aware
+  `formatCurrency`/`formatNumber`/`formatDate`/`formatDateTime` helpers; audit POS, receipts,
+  reports, dashboards for raw `$`/`toFixed` money rendering.
+- **Done when:** all money rendering uses the helpers; tenant currency respected end-to-end.
+### T74 · QA pass
+- **Scope:** `npm run lint` + `npm run build` clean; smoke-check each locale (incl. RTL +
+  dark mode); update `docs/PROGRESS.md`/`docs/API.md` as needed.
+- **Done when:** lint/build clean; docs updated.

@@ -16,7 +16,8 @@ _Last updated: 2026-07-27_
 | 2 · Backend, remaining | 10 | 0 | 0 | 10 |
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
-| **Total** | **64** | **0** | **0** | **64** |
+| 5 · Design system refresh + i18n & currency | 0 | 0 | 10 | 10 |
+| **Total** | **64** | **0** | **10** | **74** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -101,3 +102,20 @@ _Last updated: 2026-07-27_
 | T62 | Frontend component/unit tests | ✅ | #6 | Vitest + Testing Library; 26 tests across utils/stores/components |
 | T63 | Richer demo seed data | ✅ | #6 | RichDemoSeeder: branch2, returns, journals, coupons, loyalty |
 | T64 | Deployment guides & infra hardening | ✅ | #6 | docs/DEPLOYMENT.md: nginx, PHP-FPM, PM2, supervisor, security headers |
+
+## Phase 5 — Design system refresh + i18n & currency
+
+Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T65 | Token architecture + 6 palettes (light+dark) | ⬜ | | |
+| T66 | Theme store + palette switcher UI | ⬜ | | |
+| T67 | Sidebar + shell restyle | ⬜ | | |
+| T68 | Table + list-page pattern upgrade | ⬜ | | |
+| T69 | i18n foundation | ⬜ | | |
+| T70 | Locale switcher UI + per-script fonts | ⬜ | | |
+| T71 | RTL support | ⬜ | | |
+| T72 | Translation catalogs (de/bn/ar/ja) | ⬜ | | |
+| T73 | Currency/locale-aware formatting | ⬜ | | |
+| T74 | QA pass | ⬜ | | |
