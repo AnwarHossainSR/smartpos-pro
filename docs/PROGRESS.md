@@ -116,6 +116,6 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T69 | i18n foundation | ✅ | | I18nProvider + t()/plural(), en.json source of truth; wired into shell, auth pages, settings, Products (flagship); other module pages still hardcoded English — tracked as follow-up |
 | T70 | Locale switcher UI + per-script fonts | ✅ | | LocalePicker in header + Settings→Localization; Noto Sans Bengali/JP/Arabic via next/font, applied per [data-lang] |
 | T71 | RTL support | ✅ | | dir=rtl driven by locale (I18nProvider); 106 physical→logical class swaps (ml/pl/left/right/text-left/right) across 20 files; pagination chevrons flip via rtl:scale-x-[-1] |
-| T72 | Translation catalogs (de/bn/ar/ja) | ⬜ | | |
+| T72 | Translation catalogs (de/bn/ar/ja) | ✅ | | Full human translations, 121/121 keys parity with en.json verified by script |
 | T73 | Currency/locale-aware formatting | ⬜ | | |
 | T74 | QA pass | ⬜ | | |
