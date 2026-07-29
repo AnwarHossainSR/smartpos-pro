@@ -95,4 +95,26 @@ class SaleCheckoutTest extends TestCase
         $this->assertSame(1, Sale::count());
         $this->assertEqualsWithDelta(18, $product->fresh()->totalStock(), 0.001);
     }
+
+    public function test_invoice_pdf_can_be_streamed_and_downloaded(): void
+    {
+        $owner = $this->createTenant();
+        $warehouse = $this->warehouseFor($owner);
+        Sanctum::actingAs($owner);
+        $product = $this->seedProduct($owner->id, $warehouse->id, stock: 10, price: 50);
+
+        $sale = $this->postJson('/api/v1/sales', [
+            'branch_id' => $owner->branch_id,
+            'warehouse_id' => $warehouse->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'payments' => [['method' => 'cash', 'amount' => 100]],
+        ])->assertCreated()->json('data');
+
+        $this->get("/api/v1/sales/{$sale['id']}/invoice")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $download = $this->get("/api/v1/sales/{$sale['id']}/invoice?download=1")->assertOk();
+        $this->assertStringContainsString('attachment', (string) $download->headers->get('Content-Disposition'));
+    }
 }

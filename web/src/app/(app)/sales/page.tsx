@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Eye, RotateCcw } from "lucide-react";
+import { Search, Eye, RotateCcw, FileText } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,19 @@ interface Sale {
 
 function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () => void; onReturn: () => void }) {
   const { can } = useAuth();
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+
+  const viewInvoice = async () => {
+    setLoadingInvoice(true);
+    try {
+      openPdfBlob(await apiBlob(`/sales/${sale.id}/invoice`));
+    } catch {
+      toast("Could not load invoice", "error");
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
+
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     completed: "success", held: "warning", draft: "default", quotation: "info" as "default",
   };
@@ -84,6 +97,9 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose} className="flex-1">Close</Button>
+          <Button variant="outline" onClick={viewInvoice} disabled={loadingInvoice} className="flex-1">
+            <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
+          </Button>
           {can("sales.refund") && sale.status === "completed" && (
             <Button variant="danger" onClick={onReturn} className="flex-1">
               <RotateCcw className="h-4 w-4" /> Return

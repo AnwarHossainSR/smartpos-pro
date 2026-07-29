@@ -119,3 +119,9 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T72 | Translation catalogs (de/bn/ar/ja) | ✅ | | Full human translations, 121/121 keys parity with en.json verified by script |
 | T73 | Currency/locale-aware formatting | ✅ | | formatCurrency/Number/Date/DateTime read locale+tenant-currency stores; business store added; audited/fixed 3 raw `$` spots + 8 raw toLocaleDateString/String spots app-wide |
 | T74 | QA pass | ✅ | | lint 0 errors (fixed 3 pre-existing react-hooks/set-state-in-effect issues), build clean, 32/32 unit tests, Playwright visual smoke test across all 6 palettes × light/dark × en/ar/bn/ja on login/register/landing |
+
+## Phase 6 — Printable documents
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T75 | Invoice & cash-register payment-slip PDFs | ✅ | | barryvdh/laravel-dompdf; `pdf.invoice`/`pdf.cash-slip` Blade templates; `GET sales/{sale}/invoice`, `GET cash-register-sessions/{session}/slip` (`?download=1`); wired into POS receipt, sales list, cash-register page. Also fixed the cash-register frontend, which was calling endpoints/fields that didn't match the backend at all (`opening_balance` vs `opening_cash`, wrong close/movement URLs) — added the missing `GET cash-registers/{id}/current-session` endpoint the frontend already expected. Verified end-to-end with Playwright against the running app (8 new/updated backend feature tests, all green). |

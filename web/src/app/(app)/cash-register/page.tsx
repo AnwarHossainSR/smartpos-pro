@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { FileText } from "lucide-react";
+import { api, apiBlob, ApiError } from "@/lib/api";
+import { formatCurrency, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +24,11 @@ interface Register {
 interface Session {
   id: number;
   status: "open" | "closed";
-  opening_balance: number;
-  expected_balance: number | null;
-  actual_balance: number | null;
+  opening_cash: number;
+  cash_in: number;
+  cash_out: number;
+  expected_cash: number;
+  actual_cash: number | null;
   difference: number | null;
   opened_at: string;
   closed_at: string | null;
@@ -55,24 +58,45 @@ export default function CashRegisterPage() {
   });
 
   const session = sessionData?.data;
+  const [lastClosed, setLastClosed] = useState<Session | null>(null);
+  const [loadingSlip, setLoadingSlip] = useState(false);
 
   const openMutation = useMutation({
-    mutationFn: () => api(`/cash-registers/${register?.id}/open`, { method: "POST", body: { opening_balance: parseFloat(openingAmount) } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Register opened"); },
+    mutationFn: () => api(`/cash-registers/${register?.id}/open`, { method: "POST", body: { opening_cash: parseFloat(openingAmount) } }),
+    onSuccess: () => { setLastClosed(null); qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Register opened"); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const closeMutation = useMutation({
-    mutationFn: () => api(`/cash-registers/${register?.id}/sessions/${session?.id}/close`, { method: "POST", body: { actual_balance: parseFloat(closeAmount) } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Register closed"); setShowClose(false); },
+    mutationFn: () => api<{ data: Session }>(`/cash-register-sessions/${session?.id}/close`, { method: "POST", body: { actual_cash: parseFloat(closeAmount) } }),
+    onSuccess: ({ data }) => {
+      setLastClosed(data);
+      qc.invalidateQueries({ queryKey: ["cash-session"] });
+      toast("Register closed");
+      setShowClose(false);
+    },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const movementMutation = useMutation({
-    mutationFn: () => api(`/cash-registers/${register?.id}/sessions/${session?.id}/movements`, { method: "POST", body: { type: movementType, amount: parseFloat(movementAmount), note: movementNote } }),
+    mutationFn: () => api(`/cash-register-sessions/${session?.id}/movement`, { method: "POST", body: { type: movementType, amount: parseFloat(movementAmount), reason: movementNote } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Movement recorded"); setMovementAmount("0"); setMovementNote(""); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
+
+  const slipSessionId = session?.id ?? lastClosed?.id;
+
+  const viewSlip = async () => {
+    if (!slipSessionId) return;
+    setLoadingSlip(true);
+    try {
+      openPdfBlob(await apiBlob(`/cash-register-sessions/${slipSessionId}/slip`));
+    } catch {
+      toast("Could not load slip", "error");
+    } finally {
+      setLoadingSlip(false);
+    }
+  };
 
   if (!register) {
     return <div className="py-12 text-center text-[var(--muted)]">No cash register configured for your branch.</div>;
@@ -82,10 +106,34 @@ export default function CashRegisterPage() {
     <div className="max-w-2xl space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Cash Register</h1>
-        {session && <Badge tone={session.status === "open" ? "success" : "default"} className="text-sm px-3 py-1">{session.status}</Badge>}
+        <div className="flex items-center gap-2">
+          {slipSessionId && (
+            <Button variant="outline" size="sm" onClick={viewSlip} disabled={loadingSlip}>
+              <FileText className="h-3.5 w-3.5" /> {loadingSlip ? "Loading…" : "Print slip"}
+            </Button>
+          )}
+          {session && <Badge tone={session.status === "open" ? "success" : "default"} className="text-sm px-3 py-1">{session.status}</Badge>}
+        </div>
       </div>
 
-      {!session || session.status === "closed" ? (
+      {!session && lastClosed && (
+        <Card>
+          <CardHeader><CardTitle>Last closed session</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-[var(--muted)]">Actual counted</p><p className="text-xl font-bold">{formatCurrency(lastClosed.actual_cash ?? 0)}</p></div>
+              <div>
+                <p className="text-xs text-[var(--muted)]">Difference</p>
+                <p className={`text-xl font-bold ${(lastClosed.difference ?? 0) < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>
+                  {formatCurrency(lastClosed.difference ?? 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!session ? (
         <Card>
           <CardHeader><CardTitle>Open register</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -96,8 +144,8 @@ export default function CashRegisterPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4">
-            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Opening balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.opening_balance)}</p></CardContent></Card>
-            {session.expected_balance != null && <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Expected balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.expected_balance)}</p></CardContent></Card>}
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Opening balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.opening_cash)}</p></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Expected balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.expected_cash)}</p></CardContent></Card>
           </div>
 
           <Card>

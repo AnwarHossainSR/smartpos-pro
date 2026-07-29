@@ -37,6 +37,11 @@ class CashRegisterSession extends Model
         return $this->belongsTo(CashRegister::class, 'cash_register_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(CashRegisterTransaction::class);

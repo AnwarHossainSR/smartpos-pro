@@ -39,6 +39,13 @@ export function formatDateTime(value: string | number | Date) {
   return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+/** Opens a fetched PDF blob in a new tab — the browser's built-in viewer handles print/save. */
+export function openPdfBlob(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Client-side CSV export — no backend endpoint required for a plain list dump. */
 export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   if (rows.length === 0) return;

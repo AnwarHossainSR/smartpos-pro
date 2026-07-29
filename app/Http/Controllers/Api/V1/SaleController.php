@@ -56,4 +56,13 @@ class SaleController extends Controller
     {
         return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier'));
     }
+
+    /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */
+    public function invoice(Request $request, Sale $sale)
+    {
+        $pdf = $this->sales->invoicePdf($sale);
+        $filename = "{$sale->invoice_number}.pdf";
+
+        return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
+    }
 }

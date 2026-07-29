@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, Printer } from "lucide-react";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, FileText } from "lucide-react";
+import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,19 @@ interface SaleResult {
 
 /* ---- receipt modal ---- */
 function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: () => void }) {
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+
+  const viewInvoice = async () => {
+    setLoadingInvoice(true);
+    try {
+      openPdfBlob(await apiBlob(`/sales/${sale.id}/invoice`));
+    } catch {
+      toast("Could not load invoice", "error");
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
+
   return (
     <Dialog open title="Receipt" onClose={onClose}>
       <div className="space-y-3 text-sm">
@@ -102,8 +115,8 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           )}
         </div>
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" /> Print
+          <Button variant="outline" className="flex-1" onClick={viewInvoice} disabled={loadingInvoice}>
+            <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
           </Button>
           <Button className="flex-1" onClick={onClose}>New sale</Button>
         </div>

@@ -176,3 +176,17 @@ Full plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 - **Scope:** `npm run lint` + `npm run build` clean; smoke-check each locale (incl. RTL +
   dark mode); update `docs/PROGRESS.md`/`docs/API.md` as needed.
 - **Done when:** lint/build clean; docs updated.
+
+## Phase 6 — Printable documents  (`api` + `web`)
+
+### T75 · Invoice & cash-register payment-slip PDFs
+- **Scope:** `barryvdh/laravel-dompdf`; Blade templates for a sale invoice and a cash-register
+  session slip; `GET sales/{sale}/invoice` and `GET cash-register-sessions/{session}/slip`
+  (`?download=1` forces attachment); wired into the POS receipt modal, the sales list invoice
+  view, and the cash-register page. Also fixes a pre-existing bug where the cash-register
+  frontend called endpoints/fields (`opening_balance`, `.../sessions/{id}/close`, …) that didn't
+  match the backend contract (`opening_cash`, `/cash-register-sessions/{id}/close`, …), and adds
+  the missing `GET cash-registers/{cashRegister}/current-session` endpoint the frontend already
+  expected.
+- **Done when:** invoice/slip PDFs render and download from all three surfaces; cash register
+  open/movement/close flow works end-to-end against real endpoints.
