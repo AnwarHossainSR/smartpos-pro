@@ -6,12 +6,15 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Loyalty\LoyaltyService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as PdfDocument;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Orchestrates POS checkout. The entire sale — header, line items, stock
@@ -21,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  */
 class SaleService
 {
-    public function __construct(protected StockLedgerService $ledger) {}
+    public function __construct(protected StockLedgerService $ledger, protected AuditLogService $audit) {}
 
     /**
      * @param  array{
@@ -37,12 +40,27 @@ class SaleService
             $status = $payload['status'] ?? 'completed';
             $affectsStock = $status === 'completed';
 
-            $lines = $this->buildLines($payload['items']);
+            [$lines, $overridden] = $this->buildLines($payload['items'], $cashier);
 
             $subtotal = array_sum(array_column($lines, 'line_total'));
             $taxTotal = array_sum(array_column($lines, 'tax_amount'));
             $discount = round((float) ($payload['discount_amount'] ?? 0), 2);
             $shipping = round((float) ($payload['shipping_amount'] ?? 0), 2);
+
+            if ($discount > 0 && ! $cashier->hasPermission('pos.discount')) {
+                throw new AuthorizationException('Missing required permission: pos.discount.');
+            }
+
+            if ($discount > round($subtotal, 2)) {
+                throw ValidationException::withMessages([
+                    'discount_amount' => ['The discount amount may not exceed the sale subtotal.'],
+                ]);
+            }
+
+            if ($discount > 0) {
+                $overridden = true;
+            }
+
             $total = round($subtotal + $taxTotal + $shipping - $discount, 2);
 
             $payments = $payload['payments'] ?? [];
@@ -107,6 +125,13 @@ class SaleService
 
             $this->awardLoyalty($sale, $cashier, $affectsStock);
 
+            if ($overridden) {
+                $this->audit->log('sale.price_override', $sale, null, [
+                    'discount_amount' => $discount,
+                    'lines' => array_column($lines, 'attributes'),
+                ], $cashier);
+            }
+
             return $sale->load('items', 'payments', 'customer');
         });
     }
@@ -153,14 +178,15 @@ class SaleService
      * price/cost/tax so later product edits never mutate historical invoices.
      *
      * @param  array<int, array<string, mixed>>  $items
-     * @return array<int, array{attributes: array<string, mixed>, track_inventory: bool, line_total: float, tax_amount: float}>
+     * @return array{0: array<int, array{attributes: array<string, mixed>, track_inventory: bool, line_total: float, tax_amount: float}>, 1: bool}
      */
-    protected function buildLines(array $items): array
+    protected function buildLines(array $items, User $cashier): array
     {
         $productIds = collect($items)->pluck('product_id')->unique();
         $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
         $lines = [];
+        $overridden = false;
 
         foreach ($items as $item) {
             /** @var Product $product */
@@ -171,8 +197,27 @@ class SaleService
             }
 
             $quantity = round((float) $item['quantity'], 4);
-            $unitPrice = round((float) ($item['unit_price'] ?? $product->selling_price), 2);
+            $catalogPrice = round((float) $product->selling_price, 2);
+            $requestedPrice = array_key_exists('unit_price', $item) && $item['unit_price'] !== null
+                ? round((float) $item['unit_price'], 2)
+                : null;
             $lineDiscount = round((float) ($item['discount_amount'] ?? 0), 2);
+
+            if ($requestedPrice !== null && $requestedPrice !== $catalogPrice) {
+                if (! $cashier->hasPermission('pos.price_override')) {
+                    throw new AuthorizationException('Missing required permission: pos.price_override.');
+                }
+                $overridden = true;
+            }
+
+            if ($lineDiscount > 0) {
+                if (! $cashier->hasPermission('pos.discount')) {
+                    throw new AuthorizationException('Missing required permission: pos.discount.');
+                }
+                $overridden = true;
+            }
+
+            $unitPrice = $requestedPrice ?? $catalogPrice;
             $taxable = max(0, ($unitPrice * $quantity) - $lineDiscount);
             $taxAmount = $product->tax_inclusive
                 ? round($taxable - ($taxable / (1 + ((float) $product->tax_rate / 100))), 2)
@@ -198,6 +243,6 @@ class SaleService
             ];
         }
 
-        return $lines;
+        return [$lines, $overridden];
     }
 }

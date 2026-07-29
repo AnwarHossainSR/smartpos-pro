@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 0 | 0 | 13 | 13 |
+| 7 · Security & money integrity | 1 | 0 | 12 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **75** | **0** | **24** | **99** |
+| **Total** | **76** | **0** | **23** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -137,7 +137,7 @@ T87 → T88.
 
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
-| T76 | Server-side pricing + permission-gated overrides | ⬜ | | **Critical** — `SaleService` accepts client `unit_price`; uncapped discount |
+| T76 | Server-side pricing + permission-gated overrides | ✅ | | `SaleService` prices every line from the catalog; client `unit_price`/`discount_amount` only honoured with `pos.price_override`/`pos.discount` (403 otherwise); sale-level discount capped at subtotal (422); honoured overrides write an `audit_logs` row via new `AuditLogService`; POS cart shows price/discount inputs only when permitted |
 | T77 | Coupon enforcement inside the sale transaction | ⬜ | | **Critical** — `used_count` never incremented; limits unenforced at checkout |
 | T78 | Audit trail — writer, API, UI | ⬜ | | **High** — `audit_logs` table has zero writes |
 | T79 | Impersonation hardening | ⬜ | | **High** — 24h full-owner token, no reason, no log, no revoke |

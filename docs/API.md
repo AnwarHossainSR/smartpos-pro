@@ -102,6 +102,13 @@ Requires `inventory.update`. Ledger-backed manual adjustment.
 Requires `pos.create`. **Honours the `Idempotency-Key` header.** Creates the sale,
 decrements stock through the ledger, and records payments — all in one transaction.
 
+Every line is priced from the product's catalog `selling_price` on the server; a
+client-supplied `unit_price` (that differs from the catalog price) or a `discount_amount`
+(line- or sale-level) is only honoured when the cashier holds `pos.price_override` /
+`pos.discount` respectively — otherwise the request `403`s and no sale is created. An
+honoured override writes an `audit_logs` row (`sale.price_override`). Sale-level
+`discount_amount` is also capped at the sale subtotal (`422` if it isn't).
+
 ```json
 {
   "branch_id": 1,
@@ -118,7 +125,9 @@ decrements stock through the ledger, and records payments — all in one transac
 }
 ```
 `201` → the created sale (`invoice_number`, totals, items, payments, `payment_status`).
-`422` with an `error` object when a line has insufficient stock:
+`403` when `unit_price`/`discount_amount` is overridden without the required permission.
+`422` with a `discount_amount` validation error when the sale-level discount exceeds the
+subtotal, or with an `error` object when a line has insufficient stock:
 ```json
 { "message": "One or more items do not have enough stock.",
   "error": { "product_id": 1, "warehouse_id": 1, "available": 2, "requested": 5 } }
