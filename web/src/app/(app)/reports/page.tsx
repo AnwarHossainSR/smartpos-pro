@@ -136,10 +136,10 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
         )}
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-right">Qty sold</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">Profit</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-end">Qty sold</TableHead><TableHead className="text-end">Revenue</TableHead><TableHead className="text-end">Profit</TableHead></TableRow></TableHeader>
             <TableBody>
               {items.items?.map((item, i) => (
-                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell><TableCell className="text-right text-green-600">{formatCurrency(item.profit)}</TableCell></TableRow>
+                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="text-end">{item.quantity}</TableCell><TableCell className="text-end">{formatCurrency(item.revenue)}</TableCell><TableCell className="text-end text-green-600">{formatCurrency(item.profit)}</TableCell></TableRow>
               ))}
             </TableBody>
           </Table>
@@ -176,10 +176,10 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
         <Card><CardHeader><CardTitle>Total inventory value</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{formatCurrency(iv.total_value ?? 0)}</p></CardContent></Card>
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Avg cost</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead className="text-end">Qty</TableHead><TableHead className="text-end">Avg cost</TableHead><TableHead className="text-end">Value</TableHead></TableRow></TableHeader>
             <TableBody>
               {iv.items?.map((item, i) => (
-                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="font-mono text-xs">{item.sku ?? "—"}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.average_cost)}</TableCell><TableCell className="text-right font-medium">{formatCurrency(item.value)}</TableCell></TableRow>
+                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="font-mono text-xs">{item.sku ?? "—"}</TableCell><TableCell className="text-end">{item.quantity}</TableCell><TableCell className="text-end">{formatCurrency(item.average_cost)}</TableCell><TableCell className="text-end font-medium">{formatCurrency(item.value)}</TableCell></TableRow>
               ))}
             </TableBody>
           </Table>
@@ -193,11 +193,11 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
     return (
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
-          <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead>Warehouse</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Min level</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead>Warehouse</TableHead><TableHead className="text-end">Qty</TableHead><TableHead className="text-end">Min level</TableHead></TableRow></TableHeader>
           <TableBody>
             {ls.items?.length === 0 ? <TableRow><TableCell colSpan={5} className="py-8 text-center text-[var(--muted)]">No low stock items.</TableCell></TableRow>
               : ls.items?.map((item, i) => (
-                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="font-mono text-xs">{item.sku ?? "—"}</TableCell><TableCell>{item.warehouse}</TableCell><TableCell className="text-right text-[var(--color-danger)]">{item.quantity}</TableCell><TableCell className="text-right">{item.min_stock_level}</TableCell></TableRow>
+                <TableRow key={i}><TableCell className="font-medium">{item.name}</TableCell><TableCell className="font-mono text-xs">{item.sku ?? "—"}</TableCell><TableCell>{item.warehouse}</TableCell><TableCell className="text-end text-[var(--color-danger)]">{item.quantity}</TableCell><TableCell className="text-end">{item.min_stock_level}</TableCell></TableRow>
               ))}
           </TableBody>
         </Table>
@@ -210,11 +210,11 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
     return (
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
-          <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-right">Balance due</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-end">Balance due</TableHead></TableRow></TableHeader>
           <TableBody>
             {d.customers?.length === 0 ? <TableRow><TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">No outstanding dues.</TableCell></TableRow>
               : d.customers?.map((c, i) => (
-                <TableRow key={i}><TableCell className="font-medium">{c.name}</TableCell><TableCell>{c.phone ?? "—"}</TableCell><TableCell className="text-right font-medium text-amber-600">{formatCurrency(c.balance)}</TableCell></TableRow>
+                <TableRow key={i}><TableCell className="font-medium">{c.name}</TableCell><TableCell>{c.phone ?? "—"}</TableCell><TableCell className="text-end font-medium text-amber-600">{formatCurrency(c.balance)}</TableCell></TableRow>
               ))}
           </TableBody>
         </Table>

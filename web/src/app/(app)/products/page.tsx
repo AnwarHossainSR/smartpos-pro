@@ -2,23 +2,25 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, exportToCsv } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { useTranslation } from "@/i18n/provider";
 
 /* ---- types ---- */
 interface Category { id: number; name: string; }
@@ -68,6 +70,7 @@ function ProductForm({
   isEdit: boolean;
 }) {
   const qc = useQueryClient();
+  const t = useTranslation();
   const { data: cats } = useQuery({
     queryKey: ["categories-all"],
     queryFn: () => api<{ data: Category[] }>("/categories?per_page=200"),
@@ -107,60 +110,60 @@ function ProductForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast(isEdit ? "Product updated" : "Product created");
+      toast(isEdit ? t("products.updateSuccess") : t("products.createSuccess"));
       onSuccess();
     },
     onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Something went wrong", "error");
+      toast(e instanceof ApiError ? e.message : t("products.somethingWentWrong"), "error");
     },
   });
 
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
-        <Label>Name *</Label>
-        <Input {...register("name")} placeholder="Product name" />
+        <Label>{t("products.form.name")} *</Label>
+        <Input {...register("name")} placeholder={t("products.form.namePlaceholder")} />
         {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>SKU / Code</Label>
-          <Input {...register("sku")} placeholder="Auto-generated" />
+          <Label>{t("products.form.sku")}</Label>
+          <Input {...register("sku")} placeholder={t("products.form.skuPlaceholder")} />
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("products.form.status")}</Label>
           <Select {...register("is_active", { setValueAs: (v: string) => v === "true" })}>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
+            <option value="true">{t("products.form.active")}</option>
+            <option value="false">{t("products.form.inactive")}</option>
           </Select>
         </div>
       </div>
 
       <div>
-        <Label>Description</Label>
-        <Textarea {...register("description")} placeholder="Optional description" />
+        <Label>{t("products.form.description")}</Label>
+        <Textarea {...register("description")} placeholder={t("products.form.descriptionPlaceholder")} />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label>Category</Label>
+          <Label>{t("products.form.category")}</Label>
           <Select {...register("category_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
-          <Label>Brand</Label>
+          <Label>{t("products.form.brand")}</Label>
           <Select {...register("brand_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {brands?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </Select>
         </div>
         <div>
-          <Label>Unit</Label>
+          <Label>{t("products.form.unit")}</Label>
           <Select {...register("unit_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {units?.data?.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
@@ -168,12 +171,12 @@ function ProductForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Cost price *</Label>
+          <Label>{t("products.form.costPrice")} *</Label>
           <Input type="number" step="0.01" min="0" {...register("purchase_price", { valueAsNumber: true })} />
           {errors.purchase_price && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.purchase_price.message}</p>}
         </div>
         <div>
-          <Label>Sell price *</Label>
+          <Label>{t("products.form.sellPrice")} *</Label>
           <Input type="number" step="0.01" min="0" {...register("selling_price", { valueAsNumber: true })} />
           {errors.selling_price && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.selling_price.message}</p>}
         </div>
@@ -181,18 +184,18 @@ function ProductForm({
 
       {!isEdit && (
         <div className="rounded-[var(--radius)] border border-dashed border-[var(--border)] p-3 space-y-3">
-          <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">Opening stock (optional)</p>
+          <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">{t("products.form.openingStock")}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Quantity</Label>
+              <Label>{t("products.form.quantity")}</Label>
               <Input type="number" step="0.001" min="0" {...register("opening_stock_qty", { valueAsNumber: true })} placeholder="0" />
             </div>
             <div>
-              <Label>Warehouse</Label>
+              <Label>{t("products.form.warehouse")}</Label>
               <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-                <option value="">— Select —</option>
+                <option value="">{t("products.form.selectWarehouse")}</option>
                 {warehouses?.data?.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}{w.is_default ? " (default)" : ""}</option>
+                  <option key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</option>
                 ))}
               </Select>
             </div>
@@ -202,7 +205,7 @@ function ProductForm({
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Saving…" : isEdit ? "Update product" : "Create product"}
+          {mutation.isPending ? t("products.form.saving") : isEdit ? t("products.form.update") : t("products.form.create")}
         </Button>
       </div>
     </form>
@@ -213,11 +216,13 @@ function ProductForm({
 export default function ProductsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
+  const t = useTranslation();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
   const { data, isLoading } = useQuery<Paginated<Product>>({
     queryKey: ["products", search, page],
@@ -231,11 +236,11 @@ export default function ProductsPage() {
     mutationFn: (id: number) => api(`/products/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast("Product deleted");
+      toast(t("products.deleteSuccess"));
       setDeleting(null);
     },
     onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Delete failed", "error");
+      toast(e instanceof ApiError ? e.message : t("products.deleteFailed"), "error");
     },
   });
 
@@ -245,116 +250,117 @@ export default function ProductsPage() {
 
   const lastPage = data?.meta?.last_page ?? 1;
 
+  const columns: DataTableColumn<Product>[] = [
+    { key: "name", header: t("products.name"), render: (p) => <span className="font-medium">{p.name}</span> },
+    {
+      key: "sku",
+      header: t("products.sku"),
+      render: (p) => <span className="font-mono text-xs text-[var(--muted)]">{p.sku ?? "—"}</span>,
+    },
+    {
+      key: "category",
+      header: t("products.category"),
+      render: (p) => p.category?.name ?? <span className="text-[var(--muted)]">—</span>,
+    },
+    { key: "cost", header: t("products.cost"), align: "right", render: (p) => formatCurrency(p.purchase_price) },
+    {
+      key: "price",
+      header: t("products.price"),
+      align: "right",
+      className: "font-medium",
+      render: (p) => formatCurrency(p.selling_price),
+    },
+    {
+      key: "stock",
+      header: t("products.stock"),
+      align: "right",
+      render: (p) => (
+        <span className={(p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : ""}>{p.stock ?? 0}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: t("products.status"),
+      render: (p) => (
+        <Badge tone={p.is_active ? "success" : "default"}>
+          {p.is_active ? t("common.active") : t("common.inactive")}
+        </Badge>
+      ),
+    },
+  ];
+
+  function handleExport() {
+    const rows = (data?.data ?? []).map((p) => ({
+      name: p.name,
+      sku: p.sku ?? "",
+      category: p.category?.name ?? "",
+      brand: p.brand?.name ?? "",
+      cost_price: p.purchase_price,
+      selling_price: p.selling_price,
+      stock: p.stock ?? 0,
+      status: p.is_active ? "active" : "inactive",
+    }));
+    exportToCsv("products.csv", rows);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Products</h1>
-        {can("products.create") && (
-          <Button onClick={openCreate} size="sm">
-            <Plus className="h-4 w-4" />
-            Add product
-          </Button>
-        )}
-      </div>
+      <h1 className="text-xl font-semibold">{t("products.title")}</h1>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
-        <Input
-          className="pl-9"
-          placeholder="Search products…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-      </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder={t("products.searchPlaceholder")}
+        exportLabel={t("common.export")}
+        onExport={handleExport}
+        addLabel={can("products.create") ? t("products.addProduct") : undefined}
+        onAdd={can("products.create") ? openCreate : undefined}
+      />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-20" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 8 }).map((__, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center text-[var(--muted)]">
-                  {search ? "No products match your search." : "No products yet. Add your first product."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--muted)]">{p.sku ?? "—"}</TableCell>
-                  <TableCell>{p.category?.name ?? <span className="text-[var(--muted)]">—</span>}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.purchase_price)}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(p.selling_price)}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={(p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : ""}>
-                      {p.stock ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge tone={p.is_active ? "success" : "default"}>
-                      {p.is_active ? "active" : "inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {can("products.update") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {can("products.delete") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          rowKey={(p) => p.id}
+          loading={isLoading}
+          selectable
+          selectedKeys={selected}
+          onSelectionChange={setSelected}
+          emptyMessage={search ? t("products.emptySearch") : t("products.emptyNoProducts")}
+          actions={(p) => (
+            <>
+              {can("products.update") && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {can("products.delete") && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </>
+          )}
+        />
 
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">
-              Page {data.meta.current_page} of {data.meta.last_page} · {data.meta.total} products
-            </p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            onPageChange={setPage}
+            label={t("products.paginationSummary", {
+              current: data.meta.current_page,
+              last: data.meta.last_page,
+              total: data.meta.total,
+            })}
+          />
         )}
       </div>
 
       <Drawer
         open={drawerOpen}
         onClose={closeDrawer}
-        title={editing ? `Edit: ${editing.name}` : "Add product"}
+        title={editing ? t("products.editProductTitle", { name: editing.name }) : t("products.addProduct")}
       >
         <ProductForm
           key={editing?.id ?? "new"}
@@ -381,9 +387,9 @@ export default function ProductsPage() {
       <Dialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title="Delete product"
-        description={`Are you sure you want to delete "${deleting?.name}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t("products.deleteTitle")}
+        description={t("products.deleteConfirm", { name: deleting?.name ?? "" })}
+        confirmLabel={t("common.delete")}
         confirmVariant="danger"
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
         loading={deleteMutation.isPending}

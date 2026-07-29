@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -106,10 +107,10 @@ export default function CustomersPage() {
         <h1 className="text-xl font-semibold">Customers</h1>
         {can("customers.create") && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />Add customer</Button>}
       </div>
-      <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="pl-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Group</TableHead><TableHead className="text-right">Balance</TableHead><TableHead className="text-right">Points</TableHead><TableHead>Status</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Group</TableHead><TableHead className="text-end">Balance</TableHead><TableHead className="text-end">Points</TableHead><TableHead>Status</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
               : data?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">No customers yet.</TableCell></TableRow>
@@ -118,8 +119,8 @@ export default function CustomersPage() {
                   <TableCell className="font-medium">{c.name}{c.email && <span className="block text-xs text-[var(--muted)]">{c.email}</span>}</TableCell>
                   <TableCell>{c.phone ?? "—"}</TableCell>
                   <TableCell>{c.customer_group ? <Badge>{c.customer_group}</Badge> : "—"}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(c.balance)}</TableCell>
-                  <TableCell className="text-right">{c.loyalty_points}</TableCell>
+                  <TableCell className="text-end">{formatCurrency(c.balance)}</TableCell>
+                  <TableCell className="text-end">{c.loyalty_points}</TableCell>
                   <TableCell><Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -131,14 +132,13 @@ export default function CustomersPage() {
               ))}
           </TableBody>
         </Table>
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={data.meta.last_page}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+          />
         )}
       </div>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : "Add customer"}>

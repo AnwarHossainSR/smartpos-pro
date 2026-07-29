@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, AlertTriangle } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -88,7 +89,7 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
               <button
                 key={p.id}
                 type="button"
-                className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--surface-2)]"
+                className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
                 onClick={() => { setValue("product_id", p.id); setProductSearch(p.name); }}
               >
                 {p.name} {p.sku && <span className="text-[var(--muted)]">· {p.sku}</span>}
@@ -177,9 +178,9 @@ export default function InventoryPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
         <Input
-          className="pl-9"
+          className="ps-9"
           placeholder="Search products…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -193,10 +194,10 @@ export default function InventoryPage() {
               <TableHead>Product</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Warehouse</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Available</TableHead>
-              <TableHead className="text-right">Avg cost</TableHead>
-              <TableHead className="text-right">Value</TableHead>
+              <TableHead className="text-end">Qty</TableHead>
+              <TableHead className="text-end">Available</TableHead>
+              <TableHead className="text-end">Avg cost</TableHead>
+              <TableHead className="text-end">Value</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -223,10 +224,10 @@ export default function InventoryPage() {
                     <TableCell className="font-medium">{b.product.name}</TableCell>
                     <TableCell className="font-mono text-xs text-[var(--muted)]">{b.product.sku ?? "—"}</TableCell>
                     <TableCell>{b.warehouse.name}</TableCell>
-                    <TableCell className="text-right">{b.quantity}</TableCell>
-                    <TableCell className="text-right">{b.available_quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(b.average_cost)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(b.quantity * b.average_cost)}</TableCell>
+                    <TableCell className="text-end">{b.quantity}</TableCell>
+                    <TableCell className="text-end">{b.available_quantity}</TableCell>
+                    <TableCell className="text-end">{formatCurrency(b.average_cost)}</TableCell>
+                    <TableCell className="text-end">{formatCurrency(b.quantity * b.average_cost)}</TableCell>
                     <TableCell>
                       <Badge tone={isLow ? "danger" : "success"}>
                         {isLow ? "Low" : "OK"}
@@ -238,14 +239,13 @@ export default function InventoryPage() {
             )}
           </TableBody>
         </Table>
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-              <Button variant="outline" size="sm" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}>Next</Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={data.meta.last_page}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+          />
         )}
       </div>
 

@@ -5,6 +5,8 @@ namespace App\Services\Accounting;
 use App\Models\CashRegister;
 use App\Models\CashRegisterSession;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as PdfDocument;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -69,6 +71,18 @@ class CashRegisterService
         ]);
 
         return $session->fresh();
+    }
+
+    /** Renders a session (open or closed) as a printable/downloadable cash slip PDF. */
+    public function sessionSlipPdf(CashRegisterSession $session): PdfDocument
+    {
+        $session->loadMissing(['transactions', 'user', 'register.branch.business']);
+
+        return Pdf::loadView('pdf.cash-slip', [
+            'session' => $session,
+            'branch' => $session->register->branch,
+            'business' => $session->register->branch->business,
+        ]);
     }
 
     protected function assertOpen(CashRegisterSession $session): void

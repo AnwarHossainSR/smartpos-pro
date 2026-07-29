@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -110,7 +111,7 @@ export default function ExpensesPage() {
       </div>
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
-          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead className="text-end">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 6 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
               : data?.data?.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-[var(--muted)]">No expenses yet.</TableCell></TableRow>
@@ -120,20 +121,19 @@ export default function ExpensesPage() {
                   <TableCell>{e.category?.name ?? "—"}</TableCell>
                   <TableCell>{e.spent_at}</TableCell>
                   <TableCell className="capitalize">{e.payment_method.replace("_", " ")}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(e.amount)}</TableCell>
+                  <TableCell className="text-end font-medium">{formatCurrency(e.amount)}</TableCell>
                   <TableCell><Badge tone={payColor[e.status] ?? "default"}>{e.status}</Badge></TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={data.meta.last_page}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+          />
         )}
       </div>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add expense">

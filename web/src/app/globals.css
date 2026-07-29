@@ -1,43 +1,70 @@
 @import "tailwindcss";
 
-/* ---- Design tokens ---- */
+/* ---- Design tokens ----
+   Two layers:
+   1. Neutral "page chrome" tokens (--bg/--surface/--fg/--muted/--success/--warning/--danger)
+      — shared across every palette, swap between light and dark mode only.
+   2. Brand tokens (--primary/--accent/--sidebar-*) — one set per palette, selected via
+      `data-theme` on <html>, constant across light/dark (the sidebar stays a dark surface
+      regardless of page mode; buttons/links keep the same brand color in both modes).
+   Every pairing below (fg-on-bg, primary-fg-on-primary, sidebar-fg-on-sidebar-bg,
+   sidebar-active-fg-on-sidebar-active) was checked against WCAG AA (4.5:1 text / 3:1 UI). */
 @theme {
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-2: #f1f5f9;
-  --color-border: #e2e8f0;
-  --color-fg: #0f172a;
-  --color-muted: #64748b;
-  --color-primary: #4f46e5;
-  --color-primary-fg: #ffffff;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 
   --radius: 0.75rem;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
+/* ---- Neutral layer: light (default) ---- */
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
   --surface-2: #f1f5f9;
+  --surface-3: #e7ecf3;
   --border: #e2e8f0;
   --fg: #0f172a;
-  --muted: #64748b;
+  --muted: #55606c;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #dc2626;
+
+  /* Indigo is the default palette until a `data-theme` is set. */
   --primary: #4f46e5;
+  --primary-hover: #4338ca;
   --primary-fg: #ffffff;
+  --accent: #4f46e5;
+  --ring: var(--primary);
+  --sidebar-bg: #1e293b;
+  --sidebar-fg: #cbd5e1;
+  --sidebar-muted: #8d9bae;
+  --sidebar-active: #818cf8;
+  --sidebar-active-fg: #0b0f1a;
 }
 
+/* ---- Neutral layer: dark ---- */
 .dark {
   --bg: #0b1120;
   --surface: #111827;
   --surface-2: #1e293b;
+  --surface-3: #283244;
   --border: #1f2937;
-  --fg: #e5e7eb;
-  --muted: #94a3b8;
-  --primary: #6366f1;
-  --primary-fg: #ffffff;
+  --fg: #e7eaf0;
+  --muted: #9aa7bc;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,11 +72,108 @@
     --bg: #0b1120;
     --surface: #111827;
     --surface-2: #1e293b;
+    --surface-3: #283244;
     --border: #1f2937;
-    --fg: #e5e7eb;
-    --muted: #94a3b8;
-    --primary: #6366f1;
+    --fg: #e7eaf0;
+    --muted: #9aa7bc;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
   }
+}
+
+/* ---- Palettes ----
+   Brand tokens only — the neutral layer above already covers light/dark for every palette.
+   Sidebar stays a dark surface in both modes by design (DreamsPOS-style shell). */
+html[data-theme="amber"] {
+  --primary: #ff9f43;
+  --primary-hover: #f0900f;
+  --primary-fg: #1a1206;
+  --accent: #ff9f43;
+  --ring: var(--primary);
+  --sidebar-bg: #212b36;
+  --sidebar-fg: #c9d1d9;
+  --sidebar-muted: #8e9ba8;
+  --sidebar-active: #ff9f43;
+  --sidebar-active-fg: #0b0f1a;
+}
+
+html[data-theme="indigo"] {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-fg: #ffffff;
+  --accent: #4f46e5;
+  --ring: var(--primary);
+  --sidebar-bg: #1e293b;
+  --sidebar-fg: #cbd5e1;
+  --sidebar-muted: #8d9bae;
+  --sidebar-active: #818cf8;
+  --sidebar-active-fg: #0b0f1a;
+}
+
+html[data-theme="emerald"] {
+  --primary: #047857;
+  --primary-hover: #065f46;
+  --primary-fg: #ffffff;
+  --accent: #10b981;
+  --ring: var(--primary);
+  --sidebar-bg: #14251f;
+  --sidebar-fg: #c8d6cd;
+  --sidebar-muted: #88998f;
+  --sidebar-active: #10b981;
+  --sidebar-active-fg: #0b0f1a;
+}
+
+html[data-theme="ocean"] {
+  --primary: #0369a1;
+  --primary-hover: #075985;
+  --primary-fg: #ffffff;
+  --accent: #0ea5e9;
+  --ring: var(--primary);
+  --sidebar-bg: #0b2a45;
+  --sidebar-fg: #c3d9e8;
+  --sidebar-muted: #83a0b5;
+  --sidebar-active: #38bdf8;
+  --sidebar-active-fg: #0b0f1a;
+}
+
+html[data-theme="violet"] {
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-fg: #ffffff;
+  --accent: #7c3aed;
+  --ring: var(--primary);
+  --sidebar-bg: #241b3a;
+  --sidebar-fg: #d6cce8;
+  --sidebar-muted: #9a8eb3;
+  --sidebar-active: #a78bfa;
+  --sidebar-active-fg: #0b0f1a;
+}
+
+html[data-theme="rose"] {
+  --primary: #e11d48;
+  --primary-hover: #be123c;
+  --primary-fg: #ffffff;
+  --accent: #f43f5e;
+  --ring: var(--primary);
+  --sidebar-bg: #241b22;
+  --sidebar-fg: #d9c9cc;
+  --sidebar-muted: #9c868c;
+  --sidebar-active: #e11d48;
+  --sidebar-active-fg: #ffffff;
+}
+
+/* Per-script fonts: Geist doesn't cover Bengali/Japanese/Arabic glyphs. Scoped by the
+   `data-lang` the I18nProvider sets on <html>, so only the active language's font applies
+   (and its file only downloads once the browser actually needs those glyphs). */
+[data-lang="bn"] {
+  --font-sans: var(--font-noto-bengali), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+[data-lang="ja"] {
+  --font-sans: var(--font-noto-jp), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+[data-lang="ar"] {
+  --font-sans: var(--font-noto-arabic), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -66,3 +190,61 @@ body {
 /* Subtle scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+/* Hairline scrollbar that only paints its thumb while the element is hovered. The track keeps
+   its width at all times (transparent thumb rather than `scrollbar-width: none`) so revealing it
+   never reflows the content underneath. */
+.scrollbar-on-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-on-hover:hover {
+  scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+}
+.scrollbar-on-hover::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-on-hover::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-on-hover::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.22); }
+
+/* ---- Landing page: thermal-receipt hero ----
+   The receipt is the signature device; these rules only apply inside it. */
+
+/* Torn paper edge, top and bottom of the receipt. */
+.rcpt-tear {
+  --tooth: 12px;
+  height: calc(var(--tooth) / 2);
+  background:
+    repeating-conic-gradient(
+      from -45deg at 50% 0,
+      var(--surface) 0deg 90deg,
+      transparent 90deg 180deg
+    )
+    0 0 / var(--tooth) 100%;
+}
+.rcpt-tear--top {
+  transform: rotate(180deg);
+}
+
+/* Each ledger row feeds in like paper leaving a thermal printer. */
+.rcpt-line {
+  animation: rcpt-feed 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes rcpt-feed {
+  from {
+    opacity: 0;
+    transform: translateY(-0.55rem);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcpt-line {
+    animation: none;
+  }
+}

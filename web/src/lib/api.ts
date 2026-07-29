@@ -58,6 +58,25 @@ export async function api<T = unknown>(
   return data as T;
 }
 
+/** Fetches a binary response (e.g. a generated PDF) with the same auth header as `api()`. */
+export async function apiBlob(path: string): Promise<Blob> {
+  const token = useAuth.getState().token;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (res.status === 401) {
+    useAuth.getState().logout();
+  }
+
+  if (!res.ok) {
+    throw new ApiError(res.status, `Request failed (${res.status})`);
+  }
+
+  return res.blob();
+}
+
 export interface Paginated<T> {
   data: T[];
   meta?: { current_page: number; last_page: number; total: number };

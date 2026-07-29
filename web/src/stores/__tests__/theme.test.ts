@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { useThemeStore } from "../theme";
 
 beforeEach(() => {
-  useThemeStore.setState({ theme: "system" });
+  useThemeStore.setState({ theme: "system", palette: "indigo" });
 });
 
 describe("useThemeStore", () => {
@@ -18,5 +18,14 @@ describe("useThemeStore", () => {
   it("can switch to light", () => {
     useThemeStore.getState().setTheme("light");
     expect(useThemeStore.getState().theme).toBe("light");
+  });
+
+  it("defaults to the indigo palette", () => {
+    expect(useThemeStore.getState().palette).toBe("indigo");
+  });
+
+  it("can switch palette", () => {
+    useThemeStore.getState().setPalette("emerald");
+    expect(useThemeStore.getState().palette).toBe("emerald");
   });
 });

@@ -130,6 +130,11 @@ Requires `sales.view`. `?search=&branch_id=&customer_id=&status=&payment_status=
 ### `GET /sales/{sale}`
 Requires `sales.view`. Returns the sale with items, payments, customer and cashier.
 
+### `GET /sales/{sale}/invoice`
+Requires `sales.view`. Renders the sale as a PDF invoice (`application/pdf`). Streamed inline
+by default so it opens in the browser's PDF viewer; add `?download=1` to force a
+`Content-Disposition: attachment` download instead.
+
 ## Errors
 
 Standard Laravel JSON errors: `401` unauthenticated, `403` missing tenant/permission,
@@ -231,9 +236,11 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | --- | --- | --- |
 | `GET /cash-registers` · `POST /cash-registers` | `accounting.*` | registers per branch |
 | `POST /cash-registers/{cashRegister}/open` | `accounting.create` | body `{ opening_cash }`; one open session per register |
+| `GET /cash-registers/{cashRegister}/current-session` | `accounting.view` | `{ data: session \| null }` — the register's open session, if any |
 | `POST /cash-register-sessions/{session}/movement` | `accounting.create` | body `{ type: in\|out, amount, reason }` |
 | `POST /cash-register-sessions/{session}/close` | `accounting.create` | body `{ actual_cash, note }`; computes `expected_cash` and `difference` |
 | `GET /cash-register-sessions/{session}` | `accounting.view` | session + transactions |
+| `GET /cash-register-sessions/{session}/slip` | `accounting.view` | PDF cash-drawer slip (`application/pdf`); streamed inline, `?download=1` to force download. Works for open sessions (X-report) and closed ones (Z-report). |
 
 ## Team — users, roles & permissions
 

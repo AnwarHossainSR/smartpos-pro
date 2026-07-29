@@ -54,6 +54,13 @@ class CashRegisterController extends Controller
         return new CashRegisterSessionResource($session);
     }
 
+    public function currentSession(CashRegister $cashRegister): JsonResponse
+    {
+        $session = $cashRegister->openSession();
+
+        return response()->json(['data' => $session ? new CashRegisterSessionResource($session) : null]);
+    }
+
     public function movement(Request $request, CashRegisterSession $session): CashRegisterSessionResource
     {
         $data = $request->validate([
@@ -82,5 +89,14 @@ class CashRegisterController extends Controller
     public function show(CashRegisterSession $session): CashRegisterSessionResource
     {
         return new CashRegisterSessionResource($session->load('transactions'));
+    }
+
+    /** Streams the cash register slip inline by default; `?download=1` forces a download. */
+    public function slip(Request $request, CashRegisterSession $session)
+    {
+        $pdf = $this->service->sessionSlipPdf($session);
+        $filename = "cash-slip-{$session->id}.pdf";
+
+        return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
     }
 }

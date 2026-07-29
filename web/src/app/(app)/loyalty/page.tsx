@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -121,7 +122,7 @@ export default function LoyaltyPage() {
       </div>
 
       {tab === "points" && (
-        <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="pl-9" placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+        <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
       )}
 
       {tab === "coupons" && (
@@ -135,8 +136,8 @@ export default function LoyaltyPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                     <TableCell>{c.type}</TableCell>
-                    <TableCell>{c.type === "percentage" ? `${c.value}%` : `$${c.value}`}</TableCell>
-                    <TableCell>{c.min_order_amount > 0 ? `$${c.min_order_amount}` : "—"}</TableCell>
+                    <TableCell>{c.type === "percentage" ? `${c.value}%` : formatCurrency(c.value)}</TableCell>
+                    <TableCell>{c.min_order_amount > 0 ? formatCurrency(c.min_order_amount) : "—"}</TableCell>
                     <TableCell>{c.used_count}{c.max_uses ? ` / ${c.max_uses}` : ""}</TableCell>
                     <TableCell>{c.valid_until ?? "—"}</TableCell>
                     <TableCell><Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
@@ -150,7 +151,7 @@ export default function LoyaltyPage() {
       {tab === "points" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-right">Loyalty points</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-end">Loyalty points</TableHead></TableRow></TableHeader>
             <TableBody>
               {customersLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 3 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
                 : customers?.data?.length === 0 ? <TableRow><TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">No customers found.</TableCell></TableRow>
@@ -158,7 +159,7 @@ export default function LoyaltyPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.phone ?? "—"}</TableCell>
-                    <TableCell className="text-right font-semibold">{c.loyalty_points} pts</TableCell>
+                    <TableCell className="text-end font-semibold">{c.loyalty_points} pts</TableCell>
                   </TableRow>
                 ))}
             </TableBody>

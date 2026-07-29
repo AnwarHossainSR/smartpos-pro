@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { Slot } from "@/components/ui/slot";
+import { cn } from "@/lib/utils";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 type Size = "sm" | "md" | "lg" | "icon";
@@ -9,7 +9,9 @@ const variants: Record<Variant, string> = {
   secondary: "bg-[var(--surface-2)] text-[var(--fg)] hover:bg-[var(--border)]",
   outline: "border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)]",
   ghost: "hover:bg-[var(--surface-2)] text-[var(--fg)]",
-  danger: "bg-[var(--color-danger)] text-white hover:opacity-90",
+  // Fixed red rather than the theme-reactive --danger token: --danger is tuned to read as
+  // *text* on --bg (bright in dark mode), which fails AA as a solid fill under white text.
+  danger: "bg-red-600 text-white hover:bg-red-700",
 };
 
 const sizes: Record<Size, string> = {
@@ -36,7 +38,7 @@ export function Button({
   return (
     <Comp
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-[var(--radius)] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius)] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
         sizes[size],
         className,

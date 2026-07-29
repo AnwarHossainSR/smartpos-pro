@@ -51,15 +51,31 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       )
     : items;
 
-  useEffect(() => {
+  // Reset search + selection when the palette opens, and selection whenever the query
+  // changes — adjusted directly during render (React's documented pattern for deriving state
+  // from a prop/state change) rather than in an effect, since nothing here is an external
+  // side effect. Only the input focus below is, so that stays in a real effect. (Refs can't be
+  // read during render either, so the "previous value" has to live in state, not a ref.)
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setQuery("");
       setIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 10);
+    }
+  }
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setIndex(0);
+  }
+
+  useEffect(() => {
+    if (open) {
+      const id = setTimeout(() => inputRef.current?.focus(), 10);
+      return () => clearTimeout(id);
     }
   }, [open]);
-
-  useEffect(() => { setIndex(0); }, [query]);
 
   const navigate = useCallback(
     (href: string) => {
@@ -103,7 +119,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               return (
                 <li key={it.href}>
                   <button
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-start transition-colors ${
                       i === index ? "bg-[var(--primary)] text-[var(--primary-fg)]" : "hover:bg-[var(--surface-2)]"
                     }`}
                     onMouseEnter={() => setIndex(i)}

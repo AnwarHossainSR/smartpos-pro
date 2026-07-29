@@ -3,44 +3,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/utils";
+import { notifTitle, notifBody, type NotificationResponse } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 
-interface Notification {
-  id: string;
-  type: string;
-  data: Record<string, unknown>;
-  read_at: string | null;
-  created_at: string;
-}
-
-interface NotifResponse {
-  data: Notification[];
-  unread_count: number;
-}
-
-function notifTitle(n: Notification): string {
-  const d = n.data;
-  if (typeof d.title === "string") return d.title;
-  if (typeof d.message === "string") return d.message;
-  return n.type.split("\\").pop() ?? "Notification";
-}
-
-function notifBody(n: Notification): string {
-  const d = n.data;
-  if (typeof d.body === "string") return d.body;
-  if (typeof d.amount === "number") return `Amount: $${d.amount}`;
-  return "";
-}
-
 export default function NotificationsPage() {
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery<NotifResponse>({
+  const { data, isLoading } = useQuery<NotificationResponse>({
     queryKey: ["notifications"],
-    queryFn: () => api<NotifResponse>("/notifications?per_page=50"),
+    queryFn: () => api<NotificationResponse>("/notifications?per_page=50"),
   });
 
   const markAllMutation = useMutation({
@@ -104,7 +79,7 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <p className={`text-sm ${!n.read_at ? "font-semibold" : "font-medium"}`}>{notifTitle(n)}</p>
                 {notifBody(n) && <p className="mt-0.5 text-xs text-[var(--muted)] truncate">{notifBody(n)}</p>}
-                <p className="mt-1 text-xs text-[var(--muted)]">{new Date(n.created_at).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{formatDateTime(n.created_at)}</p>
               </div>
               {!n.read_at && <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" />}
             </div>

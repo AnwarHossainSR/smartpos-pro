@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-27_
+_Last updated: 2026-07-29_
 
 ## Summary
 
@@ -16,7 +16,8 @@ _Last updated: 2026-07-27_
 | 2 · Backend, remaining | 10 | 0 | 0 | 10 |
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
-| **Total** | **64** | **0** | **0** | **64** |
+| 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
+| **Total** | **74** | **0** | **0** | **74** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -101,3 +102,26 @@ _Last updated: 2026-07-27_
 | T62 | Frontend component/unit tests | ✅ | #6 | Vitest + Testing Library; 26 tests across utils/stores/components |
 | T63 | Richer demo seed data | ✅ | #6 | RichDemoSeeder: branch2, returns, journals, coupons, loyalty |
 | T64 | Deployment guides & infra hardening | ✅ | #6 | docs/DEPLOYMENT.md: nginx, PHP-FPM, PM2, supervisor, security headers |
+
+## Phase 5 — Design system refresh + i18n & currency
+
+Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T65 | Token architecture + 6 palettes (light+dark) | ✅ | | Semantic tokens in globals.css, data-theme driven, AA-checked |
+| T66 | Theme store + palette switcher UI | ✅ | | palette in theme store; header swatch + Settings→Appearance grid; no-flash inline script in layout head |
+| T67 | Sidebar + shell restyle | ✅ | | sidebar on --sidebar-* tokens; fixed 2 latent primary-fg contrast bugs (logo badges) + danger button AA |
+| T68 | Table + list-page pattern upgrade | ✅ | | DataTable (zebra/sticky/bulk-select) + ListToolbar (search/export/add), applied to Products; CSV export is real, import deferred |
+| T69 | i18n foundation | ✅ | | I18nProvider + t()/plural(), en.json source of truth; wired into shell, auth pages, settings, Products (flagship); other module pages still hardcoded English — tracked as follow-up |
+| T70 | Locale switcher UI + per-script fonts | ✅ | | LocalePicker in header + Settings→Localization; Noto Sans Bengali/JP/Arabic via next/font, applied per [data-lang] |
+| T71 | RTL support | ✅ | | dir=rtl driven by locale (I18nProvider); 106 physical→logical class swaps (ml/pl/left/right/text-left/right) across 20 files; pagination chevrons flip via rtl:scale-x-[-1] |
+| T72 | Translation catalogs (de/bn/ar/ja) | ✅ | | Full human translations, 121/121 keys parity with en.json verified by script |
+| T73 | Currency/locale-aware formatting | ✅ | | formatCurrency/Number/Date/DateTime read locale+tenant-currency stores; business store added; audited/fixed 3 raw `$` spots + 8 raw toLocaleDateString/String spots app-wide |
+| T74 | QA pass | ✅ | | lint 0 errors (fixed 3 pre-existing react-hooks/set-state-in-effect issues), build clean, 32/32 unit tests, Playwright visual smoke test across all 6 palettes × light/dark × en/ar/bn/ja on login/register/landing |
+
+## Phase 6 — Printable documents
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T75 | Invoice & cash-register payment-slip PDFs | ✅ | | barryvdh/laravel-dompdf; `pdf.invoice`/`pdf.cash-slip` Blade templates; `GET sales/{sale}/invoice`, `GET cash-register-sessions/{session}/slip` (`?download=1`); wired into POS receipt, sales list, cash-register page. Also fixed the cash-register frontend, which was calling endpoints/fields that didn't match the backend at all (`opening_balance` vs `opening_cash`, wrong close/movement URLs) — added the missing `GET cash-registers/{id}/current-session` endpoint the frontend already expected. Verified end-to-end with Playwright against the running app (8 new/updated backend feature tests, all green). |

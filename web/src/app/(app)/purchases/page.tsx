@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Trash2 } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +124,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
           {productSearch && products?.data && products.data.length > 0 && (
             <div className="absolute z-10 mt-1 w-full rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
               {products.data.map((p) => (
-                <button key={p.id} type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--surface-2)]"
+                <button key={p.id} type="button" className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
                   onClick={() => { appendItem({ product_id: p.id, quantity: 1, unit_cost: p.purchase_price }); setProductSearch(""); }}>
                   {p.name} {p.sku && <span className="text-[var(--muted)]">· {p.sku}</span>} — {formatCurrency(p.purchase_price)}
                 </button>
@@ -142,7 +143,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
           ))}
           {errors.items && <p className="text-xs text-[var(--color-danger)]">Add at least one item</p>}
         </div>
-        <p className="mt-2 text-right text-sm font-medium">Subtotal: {formatCurrency(subtotal)}</p>
+        <p className="mt-2 text-end text-sm font-medium">Subtotal: {formatCurrency(subtotal)}</p>
       </div>
 
       {/* Payments */}
@@ -176,7 +177,7 @@ function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClos
           <div><span className="text-[var(--muted)]">Status</span><br /><Badge tone={statusColor[purchase.status] ?? "default"}>{purchase.status}</Badge></div>
           <div><span className="text-[var(--muted)]">Payment</span><br /><Badge tone={purchase.payment_status === "paid" ? "success" : "warning"}>{purchase.payment_status}</Badge></div>
           <div><span className="text-[var(--muted)]">Supplier</span><br />{purchase.supplier?.name ?? "—"}</div>
-          <div><span className="text-[var(--muted)]">Date</span><br />{new Date(purchase.purchased_at).toLocaleDateString()}</div>
+          <div><span className="text-[var(--muted)]">Date</span><br />{formatDate(purchase.purchased_at)}</div>
         </div>
         <hr />
         {purchase.items?.map((item, i) => (
@@ -218,10 +219,10 @@ export default function PurchasesPage() {
         <h1 className="text-xl font-semibold">Purchases</h1>
         {can("purchases.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4" />New purchase</Button>}
       </div>
-      <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="pl-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
-          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Supplier</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead>Payment</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Supplier</TableHead><TableHead>Date</TableHead><TableHead className="text-end">Total</TableHead><TableHead>Status</TableHead><TableHead>Payment</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
               : data?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">No purchases yet.</TableCell></TableRow>
@@ -229,8 +230,8 @@ export default function PurchasesPage() {
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs font-medium">{p.reference_number}</TableCell>
                   <TableCell>{p.supplier?.name ?? "—"}</TableCell>
-                  <TableCell className="text-[var(--muted)]">{new Date(p.purchased_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.total)}</TableCell>
+                  <TableCell className="text-[var(--muted)]">{formatDate(p.purchased_at)}</TableCell>
+                  <TableCell className="text-end">{formatCurrency(p.total)}</TableCell>
                   <TableCell><Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge></TableCell>
                   <TableCell><Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge></TableCell>
                   <TableCell><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(p)}><Eye className="h-3.5 w-3.5" /></Button></TableCell>
@@ -238,14 +239,13 @@ export default function PurchasesPage() {
               ))}
           </TableBody>
         </Table>
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={data.meta.last_page}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+          />
         )}
       </div>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="New purchase" width="max-w-2xl">

@@ -8,6 +8,8 @@ use App\Models\Sale;
 use App\Models\User;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Loyalty\LoyaltyService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as PdfDocument;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -107,6 +109,18 @@ class SaleService
 
             return $sale->load('items', 'payments', 'customer');
         });
+    }
+
+    /** Renders a sale as a printable/downloadable invoice PDF. */
+    public function invoicePdf(Sale $sale): PdfDocument
+    {
+        $sale->loadMissing(['items', 'payments', 'customer', 'cashier', 'branch.business']);
+
+        return Pdf::loadView('pdf.invoice', [
+            'sale' => $sale,
+            'branch' => $sale->branch,
+            'business' => $sale->branch->business,
+        ]);
     }
 
     /**

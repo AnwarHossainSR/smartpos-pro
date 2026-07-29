@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 interface Plan {
@@ -20,7 +20,7 @@ interface Subscription {
   id: number;
   plan: Plan;
   status: string;
-  current_period_end: string;
+  current_period_ends_at: string | null;
   trial_ends_at: string | null;
 }
 
@@ -61,8 +61,8 @@ export default function SubscriptionPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-[var(--muted)]">Billing period ends</span><span>{new Date(sub.current_period_end).toLocaleDateString()}</span></div>
-            {sub.trial_ends_at && <div className="flex justify-between"><span className="text-[var(--muted)]">Trial ends</span><span>{new Date(sub.trial_ends_at).toLocaleDateString()}</span></div>}
+            <div className="flex justify-between"><span className="text-[var(--muted)]">Billing period ends</span><span>{formatDate(sub.current_period_ends_at)}</span></div>
+            {sub.trial_ends_at && <div className="flex justify-between"><span className="text-[var(--muted)]">Trial ends</span><span>{formatDate(sub.trial_ends_at)}</span></div>}
           </CardContent>
         </Card>
       ) : (

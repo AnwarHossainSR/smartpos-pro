@@ -43,4 +43,42 @@ class CashRegisterTest extends TestCase
         $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 0])->assertCreated();
         $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 0])->assertStatus(422);
     }
+
+    public function test_current_session_reflects_open_and_empty_state(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+        $register = CashRegister::create(['branch_id' => $owner->branch_id, 'name' => 'Front Desk']);
+
+        $this->getJson("/api/v1/cash-registers/{$register->id}/current-session")
+            ->assertOk()
+            ->assertJsonPath('data', null);
+
+        $session = $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 50])
+            ->assertCreated()->json('data');
+
+        $this->getJson("/api/v1/cash-registers/{$register->id}/current-session")
+            ->assertOk()
+            ->assertJsonPath('data.id', $session['id']);
+    }
+
+    public function test_slip_pdf_can_be_streamed_for_open_and_closed_sessions(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+        $register = CashRegister::create(['branch_id' => $owner->branch_id, 'name' => 'Front Desk']);
+
+        $session = $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 100])
+            ->assertCreated()->json('data');
+
+        $this->get("/api/v1/cash-register-sessions/{$session['id']}/slip")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $this->postJson("/api/v1/cash-register-sessions/{$session['id']}/close", ['actual_cash' => 100])->assertOk();
+
+        $this->get("/api/v1/cash-register-sessions/{$session['id']}/slip")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+    }
 }

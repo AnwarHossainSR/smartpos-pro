@@ -2,18 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell } from "lucide-react";
+import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
+import { useLocaleStore } from "@/stores/locale";
+import { useClickOutside } from "@/lib/hooks";
+import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
-
-interface NotifResponse {
-  data: unknown[];
-  unread_count: number;
-}
+import { PalettePicker } from "@/components/ui/palette-picker";
+import { LocalePicker } from "@/components/ui/locale-picker";
+import { useTranslation } from "@/i18n/provider";
+import type { NotificationResponse } from "@/lib/notifications";
 
 const themeIcons: Record<Theme, React.ElementType> = { light: Sun, dark: Moon, system: Monitor };
 
@@ -24,16 +26,22 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const router = useRouter();
+  const t = useTranslation();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
-  const { theme, setTheme } = useThemeStore();
+  const { theme, setTheme, palette } = useThemeStore();
+  const locale = useLocaleStore((s) => s.locale);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [swatchMenuOpen, setSwatchMenuOpen] = useState(false);
+  const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const themeRef = useRef<HTMLDivElement>(null);
+  const swatchRef = useRef<HTMLDivElement>(null);
+  const localeRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifData } = useQuery<NotifResponse>({
+  const { data: notifData } = useQuery<NotificationResponse>({
     queryKey: ["notifications"],
-    queryFn: () => api<NotifResponse>("/notifications?per_page=1"),
+    queryFn: () => api<NotificationResponse>("/notifications?per_page=1"),
     staleTime: 60_000,
   });
   const unreadCount = notifData?.unread_count ?? 0;
@@ -50,16 +58,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Close theme menu on outside click
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (themeRef.current && !themeRef.current.contains(e.target as Node)) {
-        setThemeMenuOpen(false);
-      }
-    }
-    if (themeMenuOpen) document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [themeMenuOpen]);
+  useClickOutside(themeRef, () => setThemeMenuOpen(false), themeMenuOpen);
+  useClickOutside(swatchRef, () => setSwatchMenuOpen(false), swatchMenuOpen);
+  useClickOutside(localeRef, () => setLocaleMenuOpen(false), localeMenuOpen);
 
   async function onLogout() {
     try { await api("/auth/logout", { method: "POST" }); } catch {}
@@ -86,41 +87,79 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             className="hidden items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-[var(--muted)] transition hover:border-[var(--primary)] sm:flex"
           >
             <Search className="h-3.5 w-3.5" />
-            <span>Search…</span>
-            <kbd className="ml-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
+            <span>{t("header.searchPlaceholder")}</span>
+            <kbd className="ms-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
           </button>
-          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title="Search">
+          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title={t("header.searchPlaceholder")}>
             <Search className="h-4 w-4" />
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title="Notifications" className="relative">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title={t("header.notifications")} className="relative">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
+              <span className="absolute end-1.5 top-1.5 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-danger)] opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-danger)]" />
               </span>
             )}
           </Button>
 
+          {/* Language */}
+          <div ref={localeRef} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocaleMenuOpen((v) => !v)}
+              title={t("header.language")}
+            >
+              <Globe className="h-4 w-4" />
+              <span className="sr-only">{locale}</span>
+            </Button>
+            {localeMenuOpen && (
+              <div className="absolute end-0 top-full z-20 mt-1 w-40 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-lg">
+                <LocalePicker />
+              </div>
+            )}
+          </div>
+
+          {/* Palette swatch */}
+          <div ref={swatchRef} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSwatchMenuOpen((v) => !v)}
+              title={t("header.colorPalette")}
+            >
+              <span
+                className="h-4 w-4 rounded-full ring-1 ring-[var(--border)]"
+                style={{ backgroundColor: PALETTES.find((p) => p.id === palette)?.swatch }}
+              />
+            </Button>
+            {swatchMenuOpen && (
+              <div className="absolute end-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                <PalettePicker compact />
+              </div>
+            )}
+          </div>
+
           {/* Theme toggle */}
           <div ref={themeRef} className="relative">
-            <Button variant="ghost" size="icon" onClick={() => setThemeMenuOpen((v) => !v)} title="Toggle theme">
+            <Button variant="ghost" size="icon" onClick={() => setThemeMenuOpen((v) => !v)} title={t("header.toggleTheme")}>
               <ThemeIcon className="h-4 w-4" />
             </Button>
             {themeMenuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
-                {(["light", "dark", "system"] as Theme[]).map((t) => {
-                  const Icon = themeIcons[t];
+              <div className="absolute end-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
+                {(["light", "dark", "system"] as Theme[]).map((option) => {
+                  const Icon = themeIcons[option];
                   return (
                     <button
-                      key={t}
-                      onClick={() => { setTheme(t); setThemeMenuOpen(false); }}
-                      className={`flex w-full items-center gap-2 px-3 py-2 text-sm capitalize transition-colors hover:bg-[var(--surface-2)] ${theme === t ? "text-[var(--primary)] font-medium" : ""}`}
+                      key={option}
+                      onClick={() => { setTheme(option); setThemeMenuOpen(false); }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[var(--surface-2)] ${theme === option ? "text-[var(--primary)] font-medium" : ""}`}
                     >
                       <Icon className="h-3.5 w-3.5" />
-                      {t}
+                      {t(`header.${option}`)}
                     </button>
                   );
                 })}
@@ -139,7 +178,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={onLogout} title="Sign out">
+          <Button variant="ghost" size="icon" onClick={onLogout} title={t("header.signOut")}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

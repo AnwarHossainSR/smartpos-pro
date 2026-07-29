@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, Printer } from "lucide-react";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, FileText } from "lucide-react";
+import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ interface Product {
   sku: string | null;
   selling_price: number;
   purchase_price: number;
+  tax_rate: number;
+  tax_inclusive: boolean;
   stock: number;
   is_active: boolean;
   category: { id: number; name: string } | null;
@@ -50,25 +52,55 @@ interface SaleResult {
   data: {
     id: number;
     invoice_number: string;
+    subtotal: number;
+    tax_amount: number;
     total: number;
     paid_amount: number;
     change_amount: number;
     due_amount: number;
     sold_at: string;
     customer?: { id: number; name: string };
-    items: { name: string; quantity: number; unit_price: number; total: number }[];
+    items: { name: string; quantity: number; unit_price: number; line_total: number }[];
     payments: { method: string; amount: number }[];
   };
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Mirrors SaleService::buildLines() on the server: tax is snapshotted per product, so the cart
+ *  has to apply the same per-line rounding or the amount tendered lands a few paisa short of the
+ *  server's total and the sale silently books a due balance. */
+function lineTotals({ product, qty, unit_price, discount }: CartItem) {
+  const taxable = Math.max(0, unit_price * qty - discount * qty);
+  const rate = product.tax_rate ?? 0;
+  const tax = product.tax_inclusive
+    ? round2(taxable - taxable / (1 + rate / 100))
+    : round2(taxable * (rate / 100));
+
+  return { net: product.tax_inclusive ? round2(taxable - tax) : round2(taxable), tax };
+}
+
 /* ---- receipt modal ---- */
 function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: () => void }) {
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+
+  const viewInvoice = async () => {
+    setLoadingInvoice(true);
+    try {
+      openPdfBlob(await apiBlob(`/sales/${sale.id}/invoice`));
+    } catch {
+      toast("Could not load invoice", "error");
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
+
   return (
     <Dialog open title="Receipt" onClose={onClose}>
       <div className="space-y-3 text-sm">
         <div className="text-center">
           <p className="font-semibold text-base">Invoice #{sale.invoice_number}</p>
-          <p className="text-[var(--muted)]">{new Date(sale.sold_at).toLocaleString()}</p>
+          <p className="text-[var(--muted)]">{formatDateTime(sale.sold_at)}</p>
           {sale.customer && <p className="mt-1">{sale.customer.name}</p>}
         </div>
         <hr className="border-dashed" />
@@ -76,12 +108,22 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           {sale.items?.map((item, i) => (
             <div key={i} className="flex justify-between">
               <span className="flex-1 truncate">{item.name} × {item.quantity}</span>
-              <span className="ml-4 font-medium">{formatCurrency(item.total)}</span>
+              <span className="ms-4 font-medium">{formatCurrency(item.line_total)}</span>
             </div>
           ))}
         </div>
         <hr className="border-dashed" />
         <div className="space-y-1">
+          {sale.tax_amount > 0 && (
+            <>
+              <div className="flex justify-between text-[var(--muted)]">
+                <span>Subtotal</span><span>{formatCurrency(sale.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-[var(--muted)]">
+                <span>Tax</span><span>{formatCurrency(sale.tax_amount)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between font-semibold">
             <span>Total</span><span>{formatCurrency(sale.total)}</span>
           </div>
@@ -102,8 +144,8 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           )}
         </div>
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" /> Print
+          <Button variant="outline" className="flex-1" onClick={viewInvoice} disabled={loadingInvoice}>
+            <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
           </Button>
           <Button className="flex-1" onClick={onClose}>New sale</Button>
         </div>
@@ -235,10 +277,21 @@ export default function POSPage() {
 
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
-  const cartTotal = useMemo(
-    () => cart.reduce((sum, i) => sum + (i.unit_price - i.discount) * i.qty, 0),
-    [cart],
-  );
+  const { cartSubtotal, cartTax, cartTotal } = useMemo(() => {
+    const totals = cart.reduce(
+      (acc, item) => {
+        const { net, tax } = lineTotals(item);
+        return { net: acc.net + net, tax: acc.tax + tax };
+      },
+      { net: 0, tax: 0 },
+    );
+
+    return {
+      cartSubtotal: round2(totals.net),
+      cartTax: round2(totals.tax),
+      cartTotal: round2(totals.net + totals.tax),
+    };
+  }, [cart]);
 
   const checkoutMutation = useMutation({
     mutationFn: (payments: { method: string; amount: number }[]) => {
@@ -276,13 +329,13 @@ export default function POSPage() {
   });
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 overflow-hidden">
+    <div className="flex h-full gap-4 overflow-hidden">
       {/* Left: product search + grid */}
       <div className="flex flex-1 flex-col min-w-0 gap-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
           <Input
-            className="pl-9"
+            className="ps-9"
             placeholder="Search products…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -304,9 +357,15 @@ export default function POSPage() {
                   key={p.id}
                   onClick={() => addToCart(p)}
                   disabled={(p.stock ?? 0) <= 0}
-                  className="group flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-left transition hover:border-[var(--primary)] hover:shadow-sm disabled:opacity-50"
+                  className={cn(
+                    "group flex cursor-pointer flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start",
+                    "transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+                    "enabled:hover:-translate-y-0.5 enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
+                    "enabled:active:translate-y-0 enabled:active:scale-[0.98]",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
                 >
-                  <p className="line-clamp-2 text-sm font-medium">{p.name}</p>
+                  <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
                   {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
                   <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
                   <p className="text-xs text-[var(--muted)]">Stock: {p.stock ?? 0}</p>
@@ -333,7 +392,7 @@ export default function POSPage() {
             )}
           </div>
           {cart.length > 0 && (
-            <button onClick={() => setCart([])} className="text-xs text-[var(--muted)] hover:text-[var(--color-danger)]">
+            <button onClick={() => setCart([])} className="cursor-pointer text-xs text-[var(--muted)] transition-colors hover:text-[var(--color-danger)]">
               Clear
             </button>
           )}
@@ -342,15 +401,15 @@ export default function POSPage() {
         {/* Customer selector */}
         <div className="border-b border-[var(--border)] p-3">
           <div className="relative">
-            <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
+            <User className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <Input
-              className="pl-8 h-8 text-xs"
+              className="ps-8 h-8 text-xs"
               placeholder={selectedCustomer ? selectedCustomer.name : "Search customer (optional)…"}
               value={selectedCustomer ? selectedCustomer.name : customerSearch}
               onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); }}
             />
             {customerId && (
-              <button className="absolute right-2.5 top-1/2 -translate-y-1/2" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
+              <button className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
                 <X className="h-3.5 w-3.5 text-[var(--muted)]" />
               </button>
             )}
@@ -361,7 +420,7 @@ export default function POSPage() {
                 <button
                   key={c.id}
                   onClick={() => { setCustomerId(c.id); setCustomerSearch(""); }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--surface-2)]"
+                  className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
                 >
                   {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
                 </button>
@@ -378,10 +437,13 @@ export default function POSPage() {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.product.id} className="rounded-[var(--radius)] border border-[var(--border)] p-2.5">
+              <div
+                key={item.product.id}
+                className="rounded-[var(--radius)] border border-[var(--border)] p-2.5 transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <p className="flex-1 text-sm font-medium leading-tight">{item.product.name}</p>
-                  <button onClick={() => removeItem(item.product.id)}>
+                  <button onClick={() => removeItem(item.product.id)} className="cursor-pointer">
                     <X className="h-3.5 w-3.5 text-[var(--muted)] hover:text-[var(--color-danger)]" />
                   </button>
                 </div>
@@ -406,8 +468,14 @@ export default function POSPage() {
         <div className="border-t border-[var(--border)] p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-[var(--muted)]">Subtotal</span>
-            <span>{formatCurrency(cartTotal)}</span>
+            <span>{formatCurrency(cartSubtotal)}</span>
           </div>
+          {cartTax > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--muted)]">Tax</span>
+              <span>{formatCurrency(cartTax)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-semibold">
             <span>Total</span>
             <span>{formatCurrency(cartTotal)}</span>
