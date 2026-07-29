@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 3 | 0 | 10 | 13 |
+| 7 · Security & money integrity | 4 | 0 | 9 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **78** | **0** | **21** | **99** |
+| **Total** | **79** | **0** | **20** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -144,7 +144,7 @@ T87 → T88.
 | T80 | Token lifecycle: expiry, abilities, sessions | ⬜ | | **High** — `sanctum.expiration = null`, `*` abilities, token in localStorage |
 | T81 | Tenant suspension enforcement + token revocation | ⬜ | | **High** — suspended tenants keep full API access |
 | T82 | API rate limiting | ⬜ | | **High** — `throttleApi()` never called; only login/register throttled |
-| T83 | Role-escalation guard in user management | ⬜ | | **Critical** — `users.update` holder can self-assign `owner` |
+| T83 | Role-escalation guard in user management | ✅ | | `UserController::update` blocks self-role changes, blocks granting/revoking `owner` unless caller is owner/super-admin, and blocks editing users outside a branch-scoped caller's assigned branches; `RoleController::update` blocks editing the `owner` role's permissions the same way; role-assignment changes are audited |
 | T84 | Password reset + email verification | ⬜ | | **High** — neither exists; invited users get an undelivered password |
 | T85 | Two-factor auth (TOTP) + login lockout | ⬜ | | **High** — no 2FA, no per-account lockout |
 | T86 | Query & config hardening | ⬜ | | Medium — sort whitelist, `$fillable`, CORS, idempotency key binding |

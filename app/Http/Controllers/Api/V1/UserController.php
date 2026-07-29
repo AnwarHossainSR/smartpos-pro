@@ -8,12 +8,16 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use App\Services\Billing\PlanLimitService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    public function __construct(protected AuditLogService $audit) {}
+
     public function index(Request $request)
     {
         $users = User::query()
@@ -36,12 +40,16 @@ class UserController extends Controller
         $roles = $data['roles'] ?? [];
         unset($data['roles']);
 
+        if (in_array('owner', $roles, true) && ! $this->canGrantOwner($request->user())) {
+            throw new AuthorizationException('Only the business owner can grant the owner role.');
+        }
+
         $data['business_id'] = $request->user()->business_id;
         $data['password'] = $data['password'] ?? Str::random(16);
         $data['status'] = $request->filled('password') ? 'active' : 'invited';
 
         $user = User::create($data);
-        $this->syncRoles($user, $roles);
+        $this->syncRoles($user, $roles, $request->user());
 
         return new UserResource($user->load('roles'));
     }
@@ -53,14 +61,21 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): UserResource
     {
+        $actor = $request->user();
         $data = $request->validated();
         $roles = $data['roles'] ?? null;
         unset($data['roles']);
 
+        if ($roles !== null) {
+            $this->guardRoleChange($actor, $user, $roles);
+        }
+
+        $this->guardBranchScope($actor, $data['branch_id'] ?? $user->branch_id);
+
         $user->update($data);
 
         if ($roles !== null) {
-            $this->syncRoles($user, $roles);
+            $this->syncRoles($user, $roles, $actor);
         }
 
         return new UserResource($user->load('roles'));
@@ -76,10 +91,60 @@ class UserController extends Controller
         return response()->noContent();
     }
 
-    /** @param  string[]  $roleSlugs */
-    protected function syncRoles(User $user, array $roleSlugs): void
+    /** A caller may never change their own role assignment; only an owner/super-admin may grant or revoke `owner`. */
+    protected function guardRoleChange(User $actor, User $user, array $roleSlugs): void
     {
+        if ($actor->id === $user->id) {
+            throw new AuthorizationException('You cannot change your own roles.');
+        }
+
+        $hadOwner = $user->hasRole('owner');
+        $willHaveOwner = in_array('owner', $roleSlugs, true);
+
+        if ($hadOwner !== $willHaveOwner && ! $this->canGrantOwner($actor)) {
+            throw new AuthorizationException('Only the business owner can grant or revoke the owner role.');
+        }
+    }
+
+    protected function canGrantOwner(User $actor): bool
+    {
+        return $actor->hasRole('owner') || (bool) $actor->is_super_admin;
+    }
+
+    /**
+     * A caller whose role assignments are all pinned to specific branches
+     * (rather than tenant-wide) may only manage users within those branches.
+     */
+    protected function guardBranchScope(User $actor, ?int $targetBranchId): void
+    {
+        if ($this->canGrantOwner($actor)) {
+            return;
+        }
+
+        $roles = $actor->roles()->get();
+        $isTenantWide = $roles->isEmpty() || $roles->contains(fn (Role $role) => $role->pivot->branch_id === null);
+
+        if ($isTenantWide) {
+            return;
+        }
+
+        $scopedBranchIds = $roles->pluck('pivot.branch_id')->filter()->all();
+
+        if (! in_array($targetBranchId, $scopedBranchIds, true)) {
+            throw new AuthorizationException('You cannot manage users outside your assigned branch.');
+        }
+    }
+
+    /** @param  string[]  $roleSlugs */
+    protected function syncRoles(User $user, array $roleSlugs, ?User $actor = null): void
+    {
+        $before = $user->roles()->pluck('slug')->sort()->values()->all();
         $roleIds = Role::whereIn('slug', $roleSlugs)->pluck('id');
         $user->roles()->sync($roleIds);
+        $after = Role::whereIn('id', $roleIds)->pluck('slug')->sort()->values()->all();
+
+        if ($before !== $after) {
+            $this->audit->log('user.roles_changed', $user, ['roles' => $before], ['roles' => $after], $actor);
+        }
     }
 }

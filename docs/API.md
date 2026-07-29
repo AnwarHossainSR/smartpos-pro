@@ -265,9 +265,9 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | --- | --- | --- |
 | `GET /users` (`?search=&branch_id=&status=`) · `GET /users/{user}` | `users.view` | |
 | `POST /users` | `users.create` | invites a member (`roles: []`); no password → `status: invited` |
-| `PUT /users/{user}` | `users.update` | update profile, status, branch and roles |
+| `PUT /users/{user}` | `users.update` | update profile, status, branch and roles. `403`s: changing your own roles; granting/revoking `owner` unless you hold it (or are super-admin); editing a user outside your branch when your own role assignment is branch-scoped. Role-assignment changes are audited (`user.roles_changed`). |
 | `DELETE /users/{user}` | `users.delete` | cannot delete self or the owner |
-| `GET /roles` · `POST /roles` · `PUT /roles/{role}` · `DELETE /roles/{role}` | `roles.*` | roles carry a `permissions` slug list; system roles are protected |
+| `GET /roles` · `POST /roles` · `PUT /roles/{role}` · `DELETE /roles/{role}` | `roles.*` | roles carry a `permissions` slug list; system roles are protected. `PUT` on the `owner` role `403`s unless the caller holds `owner` (or is super-admin). |
 | `GET /permissions` | `roles.view` | full permission catalog grouped by module |
 
 ## Audit log
