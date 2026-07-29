@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 6 | 0 | 7 | 13 |
+| 7 · Security & money integrity | 7 | 0 | 6 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **81** | **0** | **18** | **99** |
+| **Total** | **82** | **0** | **17** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -147,7 +147,7 @@ T87 → T88.
 | T83 | Role-escalation guard in user management | ✅ | | `UserController::update` blocks self-role changes, blocks granting/revoking `owner` unless caller is owner/super-admin, and blocks editing users outside a branch-scoped caller's assigned branches; `RoleController::update` blocks editing the `owner` role's permissions the same way; role-assignment changes are audited |
 | T84 | Password reset + email verification | ⬜ | | **High** — neither exists; invited users get an undelivered password |
 | T85 | Two-factor auth (TOTP) + login lockout | ⬜ | | **High** — no 2FA, no per-account lockout |
-| T86 | Query & config hardening | ⬜ | | Medium — sort whitelist, `$fillable`, CORS, idempotency key binding |
+| T86 | Query & config hardening | ✅ | | `sort`/`direction` whitelisted (`ValidatesSort` trait) on Products/Customers/Suppliers (422 on unknown); `is_super_admin`/`tenant_id` dropped from `User::$fillable`; `config/cors.php` restricted to `FRONTEND_URL`; idempotency keys scoped to tenant+key+method+path with a payload hash (409 on reuse with a different body) + hourly 24h prune; baseline security headers middleware on every API response |
 | T87 | Tenant scope fail-closed + job tenant binding | ⬜ | | Medium — `TenantScope` no-ops when no tenant is bound |
 | T88 | CI security gates | ⬜ | | Medium — no dependency audit; PHPStan advisory; `web/` never built in CI |
 

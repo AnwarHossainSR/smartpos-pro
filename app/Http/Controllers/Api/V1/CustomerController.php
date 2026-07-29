@@ -6,12 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Crm\StoreCustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Support\Concerns\ValidatesSort;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    use ValidatesSort;
+
+    protected const SORTABLE = ['name', 'phone', 'email', 'balance', 'created_at'];
+
     public function index(Request $request)
     {
+        [$sort, $direction] = $this->resolveSort($request, self::SORTABLE, 'name');
+
         $customers = Customer::query()
             ->when($request->search, function ($q, $s) {
                 $q->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
@@ -19,7 +26,7 @@ class CustomerController extends Controller
                     ->orWhere('email', 'like', "%{$s}%"));
             })
             ->when($request->filled('has_due'), fn ($q) => $q->where('balance', '>', 0))
-            ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
+            ->orderBy($sort, $direction)
             ->paginate($request->integer('per_page', 25));
 
         return CustomerResource::collection($customers);

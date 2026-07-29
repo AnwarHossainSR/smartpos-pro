@@ -6,6 +6,19 @@ Content-Type: `application/json`.
 Collection endpoints are paginated (`?page=`, `?per_page=`) and return Laravel's
 standard `{ data, links, meta }` envelope. Single resources return `{ data: {...} }`.
 
+## Idempotency, CORS & security headers
+
+`Idempotency-Key` is scoped to `tenant + key + method + path` — the same key reused on a
+different route no longer replays a stranger's cached response, and reusing it on the same
+route with a **different** request body returns `409` instead of silently serving the old
+result. Keys are pruned after 24h by a scheduled job.
+
+CORS (`config/cors.php`) is restricted to `FRONTEND_URL` (comma-separated for multiple
+origins) rather than the framework default of `*`. Every API response carries baseline
+security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
+`Permissions-Policy`, a restrictive `Content-Security-Policy`, and HSTS over HTTPS) — defense
+in depth alongside the reverse-proxy config in `docs/DEPLOYMENT.md`.
+
 ## Rate limiting
 
 Every route is throttled (`throttle:api`, 120 req/min per token or IP). Report and PDF
@@ -64,7 +77,7 @@ product/customer counts, low-stock count) and a 14-day sales trend.
 
 | Method & path | Permission | Notes |
 | --- | --- | --- |
-| `GET /products` | `products.view` | `?search=&category_id=&brand_id=&is_active=&low_stock=&sort=&direction=` — includes live `stock` |
+| `GET /products` | `products.view` | `?search=&category_id=&brand_id=&is_active=&low_stock=&sort=&direction=` — includes live `stock`. `sort` is whitelisted (`name`, `sku`, `selling_price`, `purchase_price`, `created_at`); anything else `422`s. |
 | `GET /products/{product}` | `products.view` | |
 | `POST /products` | `products.create` | optional `opening_stock: { warehouse_id, quantity }` |
 | `PUT /products/{product}` | `products.update` | |
@@ -99,7 +112,7 @@ Requires `inventory.update`. Ledger-backed manual adjustment.
 
 | Method & path | Permission |
 | --- | --- |
-| `GET /customers` (`?search=&has_due=`) | `customers.view` |
+| `GET /customers` (`?search=&has_due=&sort=&direction=`) | `customers.view` | `sort` whitelisted: `name`, `phone`, `email`, `balance`, `created_at` |
 | `GET /customers/{customer}` | `customers.view` |
 | `POST /customers` | `customers.create` |
 | `PUT /customers/{customer}` | `customers.update` |
@@ -182,7 +195,7 @@ Standard Laravel JSON errors: `401` unauthenticated, `403` missing tenant/permis
 
 | Method & path | Permission |
 | --- | --- |
-| `GET /suppliers` (`?search=&has_due=`) | `suppliers.view` |
+| `GET /suppliers` (`?search=&has_due=&sort=&direction=`) | `suppliers.view` | `sort` whitelisted: `name`, `company`, `phone`, `balance`, `created_at` |
 | `GET /suppliers/{supplier}` | `suppliers.view` |
 | `POST /suppliers` · `PUT /suppliers/{supplier}` · `DELETE /suppliers/{supplier}` | `suppliers.create/update/delete` |
 

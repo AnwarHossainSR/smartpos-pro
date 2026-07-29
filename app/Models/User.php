@@ -19,9 +19,14 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
+    /**
+     * `tenant_id` and `is_super_admin` are deliberately excluded — tenant_id is filled
+     * automatically from TenantContext (see BelongsToTenant), and is_super_admin must
+     * only ever be set explicitly (forceFill), never through mass assignment.
+     */
     protected $fillable = [
-        'tenant_id', 'business_id', 'branch_id', 'name', 'email', 'phone',
-        'password', 'avatar_path', 'status', 'is_super_admin', 'last_login_at',
+        'business_id', 'branch_id', 'name', 'email', 'phone',
+        'password', 'avatar_path', 'status', 'last_login_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
