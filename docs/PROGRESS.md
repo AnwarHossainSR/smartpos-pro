@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-27_
+_Last updated: 2026-07-29_
 
 ## Summary
 
@@ -16,8 +16,8 @@ _Last updated: 2026-07-27_
 | 2 · Backend, remaining | 10 | 0 | 0 | 10 |
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
-| 5 · Design system refresh + i18n & currency | 0 | 0 | 10 | 10 |
-| **Total** | **64** | **0** | **10** | **74** |
+| 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
+| **Total** | **74** | **0** | **0** | **74** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -118,4 +118,4 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T71 | RTL support | ✅ | | dir=rtl driven by locale (I18nProvider); 106 physical→logical class swaps (ml/pl/left/right/text-left/right) across 20 files; pagination chevrons flip via rtl:scale-x-[-1] |
 | T72 | Translation catalogs (de/bn/ar/ja) | ✅ | | Full human translations, 121/121 keys parity with en.json verified by script |
 | T73 | Currency/locale-aware formatting | ✅ | | formatCurrency/Number/Date/DateTime read locale+tenant-currency stores; business store added; audited/fixed 3 raw `$` spots + 8 raw toLocaleDateString/String spots app-wide |
-| T74 | QA pass | ⬜ | | |
+| T74 | QA pass | ✅ | | lint 0 errors (fixed 3 pre-existing react-hooks/set-state-in-effect issues), build clean, 32/32 unit tests, Playwright visual smoke test across all 6 palettes × light/dark × en/ar/bn/ja on login/register/landing |

@@ -40,6 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const hydrated = useAuth((s) => s.hydrated);
   const setUser = useAuth((s) => s.setUser);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
 
   // Wait for the persisted token to load before deciding to bounce to /login,
   // otherwise a refresh logs the user out.
@@ -47,10 +48,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (hydrated && !token) router.replace("/login");
   }, [hydrated, token, router]);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
+  // Close the mobile sidebar on route change. Adjusts state during render (React's documented
+  // pattern for "derive state from a prop change") instead of an effect, since setState-in-effect
+  // here would cause an extra render on every navigation for no benefit.
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setSidebarOpen(false);
-  }, [pathname]);
+  }
 
   const { data } = useQuery({
     queryKey: ["me"],
