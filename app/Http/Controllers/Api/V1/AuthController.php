@@ -24,7 +24,7 @@ class AuthController extends Controller
     {
         $user = $this->provisioner->register($request->validated());
 
-        $token = $user->createToken($request->input('device_name', 'web'))->plainTextToken;
+        $token = $this->issueToken($user, $request);
 
         return response()->json([
             'user' => new UserResource($user),
@@ -66,7 +66,7 @@ class AuthController extends Controller
 
         $this->audit->log('auth.login', $user, null, null, $user, $user->tenant_id);
 
-        $token = $user->createToken($request->input('device_name', 'web'))->plainTextToken;
+        $token = $this->issueToken($user, $request);
 
         return response()->json([
             'user' => new UserResource($user),
@@ -84,5 +84,72 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out.']);
+    }
+
+    /** Active devices/sessions (personal access tokens) for the current user. */
+    public function sessions(Request $request): JsonResponse
+    {
+        $current = $request->user()->currentAccessToken();
+
+        $sessions = $request->user()->tokens()
+            ->orderByDesc('last_used_at')
+            ->get()
+            ->map(fn ($token) => [
+                'id' => $token->id,
+                'name' => $token->name,
+                'ip_address' => $token->ip_address,
+                'last_used_at' => $token->last_used_at,
+                'created_at' => $token->created_at,
+                'expires_at' => $token->expires_at,
+                'current' => $current && $token->id === $current->id,
+            ]);
+
+        return response()->json(['data' => $sessions]);
+    }
+
+    /** Revoke a single device/session — must belong to the current user. */
+    public function revokeSession(Request $request, int $tokenId): JsonResponse
+    {
+        $deleted = $request->user()->tokens()->whereKey($tokenId)->delete();
+
+        abort_if($deleted === 0, 404, 'Session not found.');
+
+        return response()->json(['message' => 'Session revoked.']);
+    }
+
+    /** Revoke every session except the one making this request. */
+    public function revokeAllSessions(Request $request): JsonResponse
+    {
+        $current = $request->user()->currentAccessToken();
+
+        $request->user()->tokens()
+            ->when($current, fn ($q) => $q->whereKeyNot($current->id))
+            ->delete();
+
+        return response()->json(['message' => 'All other sessions revoked.']);
+    }
+
+    protected function issueToken(User $user, Request $request): string
+    {
+        $newToken = $user->createToken($request->input('device_name', 'web'), $this->abilitiesFor($user));
+
+        $newToken->accessToken->forceFill(['ip_address' => $request->ip()])->save();
+
+        return $newToken->plainTextToken;
+    }
+
+    /**
+     * Token abilities mirror the user's current permissions at issuance time
+     * (rather than a blanket '*') — owner/super-admin still get everything.
+     *
+     * @return string[]
+     */
+    protected function abilitiesFor(User $user): array
+    {
+        if (($user->is_super_admin ?? false) || $user->hasRole('owner')) {
+            return ['*'];
+        }
+
+        return $user->permissionSlugs();
     }
 }

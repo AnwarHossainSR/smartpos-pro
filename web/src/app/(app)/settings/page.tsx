@@ -1,19 +1,146 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Laptop, Smartphone } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { PalettePicker } from "@/components/ui/palette-picker";
 import { LocalePicker } from "@/components/ui/locale-picker";
 import { useTranslation } from "@/i18n/provider";
+
+interface Session {
+  id: number;
+  name: string;
+  ip_address: string | null;
+  last_used_at: string | null;
+  created_at: string;
+  expires_at: string | null;
+  current: boolean;
+}
+
+function SessionsCard() {
+  const t = useTranslation();
+  const qc = useQueryClient();
+  const [revoking, setRevoking] = useState<Session | null>(null);
+  const [revokingAll, setRevokingAll] = useState(false);
+
+  const { data, isLoading } = useQuery<{ data: Session[] }>({
+    queryKey: ["auth-sessions"],
+    queryFn: () => api<{ data: Session[] }>("/auth/sessions"),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (id: number) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["auth-sessions"] });
+      toast(t("settings.sessionRevoked"));
+      setRevoking(null);
+    },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const revokeAllMutation = useMutation({
+    mutationFn: () => api("/auth/sessions/revoke-all", { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["auth-sessions"] });
+      toast(t("settings.sessionsRevokedAll"));
+      setRevokingAll(false);
+    },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const sessions = data?.data ?? [];
+  const otherSessions = sessions.filter((s) => !s.current);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle>{t("settings.security")}</CardTitle>
+        {otherSessions.length > 0 && (
+          <Button variant="outline" size="sm" onClick={() => setRevokingAll(true)}>
+            {t("settings.sessionRevokeAll")}
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-[var(--muted)]">{t("settings.securityHint")}</p>
+
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : sessions.length === 0 ? (
+          <p className="text-sm text-[var(--muted)]">{t("settings.sessionsEmpty")}</p>
+        ) : (
+          <ul className="divide-y divide-[var(--border)]">
+            {sessions.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/^(iphone|android|phone)/i.test(s.name) ? (
+                    <Smartphone className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+                  ) : (
+                    <Laptop className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium">{s.name}</span>
+                      {s.current && <Badge tone="success">{t("settings.sessionCurrent")}</Badge>}
+                    </div>
+                    <p className="truncate text-xs text-[var(--muted)]">
+                      {s.ip_address ?? "—"} · {t("settings.sessionLastActive")}{" "}
+                      {s.last_used_at ? formatDateTime(s.last_used_at) : formatDateTime(s.created_at)}
+                    </p>
+                  </div>
+                </div>
+                {!s.current && (
+                  <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setRevoking(s)}>
+                    {t("settings.sessionRevoke")}
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+
+      <Dialog
+        open={!!revoking}
+        onClose={() => setRevoking(null)}
+        title={t("settings.sessionRevokeConfirmTitle")}
+        description={t("settings.sessionRevokeConfirmBody")}
+        confirmLabel={t("settings.sessionRevoke")}
+        confirmVariant="danger"
+        loading={revokeMutation.isPending}
+        onConfirm={() => revoking && revokeMutation.mutate(revoking.id)}
+      />
+
+      <Dialog
+        open={revokingAll}
+        onClose={() => setRevokingAll(false)}
+        title={t("settings.sessionRevokeAllConfirmTitle")}
+        description={t("settings.sessionRevokeAllConfirmBody")}
+        confirmLabel={t("settings.sessionRevokeAll")}
+        confirmVariant="danger"
+        loading={revokeAllMutation.isPending}
+        onConfirm={() => revokeAllMutation.mutate()}
+      />
+    </Card>
+  );
+}
 
 interface BusinessSettings {
   name: string;
@@ -153,6 +280,8 @@ export default function SettingsPage() {
           </Card>
         </div>
       </div>
+
+      <SessionsCard />
     </div>
   );
 }

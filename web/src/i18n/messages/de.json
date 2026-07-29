@@ -104,7 +104,20 @@
     "language": "Sprache",
     "account": "Konto",
     "name": "Name",
-    "roles": "Rollen"
+    "roles": "Rollen",
+    "security": "Sitzungen & Geräte",
+    "securityHint": "Alle Geräte, die aktuell bei Ihrem Konto angemeldet sind.",
+    "sessionCurrent": "Dieses Gerät",
+    "sessionLastActive": "Zuletzt aktiv",
+    "sessionRevoke": "Widerrufen",
+    "sessionRevokeAll": "Andere Geräte abmelden",
+    "sessionRevokeConfirmTitle": "Diese Sitzung widerrufen?",
+    "sessionRevokeConfirmBody": "Das Gerät wird sofort abgemeldet.",
+    "sessionRevokeAllConfirmTitle": "Alle anderen Geräte abmelden?",
+    "sessionRevokeAllConfirmBody": "Sie bleiben auf diesem Gerät angemeldet.",
+    "sessionRevoked": "Sitzung widerrufen.",
+    "sessionsRevokedAll": "Alle anderen Sitzungen widerrufen.",
+    "sessionsEmpty": "Keine weiteren aktiven Sitzungen."
   },
   "products": {
     "title": "Produkte",

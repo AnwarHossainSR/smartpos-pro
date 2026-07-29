@@ -29,3 +29,6 @@ Schedule::call(function () {
 Schedule::call(function () {
     IdempotencyKey::withoutGlobalScopes()->where('created_at', '<', now()->subDay())->delete();
 })->hourly()->name('prune-idempotency-keys');
+
+// Sanctum tokens carry their own expires_at (config/sanctum.php); sweep the expired rows daily.
+Schedule::command('sanctum:prune-expired --hours=24')->daily()->name('prune-expired-tokens');

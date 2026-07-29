@@ -104,7 +104,20 @@
     "language": "اللغة",
     "account": "الحساب",
     "name": "الاسم",
-    "roles": "الأدوار"
+    "roles": "الأدوار",
+    "security": "الجلسات والأجهزة",
+    "securityHint": "كل جهاز مسجّل دخوله حاليًا إلى حسابك.",
+    "sessionCurrent": "هذا الجهاز",
+    "sessionLastActive": "آخر نشاط",
+    "sessionRevoke": "إلغاء",
+    "sessionRevokeAll": "تسجيل خروج الأجهزة الأخرى",
+    "sessionRevokeConfirmTitle": "هل تريد إلغاء هذه الجلسة؟",
+    "sessionRevokeConfirmBody": "سيتم تسجيل خروج الجهاز فورًا.",
+    "sessionRevokeAllConfirmTitle": "هل تريد تسجيل خروج كل الأجهزة الأخرى؟",
+    "sessionRevokeAllConfirmBody": "ستبقى مسجلاً الدخول على هذا الجهاز.",
+    "sessionRevoked": "تم إلغاء الجلسة.",
+    "sessionsRevokedAll": "تم إلغاء كل الجلسات الأخرى.",
+    "sessionsEmpty": "لا توجد جلسات أخرى نشطة."
   },
   "products": {
     "title": "المنتجات",

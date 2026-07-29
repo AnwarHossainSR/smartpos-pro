@@ -104,7 +104,20 @@
     "language": "ভাষা",
     "account": "অ্যাকাউন্ট",
     "name": "নাম",
-    "roles": "ভূমিকা"
+    "roles": "ভূমিকা",
+    "security": "সেশন ও ডিভাইস",
+    "securityHint": "আপনার অ্যাকাউন্টে বর্তমানে সাইন-ইন থাকা প্রতিটি ডিভাইস।",
+    "sessionCurrent": "এই ডিভাইস",
+    "sessionLastActive": "সর্বশেষ সক্রিয়",
+    "sessionRevoke": "বাতিল করুন",
+    "sessionRevokeAll": "অন্য ডিভাইস সাইন আউট করুন",
+    "sessionRevokeConfirmTitle": "এই সেশন বাতিল করবেন?",
+    "sessionRevokeConfirmBody": "ডিভাইসটি সাথে সাথে সাইন আউট হয়ে যাবে।",
+    "sessionRevokeAllConfirmTitle": "অন্য সব ডিভাইস সাইন আউট করবেন?",
+    "sessionRevokeAllConfirmBody": "আপনি এই ডিভাইসে সাইন-ইন থাকবেন।",
+    "sessionRevoked": "সেশন বাতিল হয়েছে।",
+    "sessionsRevokedAll": "অন্য সব সেশন বাতিল হয়েছে।",
+    "sessionsEmpty": "অন্য কোনো সক্রিয় সেশন নেই।"
   },
   "products": {
     "title": "পণ্য",

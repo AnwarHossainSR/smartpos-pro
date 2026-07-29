@@ -104,7 +104,20 @@
     "language": "Language",
     "account": "Account",
     "name": "Name",
-    "roles": "Roles"
+    "roles": "Roles",
+    "security": "Sessions & devices",
+    "securityHint": "Every device currently signed in to your account.",
+    "sessionCurrent": "This device",
+    "sessionLastActive": "Last active",
+    "sessionRevoke": "Revoke",
+    "sessionRevokeAll": "Sign out other devices",
+    "sessionRevokeConfirmTitle": "Revoke this session?",
+    "sessionRevokeConfirmBody": "The device will be signed out immediately.",
+    "sessionRevokeAllConfirmTitle": "Sign out every other device?",
+    "sessionRevokeAllConfirmBody": "You'll stay signed in on this device.",
+    "sessionRevoked": "Session revoked.",
+    "sessionsRevokedAll": "All other sessions revoked.",
+    "sessionsEmpty": "No other active sessions."
   },
   "products": {
     "title": "Products",

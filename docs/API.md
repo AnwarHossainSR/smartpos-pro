@@ -50,13 +50,30 @@ Creates a new business (tenant + business + branch + warehouse + owner) and retu
 ```json
 { "email": "jane@example.com", "password": "password123", "device_name": "web" }
 ```
-`200` → `{ "user": { ... }, "token": "..." }` · `422` on bad credentials.
+`200` → `{ "user": { ... }, "token": "..." }` · `422` on bad credentials · `403` with
+`{ "code": "tenant_suspended" }` for a suspended tenant.
+
+Tokens expire after `SANCTUM_TOKEN_EXPIRATION` minutes (default 14 days; expired tokens are
+swept daily by `sanctum:prune-expired`) and are issued with **abilities scoped to the user's
+current permissions** (`['*']` only for the owner/super-admin) rather than a blanket
+wildcard.
 
 ### `GET /auth/me`
 Returns the current user with `roles` and resolved `permissions`.
 
 ### `POST /auth/logout`
 Revokes the current access token.
+
+### `GET /auth/sessions`
+Lists every active device/session (personal access token) for the current user: `name`
+(device name at login), `ip_address`, `last_used_at`, `created_at`, `expires_at`, and
+`current` (whether it's the token making this request).
+
+### `DELETE /auth/sessions/{tokenId}`
+Revokes one session. `404` if the token doesn't belong to the current user.
+
+### `POST /auth/sessions/revoke-all`
+Revokes every session **except** the one making the request.
 
 ## Dashboard
 
