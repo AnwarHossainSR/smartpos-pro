@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, FileText } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -357,9 +357,15 @@ export default function POSPage() {
                   key={p.id}
                   onClick={() => addToCart(p)}
                   disabled={(p.stock ?? 0) <= 0}
-                  className="group flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start transition hover:border-[var(--primary)] hover:shadow-sm disabled:opacity-50"
+                  className={cn(
+                    "group flex cursor-pointer flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start",
+                    "transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+                    "enabled:hover:-translate-y-0.5 enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
+                    "enabled:active:translate-y-0 enabled:active:scale-[0.98]",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
                 >
-                  <p className="line-clamp-2 text-sm font-medium">{p.name}</p>
+                  <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
                   {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
                   <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
                   <p className="text-xs text-[var(--muted)]">Stock: {p.stock ?? 0}</p>
@@ -386,7 +392,7 @@ export default function POSPage() {
             )}
           </div>
           {cart.length > 0 && (
-            <button onClick={() => setCart([])} className="text-xs text-[var(--muted)] hover:text-[var(--color-danger)]">
+            <button onClick={() => setCart([])} className="cursor-pointer text-xs text-[var(--muted)] transition-colors hover:text-[var(--color-danger)]">
               Clear
             </button>
           )}
@@ -403,7 +409,7 @@ export default function POSPage() {
               onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); }}
             />
             {customerId && (
-              <button className="absolute end-2.5 top-1/2 -translate-y-1/2" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
+              <button className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
                 <X className="h-3.5 w-3.5 text-[var(--muted)]" />
               </button>
             )}
@@ -414,7 +420,7 @@ export default function POSPage() {
                 <button
                   key={c.id}
                   onClick={() => { setCustomerId(c.id); setCustomerSearch(""); }}
-                  className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
+                  className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
                 >
                   {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
                 </button>
@@ -431,10 +437,13 @@ export default function POSPage() {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.product.id} className="rounded-[var(--radius)] border border-[var(--border)] p-2.5">
+              <div
+                key={item.product.id}
+                className="rounded-[var(--radius)] border border-[var(--border)] p-2.5 transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <p className="flex-1 text-sm font-medium leading-tight">{item.product.name}</p>
-                  <button onClick={() => removeItem(item.product.id)}>
+                  <button onClick={() => removeItem(item.product.id)} className="cursor-pointer">
                     <X className="h-3.5 w-3.5 text-[var(--muted)] hover:text-[var(--color-danger)]" />
                   </button>
                 </div>
