@@ -17,7 +17,10 @@ _Last updated: 2026-07-29_
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
-| **Total** | **74** | **0** | **0** | **74** |
+| 6 · Printable documents | 1 | 0 | 0 | 1 |
+| 7 · Security & money integrity | 0 | 0 | 13 | 13 |
+| 8 · Product depth | 0 | 0 | 11 | 11 |
+| **Total** | **75** | **0** | **24** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -125,3 +128,44 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
 | T75 | Invoice & cash-register payment-slip PDFs | ✅ | | barryvdh/laravel-dompdf; `pdf.invoice`/`pdf.cash-slip` Blade templates; `GET sales/{sale}/invoice`, `GET cash-register-sessions/{session}/slip` (`?download=1`); wired into POS receipt, sales list, cash-register page. Also fixed the cash-register frontend, which was calling endpoints/fields that didn't match the backend at all (`opening_balance` vs `opening_cash`, wrong close/movement URLs) — added the missing `GET cash-registers/{id}/current-session` endpoint the frontend already expected. Verified end-to-end with Playwright against the running app (8 new/updated backend feature tests, all green). |
+
+## Phase 7 — Security & money integrity
+
+Plan: [`NEXT_PHASE_PLAN.md`](NEXT_PHASE_PLAN.md) — each task lists the review finding it
+closes. Suggested order: T76 → T77 → T78 → T83 → T81 → T82 → T86 → T80 → T79 → T84 → T85 →
+T87 → T88.
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T76 | Server-side pricing + permission-gated overrides | ⬜ | | **Critical** — `SaleService` accepts client `unit_price`; uncapped discount |
+| T77 | Coupon enforcement inside the sale transaction | ⬜ | | **Critical** — `used_count` never incremented; limits unenforced at checkout |
+| T78 | Audit trail — writer, API, UI | ⬜ | | **High** — `audit_logs` table has zero writes |
+| T79 | Impersonation hardening | ⬜ | | **High** — 24h full-owner token, no reason, no log, no revoke |
+| T80 | Token lifecycle: expiry, abilities, sessions | ⬜ | | **High** — `sanctum.expiration = null`, `*` abilities, token in localStorage |
+| T81 | Tenant suspension enforcement + token revocation | ⬜ | | **High** — suspended tenants keep full API access |
+| T82 | API rate limiting | ⬜ | | **High** — `throttleApi()` never called; only login/register throttled |
+| T83 | Role-escalation guard in user management | ⬜ | | **Critical** — `users.update` holder can self-assign `owner` |
+| T84 | Password reset + email verification | ⬜ | | **High** — neither exists; invited users get an undelivered password |
+| T85 | Two-factor auth (TOTP) + login lockout | ⬜ | | **High** — no 2FA, no per-account lockout |
+| T86 | Query & config hardening | ⬜ | | Medium — sort whitelist, `$fillable`, CORS, idempotency key binding |
+| T87 | Tenant scope fail-closed + job tenant binding | ⬜ | | Medium — `TenantScope` no-ops when no tenant is bound |
+| T88 | CI security gates | ⬜ | | Medium — no dependency audit; PHPStan advisory; `web/` never built in CI |
+
+## Phase 8 — Product depth
+
+Detail in [`NEXT_PHASE_PLAN.md`](NEXT_PHASE_PLAN.md). T89–T91 unlock revenue; T92–T99 are
+vertical depth — pick a lane rather than building all of them.
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T89 | Manager approval workflow at POS | ⬜ | | Manager PIN for the actions gated in T76 |
+| T90 | Security settings page | ⬜ | | One surface for T80/T84/T85 |
+| T91 | Subscription billing gateway | ⬜ | | Plans/Subscriptions exist but nothing can charge a card |
+| T92 | Stocktake / cycle counting | ⬜ | | Shrinkage is currently invisible |
+| T93 | Reorder suggestions → draft POs | ⬜ | | All inputs already exist; loop not closed |
+| T94 | Accounts payable & receivable aging | ⬜ | | Supplier bills + payments missing |
+| T95 | Hardware integration | ⬜ | | ESC/POS, cash drawer, scale, label printing |
+| T96 | Tax compliance profiles | ⬜ | | NBR / GST / EU VAT |
+| T97 | Restaurant mode | ⬜ | | Tables, KOT, modifiers, split bills |
+| T98 | Offline sync conflict resolution | ⬜ | | Server side of T60's offline queue |
+| T99 | AI assist | ⬜ | | Forecasting, NL reports, receipt OCR |
