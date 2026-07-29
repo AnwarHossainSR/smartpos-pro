@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales;
 
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
@@ -29,7 +30,7 @@ class SaleService
     /**
      * @param  array{
      *   branch_id:int, warehouse_id:int, customer_id?:int|null, status?:string,
-     *   note?:string|null, discount_amount?:float, shipping_amount?:float,
+     *   note?:string|null, discount_amount?:float, shipping_amount?:float, coupon_code?:string|null,
      *   items: array<int, array{product_id:int, quantity:float, unit_price?:float, variant_id?:int|null, discount_amount?:float}>,
      *   payments?: array<int, array{method:string, amount:float, reference?:string|null}>
      * }  $payload
@@ -61,7 +62,14 @@ class SaleService
                 $overridden = true;
             }
 
-            $total = round($subtotal + $taxTotal + $shipping - $discount, 2);
+            $coupon = null;
+            $couponDiscount = 0.0;
+
+            if (! empty($payload['coupon_code'])) {
+                [$coupon, $couponDiscount] = $this->redeemCoupon($payload['coupon_code'], round($subtotal, 2));
+            }
+
+            $total = max(0, round($subtotal + $taxTotal + $shipping - $discount - $couponDiscount, 2));
 
             $payments = $payload['payments'] ?? [];
             $paid = round((float) array_sum(array_column($payments, 'amount')), 2);
@@ -74,11 +82,13 @@ class SaleService
                 'warehouse_id' => $payload['warehouse_id'],
                 'customer_id' => $payload['customer_id'] ?? null,
                 'user_id' => $cashier->id,
+                'coupon_id' => $coupon?->id,
                 'invoice_number' => 'PENDING-'.uniqid(),
                 'status' => $status,
                 'payment_status' => $due <= 0 ? 'paid' : ($paid > 0 ? 'partial' : 'due'),
                 'subtotal' => round($subtotal, 2),
                 'discount_amount' => $discount,
+                'coupon_discount' => round($couponDiscount, 2),
                 'tax_amount' => round($taxTotal, 2),
                 'shipping_amount' => $shipping,
                 'total' => $total,
@@ -132,8 +142,34 @@ class SaleService
                 ], $cashier);
             }
 
-            return $sale->load('items', 'payments', 'customer');
+            return $sale->load('items', 'payments', 'customer', 'coupon');
         });
+    }
+
+    /**
+     * Re-validates the coupon inside the checkout transaction and atomically
+     * consumes one redemption. Row-locked so two concurrent checkouts against
+     * a usage_limit-1 coupon can never both succeed.
+     *
+     * @return array{0: Coupon, 1: float}
+     */
+    protected function redeemCoupon(string $code, float $subtotal): array
+    {
+        $coupon = Coupon::where('code', strtoupper($code))->lockForUpdate()->first();
+
+        if (! $coupon) {
+            throw ValidationException::withMessages(['coupon_code' => ['Coupon not found.']]);
+        }
+
+        $result = $coupon->evaluate($subtotal);
+
+        if (! $result['valid']) {
+            throw ValidationException::withMessages(['coupon_code' => [$result['reason']]]);
+        }
+
+        $coupon->increment('used_count');
+
+        return [$coupon, (float) $result['discount']];
     }
 
     /** Renders a sale as a printable/downloadable invoice PDF. */

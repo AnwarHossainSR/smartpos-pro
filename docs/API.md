@@ -107,7 +107,12 @@ client-supplied `unit_price` (that differs from the catalog price) or a `discoun
 (line- or sale-level) is only honoured when the cashier holds `pos.price_override` /
 `pos.discount` respectively — otherwise the request `403`s and no sale is created. An
 honoured override writes an `audit_logs` row (`sale.price_override`). Sale-level
-`discount_amount` is also capped at the sale subtotal (`422` if it isn't).
+`discount_amount` is also capped at the sale subtotal (`422` if it isn't). An optional
+`coupon_code` is re-validated and redeemed server-side **inside the same transaction**
+(active, date window, min-spend, `usage_limit`) — the discount is computed from the coupon,
+never trusted from the client, and `used_count` is incremented under a row lock so a coupon
+can never be over-redeemed by concurrent checkouts. `POST coupons/validate` remains
+available as a pre-checkout preview only.
 
 ```json
 {
@@ -116,6 +121,7 @@ honoured override writes an `audit_logs` row (`sale.price_override`). Sale-level
   "customer_id": null,
   "discount_amount": 0,
   "shipping_amount": 0,
+  "coupon_code": "SAVE10",
   "items": [
     { "product_id": 1, "quantity": 2, "unit_price": 8, "discount_amount": 0 }
   ],
@@ -124,10 +130,12 @@ honoured override writes an `audit_logs` row (`sale.price_override`). Sale-level
   ]
 }
 ```
-`201` → the created sale (`invoice_number`, totals, items, payments, `payment_status`).
+`201` → the created sale (`invoice_number`, totals, `coupon_code`, `coupon_discount`, items,
+payments, `payment_status`).
 `403` when `unit_price`/`discount_amount` is overridden without the required permission.
 `422` with a `discount_amount` validation error when the sale-level discount exceeds the
-subtotal, or with an `error` object when a line has insufficient stock:
+subtotal, a `coupon_code` error when the coupon is invalid/expired/exhausted, or with an
+`error` object when a line has insufficient stock:
 ```json
 { "message": "One or more items do not have enough stock.",
   "error": { "product_id": 1, "warehouse_id": 1, "available": 2, "requested": 5 } }

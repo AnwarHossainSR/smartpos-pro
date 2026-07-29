@@ -14,8 +14,8 @@ class Sale extends Model
 
     protected $fillable = [
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',
-        'invoice_number', 'status', 'payment_status', 'subtotal', 'discount_amount',
-        'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'change_amount',
+        'coupon_id', 'invoice_number', 'status', 'payment_status', 'subtotal', 'discount_amount',
+        'coupon_discount', 'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'change_amount',
         'due_amount', 'note', 'sold_at',
     ];
 
@@ -24,6 +24,7 @@ class Sale extends Model
         return [
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'coupon_discount' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'shipping_amount' => 'decimal:2',
             'total' => 'decimal:2',
@@ -47,6 +48,11 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function cashier(): BelongsTo
