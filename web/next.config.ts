@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // Default bottom-left puts the dev overlay on top of the sidebar's own controls.
+  devIndicators: {
+    position: "bottom-right",
+  },
 };
 
 export default nextConfig;

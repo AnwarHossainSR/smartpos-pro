@@ -191,6 +191,21 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
+/* Hairline scrollbar that only paints its thumb while the element is hovered. The track keeps
+   its width at all times (transparent thumb rather than `scrollbar-width: none`) so revealing it
+   never reflows the content underneath. */
+.scrollbar-on-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-on-hover:hover {
+  scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+}
+.scrollbar-on-hover::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-on-hover::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-on-hover::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.22); }
+
 /* ---- Landing page: thermal-receipt hero ----
    The receipt is the signature device; these rules only apply inside it. */
 
