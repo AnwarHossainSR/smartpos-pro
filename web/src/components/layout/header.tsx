@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Languages } from "lucide-react";
+import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
@@ -113,7 +113,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               onClick={() => setLocaleMenuOpen((v) => !v)}
               title={t("header.language")}
             >
-              <Languages className="h-4 w-4" />
+              <Globe className="h-4 w-4" />
               <span className="sr-only">{locale}</span>
             </Button>
             {localeMenuOpen && (

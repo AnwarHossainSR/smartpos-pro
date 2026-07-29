@@ -14,23 +14,29 @@ function activeLocale(): string {
   return useLocaleStore.getState().locale;
 }
 
+/** Locale-aware grouping/decimal separators, but always Latin (0-9) digits — some locales
+ *  (bn, ar, …) default to native digit glyphs, which we don't want here. */
+function numericLocale(): string {
+  return `${activeLocale()}-u-nu-latn`;
+}
+
 /** `currency` overrides the tenant default — pass it explicitly for a sale/purchase that was
  *  recorded in a different currency than the tenant's current setting. */
 export function formatCurrency(value: number, currency?: string) {
   const cur = currency ?? useBusinessStore.getState().currency;
-  return new Intl.NumberFormat(activeLocale(), { style: "currency", currency: cur }).format(value ?? 0);
+  return new Intl.NumberFormat(numericLocale(), { style: "currency", currency: cur }).format(value ?? 0);
 }
 
 export function formatNumber(value: number) {
-  return new Intl.NumberFormat(activeLocale()).format(value ?? 0);
+  return new Intl.NumberFormat(numericLocale()).format(value ?? 0);
 }
 
 export function formatDate(value: string | number | Date) {
-  return new Intl.DateTimeFormat(activeLocale(), { dateStyle: "medium" }).format(new Date(value));
+  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium" }).format(new Date(value));
 }
 
 export function formatDateTime(value: string | number | Date) {
-  return new Intl.DateTimeFormat(activeLocale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 /** Client-side CSV export — no backend endpoint required for a plain list dump. */

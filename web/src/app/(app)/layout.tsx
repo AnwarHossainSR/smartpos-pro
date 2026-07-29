@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
+import { useLocaleStore } from "@/stores/locale";
+import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
 import { navKeyForPathname } from "@/lib/nav";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -20,6 +22,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const token = useAuth((s) => s.token);
   const hydrated = useAuth((s) => s.hydrated);
   const setUser = useAuth((s) => s.setUser);
+  const locale = useLocaleStore((s) => s.locale);
+  const currency = useBusinessStore((s) => s.currency);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
@@ -67,7 +71,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+          {/* Re-mounting on locale/currency change guarantees every formatCurrency()/formatNumber()
+              call in the page tree picks up the new value — those helpers read the stores
+              imperatively (via getState()), so pages that don't otherwise subscribe to either
+              store would keep rendering stale numbers until an unrelated re-render happened. */}
+          <main key={`${locale}:${currency}`} className="flex-1 overflow-auto p-4 md:p-6">
+            {children}
+          </main>
         </div>
       </div>
     </>
