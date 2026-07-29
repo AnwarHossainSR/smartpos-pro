@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, exportToCsv } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
@@ -218,6 +218,7 @@ export default function ProductsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
   const { data, isLoading } = useQuery<Paginated<Product>>({
     queryKey: ["products", search, page],
@@ -245,94 +246,93 @@ export default function ProductsPage() {
 
   const lastPage = data?.meta?.last_page ?? 1;
 
+  const columns: DataTableColumn<Product>[] = [
+    { key: "name", header: "Name", render: (p) => <span className="font-medium">{p.name}</span> },
+    {
+      key: "sku",
+      header: "SKU",
+      render: (p) => <span className="font-mono text-xs text-[var(--muted)]">{p.sku ?? "—"}</span>,
+    },
+    {
+      key: "category",
+      header: "Category",
+      render: (p) => p.category?.name ?? <span className="text-[var(--muted)]">—</span>,
+    },
+    { key: "cost", header: "Cost", align: "right", render: (p) => formatCurrency(p.purchase_price) },
+    {
+      key: "price",
+      header: "Price",
+      align: "right",
+      className: "font-medium",
+      render: (p) => formatCurrency(p.selling_price),
+    },
+    {
+      key: "stock",
+      header: "Stock",
+      align: "right",
+      render: (p) => (
+        <span className={(p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : ""}>{p.stock ?? 0}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (p) => <Badge tone={p.is_active ? "success" : "default"}>{p.is_active ? "active" : "inactive"}</Badge>,
+    },
+  ];
+
+  function handleExport() {
+    const rows = (data?.data ?? []).map((p) => ({
+      name: p.name,
+      sku: p.sku ?? "",
+      category: p.category?.name ?? "",
+      brand: p.brand?.name ?? "",
+      cost_price: p.purchase_price,
+      selling_price: p.selling_price,
+      stock: p.stock ?? 0,
+      status: p.is_active ? "active" : "inactive",
+    }));
+    exportToCsv("products.csv", rows);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Products</h1>
-        {can("products.create") && (
-          <Button onClick={openCreate} size="sm">
-            <Plus className="h-4 w-4" />
-            Add product
-          </Button>
-        )}
-      </div>
+      <h1 className="text-xl font-semibold">Products</h1>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
-        <Input
-          className="pl-9"
-          placeholder="Search products…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-      </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="Search products…"
+        onExport={handleExport}
+        addLabel={can("products.create") ? "Add product" : undefined}
+        onAdd={can("products.create") ? openCreate : undefined}
+      />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-20" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 8 }).map((__, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center text-[var(--muted)]">
-                  {search ? "No products match your search." : "No products yet. Add your first product."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--muted)]">{p.sku ?? "—"}</TableCell>
-                  <TableCell>{p.category?.name ?? <span className="text-[var(--muted)]">—</span>}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.purchase_price)}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(p.selling_price)}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={(p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : ""}>
-                      {p.stock ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge tone={p.is_active ? "success" : "default"}>
-                      {p.is_active ? "active" : "inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {can("products.update") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {can("products.delete") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          rowKey={(p) => p.id}
+          loading={isLoading}
+          selectable
+          selectedKeys={selected}
+          onSelectionChange={setSelected}
+          emptyMessage={search ? "No products match your search." : "No products yet. Add your first product."}
+          actions={(p) => (
+            <>
+              {can("products.update") && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {can("products.delete") && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </>
+          )}
+        />
 
         {data?.meta && data.meta.last_page > 1 && (
           <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
