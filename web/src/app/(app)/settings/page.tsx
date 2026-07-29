@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { PalettePicker } from "@/components/ui/palette-picker";
 
 interface BusinessSettings {
   name: string;
@@ -118,6 +119,16 @@ export default function SettingsPage() {
             </div>
             <Button type="submit" disabled={mutation.isPending || !isDirty} className="w-full">{mutation.isPending ? "Saving…" : "Save settings"}</Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Appearance</CardTitle></CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-[var(--muted)]">
+            Pick an accent palette. Light/dark mode is set from the toggle in the header.
+          </p>
+          <PalettePicker />
         </CardContent>
       </Card>
 

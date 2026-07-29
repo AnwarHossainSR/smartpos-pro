@@ -7,8 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
+import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
+import { PalettePicker } from "@/components/ui/palette-picker";
 
 interface NotifResponse {
   data: unknown[];
@@ -26,10 +28,12 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
-  const { theme, setTheme } = useThemeStore();
+  const { theme, setTheme, palette } = useThemeStore();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [swatchMenuOpen, setSwatchMenuOpen] = useState(false);
   const themeRef = useRef<HTMLDivElement>(null);
+  const swatchRef = useRef<HTMLDivElement>(null);
 
   const { data: notifData } = useQuery<NotifResponse>({
     queryKey: ["notifications"],
@@ -60,6 +64,17 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     if (themeMenuOpen) document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, [themeMenuOpen]);
+
+  // Close palette swatch menu on outside click
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (swatchRef.current && !swatchRef.current.contains(e.target as Node)) {
+        setSwatchMenuOpen(false);
+      }
+    }
+    if (swatchMenuOpen) document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [swatchMenuOpen]);
 
   async function onLogout() {
     try { await api("/auth/logout", { method: "POST" }); } catch {}
@@ -103,6 +118,26 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               </span>
             )}
           </Button>
+
+          {/* Palette swatch */}
+          <div ref={swatchRef} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSwatchMenuOpen((v) => !v)}
+              title="Color palette"
+            >
+              <span
+                className="h-4 w-4 rounded-full ring-1 ring-[var(--border)]"
+                style={{ backgroundColor: PALETTES.find((p) => p.id === palette)?.swatch }}
+              />
+            </Button>
+            {swatchMenuOpen && (
+              <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                <PalettePicker compact />
+              </div>
+            )}
+          </div>
 
           {/* Theme toggle */}
           <div ref={themeRef} className="relative">

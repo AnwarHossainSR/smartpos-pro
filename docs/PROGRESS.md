@@ -109,8 +109,8 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
-| T65 | Token architecture + 6 palettes (light+dark) | ⬜ | | |
-| T66 | Theme store + palette switcher UI | ⬜ | | |
+| T65 | Token architecture + 6 palettes (light+dark) | ✅ | | Semantic tokens in globals.css, data-theme driven, AA-checked |
+| T66 | Theme store + palette switcher UI | ✅ | | palette in theme store; header swatch + Settings→Appearance grid; no-flash inline script in layout head |
 | T67 | Sidebar + shell restyle | ⬜ | | |
 | T68 | Table + list-page pattern upgrade | ⬜ | | |
 | T69 | i18n foundation | ⬜ | | |
