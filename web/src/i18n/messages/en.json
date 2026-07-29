@@ -34,6 +34,10 @@
     "notifications": "Notifications",
     "settings": "Settings"
   },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
   "navGroups": {
     "overview": "Overview",
     "sales": "Sales",
@@ -71,7 +75,12 @@
     "creatingAccount": "Creating account…",
     "newBusiness": "New business?",
     "createAnAccount": "Create an account",
-    "alreadyHaveAccount": "Already have an account?"
+    "alreadyHaveAccount": "Already have an account?",
+    "marketingTitle": "Run your whole store from one counter.",
+    "marketingBody": "Sales, inventory, purchases and accounting — synced in real time across every till.",
+    "feature1": "Multi-tenant, multi-till ready",
+    "feature2": "Live stock & accounting ledgers",
+    "feature3": "Role-based access for every teammate"
   },
   "settings": {
     "title": "Settings",

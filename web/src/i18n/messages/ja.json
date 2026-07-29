@@ -34,6 +34,10 @@
     "notifications": "通知",
     "settings": "設定"
   },
+  "sidebar": {
+    "collapse": "サイドバーを折りたたむ",
+    "expand": "サイドバーを展開する"
+  },
   "navGroups": {
     "overview": "概要",
     "sales": "販売",
@@ -71,7 +75,12 @@
     "creatingAccount": "アカウントを作成中…",
     "newBusiness": "新しい店舗ですか?",
     "createAnAccount": "アカウントを作成",
-    "alreadyHaveAccount": "すでにアカウントをお持ちですか?"
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか?",
+    "marketingTitle": "ひとつのカウンターで店舗全体を管理。",
+    "marketingBody": "販売、在庫、仕入れ、会計をすべてのレジでリアルタイムに同期。",
+    "feature1": "マルチテナント・マルチレジに対応",
+    "feature2": "リアルタイムの在庫・会計台帳",
+    "feature3": "メンバーごとのロールベースアクセス"
   },
   "settings": {
     "title": "設定",

@@ -34,6 +34,10 @@
     "notifications": "Benachrichtigungen",
     "settings": "Einstellungen"
   },
+  "sidebar": {
+    "collapse": "Seitenleiste einklappen",
+    "expand": "Seitenleiste ausklappen"
+  },
   "navGroups": {
     "overview": "Übersicht",
     "sales": "Verkauf",
@@ -71,7 +75,12 @@
     "creatingAccount": "Konto wird erstellt…",
     "newBusiness": "Neues Unternehmen?",
     "createAnAccount": "Konto erstellen",
-    "alreadyHaveAccount": "Bereits ein Konto?"
+    "alreadyHaveAccount": "Bereits ein Konto?",
+    "marketingTitle": "Führen Sie Ihr gesamtes Geschäft von einer Kasse aus.",
+    "marketingBody": "Verkäufe, Bestand, Einkauf und Buchhaltung — in Echtzeit über jede Kasse synchronisiert.",
+    "feature1": "Bereit für mehrere Mandanten und Kassen",
+    "feature2": "Live-Bestands- und Buchhaltungsjournale",
+    "feature3": "Rollenbasierter Zugriff für jedes Teammitglied"
   },
   "settings": {
     "title": "Einstellungen",
