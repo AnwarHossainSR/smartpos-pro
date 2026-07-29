@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
@@ -47,6 +48,17 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['This account is suspended.'],
             ]);
+        }
+
+        if (! ($user->is_super_admin ?? false) && $user->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+
+            if (! $tenant || ! in_array($tenant->status, ['trialing', 'active'], true)) {
+                abort(response()->json([
+                    'message' => 'This account has been suspended.',
+                    'code' => 'tenant_suspended',
+                ], 403));
+            }
         }
 
         $user->forceFill(['last_login_at' => now()])->save();

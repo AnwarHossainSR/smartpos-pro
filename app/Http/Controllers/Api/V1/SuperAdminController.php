@@ -7,8 +7,10 @@ use App\Models\Sale;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Super-admin endpoints: tenant management, billing metrics, impersonation.
@@ -16,6 +18,8 @@ use Illuminate\Http\Request;
  */
 class SuperAdminController extends Controller
 {
+    public function __construct(protected AuditLogService $audit) {}
+
     // ------------------------------------------------------------------
     // T31 — Tenant management
     // ------------------------------------------------------------------
@@ -48,16 +52,23 @@ class SuperAdminController extends Controller
         ])]);
     }
 
-    public function suspendTenant(Tenant $tenant): JsonResponse
+    public function suspendTenant(Request $request, Tenant $tenant): JsonResponse
     {
         $tenant->update(['status' => 'suspended']);
+
+        $userIds = User::withoutTenancy()->where('tenant_id', $tenant->id)->pluck('id');
+        PersonalAccessToken::where('tokenable_type', User::class)->whereIn('tokenable_id', $userIds)->delete();
+
+        $this->audit->log('tenant.suspended', $tenant, null, ['tenant_id' => $tenant->id], $request->user(), $tenant->id);
 
         return response()->json(['data' => $tenant]);
     }
 
-    public function activateTenant(Tenant $tenant): JsonResponse
+    public function activateTenant(Request $request, Tenant $tenant): JsonResponse
     {
         $tenant->update(['status' => 'active']);
+
+        $this->audit->log('tenant.activated', $tenant, null, ['tenant_id' => $tenant->id], $request->user(), $tenant->id);
 
         return response()->json(['data' => $tenant]);
     }

@@ -398,8 +398,8 @@ Base path: `/api/v1/super` · Requires: `is_super_admin = true` on the authentic
 | --- | --- |
 | `GET /super/tenants` | list all tenants with user/business counts |
 | `GET /super/tenants/{id}` | detail + subscription + live usage |
-| `POST /super/tenants/{id}/suspend` | set status = suspended |
-| `POST /super/tenants/{id}/activate` | set status = active |
+| `POST /super/tenants/{id}/suspend` | set status = suspended, deletes every live token for the tenant's users, audited |
+| `POST /super/tenants/{id}/activate` | set status = active, audited |
 | `DELETE /super/tenants/{id}` | soft-delete tenant |
 | `GET /super/metrics/revenue` | MRR, plan distribution, recent subscriptions |
 | `POST /super/tenants/{id}/impersonate` | issues a 24h scoped token for the tenant's owner |
@@ -409,6 +409,11 @@ Base path: `/api/v1/super` · Requires: `is_super_admin = true` on the authentic
 1. `POST /super/tenants/42/impersonate` → `{ token, expires_at }`
 2. Use the returned token as `Authorization: Bearer <token>` for subsequent requests
 3. `POST /super/impersonation/stop` to revoke when done
+
+**Tenant suspension:** every tenant-scoped route (guarded by the `ensure.tenant` middleware)
+403s with `{ "code": "tenant_suspended" }` once a tenant's status leaves `trialing`/`active`,
+and `POST /auth/login` refuses the same tenant's users with the same `403`/code. The
+frontend shows a full-screen "account suspended" block on that code.
 
 ## Real-time events (T34 — Laravel Reverb)
 
