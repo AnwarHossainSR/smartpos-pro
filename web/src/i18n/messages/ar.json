@@ -34,6 +34,16 @@
     "notifications": "الإشعارات",
     "settings": "الإعدادات"
   },
+  "navGroups": {
+    "overview": "نظرة عامة",
+    "sales": "المبيعات",
+    "catalog": "الكتالوج",
+    "purchasing": "المشتريات",
+    "people": "الأشخاص",
+    "finance": "المالية",
+    "insights": "التحليلات",
+    "account": "الحساب"
+  },
   "header": {
     "searchPlaceholder": "بحث…",
     "notifications": "الإشعارات",

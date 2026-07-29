@@ -34,6 +34,16 @@
     "notifications": "Notifications",
     "settings": "Settings"
   },
+  "navGroups": {
+    "overview": "Overview",
+    "sales": "Sales",
+    "catalog": "Catalog",
+    "purchasing": "Purchasing",
+    "people": "People",
+    "finance": "Finance",
+    "insights": "Insights",
+    "account": "Account"
+  },
   "header": {
     "searchPlaceholder": "Search…",
     "notifications": "Notifications",

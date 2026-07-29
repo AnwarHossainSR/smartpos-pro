@@ -44,7 +44,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently --prefix \"[{time} {name}]\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgYellow.bold,bgGreen.bold\" --names \"api   ,queue ,vite  ,web   \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun run dev\" \"bun --cwd=web run dev\""
+            "npx concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgYellow.bold.black,bgGreen.bold.black\" --names \"api  ,queue,vite ,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun run dev\" \"bun --cwd=web run dev\""
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",

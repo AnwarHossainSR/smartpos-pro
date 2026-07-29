@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_GROUPS } from "@/lib/nav";
 import { useTranslation } from "@/i18n/provider";
 
 interface SidebarProps {
@@ -31,26 +31,33 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         )}
       </div>
-      <nav className="flex-1 overflow-y-auto space-y-0.5 px-3 py-4">
-        {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)]"
-                  : "text-[var(--sidebar-muted)] hover:bg-white/10 hover:text-[var(--sidebar-fg)]",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {t(`nav.${key}`)}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto space-y-4 px-3 py-4">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.key} className="space-y-0.5">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-muted)]/70">
+              {t(`navGroups.${group.key}`)}
+            </p>
+            {group.items.map(({ href, key, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + "/");
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)]"
+                      : "text-[var(--sidebar-muted)] hover:bg-white/10 hover:text-[var(--sidebar-fg)]",
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {t(`nav.${key}`)}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
     </div>
   );

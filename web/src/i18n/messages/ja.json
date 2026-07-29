@@ -34,6 +34,16 @@
     "notifications": "通知",
     "settings": "設定"
   },
+  "navGroups": {
+    "overview": "概要",
+    "sales": "販売",
+    "catalog": "カタログ",
+    "purchasing": "仕入",
+    "people": "人材",
+    "finance": "財務",
+    "insights": "分析",
+    "account": "アカウント"
+  },
   "header": {
     "searchPlaceholder": "検索…",
     "notifications": "通知",

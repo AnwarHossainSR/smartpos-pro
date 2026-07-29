@@ -34,6 +34,16 @@
     "notifications": "বিজ্ঞপ্তি",
     "settings": "সেটিংস"
   },
+  "navGroups": {
+    "overview": "ওভারভিউ",
+    "sales": "বিক্রয়",
+    "catalog": "ক্যাটালগ",
+    "purchasing": "ক্রয়",
+    "people": "মানুষ",
+    "finance": "অর্থ",
+    "insights": "ইনসাইট",
+    "account": "অ্যাকাউন্ট"
+  },
   "header": {
     "searchPlaceholder": "অনুসন্ধান করুন…",
     "notifications": "বিজ্ঞপ্তি",

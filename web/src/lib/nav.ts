@@ -10,27 +10,74 @@ export interface NavItem {
   icon: React.ElementType;
 }
 
-/** Single source of truth for app routes: Sidebar renders this list, AppLayout derives page
- *  titles from it, so the two never drift out of sync. */
-export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/pos", key: "pos", icon: ShoppingCart },
-  { href: "/products", key: "products", icon: Package },
-  { href: "/inventory", key: "inventory", icon: Boxes },
-  { href: "/sales", key: "sales", icon: Receipt },
-  { href: "/purchases", key: "purchases", icon: Truck },
-  { href: "/customers", key: "customers", icon: Users },
-  { href: "/suppliers", key: "suppliers", icon: Truck },
-  { href: "/expenses", key: "expenses", icon: Wallet },
-  { href: "/reports", key: "reports", icon: BarChart3 },
-  { href: "/accounting", key: "accounting", icon: BookOpen },
-  { href: "/cash-register", key: "cashRegister", icon: CreditCard },
-  { href: "/team", key: "team", icon: UserCog },
-  { href: "/loyalty", key: "loyalty", icon: Gift },
-  { href: "/subscription", key: "subscription", icon: Crown },
-  { href: "/notifications", key: "notifications", icon: Bell },
-  { href: "/settings", key: "settings", icon: Settings },
+export interface NavGroup {
+  /** i18n key under the `navGroups` namespace. */
+  key: string;
+  items: NavItem[];
+}
+
+/** Single source of truth for app routes, grouped for the sidebar. AppLayout derives page
+ *  titles from the flattened list, so titles and sidebar never drift out of sync. */
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    key: "overview",
+    items: [{ href: "/dashboard", key: "dashboard", icon: LayoutDashboard }],
+  },
+  {
+    key: "sales",
+    items: [
+      { href: "/pos", key: "pos", icon: ShoppingCart },
+      { href: "/sales", key: "sales", icon: Receipt },
+      { href: "/cash-register", key: "cashRegister", icon: CreditCard },
+    ],
+  },
+  {
+    key: "catalog",
+    items: [
+      { href: "/products", key: "products", icon: Package },
+      { href: "/inventory", key: "inventory", icon: Boxes },
+    ],
+  },
+  {
+    key: "purchasing",
+    items: [
+      { href: "/purchases", key: "purchases", icon: Truck },
+      { href: "/suppliers", key: "suppliers", icon: Truck },
+    ],
+  },
+  {
+    key: "people",
+    items: [
+      { href: "/customers", key: "customers", icon: Users },
+      { href: "/team", key: "team", icon: UserCog },
+    ],
+  },
+  {
+    key: "finance",
+    items: [
+      { href: "/expenses", key: "expenses", icon: Wallet },
+      { href: "/accounting", key: "accounting", icon: BookOpen },
+    ],
+  },
+  {
+    key: "insights",
+    items: [
+      { href: "/reports", key: "reports", icon: BarChart3 },
+      { href: "/loyalty", key: "loyalty", icon: Gift },
+    ],
+  },
+  {
+    key: "account",
+    items: [
+      { href: "/subscription", key: "subscription", icon: Crown },
+      { href: "/notifications", key: "notifications", icon: Bell },
+      { href: "/settings", key: "settings", icon: Settings },
+    ],
+  },
 ];
+
+/** Flattened route list, derived from NAV_GROUPS so both stay in sync. */
+export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Looks up the `nav.*` i18n key for the route a pathname belongs to. */
 export function navKeyForPathname(pathname: string): string | undefined {
