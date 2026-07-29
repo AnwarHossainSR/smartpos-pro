@@ -329,7 +329,7 @@ export default function POSPage() {
   });
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 overflow-hidden">
+    <div className="flex h-full gap-4 overflow-hidden">
       {/* Left: product search + grid */}
       <div className="flex flex-1 flex-col min-w-0 gap-3">
         <div className="relative">

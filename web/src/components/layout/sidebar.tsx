@@ -138,7 +138,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Desktop sidebar — flush to the viewport edge, full height, square corners. */}
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 bg-[var(--sidebar-bg)] transition-[width] duration-200 md:block",
+          "hidden h-full shrink-0 bg-[var(--sidebar-bg)] transition-[width] duration-200 md:block",
           collapsed ? "w-[76px]" : "w-64",
         )}
       >

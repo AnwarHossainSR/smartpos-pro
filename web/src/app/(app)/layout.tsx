@@ -67,15 +67,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ThemeSync />
-      <div className="flex min-h-screen">
+      {/* Fixed-height shell: the viewport itself never scrolls, so the sidebar and header stay put
+          and <main> is the only scroll container. Pages can then size against `h-full` instead of
+          re-deriving the header offset with calc(100vh - …). */}
+      <div className="flex h-dvh overflow-hidden">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
           {/* Re-mounting on locale/currency change guarantees every formatCurrency()/formatNumber()
               call in the page tree picks up the new value — those helpers read the stores
               imperatively (via getState()), so pages that don't otherwise subscribe to either
               store would keep rendering stale numbers until an unrelated re-render happened. */}
-          <main key={`${locale}:${currency}`} className="flex-1 overflow-auto p-4 md:p-6">
+          <main key={`${locale}:${currency}`} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
             {children}
           </main>
         </div>
