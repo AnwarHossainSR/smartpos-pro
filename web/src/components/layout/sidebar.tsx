@@ -2,32 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
-  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, X,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NAV_ITEMS } from "@/lib/nav";
 import { useTranslation } from "@/i18n/provider";
-
-const nav = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/pos", key: "pos", icon: ShoppingCart },
-  { href: "/products", key: "products", icon: Package },
-  { href: "/inventory", key: "inventory", icon: Boxes },
-  { href: "/sales", key: "sales", icon: Receipt },
-  { href: "/purchases", key: "purchases", icon: Truck },
-  { href: "/customers", key: "customers", icon: Users },
-  { href: "/suppliers", key: "suppliers", icon: Truck },
-  { href: "/expenses", key: "expenses", icon: Wallet },
-  { href: "/reports", key: "reports", icon: BarChart3 },
-  { href: "/accounting", key: "accounting", icon: BookOpen },
-  { href: "/cash-register", key: "cashRegister", icon: CreditCard },
-  { href: "/team", key: "team", icon: UserCog },
-  { href: "/loyalty", key: "loyalty", icon: Gift },
-  { href: "/subscription", key: "subscription", icon: Crown },
-  { href: "/notifications", key: "notifications", icon: Bell },
-  { href: "/settings", key: "settings", icon: Settings },
-] as const;
 
 interface SidebarProps {
   open?: boolean;
@@ -54,7 +32,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       </div>
       <nav className="flex-1 overflow-y-auto space-y-0.5 px-3 py-4">
-        {nav.map(({ href, key, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Eye, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, RotateCcw } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 import { api, ApiError, type Paginated } from "@/lib/api";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -249,18 +250,13 @@ export default function SalesPage() {
             )}
           </TableBody>
         </Table>
-        {data?.meta && data.meta.last_page > 1 && (
-          <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-4 w-4 rtl:scale-x-[-1]" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4 rtl:scale-x-[-1]" />
-              </Button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={data.meta.last_page}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+          />
         )}
       </div>
 

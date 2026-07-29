@@ -8,17 +8,14 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
 import { useLocaleStore } from "@/stores/locale";
+import { useClickOutside } from "@/lib/hooks";
 import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
 import { LocalePicker } from "@/components/ui/locale-picker";
 import { useTranslation } from "@/i18n/provider";
-
-interface NotifResponse {
-  data: unknown[];
-  unread_count: number;
-}
+import type { NotificationResponse } from "@/lib/notifications";
 
 const themeIcons: Record<Theme, React.ElementType> = { light: Sun, dark: Moon, system: Monitor };
 
@@ -42,9 +39,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const swatchRef = useRef<HTMLDivElement>(null);
   const localeRef = useRef<HTMLDivElement>(null);
 
-  const { data: notifData } = useQuery<NotifResponse>({
+  const { data: notifData } = useQuery<NotificationResponse>({
     queryKey: ["notifications"],
-    queryFn: () => api<NotifResponse>("/notifications?per_page=1"),
+    queryFn: () => api<NotificationResponse>("/notifications?per_page=1"),
     staleTime: 60_000,
   });
   const unreadCount = notifData?.unread_count ?? 0;
@@ -61,38 +58,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Close theme menu on outside click
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (themeRef.current && !themeRef.current.contains(e.target as Node)) {
-        setThemeMenuOpen(false);
-      }
-    }
-    if (themeMenuOpen) document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [themeMenuOpen]);
-
-  // Close palette swatch menu on outside click
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (swatchRef.current && !swatchRef.current.contains(e.target as Node)) {
-        setSwatchMenuOpen(false);
-      }
-    }
-    if (swatchMenuOpen) document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [swatchMenuOpen]);
-
-  // Close locale menu on outside click
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (localeRef.current && !localeRef.current.contains(e.target as Node)) {
-        setLocaleMenuOpen(false);
-      }
-    }
-    if (localeMenuOpen) document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [localeMenuOpen]);
+  useClickOutside(themeRef, () => setThemeMenuOpen(false), themeMenuOpen);
+  useClickOutside(swatchRef, () => setSwatchMenuOpen(false), swatchMenuOpen);
+  useClickOutside(localeRef, () => setLocaleMenuOpen(false), localeMenuOpen);
 
   async function onLogout() {
     try { await api("/auth/logout", { method: "POST" }); } catch {}

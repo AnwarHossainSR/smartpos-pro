@@ -5,32 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
-import { useBusinessStore } from "@/stores/business";
+import { useSyncBusinessCurrency } from "@/lib/hooks";
+import { navKeyForPathname } from "@/lib/nav";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
-
-const titleKeys: Record<string, string> = {
-  "/dashboard": "nav.dashboard",
-  "/pos": "nav.pos",
-  "/products": "nav.products",
-  "/inventory": "nav.inventory",
-  "/sales": "nav.sales",
-  "/purchases": "nav.purchases",
-  "/customers": "nav.customers",
-  "/suppliers": "nav.suppliers",
-  "/expenses": "nav.expenses",
-  "/reports": "nav.reports",
-  "/accounting": "nav.accounting",
-  "/cash-register": "nav.cashRegister",
-  "/team": "nav.team",
-  "/loyalty": "nav.loyalty",
-  "/subscription": "nav.subscription",
-  "/notifications": "nav.notifications",
-  "/settings": "nav.settings",
-};
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -66,18 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
 
-  // Tenant currency drives formatCurrency() everywhere; fetched once here (same query key
-  // as Settings -> Business info, so React Query shares one cached request) and mirrored
-  // into a store so the plain formatCurrency() helper can read it without a hook.
-  const { data: businessData } = useQuery({
-    queryKey: ["business-settings"],
-    queryFn: () => api<{ data: { currency: string } }>("/settings/business"),
-    enabled: !!token,
-  });
-  const setCurrency = useBusinessStore((s) => s.setCurrency);
-  useEffect(() => {
-    if (businessData?.data?.currency) setCurrency(businessData.data.currency);
-  }, [businessData, setCurrency]);
+  useSyncBusinessCurrency(!!token);
 
   if (!hydrated || !token) {
     return (
@@ -87,8 +57,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const titleKey = Object.entries(titleKeys).find(([href]) => pathname.startsWith(href))?.[1];
-  const title = titleKey ? t(titleKey) : "SmartPOS";
+  const navKey = navKeyForPathname(pathname);
+  const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
   return (
     <>
