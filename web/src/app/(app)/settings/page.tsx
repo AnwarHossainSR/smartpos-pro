@@ -73,82 +73,86 @@ export default function SettingsPage() {
   if (isLoading) return <div className="py-12 text-center text-[var(--muted)]">{t("common.loading")}</div>;
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-5xl space-y-5">
       <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
 
-      <Card>
-        <CardHeader><CardTitle>{t("settings.businessInfo")}</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-            <div><Label>{t("settings.businessName")} *</Label><Input {...register("name")} />{errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>{t("settings.email")}</Label><Input type="email" {...register("email")} /></div>
-              <div><Label>{t("settings.phone")}</Label><Input {...register("phone")} /></div>
-            </div>
-            <div><Label>{t("settings.address")}</Label><Input {...register("address")} /></div>
-            <div><Label>{t("settings.taxNumber")}</Label><Input {...register("tax_number")} /></div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>{t("settings.currency")}</Label>
-                <Select {...register("currency")}>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="BDT">BDT</option>
-                  <option value="INR">INR</option>
-                  <option value="SAR">SAR</option>
-                </Select>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>{t("settings.businessInfo")}</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+              <div><Label>{t("settings.businessName")} *</Label><Input {...register("name")} />{errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div><Label>{t("settings.email")}</Label><Input type="email" {...register("email")} /></div>
+                <div><Label>{t("settings.phone")}</Label><Input {...register("phone")} /></div>
               </div>
-              <div>
-                <Label>{t("settings.timezone")}</Label>
-                <Select {...register("timezone")}>
-                  <option value="UTC">UTC</option>
-                  <option value="America/New_York">America/New_York</option>
-                  <option value="America/Los_Angeles">America/Los_Angeles</option>
-                  <option value="Europe/London">Europe/London</option>
-                  <option value="Asia/Dhaka">Asia/Dhaka</option>
-                  <option value="Asia/Kolkata">Asia/Kolkata</option>
-                  <option value="Asia/Riyadh">Asia/Riyadh</option>
-                </Select>
+              <div><Label>{t("settings.address")}</Label><Input {...register("address")} /></div>
+              <div><Label>{t("settings.taxNumber")}</Label><Input {...register("tax_number")} /></div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <Label>{t("settings.currency")}</Label>
+                  <Select {...register("currency")}>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="BDT">BDT</option>
+                    <option value="INR">INR</option>
+                    <option value="SAR">SAR</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{t("settings.timezone")}</Label>
+                  <Select {...register("timezone")}>
+                    <option value="UTC">UTC</option>
+                    <option value="America/New_York">America/New_York</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles</option>
+                    <option value="Europe/London">Europe/London</option>
+                    <option value="Asia/Dhaka">Asia/Dhaka</option>
+                    <option value="Asia/Kolkata">Asia/Kolkata</option>
+                    <option value="Asia/Riyadh">Asia/Riyadh</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{t("settings.dateFormat")}</Label>
+                  <Select {...register("date_format")}>
+                    <option value="Y-m-d">YYYY-MM-DD</option>
+                    <option value="d/m/Y">DD/MM/YYYY</option>
+                    <option value="m/d/Y">MM/DD/YYYY</option>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label>{t("settings.dateFormat")}</Label>
-                <Select {...register("date_format")}>
-                  <option value="Y-m-d">YYYY-MM-DD</option>
-                  <option value="d/m/Y">DD/MM/YYYY</option>
-                  <option value="m/d/Y">MM/DD/YYYY</option>
-                </Select>
-              </div>
-            </div>
-            <Button type="submit" disabled={mutation.isPending || !isDirty} className="w-full">{mutation.isPending ? t("settings.saving") : t("settings.save")}</Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" disabled={mutation.isPending || !isDirty} className="w-full sm:w-auto">{mutation.isPending ? t("settings.saving") : t("settings.save")}</Button>
+            </form>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader><CardTitle>{t("settings.appearance")}</CardTitle></CardHeader>
-        <CardContent>
-          <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.appearanceHint")}</p>
-          <PalettePicker />
-        </CardContent>
-      </Card>
+        <div className="space-y-5">
+          <Card>
+            <CardHeader><CardTitle>{t("settings.appearance")}</CardTitle></CardHeader>
+            <CardContent>
+              <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.appearanceHint")}</p>
+              <PalettePicker compact />
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader><CardTitle>{t("settings.localization")}</CardTitle></CardHeader>
-        <CardContent>
-          <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.localizationHint")}</p>
-          <LocalePicker className="max-w-xs" />
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader><CardTitle>{t("settings.localization")}</CardTitle></CardHeader>
+            <CardContent>
+              <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.localizationHint")}</p>
+              <LocalePicker />
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader><CardTitle>{t("settings.account")}</CardTitle></CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-[var(--muted)]">{t("settings.name")}</span><span>{user?.name}</span></div>
-          <div className="flex justify-between"><span className="text-[var(--muted)]">{t("settings.email")}</span><span>{user?.email}</span></div>
-          <div className="flex justify-between"><span className="text-[var(--muted)]">{t("settings.roles")}</span><span>{user?.roles?.join(", ") ?? "—"}</span></div>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader><CardTitle>{t("settings.account")}</CardTitle></CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.name")}</span><span className="truncate text-right">{user?.name}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.email")}</span><span className="truncate text-right">{user?.email}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.roles")}</span><span className="truncate text-right">{user?.roles?.join(", ") ?? "—"}</span></div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

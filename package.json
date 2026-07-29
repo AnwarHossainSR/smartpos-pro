@@ -3,15 +3,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgYellow.bold.black,bgGreen.bold.black\" --names \"api  ,queue,vite ,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun run dev:vite\" \"bun --cwd=web run dev\"",
-        "dev:vite": "vite"
+        "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgGreen.bold.black\" --names \"api  ,queue,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun --cwd=web run dev\""
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.0.0",
-        "concurrently": "^9.0.1",
-        "laravel-vite-plugin": "^3.1",
-        "tailwindcss": "^4.0.0",
-        "vite": "^8.0.0"
+        "concurrently": "^9.0.1"
     }
 }
