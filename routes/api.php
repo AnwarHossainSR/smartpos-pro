@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CashRegisterController;
@@ -166,6 +167,9 @@ Route::prefix('v1')->group(function () {
         Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+        // Audit trail (immutable — read-only)
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
         // Settings — business profile
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');

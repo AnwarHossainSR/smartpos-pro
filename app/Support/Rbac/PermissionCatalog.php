@@ -27,6 +27,7 @@ class PermissionCatalog
         'users' => ['view', 'create', 'update', 'delete'],
         'roles' => ['view', 'create', 'update', 'delete'],
         'settings' => ['view', 'update'],
+        'audit' => ['view'],
     ];
 
     /**

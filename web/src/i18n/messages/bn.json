@@ -32,7 +32,8 @@
     "loyalty": "লয়্যালটি ও কুপন",
     "subscription": "সাবস্ক্রিপশন",
     "notifications": "বিজ্ঞপ্তি",
-    "settings": "সেটিংস"
+    "settings": "সেটিংস",
+    "auditLog": "অডিট লগ"
   },
   "sidebar": {
     "collapse": "সাইডবার সংকুচিত করুন",

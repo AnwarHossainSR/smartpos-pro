@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 2 | 0 | 11 | 13 |
+| 7 · Security & money integrity | 3 | 0 | 10 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **77** | **0** | **22** | **99** |
+| **Total** | **78** | **0** | **21** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -139,7 +139,7 @@ T87 → T88.
 | -- | ---- | ------ | -- | ----- |
 | T76 | Server-side pricing + permission-gated overrides | ✅ | | `SaleService` prices every line from the catalog; client `unit_price`/`discount_amount` only honoured with `pos.price_override`/`pos.discount` (403 otherwise); sale-level discount capped at subtotal (422); honoured overrides write an `audit_logs` row via new `AuditLogService`; POS cart shows price/discount inputs only when permitted |
 | T77 | Coupon enforcement inside the sale transaction | ✅ | | `SaleService` re-validates `coupon_code` inside the checkout transaction (active/date/min-spend/limit), row-locks the coupon and increments `used_count`, derives `coupon_discount` server-side; new `coupon_id`/`coupon_discount` columns on `sales`; `POST coupons/validate` unchanged (pre-check only) |
-| T78 | Audit trail — writer, API, UI | ⬜ | | **High** — `audit_logs` table has zero writes |
+| T78 | Audit trail — writer, API, UI | ✅ | | New `Auditable` trait auto-logs created/updated/deleted on `Sale`, `SaleReturn`, `Purchase`, `Expense`, `JournalEntry`, `User`, `Role`, `Business`, `Coupon`; explicit `auth.login`/`auth.login_failed` events; `GET /v1/audit-logs` (`audit.view`) with actor/action/model/date filters + pagination; Settings → Audit Log page (`DataTable`/`ListToolbar`, detail dialog), fully translated (en/de/bn/ja/ar) |
 | T79 | Impersonation hardening | ⬜ | | **High** — 24h full-owner token, no reason, no log, no revoke |
 | T80 | Token lifecycle: expiry, abilities, sessions | ⬜ | | **High** — `sanctum.expiration = null`, `*` abilities, token in localStorage |
 | T81 | Tenant suspension enforcement + token revocation | ⬜ | | **High** — suspended tenants keep full API access |

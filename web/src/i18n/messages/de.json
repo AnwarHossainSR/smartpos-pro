@@ -32,7 +32,8 @@
     "loyalty": "Treuepunkte & Gutscheine",
     "subscription": "Abonnement",
     "notifications": "Benachrichtigungen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "auditLog": "Audit-Protokoll"
   },
   "sidebar": {
     "collapse": "Seitenleiste einklappen",

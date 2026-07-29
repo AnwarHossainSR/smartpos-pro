@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JournalEntry extends Model
 {
-    use BelongsToTenant;
+    use Auditable, BelongsToTenant;
 
     public const UPDATED_AT = null;
 

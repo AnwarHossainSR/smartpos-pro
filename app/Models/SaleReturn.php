@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleReturn extends Model
 {
-    use BelongsToTenant;
+    use Auditable, BelongsToTenant;
 
     protected $fillable = [
         'tenant_id', 'sale_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',

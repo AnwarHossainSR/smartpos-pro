@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class Coupon extends Model
 {
-    use BelongsToTenant;
+    use Auditable, BelongsToTenant;
 
     protected $fillable = [
         'tenant_id', 'code', 'type', 'value', 'min_purchase', 'max_discount',

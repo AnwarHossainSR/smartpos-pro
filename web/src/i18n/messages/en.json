@@ -32,7 +32,8 @@
     "loyalty": "Loyalty & Coupons",
     "subscription": "Subscription",
     "notifications": "Notifications",
-    "settings": "Settings"
+    "settings": "Settings",
+    "auditLog": "Audit Log"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",

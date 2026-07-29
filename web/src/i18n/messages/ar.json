@@ -32,7 +32,8 @@
     "loyalty": "الولاء والقسائم",
     "subscription": "الاشتراك",
     "notifications": "الإشعارات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "auditLog": "سجل التدقيق"
   },
   "sidebar": {
     "collapse": "طي الشريط الجانبي",

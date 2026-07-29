@@ -270,6 +270,18 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | `GET /roles` · `POST /roles` · `PUT /roles/{role}` · `DELETE /roles/{role}` | `roles.*` | roles carry a `permissions` slug list; system roles are protected |
 | `GET /permissions` | `roles.view` | full permission catalog grouped by module |
 
+## Audit log
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /audit-logs` (`?actor=&action=&model=&from=&to=&per_page=`) | `audit.view` | immutable — no update/delete endpoint. `action` matches with `LIKE %term%`; `model` matches the full auditable class name. |
+
+Every `Sale`, `SaleReturn`, `Purchase`, `Expense`, `JournalEntry`, `User`, `Role`, `Business`
+and `Coupon` create/update/delete is written automatically (via the `Auditable` trait);
+non-CRUD security events (`sale.price_override`, `auth.login`, `auth.login_failed`, …) are
+logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values`,
+`ip_address`, `user_agent` and the acting user.
+
 ## Notifications
 
 | Method & path | Notes |
