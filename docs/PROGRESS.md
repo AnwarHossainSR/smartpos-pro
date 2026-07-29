@@ -113,7 +113,7 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T66 | Theme store + palette switcher UI | ✅ | | palette in theme store; header swatch + Settings→Appearance grid; no-flash inline script in layout head |
 | T67 | Sidebar + shell restyle | ✅ | | sidebar on --sidebar-* tokens; fixed 2 latent primary-fg contrast bugs (logo badges) + danger button AA |
 | T68 | Table + list-page pattern upgrade | ✅ | | DataTable (zebra/sticky/bulk-select) + ListToolbar (search/export/add), applied to Products; CSV export is real, import deferred |
-| T69 | i18n foundation | ⬜ | | |
+| T69 | i18n foundation | ✅ | | I18nProvider + t()/plural(), en.json source of truth; wired into shell, auth pages, settings, Products (flagship); other module pages still hardcoded English — tracked as follow-up |
 | T70 | Locale switcher UI + per-script fonts | ⬜ | | |
 | T71 | RTL support | ⬜ | | |
 | T72 | Translation catalogs (de/bn/ar/ja) | ⬜ | | |

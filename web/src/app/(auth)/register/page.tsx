@@ -9,9 +9,11 @@ import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useTranslation } from "@/i18n/provider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslation();
   const setAuth = useAuth((s) => s.setAuth);
   const [form, setForm] = useState({
     name: "",
@@ -45,39 +47,39 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell title="Create your business" subtitle="Start selling in minutes">
+    <AuthShell title={t("auth.registerTitle")} subtitle={t("auth.registerSubtitle")}>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label>Business name</Label>
+          <Label>{t("auth.businessName")}</Label>
           <Input value={form.business_name} onChange={set("business_name")} required />
         </div>
         <div>
-          <Label>Your name</Label>
+          <Label>{t("auth.yourName")}</Label>
           <Input value={form.name} onChange={set("name")} required />
         </div>
         <div>
-          <Label>Email</Label>
+          <Label>{t("auth.email")}</Label>
           <Input type="email" value={form.email} onChange={set("email")} required />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Password</Label>
+            <Label>{t("auth.password")}</Label>
             <Input type="password" value={form.password} onChange={set("password")} required />
           </div>
           <div>
-            <Label>Confirm</Label>
+            <Label>{t("auth.confirmPassword")}</Label>
             <Input type="password" value={form.password_confirmation} onChange={set("password_confirmation")} required />
           </div>
         </div>
         {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading && <Spinner />} Create account
+          {loading && <Spinner />} {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </Button>
       </form>
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="font-medium text-[var(--primary)]">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </AuthShell>

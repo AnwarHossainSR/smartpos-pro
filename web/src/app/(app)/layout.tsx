@@ -9,30 +9,32 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
 import { Spinner } from "@/components/ui/spinner";
+import { useTranslation } from "@/i18n/provider";
 
-const titles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/pos": "POS Terminal",
-  "/products": "Products",
-  "/inventory": "Inventory",
-  "/sales": "Sales",
-  "/purchases": "Purchases",
-  "/customers": "Customers",
-  "/suppliers": "Suppliers",
-  "/expenses": "Expenses",
-  "/reports": "Reports",
-  "/accounting": "Accounting",
-  "/cash-register": "Cash Register",
-  "/team": "Team",
-  "/loyalty": "Loyalty & Coupons",
-  "/subscription": "Subscription",
-  "/notifications": "Notifications",
-  "/settings": "Settings",
+const titleKeys: Record<string, string> = {
+  "/dashboard": "nav.dashboard",
+  "/pos": "nav.pos",
+  "/products": "nav.products",
+  "/inventory": "nav.inventory",
+  "/sales": "nav.sales",
+  "/purchases": "nav.purchases",
+  "/customers": "nav.customers",
+  "/suppliers": "nav.suppliers",
+  "/expenses": "nav.expenses",
+  "/reports": "nav.reports",
+  "/accounting": "nav.accounting",
+  "/cash-register": "nav.cashRegister",
+  "/team": "nav.team",
+  "/loyalty": "nav.loyalty",
+  "/subscription": "nav.subscription",
+  "/notifications": "nav.notifications",
+  "/settings": "nav.settings",
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslation();
   const token = useAuth((s) => s.token);
   const hydrated = useAuth((s) => s.hydrated);
   const setUser = useAuth((s) => s.setUser);
@@ -67,8 +69,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const title =
-    Object.entries(titles).find(([href]) => pathname.startsWith(href))?.[1] ?? "SmartPOS";
+  const titleKey = Object.entries(titleKeys).find(([href]) => pathname.startsWith(href))?.[1];
+  const title = titleKey ? t(titleKey) : "SmartPOS";
 
   return (
     <>

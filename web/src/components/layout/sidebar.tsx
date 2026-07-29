@@ -7,26 +7,27 @@ import {
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pos", label: "POS Terminal", icon: ShoppingCart },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/inventory", label: "Inventory", icon: Boxes },
-  { href: "/sales", label: "Sales", icon: Receipt },
-  { href: "/purchases", label: "Purchases", icon: Truck },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/suppliers", label: "Suppliers", icon: Truck },
-  { href: "/expenses", label: "Expenses", icon: Wallet },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/accounting", label: "Accounting", icon: BookOpen },
-  { href: "/cash-register", label: "Cash Register", icon: CreditCard },
-  { href: "/team", label: "Team", icon: UserCog },
-  { href: "/loyalty", label: "Loyalty & Coupons", icon: Gift },
-  { href: "/subscription", label: "Subscription", icon: Crown },
-  { href: "/notifications", label: "Notifications", icon: Bell },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/pos", key: "pos", icon: ShoppingCart },
+  { href: "/products", key: "products", icon: Package },
+  { href: "/inventory", key: "inventory", icon: Boxes },
+  { href: "/sales", key: "sales", icon: Receipt },
+  { href: "/purchases", key: "purchases", icon: Truck },
+  { href: "/customers", key: "customers", icon: Users },
+  { href: "/suppliers", key: "suppliers", icon: Truck },
+  { href: "/expenses", key: "expenses", icon: Wallet },
+  { href: "/reports", key: "reports", icon: BarChart3 },
+  { href: "/accounting", key: "accounting", icon: BookOpen },
+  { href: "/cash-register", key: "cashRegister", icon: CreditCard },
+  { href: "/team", key: "team", icon: UserCog },
+  { href: "/loyalty", key: "loyalty", icon: Gift },
+  { href: "/subscription", key: "subscription", icon: Crown },
+  { href: "/notifications", key: "notifications", icon: Bell },
+  { href: "/settings", key: "settings", icon: Settings },
+] as const;
 
 interface SidebarProps {
   open?: boolean;
@@ -35,6 +36,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const t = useTranslation();
 
   const content = (
     <div className="flex h-full flex-col text-[var(--sidebar-fg)]">
@@ -52,7 +54,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       </div>
       <nav className="flex-1 overflow-y-auto space-y-0.5 px-3 py-4">
-        {nav.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, key, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
@@ -67,7 +69,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              {t(`nav.${key}`)}
             </Link>
           );
         })}

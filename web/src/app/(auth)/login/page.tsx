@@ -9,9 +9,11 @@ import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useTranslation } from "@/i18n/provider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslation();
   const setAuth = useAuth((s) => s.setAuth);
   const hydrated = useAuth((s) => s.hydrated);
   const token = useAuth((s) => s.token);
@@ -44,25 +46,25 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to your SmartPOS account">
+    <AuthShell title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label>Email</Label>
+          <Label>{t("auth.email")}</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
         <div>
-          <Label>Password</Label>
+          <Label>{t("auth.password")}</Label>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
         {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
-          {loading && <Spinner />} Sign in
+          {loading && <Spinner />} {loading ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
       </form>
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
-        New business?{" "}
+        {t("auth.newBusiness")}{" "}
         <Link href="/register" className="font-medium text-[var(--primary)]">
-          Create an account
+          {t("auth.createAnAccount")}
         </Link>
       </p>
     </AuthShell>

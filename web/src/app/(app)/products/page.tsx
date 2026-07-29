@@ -19,6 +19,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { useTranslation } from "@/i18n/provider";
 
 /* ---- types ---- */
 interface Category { id: number; name: string; }
@@ -68,6 +69,7 @@ function ProductForm({
   isEdit: boolean;
 }) {
   const qc = useQueryClient();
+  const t = useTranslation();
   const { data: cats } = useQuery({
     queryKey: ["categories-all"],
     queryFn: () => api<{ data: Category[] }>("/categories?per_page=200"),
@@ -107,60 +109,60 @@ function ProductForm({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast(isEdit ? "Product updated" : "Product created");
+      toast(isEdit ? t("products.updateSuccess") : t("products.createSuccess"));
       onSuccess();
     },
     onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Something went wrong", "error");
+      toast(e instanceof ApiError ? e.message : t("products.somethingWentWrong"), "error");
     },
   });
 
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
-        <Label>Name *</Label>
-        <Input {...register("name")} placeholder="Product name" />
+        <Label>{t("products.form.name")} *</Label>
+        <Input {...register("name")} placeholder={t("products.form.namePlaceholder")} />
         {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>SKU / Code</Label>
-          <Input {...register("sku")} placeholder="Auto-generated" />
+          <Label>{t("products.form.sku")}</Label>
+          <Input {...register("sku")} placeholder={t("products.form.skuPlaceholder")} />
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("products.form.status")}</Label>
           <Select {...register("is_active", { setValueAs: (v: string) => v === "true" })}>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
+            <option value="true">{t("products.form.active")}</option>
+            <option value="false">{t("products.form.inactive")}</option>
           </Select>
         </div>
       </div>
 
       <div>
-        <Label>Description</Label>
-        <Textarea {...register("description")} placeholder="Optional description" />
+        <Label>{t("products.form.description")}</Label>
+        <Textarea {...register("description")} placeholder={t("products.form.descriptionPlaceholder")} />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label>Category</Label>
+          <Label>{t("products.form.category")}</Label>
           <Select {...register("category_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
-          <Label>Brand</Label>
+          <Label>{t("products.form.brand")}</Label>
           <Select {...register("brand_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {brands?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </Select>
         </div>
         <div>
-          <Label>Unit</Label>
+          <Label>{t("products.form.unit")}</Label>
           <Select {...register("unit_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-            <option value="">— None —</option>
+            <option value="">{t("products.form.none")}</option>
             {units?.data?.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
@@ -168,12 +170,12 @@ function ProductForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Cost price *</Label>
+          <Label>{t("products.form.costPrice")} *</Label>
           <Input type="number" step="0.01" min="0" {...register("purchase_price", { valueAsNumber: true })} />
           {errors.purchase_price && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.purchase_price.message}</p>}
         </div>
         <div>
-          <Label>Sell price *</Label>
+          <Label>{t("products.form.sellPrice")} *</Label>
           <Input type="number" step="0.01" min="0" {...register("selling_price", { valueAsNumber: true })} />
           {errors.selling_price && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.selling_price.message}</p>}
         </div>
@@ -181,18 +183,18 @@ function ProductForm({
 
       {!isEdit && (
         <div className="rounded-[var(--radius)] border border-dashed border-[var(--border)] p-3 space-y-3">
-          <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">Opening stock (optional)</p>
+          <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">{t("products.form.openingStock")}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Quantity</Label>
+              <Label>{t("products.form.quantity")}</Label>
               <Input type="number" step="0.001" min="0" {...register("opening_stock_qty", { valueAsNumber: true })} placeholder="0" />
             </div>
             <div>
-              <Label>Warehouse</Label>
+              <Label>{t("products.form.warehouse")}</Label>
               <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
-                <option value="">— Select —</option>
+                <option value="">{t("products.form.selectWarehouse")}</option>
                 {warehouses?.data?.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}{w.is_default ? " (default)" : ""}</option>
+                  <option key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</option>
                 ))}
               </Select>
             </div>
@@ -202,7 +204,7 @@ function ProductForm({
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Saving…" : isEdit ? "Update product" : "Create product"}
+          {mutation.isPending ? t("products.form.saving") : isEdit ? t("products.form.update") : t("products.form.create")}
         </Button>
       </div>
     </form>
@@ -213,6 +215,7 @@ function ProductForm({
 export default function ProductsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
+  const t = useTranslation();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -232,11 +235,11 @@ export default function ProductsPage() {
     mutationFn: (id: number) => api(`/products/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast("Product deleted");
+      toast(t("products.deleteSuccess"));
       setDeleting(null);
     },
     onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Delete failed", "error");
+      toast(e instanceof ApiError ? e.message : t("products.deleteFailed"), "error");
     },
   });
 
@@ -247,28 +250,28 @@ export default function ProductsPage() {
   const lastPage = data?.meta?.last_page ?? 1;
 
   const columns: DataTableColumn<Product>[] = [
-    { key: "name", header: "Name", render: (p) => <span className="font-medium">{p.name}</span> },
+    { key: "name", header: t("products.name"), render: (p) => <span className="font-medium">{p.name}</span> },
     {
       key: "sku",
-      header: "SKU",
+      header: t("products.sku"),
       render: (p) => <span className="font-mono text-xs text-[var(--muted)]">{p.sku ?? "—"}</span>,
     },
     {
       key: "category",
-      header: "Category",
+      header: t("products.category"),
       render: (p) => p.category?.name ?? <span className="text-[var(--muted)]">—</span>,
     },
-    { key: "cost", header: "Cost", align: "right", render: (p) => formatCurrency(p.purchase_price) },
+    { key: "cost", header: t("products.cost"), align: "right", render: (p) => formatCurrency(p.purchase_price) },
     {
       key: "price",
-      header: "Price",
+      header: t("products.price"),
       align: "right",
       className: "font-medium",
       render: (p) => formatCurrency(p.selling_price),
     },
     {
       key: "stock",
-      header: "Stock",
+      header: t("products.stock"),
       align: "right",
       render: (p) => (
         <span className={(p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : ""}>{p.stock ?? 0}</span>
@@ -276,8 +279,12 @@ export default function ProductsPage() {
     },
     {
       key: "status",
-      header: "Status",
-      render: (p) => <Badge tone={p.is_active ? "success" : "default"}>{p.is_active ? "active" : "inactive"}</Badge>,
+      header: t("products.status"),
+      render: (p) => (
+        <Badge tone={p.is_active ? "success" : "default"}>
+          {p.is_active ? t("common.active") : t("common.inactive")}
+        </Badge>
+      ),
     },
   ];
 
@@ -297,14 +304,15 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Products</h1>
+      <h1 className="text-xl font-semibold">{t("products.title")}</h1>
 
       <ListToolbar
         search={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
-        searchPlaceholder="Search products…"
+        searchPlaceholder={t("products.searchPlaceholder")}
+        exportLabel={t("common.export")}
         onExport={handleExport}
-        addLabel={can("products.create") ? "Add product" : undefined}
+        addLabel={can("products.create") ? t("products.addProduct") : undefined}
         onAdd={can("products.create") ? openCreate : undefined}
       />
 
@@ -317,7 +325,7 @@ export default function ProductsPage() {
           selectable
           selectedKeys={selected}
           onSelectionChange={setSelected}
-          emptyMessage={search ? "No products match your search." : "No products yet. Add your first product."}
+          emptyMessage={search ? t("products.emptySearch") : t("products.emptyNoProducts")}
           actions={(p) => (
             <>
               {can("products.update") && (
@@ -337,7 +345,11 @@ export default function ProductsPage() {
         {data?.meta && data.meta.last_page > 1 && (
           <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
             <p className="text-sm text-[var(--muted)]">
-              Page {data.meta.current_page} of {data.meta.last_page} · {data.meta.total} products
+              {t("products.paginationSummary", {
+                current: data.meta.current_page,
+                last: data.meta.last_page,
+                total: data.meta.total,
+              })}
             </p>
             <div className="flex gap-1">
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
@@ -354,7 +366,7 @@ export default function ProductsPage() {
       <Drawer
         open={drawerOpen}
         onClose={closeDrawer}
-        title={editing ? `Edit: ${editing.name}` : "Add product"}
+        title={editing ? t("products.editProductTitle", { name: editing.name }) : t("products.addProduct")}
       >
         <ProductForm
           key={editing?.id ?? "new"}
@@ -381,9 +393,9 @@ export default function ProductsPage() {
       <Dialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title="Delete product"
-        description={`Are you sure you want to delete "${deleting?.name}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t("products.deleteTitle")}
+        description={t("products.deleteConfirm", { name: deleting?.name ?? "" })}
+        confirmLabel={t("common.delete")}
         confirmVariant="danger"
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
         loading={deleteMutation.isPending}

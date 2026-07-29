@@ -11,6 +11,7 @@ import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
+import { useTranslation } from "@/i18n/provider";
 
 interface NotifResponse {
   data: unknown[];
@@ -26,6 +27,7 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const router = useRouter();
+  const t = useTranslation();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const { theme, setTheme, palette } = useThemeStore();
@@ -101,15 +103,15 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             className="hidden items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-[var(--muted)] transition hover:border-[var(--primary)] sm:flex"
           >
             <Search className="h-3.5 w-3.5" />
-            <span>Search…</span>
+            <span>{t("header.searchPlaceholder")}</span>
             <kbd className="ml-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
           </button>
-          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title="Search">
+          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title={t("header.searchPlaceholder")}>
             <Search className="h-4 w-4" />
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title="Notifications" className="relative">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title={t("header.notifications")} className="relative">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
@@ -125,7 +127,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={() => setSwatchMenuOpen((v) => !v)}
-              title="Color palette"
+              title={t("header.colorPalette")}
             >
               <span
                 className="h-4 w-4 rounded-full ring-1 ring-[var(--border)]"
@@ -141,21 +143,21 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
           {/* Theme toggle */}
           <div ref={themeRef} className="relative">
-            <Button variant="ghost" size="icon" onClick={() => setThemeMenuOpen((v) => !v)} title="Toggle theme">
+            <Button variant="ghost" size="icon" onClick={() => setThemeMenuOpen((v) => !v)} title={t("header.toggleTheme")}>
               <ThemeIcon className="h-4 w-4" />
             </Button>
             {themeMenuOpen && (
               <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
-                {(["light", "dark", "system"] as Theme[]).map((t) => {
-                  const Icon = themeIcons[t];
+                {(["light", "dark", "system"] as Theme[]).map((option) => {
+                  const Icon = themeIcons[option];
                   return (
                     <button
-                      key={t}
-                      onClick={() => { setTheme(t); setThemeMenuOpen(false); }}
-                      className={`flex w-full items-center gap-2 px-3 py-2 text-sm capitalize transition-colors hover:bg-[var(--surface-2)] ${theme === t ? "text-[var(--primary)] font-medium" : ""}`}
+                      key={option}
+                      onClick={() => { setTheme(option); setThemeMenuOpen(false); }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[var(--surface-2)] ${theme === option ? "text-[var(--primary)] font-medium" : ""}`}
                     >
                       <Icon className="h-3.5 w-3.5" />
-                      {t}
+                      {t(`header.${option}`)}
                     </button>
                   );
                 })}
@@ -174,7 +176,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={onLogout} title="Sign out">
+          <Button variant="ghost" size="icon" onClick={onLogout} title={t("header.signOut")}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

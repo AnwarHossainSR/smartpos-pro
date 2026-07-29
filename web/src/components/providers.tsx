@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "./ui/toast";
 import { PwaRegister } from "./pwa-register";
+import { I18nProvider } from "@/i18n/provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -17,9 +18,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
-      {children}
-      <Toaster />
-      <PwaRegister />
+      <I18nProvider>
+        {children}
+        <Toaster />
+        <PwaRegister />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }
