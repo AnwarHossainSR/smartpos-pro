@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgYellow.bold.black,bgGreen.bold.black\" --names \"api  ,queue,vite ,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun run dev:vite\" \"bun --cwd=web run dev\"",
+        "dev:vite": "vite"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

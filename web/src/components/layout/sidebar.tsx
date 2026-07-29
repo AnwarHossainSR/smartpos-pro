@@ -31,10 +31,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         )}
       </div>
-      <nav className="flex-1 overflow-y-auto space-y-4 px-3 py-4">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.key} className="space-y-0.5">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-muted)]/70">
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {NAV_GROUPS.map((group, i) => (
+          <div
+            key={group.key}
+            className={cn("space-y-0.5", i > 0 && "mt-4 border-t border-white/[0.06] pt-4")}
+          >
+            <p className="px-3 pb-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[var(--sidebar-muted)]/60">
               {t(`navGroups.${group.key}`)}
             </p>
             {group.items.map(({ href, key, icon: Icon }) => {
@@ -45,14 +48,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   href={href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors",
+                    "group relative flex items-center gap-3 rounded-[var(--radius)] py-2 ps-3 pe-3 text-sm font-medium transition-colors",
                     active
-                      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)]"
-                      : "text-[var(--sidebar-muted)] hover:bg-white/10 hover:text-[var(--sidebar-fg)]",
+                      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)] shadow-sm"
+                      : "text-[var(--sidebar-muted)] hover:bg-white/[0.06] hover:text-[var(--sidebar-fg)]",
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {t(`nav.${key}`)}
+                  {active && (
+                    <span className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-[var(--sidebar-active-fg)]/40" />
+                  )}
+                  <Icon className={cn("h-4 w-4 shrink-0", !active && "opacity-80 group-hover:opacity-100")} />
+                  <span className="truncate">{t(`nav.${key}`)}</span>
                 </Link>
               );
             })}

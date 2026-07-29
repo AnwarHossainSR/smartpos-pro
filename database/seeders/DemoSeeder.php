@@ -40,7 +40,7 @@ class DemoSeeder extends Seeder
             'password' => 'password123',
             'business_name' => 'SmartPOS Demo Store',
             'business_type' => 'supermarket',
-            'currency' => 'USD',
+            'currency' => 'BDT',
         ]);
 
         $context->set($owner->tenant_id);
