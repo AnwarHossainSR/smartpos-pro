@@ -35,8 +35,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // ---- Public ----
-    Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
-    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:login');
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
@@ -108,7 +108,7 @@ Route::prefix('v1')->group(function () {
         // Sales / POS
         Route::get('sales', [SaleController::class, 'index'])->middleware('permission:sales.view');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view');
-        Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware('permission:sales.view');
+        Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
 
         // Sale returns / refunds
@@ -117,7 +117,7 @@ Route::prefix('v1')->group(function () {
         Route::post('sales/{sale}/returns', [SaleReturnController::class, 'store'])->middleware(['permission:sales.refund', 'idempotency']);
 
         // Reports
-        Route::middleware('permission:reports.view')->prefix('reports')->group(function () {
+        Route::middleware(['permission:reports.view', 'throttle:reports'])->prefix('reports')->group(function () {
             Route::get('sales-summary', [ReportController::class, 'salesSummary']);
             Route::get('sales-by-product', [ReportController::class, 'salesByProduct']);
             Route::get('profit', [ReportController::class, 'profit']);
@@ -144,7 +144,7 @@ Route::prefix('v1')->group(function () {
         Route::post('cash-registers/{cashRegister}/open', [CashRegisterController::class, 'open'])->middleware('permission:accounting.create');
         Route::get('cash-registers/{cashRegister}/current-session', [CashRegisterController::class, 'currentSession'])->middleware('permission:accounting.view');
         Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
-        Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware('permission:accounting.view');
+        Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware(['permission:accounting.view', 'throttle:reports']);
         Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
         Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
 

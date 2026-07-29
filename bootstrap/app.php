@@ -25,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'idempotency' => Idempotency::class,
             'super_admin' => SuperAdmin::class,
         ]);
+
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

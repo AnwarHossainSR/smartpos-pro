@@ -6,6 +6,15 @@ Content-Type: `application/json`.
 Collection endpoints are paginated (`?page=`, `?per_page=`) and return Laravel's
 standard `{ data, links, meta }` envelope. Single resources return `{ data: {...} }`.
 
+## Rate limiting
+
+Every route is throttled (`throttle:api`, 120 req/min per token or IP). Report and PDF
+endpoints (`/reports/*`, `/sales/{sale}/invoice`, `/cash-register-sessions/{session}/slip`)
+carry a tighter `throttle:reports` ceiling (20 req/min). `POST /auth/login` and
+`POST /auth/register` are throttled per-account **and** per-IP (`throttle:login`: 5/min by
+email, 20/min by IP), so credential stuffing against one account is throttled even when
+spread across many source IPs. Exceeding a limit returns `429` with a `Retry-After` header.
+
 ## Authentication
 
 ### `POST /auth/register`
