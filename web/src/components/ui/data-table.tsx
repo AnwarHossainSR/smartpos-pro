@@ -76,7 +76,7 @@ export function DataTable<T>({
             </TableHead>
           )}
           {columns.map((col) => (
-            <TableHead key={col.key} className={cn(col.align === "right" && "text-right", col.className)}>
+            <TableHead key={col.key} className={cn(col.align === "right" && "text-end", col.className)}>
               {col.header}
             </TableHead>
           ))}
@@ -127,7 +127,7 @@ export function DataTable<T>({
                   </TableCell>
                 )}
                 {columns.map((col) => (
-                  <TableCell key={col.key} className={cn(col.align === "right" && "text-right", col.className)}>
+                  <TableCell key={col.key} className={cn(col.align === "right" && "text-end", col.className)}>
                     {col.render(row)}
                   </TableCell>
                 ))}

@@ -103,7 +103,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               return (
                 <li key={it.href}>
                   <button
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-start transition-colors ${
                       i === index ? "bg-[var(--primary)] text-[var(--primary-fg)]" : "hover:bg-[var(--surface-2)]"
                     }`}
                     onMouseEnter={() => setIndex(i)}

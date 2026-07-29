@@ -76,7 +76,7 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           {sale.items?.map((item, i) => (
             <div key={i} className="flex justify-between">
               <span className="flex-1 truncate">{item.name} × {item.quantity}</span>
-              <span className="ml-4 font-medium">{formatCurrency(item.total)}</span>
+              <span className="ms-4 font-medium">{formatCurrency(item.total)}</span>
             </div>
           ))}
         </div>
@@ -280,9 +280,9 @@ export default function POSPage() {
       {/* Left: product search + grid */}
       <div className="flex flex-1 flex-col min-w-0 gap-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
           <Input
-            className="pl-9"
+            className="ps-9"
             placeholder="Search products…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -304,7 +304,7 @@ export default function POSPage() {
                   key={p.id}
                   onClick={() => addToCart(p)}
                   disabled={(p.stock ?? 0) <= 0}
-                  className="group flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-left transition hover:border-[var(--primary)] hover:shadow-sm disabled:opacity-50"
+                  className="group flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start transition hover:border-[var(--primary)] hover:shadow-sm disabled:opacity-50"
                 >
                   <p className="line-clamp-2 text-sm font-medium">{p.name}</p>
                   {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
@@ -342,15 +342,15 @@ export default function POSPage() {
         {/* Customer selector */}
         <div className="border-b border-[var(--border)] p-3">
           <div className="relative">
-            <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
+            <User className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <Input
-              className="pl-8 h-8 text-xs"
+              className="ps-8 h-8 text-xs"
               placeholder={selectedCustomer ? selectedCustomer.name : "Search customer (optional)…"}
               value={selectedCustomer ? selectedCustomer.name : customerSearch}
               onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); }}
             />
             {customerId && (
-              <button className="absolute right-2.5 top-1/2 -translate-y-1/2" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
+              <button className="absolute end-2.5 top-1/2 -translate-y-1/2" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
                 <X className="h-3.5 w-3.5 text-[var(--muted)]" />
               </button>
             )}
@@ -361,7 +361,7 @@ export default function POSPage() {
                 <button
                   key={c.id}
                   onClick={() => { setCustomerId(c.id); setCustomerSearch(""); }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--surface-2)]"
+                  className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
                 >
                   {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
                 </button>

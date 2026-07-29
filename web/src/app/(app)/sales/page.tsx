@@ -61,7 +61,7 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
           {sale.items?.map((item) => (
             <div key={item.id} className="flex justify-between">
               <span className="flex-1 truncate">{item.name} × {item.quantity}</span>
-              <span className="ml-4">{formatCurrency(item.line_total)}</span>
+              <span className="ms-4">{formatCurrency(item.line_total)}</span>
             </div>
           ))}
         </div>
@@ -191,9 +191,9 @@ export default function SalesPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
         <Input
-          className="pl-9"
+          className="ps-9"
           placeholder="Search by invoice number…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -207,7 +207,7 @@ export default function SalesPage() {
               <TableHead>Invoice</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-end">Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead className="w-20" />
@@ -234,7 +234,7 @@ export default function SalesPage() {
                   <TableCell className="font-mono text-xs font-medium">{s.invoice_number}</TableCell>
                   <TableCell>{s.customer?.name ?? <span className="text-[var(--muted)]">Walk-in</span>}</TableCell>
                   <TableCell className="text-[var(--muted)]">{new Date(s.sold_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(s.total)}</TableCell>
+                  <TableCell className="text-end font-medium">{formatCurrency(s.total)}</TableCell>
                   <TableCell><Badge tone={statusColor[s.status] ?? "default"}>{s.status}</Badge></TableCell>
                   <TableCell><Badge tone={payColor[s.payment_status] ?? "default"}>{s.payment_status}</Badge></TableCell>
                   <TableCell>
@@ -254,10 +254,10 @@ export default function SalesPage() {
             <p className="text-sm text-[var(--muted)]">Page {data.meta.current_page} of {data.meta.last_page}</p>
             <div className="flex gap-1">
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 rtl:scale-x-[-1]" />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (data.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 rtl:scale-x-[-1]" />
               </Button>
             </div>
           </div>

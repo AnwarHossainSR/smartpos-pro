@@ -153,7 +153,7 @@ export default function Home() {
                 >
                   <h3 className="font-medium tracking-tight">{m.name}</h3>
                   <p className="text-sm text-[var(--muted)]">{m.detail}</p>
-                  <span className="font-[family-name:var(--font-mono)] text-[0.7rem] tracking-[0.16em] text-[var(--muted)] uppercase sm:text-right">
+                  <span className="font-[family-name:var(--font-mono)] text-[0.7rem] tracking-[0.16em] text-[var(--muted)] uppercase sm:text-end">
                     {m.tag}
                   </span>
                 </li>

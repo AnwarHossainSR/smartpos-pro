@@ -115,7 +115,7 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T68 | Table + list-page pattern upgrade | ✅ | | DataTable (zebra/sticky/bulk-select) + ListToolbar (search/export/add), applied to Products; CSV export is real, import deferred |
 | T69 | i18n foundation | ✅ | | I18nProvider + t()/plural(), en.json source of truth; wired into shell, auth pages, settings, Products (flagship); other module pages still hardcoded English — tracked as follow-up |
 | T70 | Locale switcher UI + per-script fonts | ✅ | | LocalePicker in header + Settings→Localization; Noto Sans Bengali/JP/Arabic via next/font, applied per [data-lang] |
-| T71 | RTL support | ⬜ | | |
+| T71 | RTL support | ✅ | | dir=rtl driven by locale (I18nProvider); 106 physical→logical class swaps (ml/pl/left/right/text-left/right) across 20 files; pagination chevrons flip via rtl:scale-x-[-1] |
 | T72 | Translation catalogs (de/bn/ar/ja) | ⬜ | | |
 | T73 | Currency/locale-aware formatting | ⬜ | | |
 | T74 | QA pass | ⬜ | | |

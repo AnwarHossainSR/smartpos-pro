@@ -120,7 +120,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           >
             <Search className="h-3.5 w-3.5" />
             <span>{t("header.searchPlaceholder")}</span>
-            <kbd className="ml-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
+            <kbd className="ms-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
           </button>
           <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title={t("header.searchPlaceholder")}>
             <Search className="h-4 w-4" />
@@ -130,7 +130,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title={t("header.notifications")} className="relative">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
+              <span className="absolute end-1.5 top-1.5 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-danger)] opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-danger)]" />
               </span>
@@ -149,7 +149,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               <span className="sr-only">{locale}</span>
             </Button>
             {localeMenuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-lg">
+              <div className="absolute end-0 top-full z-20 mt-1 w-40 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-lg">
                 <LocalePicker />
               </div>
             )}
@@ -169,7 +169,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               />
             </Button>
             {swatchMenuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+              <div className="absolute end-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
                 <PalettePicker compact />
               </div>
             )}
@@ -181,7 +181,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               <ThemeIcon className="h-4 w-4" />
             </Button>
             {themeMenuOpen && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
+              <div className="absolute end-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
                 {(["light", "dark", "system"] as Theme[]).map((option) => {
                   const Icon = themeIcons[option];
                   return (

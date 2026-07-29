@@ -353,10 +353,10 @@ export default function ProductsPage() {
             </p>
             <div className="flex gap-1">
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 rtl:scale-x-[-1]" />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 rtl:scale-x-[-1]" />
               </Button>
             </div>
           </div>

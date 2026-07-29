@@ -162,7 +162,7 @@ export default function AccountingPage() {
       {tab === "accounts" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Balance</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead className="text-end">Balance</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
             <TableBody>
               {accLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
                 : accounts?.data?.map((a) => (
@@ -170,7 +170,7 @@ export default function AccountingPage() {
                     <TableCell className="font-mono text-xs">{a.code}</TableCell>
                     <TableCell className="font-medium">{a.name}</TableCell>
                     <TableCell><Badge tone={typeColors[a.type] ?? "default"}>{a.type}</Badge></TableCell>
-                    <TableCell className="text-right">{formatCurrency(a.balance)}</TableCell>
+                    <TableCell className="text-end">{formatCurrency(a.balance)}</TableCell>
                     <TableCell><Badge tone={a.is_active ? "success" : "default"}>{a.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                   </TableRow>
                 ))}
@@ -182,7 +182,7 @@ export default function AccountingPage() {
       {tab === "journals" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Number</TableHead><TableHead>Description</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Number</TableHead><TableHead>Description</TableHead><TableHead>Date</TableHead><TableHead className="text-end">Amount</TableHead></TableRow></TableHeader>
             <TableBody>
               {jrnLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 4 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
                 : journals?.data?.length === 0 ? <TableRow><TableCell colSpan={4} className="py-8 text-center text-[var(--muted)]">No journal entries yet.</TableCell></TableRow>
@@ -191,7 +191,7 @@ export default function AccountingPage() {
                     <TableCell className="font-mono text-xs">{j.entry_number}</TableCell>
                     <TableCell>{j.description}</TableCell>
                     <TableCell className="text-[var(--muted)]">{new Date(j.posted_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(j.total_debit)}</TableCell>
+                    <TableCell className="text-end">{formatCurrency(j.total_debit)}</TableCell>
                   </TableRow>
                 ))}
             </TableBody>
@@ -200,8 +200,8 @@ export default function AccountingPage() {
             <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3">
               <p className="text-sm text-[var(--muted)]">Page {journals.meta.current_page} of {journals.meta.last_page}</p>
               <div className="flex gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (journals.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="h-4 w-4 rtl:scale-x-[-1]" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= (journals.meta.last_page ?? 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight className="h-4 w-4 rtl:scale-x-[-1]" /></Button>
               </div>
             </div>
           )}
@@ -211,20 +211,20 @@ export default function AccountingPage() {
       {tab === "trial-balance" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Account</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Debit</TableHead><TableHead className="text-right">Credit</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Account</TableHead><TableHead>Type</TableHead><TableHead className="text-end">Debit</TableHead><TableHead className="text-end">Credit</TableHead></TableRow></TableHeader>
             <TableBody>
               {trialBalance?.data?.accounts?.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-medium">{a.code} {a.name}</TableCell>
                   <TableCell><Badge tone={typeColors[a.type] ?? "default"}>{a.type}</Badge></TableCell>
-                  <TableCell className="text-right">{a.normal_side === "debit" ? formatCurrency(a.balance) : "—"}</TableCell>
-                  <TableCell className="text-right">{a.normal_side === "credit" ? formatCurrency(a.balance) : "—"}</TableCell>
+                  <TableCell className="text-end">{a.normal_side === "debit" ? formatCurrency(a.balance) : "—"}</TableCell>
+                  <TableCell className="text-end">{a.normal_side === "credit" ? formatCurrency(a.balance) : "—"}</TableCell>
                 </TableRow>
               ))}
               <TableRow className="font-semibold bg-[var(--surface-2)]">
                 <TableCell colSpan={2}>Total</TableCell>
-                <TableCell className="text-right">{formatCurrency(trialBalance?.data?.total_debit ?? 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(trialBalance?.data?.total_credit ?? 0)}</TableCell>
+                <TableCell className="text-end">{formatCurrency(trialBalance?.data?.total_debit ?? 0)}</TableCell>
+                <TableCell className="text-end">{formatCurrency(trialBalance?.data?.total_credit ?? 0)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
