@@ -16,6 +16,7 @@
 
   --radius: 0.75rem;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
@@ -66,3 +67,46 @@ body {
 /* Subtle scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+/* ---- Landing page: thermal-receipt hero ----
+   The receipt is the signature device; these rules only apply inside it. */
+
+/* Torn paper edge, top and bottom of the receipt. */
+.rcpt-tear {
+  --tooth: 12px;
+  height: calc(var(--tooth) / 2);
+  background:
+    repeating-conic-gradient(
+      from -45deg at 50% 0,
+      var(--surface) 0deg 90deg,
+      transparent 90deg 180deg
+    )
+    0 0 / var(--tooth) 100%;
+}
+.rcpt-tear--top {
+  transform: rotate(180deg);
+}
+
+/* Each ledger row feeds in like paper leaving a thermal printer. */
+.rcpt-line {
+  animation: rcpt-feed 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes rcpt-feed {
+  from {
+    opacity: 0;
+    transform: translateY(-0.55rem);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcpt-line {
+    animation: none;
+  }
+}

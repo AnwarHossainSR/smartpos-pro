@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -13,10 +13,17 @@ import { Spinner } from "@/components/ui/spinner";
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuth((s) => s.setAuth);
+  const hydrated = useAuth((s) => s.hydrated);
+  const token = useAuth((s) => s.token);
   const [email, setEmail] = useState("owner@smartpos.test");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Someone who still has a valid session should not see the form again.
+  useEffect(() => {
+    if (hydrated && token) router.replace("/dashboard");
+  }, [hydrated, token, router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

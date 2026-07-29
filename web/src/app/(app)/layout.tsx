@@ -34,12 +34,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const token = useAuth((s) => s.token);
+  const hydrated = useAuth((s) => s.hydrated);
   const setUser = useAuth((s) => s.setUser);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Wait for the persisted token to load before deciding to bounce to /login,
+  // otherwise a refresh logs the user out.
   useEffect(() => {
-    if (!token) router.replace("/login");
-  }, [token, router]);
+    if (hydrated && !token) router.replace("/login");
+  }, [hydrated, token, router]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
 
-  if (!token) {
+  if (!hydrated || !token) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner className="h-6 w-6 text-[var(--primary)]" />
