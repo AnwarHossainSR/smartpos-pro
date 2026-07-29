@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText } from "lucide-react";
+import {
+  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock,
+} from "lucide-react";
 import { api, apiBlob, ApiError } from "@/lib/api";
-import { formatCurrency, openPdfBlob } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatCard } from "@/components/stat-card";
 import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
 
 interface Register {
   id: number;
@@ -34,12 +35,18 @@ interface Session {
   closed_at: string | null;
 }
 
+interface Movement {
+  type: "in" | "out";
+  amount: number;
+  reason: string | null;
+  created_at: string;
+}
+
 export default function CashRegisterPage() {
-  const { can } = useAuth();
   const qc = useQueryClient();
   const [openingAmount, setOpeningAmount] = useState("0");
   const [closeAmount, setCloseAmount] = useState("0");
-  const [movementAmount, setMovementAmount] = useState("0");
+  const [movementAmount, setMovementAmount] = useState("");
   const [movementType, setMovementType] = useState<"in" | "out">("in");
   const [movementNote, setMovementNote] = useState("");
   const [showClose, setShowClose] = useState(false);
@@ -61,6 +68,14 @@ export default function CashRegisterPage() {
   const [lastClosed, setLastClosed] = useState<Session | null>(null);
   const [loadingSlip, setLoadingSlip] = useState(false);
 
+  const { data: detailData } = useQuery<{ data: Session & { transactions?: Movement[] } }>({
+    queryKey: ["cash-session-detail", session?.id],
+    queryFn: () => api(`/cash-register-sessions/${session?.id}`),
+    enabled: !!session?.id,
+  });
+
+  const movements = detailData?.data?.transactions ?? [];
+
   const openMutation = useMutation({
     mutationFn: () => api(`/cash-registers/${register?.id}/open`, { method: "POST", body: { opening_cash: parseFloat(openingAmount) } }),
     onSuccess: () => { setLastClosed(null); qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Register opened"); },
@@ -80,7 +95,13 @@ export default function CashRegisterPage() {
 
   const movementMutation = useMutation({
     mutationFn: () => api(`/cash-register-sessions/${session?.id}/movement`, { method: "POST", body: { type: movementType, amount: parseFloat(movementAmount), reason: movementNote } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["cash-session"] }); toast("Movement recorded"); setMovementAmount("0"); setMovementNote(""); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cash-session"] });
+      qc.invalidateQueries({ queryKey: ["cash-session-detail"] });
+      toast("Movement recorded");
+      setMovementAmount("");
+      setMovementNote("");
+    },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
@@ -98,87 +119,187 @@ export default function CashRegisterPage() {
     }
   };
 
+  const closeDiff = parseFloat(closeAmount || "0") - (session?.expected_cash ?? 0);
+
   if (!register) {
-    return <div className="py-12 text-center text-[var(--muted)]">No cash register configured for your branch.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
+        <Wallet className="h-8 w-8 text-[var(--muted)]" />
+        <p className="text-sm text-[var(--muted)]">No cash register configured for your branch.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Cash Register</h1>
+        <div>
+          <h1 className="text-xl font-semibold">Cash Register</h1>
+          <p className="text-sm text-[var(--muted)]">{register.name}</p>
+        </div>
         <div className="flex items-center gap-2">
           {slipSessionId && (
             <Button variant="outline" size="sm" onClick={viewSlip} disabled={loadingSlip}>
               <FileText className="h-3.5 w-3.5" /> {loadingSlip ? "Loading…" : "Print slip"}
             </Button>
           )}
-          {session && <Badge tone={session.status === "open" ? "success" : "default"} className="text-sm px-3 py-1">{session.status}</Badge>}
+          {session && <Badge tone={session.status === "open" ? "success" : "default"} className="px-3 py-1 text-sm">{session.status}</Badge>}
         </div>
       </div>
 
-      {!session && lastClosed && (
-        <Card>
-          <CardHeader><CardTitle>Last closed session</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div><p className="text-xs text-[var(--muted)]">Actual counted</p><p className="text-xl font-bold">{formatCurrency(lastClosed.actual_cash ?? 0)}</p></div>
-              <div>
-                <p className="text-xs text-[var(--muted)]">Difference</p>
-                <p className={`text-xl font-bold ${(lastClosed.difference ?? 0) < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>
-                  {formatCurrency(lastClosed.difference ?? 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {isLoading ? (
+        <Card className="h-40 animate-pulse" />
+      ) : !session ? (
+        <div className="space-y-5">
+          {lastClosed && (
+            <Card>
+              <CardHeader><CardTitle>Last closed session</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><p className="text-xs text-[var(--muted)]">Actual counted</p><p className="text-xl font-bold">{formatCurrency(lastClosed.actual_cash ?? 0)}</p></div>
+                  <div>
+                    <p className="text-xs text-[var(--muted)]">Difference</p>
+                    <p className={cn("text-xl font-bold", (lastClosed.difference ?? 0) < 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]")}>
+                      {formatCurrency(lastClosed.difference ?? 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {!session ? (
-        <Card>
-          <CardHeader><CardTitle>Open register</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div><Label>Opening balance</Label><Input type="number" step="0.01" min="0" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)} /></div>
-            <Button onClick={() => openMutation.mutate()} disabled={openMutation.isPending} className="w-full">{openMutation.isPending ? "Opening…" : "Open register"}</Button>
-          </CardContent>
-        </Card>
+          {/* Empty / open state — a focused hero rather than a plain form, since this is the
+              first thing a cashier sees at the start of every shift. */}
+          <Card className="mx-auto max-w-sm">
+            <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+                <Wallet className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-semibold">Register is closed</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">Count the opening float and start a new session.</p>
+              </div>
+              <div className="w-full text-start">
+                <Label>Opening balance</Label>
+                <Input type="number" step="0.01" min="0" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)} autoFocus />
+              </div>
+              <Button onClick={() => openMutation.mutate()} disabled={openMutation.isPending} className="w-full">
+                {openMutation.isPending ? "Opening…" : "Open register"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Opening balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.opening_cash)}</p></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Expected balance</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(session.expected_cash)}</p></CardContent></Card>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="Opening balance" value={formatCurrency(session.opening_cash)} />
+            <StatCard label="Cash in" value={`+${formatCurrency(session.cash_in)}`} tone="success" />
+            <StatCard label="Cash out" value={`-${formatCurrency(session.cash_out)}`} tone="danger" />
+            <StatCard label="Expected balance" value={formatCurrency(session.expected_cash)} />
           </div>
 
-          <Card>
-            <CardHeader><CardTitle>Cash movement</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Type</Label>
-                  <Select value={movementType} onChange={(e) => setMovementType(e.target.value as "in" | "out")}>
-                    <option value="in">Cash in</option>
-                    <option value="out">Cash out</option>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Amount</Label>
-                  <Input type="number" step="0.01" min="0" value={movementAmount} onChange={(e) => setMovementAmount(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Note</Label>
-                  <Input value={movementNote} onChange={(e) => setMovementNote(e.target.value)} placeholder="Optional" />
-                </div>
-              </div>
-              <Button variant="secondary" onClick={() => movementMutation.mutate()} disabled={movementMutation.isPending}>Record movement</Button>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {/* Cash movement ledger */}
+            <Card className="lg:col-span-2">
+              <CardHeader><CardTitle>Cash movements</CardTitle></CardHeader>
+              <CardContent className="pt-4">
+                {movements.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-[var(--muted)]">
+                    <Clock className="h-5 w-5" />
+                    No cash movements recorded yet this session.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {movements.map((m, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-[var(--radius)] px-2 py-2.5 transition-colors hover:bg-[var(--surface-2)]">
+                        <div className={cn(
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                          m.type === "in" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400",
+                        )}>
+                          {m.type === "in" ? <ArrowDownCircle className="h-4 w-4" /> : <ArrowUpCircle className="h-4 w-4" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{m.reason || (m.type === "in" ? "Cash in" : "Cash out")}</p>
+                          <p className="text-xs text-[var(--muted)]">{formatDateTime(m.created_at)}</p>
+                        </div>
+                        <span className={cn("shrink-0 text-sm font-semibold", m.type === "in" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                          {m.type === "in" ? "+" : "-"}{formatCurrency(m.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Close register</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div><Label>Actual cash on hand</Label><Input type="number" step="0.01" min="0" value={closeAmount} onChange={(e) => setCloseAmount(e.target.value)} /></div>
-              <Button variant="danger" onClick={() => setShowClose(true)}>Close register</Button>
-            </CardContent>
-          </Card>
+            {/* Actions */}
+            <div className="space-y-5">
+              <Card>
+                <CardHeader><CardTitle>Record movement</CardTitle></CardHeader>
+                <CardContent className="space-y-3 pt-4">
+                  <div className="grid grid-cols-2 gap-1 rounded-[var(--radius)] bg-[var(--surface-2)] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMovementType("in")}
+                      className={cn(
+                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-[calc(var(--radius)-4px)] py-2 text-sm font-medium transition-colors",
+                        movementType === "in" ? "bg-[var(--surface)] text-green-600 shadow-sm dark:text-green-400" : "text-[var(--muted)] hover:text-[var(--fg)]",
+                      )}
+                    >
+                      <ArrowDownCircle className="h-4 w-4" /> Cash in
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMovementType("out")}
+                      className={cn(
+                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-[calc(var(--radius)-4px)] py-2 text-sm font-medium transition-colors",
+                        movementType === "out" ? "bg-[var(--surface)] text-red-600 shadow-sm dark:text-red-400" : "text-[var(--muted)] hover:text-[var(--fg)]",
+                      )}
+                    >
+                      <ArrowUpCircle className="h-4 w-4" /> Cash out
+                    </button>
+                  </div>
+                  <div>
+                    <Label>Amount</Label>
+                    <Input type="number" step="0.01" min="0" placeholder="0.00" value={movementAmount} onChange={(e) => setMovementAmount(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Note</Label>
+                    <Input value={movementNote} onChange={(e) => setMovementNote(e.target.value)} placeholder="Optional" />
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => movementMutation.mutate()}
+                    disabled={movementMutation.isPending || !movementAmount || parseFloat(movementAmount) <= 0}
+                  >
+                    {movementMutation.isPending ? "Recording…" : "Record movement"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle>Close register</CardTitle></CardHeader>
+                <CardContent className="space-y-3 pt-4">
+                  <div>
+                    <Label>Actual cash on hand</Label>
+                    <Input type="number" step="0.01" min="0" value={closeAmount} onChange={(e) => setCloseAmount(e.target.value)} />
+                  </div>
+                  {closeAmount !== "" && (
+                    <div className="flex items-center justify-between rounded-[var(--radius)] bg-[var(--surface-2)] px-3 py-2 text-sm">
+                      <span className="text-[var(--muted)]">Difference</span>
+                      <span className={cn("font-semibold", closeDiff < 0 ? "text-[var(--color-danger)]" : closeDiff > 0 ? "text-[var(--color-success)]" : "")}>
+                        {closeDiff >= 0 ? "+" : ""}{formatCurrency(closeDiff)}
+                      </span>
+                    </div>
+                  )}
+                  <Button variant="danger" className="w-full" onClick={() => setShowClose(true)}>
+                    <Lock className="h-3.5 w-3.5" /> Close register
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </>
       )}
 

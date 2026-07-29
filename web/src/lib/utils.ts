@@ -31,12 +31,18 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat(numericLocale()).format(value ?? 0);
 }
 
-export function formatDate(value: string | number | Date) {
-  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium" }).format(new Date(value));
+export function formatDate(value: string | number | Date | null | undefined) {
+  if (value == null) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium" }).format(date);
 }
 
-export function formatDateTime(value: string | number | Date) {
-  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+export function formatDateTime(value: string | number | Date | null | undefined) {
+  if (value == null) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 /** Opens a fetched PDF blob in a new tab — the browser's built-in viewer handles print/save. */

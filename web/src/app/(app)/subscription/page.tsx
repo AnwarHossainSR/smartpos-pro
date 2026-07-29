@@ -20,7 +20,7 @@ interface Subscription {
   id: number;
   plan: Plan;
   status: string;
-  current_period_end: string;
+  current_period_ends_at: string | null;
   trial_ends_at: string | null;
 }
 
@@ -61,7 +61,7 @@ export default function SubscriptionPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-[var(--muted)]">Billing period ends</span><span>{formatDate(sub.current_period_end)}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--muted)]">Billing period ends</span><span>{formatDate(sub.current_period_ends_at)}</span></div>
             {sub.trial_ends_at && <div className="flex justify-between"><span className="text-[var(--muted)]">Trial ends</span><span>{formatDate(sub.trial_ends_at)}</span></div>}
           </CardContent>
         </Card>
