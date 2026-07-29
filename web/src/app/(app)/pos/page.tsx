@@ -21,6 +21,8 @@ interface Product {
   sku: string | null;
   selling_price: number;
   purchase_price: number;
+  tax_rate: number;
+  tax_inclusive: boolean;
   stock: number;
   is_active: boolean;
   category: { id: number; name: string } | null;
@@ -50,15 +52,32 @@ interface SaleResult {
   data: {
     id: number;
     invoice_number: string;
+    subtotal: number;
+    tax_amount: number;
     total: number;
     paid_amount: number;
     change_amount: number;
     due_amount: number;
     sold_at: string;
     customer?: { id: number; name: string };
-    items: { name: string; quantity: number; unit_price: number; total: number }[];
+    items: { name: string; quantity: number; unit_price: number; line_total: number }[];
     payments: { method: string; amount: number }[];
   };
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Mirrors SaleService::buildLines() on the server: tax is snapshotted per product, so the cart
+ *  has to apply the same per-line rounding or the amount tendered lands a few paisa short of the
+ *  server's total and the sale silently books a due balance. */
+function lineTotals({ product, qty, unit_price, discount }: CartItem) {
+  const taxable = Math.max(0, unit_price * qty - discount * qty);
+  const rate = product.tax_rate ?? 0;
+  const tax = product.tax_inclusive
+    ? round2(taxable - taxable / (1 + rate / 100))
+    : round2(taxable * (rate / 100));
+
+  return { net: product.tax_inclusive ? round2(taxable - tax) : round2(taxable), tax };
 }
 
 /* ---- receipt modal ---- */
@@ -89,12 +108,22 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           {sale.items?.map((item, i) => (
             <div key={i} className="flex justify-between">
               <span className="flex-1 truncate">{item.name} × {item.quantity}</span>
-              <span className="ms-4 font-medium">{formatCurrency(item.total)}</span>
+              <span className="ms-4 font-medium">{formatCurrency(item.line_total)}</span>
             </div>
           ))}
         </div>
         <hr className="border-dashed" />
         <div className="space-y-1">
+          {sale.tax_amount > 0 && (
+            <>
+              <div className="flex justify-between text-[var(--muted)]">
+                <span>Subtotal</span><span>{formatCurrency(sale.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-[var(--muted)]">
+                <span>Tax</span><span>{formatCurrency(sale.tax_amount)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between font-semibold">
             <span>Total</span><span>{formatCurrency(sale.total)}</span>
           </div>
@@ -248,10 +277,21 @@ export default function POSPage() {
 
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
-  const cartTotal = useMemo(
-    () => cart.reduce((sum, i) => sum + (i.unit_price - i.discount) * i.qty, 0),
-    [cart],
-  );
+  const { cartSubtotal, cartTax, cartTotal } = useMemo(() => {
+    const totals = cart.reduce(
+      (acc, item) => {
+        const { net, tax } = lineTotals(item);
+        return { net: acc.net + net, tax: acc.tax + tax };
+      },
+      { net: 0, tax: 0 },
+    );
+
+    return {
+      cartSubtotal: round2(totals.net),
+      cartTax: round2(totals.tax),
+      cartTotal: round2(totals.net + totals.tax),
+    };
+  }, [cart]);
 
   const checkoutMutation = useMutation({
     mutationFn: (payments: { method: string; amount: number }[]) => {
@@ -419,8 +459,14 @@ export default function POSPage() {
         <div className="border-t border-[var(--border)] p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-[var(--muted)]">Subtotal</span>
-            <span>{formatCurrency(cartTotal)}</span>
+            <span>{formatCurrency(cartSubtotal)}</span>
           </div>
+          {cartTax > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--muted)]">Tax</span>
+              <span>{formatCurrency(cartTax)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-semibold">
             <span>Total</span>
             <span>{formatCurrency(cartTotal)}</span>
