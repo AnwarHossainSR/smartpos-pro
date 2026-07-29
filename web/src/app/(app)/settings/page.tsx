@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { PalettePicker } from "@/components/ui/palette-picker";
+import { LocalePicker } from "@/components/ui/locale-picker";
 import { useTranslation } from "@/i18n/provider";
 
 interface BusinessSettings {
@@ -129,6 +130,14 @@ export default function SettingsPage() {
         <CardContent>
           <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.appearanceHint")}</p>
           <PalettePicker />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>{t("settings.localization")}</CardTitle></CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.localizationHint")}</p>
+          <LocalePicker className="max-w-xs" />
         </CardContent>
       </Card>
 

@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell } from "lucide-react";
+import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Languages } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
+import { useLocaleStore } from "@/stores/locale";
 import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
+import { LocalePicker } from "@/components/ui/locale-picker";
 import { useTranslation } from "@/i18n/provider";
 
 interface NotifResponse {
@@ -31,11 +33,14 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const { theme, setTheme, palette } = useThemeStore();
+  const locale = useLocaleStore((s) => s.locale);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [swatchMenuOpen, setSwatchMenuOpen] = useState(false);
+  const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const themeRef = useRef<HTMLDivElement>(null);
   const swatchRef = useRef<HTMLDivElement>(null);
+  const localeRef = useRef<HTMLDivElement>(null);
 
   const { data: notifData } = useQuery<NotifResponse>({
     queryKey: ["notifications"],
@@ -77,6 +82,17 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     if (swatchMenuOpen) document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, [swatchMenuOpen]);
+
+  // Close locale menu on outside click
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (localeRef.current && !localeRef.current.contains(e.target as Node)) {
+        setLocaleMenuOpen(false);
+      }
+    }
+    if (localeMenuOpen) document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [localeMenuOpen]);
 
   async function onLogout() {
     try { await api("/auth/logout", { method: "POST" }); } catch {}
@@ -120,6 +136,24 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               </span>
             )}
           </Button>
+
+          {/* Language */}
+          <div ref={localeRef} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocaleMenuOpen((v) => !v)}
+              title={t("header.language")}
+            >
+              <Languages className="h-4 w-4" />
+              <span className="sr-only">{locale}</span>
+            </Button>
+            {localeMenuOpen && (
+              <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-lg">
+                <LocalePicker />
+              </div>
+            )}
+          </div>
 
           {/* Palette swatch */}
           <div ref={swatchRef} className="relative">
