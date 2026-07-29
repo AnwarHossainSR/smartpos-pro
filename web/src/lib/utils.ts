@@ -1,17 +1,36 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useLocaleStore } from "@/stores/locale";
+import { useBusinessStore } from "@/stores/business";
 
 /** Merge conditional class names, resolving Tailwind conflicts. */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(value: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value ?? 0);
+/** UI language (nav, buttons, …) and the number/date locale are the same store — but stay
+ *  independent of `currency`, which is a tenant setting (see docs/REDESIGN_I18N_PLAN.md). */
+function activeLocale(): string {
+  return useLocaleStore.getState().locale;
+}
+
+/** `currency` overrides the tenant default — pass it explicitly for a sale/purchase that was
+ *  recorded in a different currency than the tenant's current setting. */
+export function formatCurrency(value: number, currency?: string) {
+  const cur = currency ?? useBusinessStore.getState().currency;
+  return new Intl.NumberFormat(activeLocale(), { style: "currency", currency: cur }).format(value ?? 0);
 }
 
 export function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-US").format(value ?? 0);
+  return new Intl.NumberFormat(activeLocale()).format(value ?? 0);
+}
+
+export function formatDate(value: string | number | Date) {
+  return new Intl.DateTimeFormat(activeLocale(), { dateStyle: "medium" }).format(new Date(value));
+}
+
+export function formatDateTime(value: string | number | Date) {
+  return new Intl.DateTimeFormat(activeLocale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 /** Client-side CSV export — no backend endpoint required for a plain list dump. */

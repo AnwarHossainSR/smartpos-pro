@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
+import { useBusinessStore } from "@/stores/business";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
@@ -60,6 +61,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
+
+  // Tenant currency drives formatCurrency() everywhere; fetched once here (same query key
+  // as Settings -> Business info, so React Query shares one cached request) and mirrored
+  // into a store so the plain formatCurrency() helper can read it without a hook.
+  const { data: businessData } = useQuery({
+    queryKey: ["business-settings"],
+    queryFn: () => api<{ data: { currency: string } }>("/settings/business"),
+    enabled: !!token,
+  });
+  const setCurrency = useBusinessStore((s) => s.setCurrency);
+  useEffect(() => {
+    if (businessData?.data?.currency) setCurrency(businessData.data.currency);
+  }, [businessData, setCurrency]);
 
   if (!hydrated || !token) {
     return (

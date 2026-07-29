@@ -117,5 +117,5 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | T70 | Locale switcher UI + per-script fonts | ✅ | | LocalePicker in header + Settings→Localization; Noto Sans Bengali/JP/Arabic via next/font, applied per [data-lang] |
 | T71 | RTL support | ✅ | | dir=rtl driven by locale (I18nProvider); 106 physical→logical class swaps (ml/pl/left/right/text-left/right) across 20 files; pagination chevrons flip via rtl:scale-x-[-1] |
 | T72 | Translation catalogs (de/bn/ar/ja) | ✅ | | Full human translations, 121/121 keys parity with en.json verified by script |
-| T73 | Currency/locale-aware formatting | ⬜ | | |
+| T73 | Currency/locale-aware formatting | ✅ | | formatCurrency/Number/Date/DateTime read locale+tenant-currency stores; business store added; audited/fixed 3 raw `$` spots + 8 raw toLocaleDateString/String spots app-wide |
 | T74 | QA pass | ⬜ | | |

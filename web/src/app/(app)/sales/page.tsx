@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Eye, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +54,7 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
           <div><span className="text-[var(--muted)]">Status</span><br /><Badge tone={statusColor[sale.status] ?? "default"}>{sale.status}</Badge></div>
           <div><span className="text-[var(--muted)]">Payment</span><br /><Badge tone={payColor[sale.payment_status] ?? "default"}>{sale.payment_status}</Badge></div>
           <div><span className="text-[var(--muted)]">Customer</span><br />{sale.customer?.name ?? "—"}</div>
-          <div><span className="text-[var(--muted)]">Date</span><br />{new Date(sale.sold_at).toLocaleString()}</div>
+          <div><span className="text-[var(--muted)]">Date</span><br />{formatDateTime(sale.sold_at)}</div>
         </div>
         <hr />
         <div className="space-y-1">
@@ -233,7 +233,7 @@ export default function SalesPage() {
                 <TableRow key={s.id}>
                   <TableCell className="font-mono text-xs font-medium">{s.invoice_number}</TableCell>
                   <TableCell>{s.customer?.name ?? <span className="text-[var(--muted)]">Walk-in</span>}</TableCell>
-                  <TableCell className="text-[var(--muted)]">{new Date(s.sold_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-[var(--muted)]">{formatDate(s.sold_at)}</TableCell>
                   <TableCell className="text-end font-medium">{formatCurrency(s.total)}</TableCell>
                   <TableCell><Badge tone={statusColor[s.status] ?? "default"}>{s.status}</Badge></TableCell>
                   <TableCell><Badge tone={payColor[s.payment_status] ?? "default"}>{s.payment_status}</Badge></TableCell>

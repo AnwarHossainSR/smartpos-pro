@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -135,8 +136,8 @@ export default function LoyaltyPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                     <TableCell>{c.type}</TableCell>
-                    <TableCell>{c.type === "percentage" ? `${c.value}%` : `$${c.value}`}</TableCell>
-                    <TableCell>{c.min_order_amount > 0 ? `$${c.min_order_amount}` : "—"}</TableCell>
+                    <TableCell>{c.type === "percentage" ? `${c.value}%` : formatCurrency(c.value)}</TableCell>
+                    <TableCell>{c.min_order_amount > 0 ? formatCurrency(c.min_order_amount) : "—"}</TableCell>
                     <TableCell>{c.used_count}{c.max_uses ? ` / ${c.max_uses}` : ""}</TableCell>
                     <TableCell>{c.valid_until ?? "—"}</TableCell>
                     <TableCell><Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>

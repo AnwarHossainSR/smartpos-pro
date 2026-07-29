@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -190,7 +190,7 @@ export default function AccountingPage() {
                   <TableRow key={j.id}>
                     <TableCell className="font-mono text-xs">{j.entry_number}</TableCell>
                     <TableCell>{j.description}</TableCell>
-                    <TableCell className="text-[var(--muted)]">{new Date(j.posted_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-[var(--muted)]">{formatDate(j.posted_at)}</TableCell>
                     <TableCell className="text-end">{formatCurrency(j.total_debit)}</TableCell>
                   </TableRow>
                 ))}

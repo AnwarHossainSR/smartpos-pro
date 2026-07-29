@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +32,7 @@ function notifTitle(n: Notification): string {
 function notifBody(n: Notification): string {
   const d = n.data;
   if (typeof d.body === "string") return d.body;
-  if (typeof d.amount === "number") return `Amount: $${d.amount}`;
+  if (typeof d.amount === "number") return `Amount: ${formatCurrency(d.amount)}`;
   return "";
 }
 
@@ -104,7 +105,7 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <p className={`text-sm ${!n.read_at ? "font-semibold" : "font-medium"}`}>{notifTitle(n)}</p>
                 {notifBody(n) && <p className="mt-0.5 text-xs text-[var(--muted)] truncate">{notifBody(n)}</p>}
-                <p className="mt-1 text-xs text-[var(--muted)]">{new Date(n.created_at).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{formatDateTime(n.created_at)}</p>
               </div>
               {!n.read_at && <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" />}
             </div>

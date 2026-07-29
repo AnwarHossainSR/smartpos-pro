@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, Printer } from "lucide-react";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,7 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
       <div className="space-y-3 text-sm">
         <div className="text-center">
           <p className="font-semibold text-base">Invoice #{sale.invoice_number}</p>
-          <p className="text-[var(--muted)]">{new Date(sale.sold_at).toLocaleString()}</p>
+          <p className="text-[var(--muted)]">{formatDateTime(sale.sold_at)}</p>
           {sale.customer && <p className="mt-1">{sale.customer.name}</p>}
         </div>
         <hr className="border-dashed" />

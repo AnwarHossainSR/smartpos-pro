@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -176,7 +176,7 @@ function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClos
           <div><span className="text-[var(--muted)]">Status</span><br /><Badge tone={statusColor[purchase.status] ?? "default"}>{purchase.status}</Badge></div>
           <div><span className="text-[var(--muted)]">Payment</span><br /><Badge tone={purchase.payment_status === "paid" ? "success" : "warning"}>{purchase.payment_status}</Badge></div>
           <div><span className="text-[var(--muted)]">Supplier</span><br />{purchase.supplier?.name ?? "—"}</div>
-          <div><span className="text-[var(--muted)]">Date</span><br />{new Date(purchase.purchased_at).toLocaleDateString()}</div>
+          <div><span className="text-[var(--muted)]">Date</span><br />{formatDate(purchase.purchased_at)}</div>
         </div>
         <hr />
         {purchase.items?.map((item, i) => (
@@ -229,7 +229,7 @@ export default function PurchasesPage() {
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs font-medium">{p.reference_number}</TableCell>
                   <TableCell>{p.supplier?.name ?? "—"}</TableCell>
-                  <TableCell className="text-[var(--muted)]">{new Date(p.purchased_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-[var(--muted)]">{formatDate(p.purchased_at)}</TableCell>
                   <TableCell className="text-end">{formatCurrency(p.total)}</TableCell>
                   <TableCell><Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge></TableCell>
                   <TableCell><Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge></TableCell>
