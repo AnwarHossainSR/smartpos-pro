@@ -45,8 +45,10 @@ jobs:
         run: vendor/bin/pint --test
 
       - name: Static analysis (PHPStan)
-        continue-on-error: true # advisory until the level-max baseline is curated
         run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Dependency audit (Composer)
+        run: composer audit --no-interaction
 
       - name: Run tests
         env:
@@ -57,3 +59,55 @@ jobs:
           DB_USERNAME: smartpos
           DB_PASSWORD: secret
         run: php artisan test
+
+  web:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+      - name: Unit tests
+        run: bun run test
+
+      - name: Dependency audit (npm)
+        # Ignored: transitive dev-tooling-only deps (eslint/next/vitest toolchain, never
+        # shipped in the production bundle) with no non-breaking fix available yet.
+        # GHSA-mh99-v99m-4gvg (brace-expansion via eslint), GHSA-6g55-p6wh-862q /
+        # GHSA-r28c-9q8g-f849 (postcss via next/vite build tooling), GHSA-f88m-g3jw-g9cj
+        # (sharp, next's optional image-optimizer binary — not called directly by app code).
+        run: >-
+          bun audit --audit-level=high
+          --ignore=GHSA-mh99-v99m-4gvg,GHSA-6g55-p6wh-862q,GHSA-r28c-9q8g-f849,GHSA-f88m-g3jw-g9cj
+
+  secret-scan:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for leaked secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

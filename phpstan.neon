@@ -1,5 +1,6 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     level: 5
@@ -7,5 +8,3 @@ parameters:
         - app
     excludePaths:
         - app/Http/Middleware/Idempotency.php # dynamic response body typing
-    ignoreErrors:
-        - '#Unsafe usage of new static#'
