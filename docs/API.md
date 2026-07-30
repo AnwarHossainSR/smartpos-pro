@@ -441,13 +441,19 @@ Base path: `/api/v1/super` · Requires: `is_super_admin = true` on the authentic
 | `POST /super/tenants/{id}/activate` | set status = active, audited |
 | `DELETE /super/tenants/{id}` | soft-delete tenant |
 | `GET /super/metrics/revenue` | MRR, plan distribution, recent subscriptions |
-| `POST /super/tenants/{id}/impersonate` | issues a 24h scoped token for the tenant's owner |
-| `POST /super/impersonation/stop` | revokes the current impersonation token |
+| `POST /super/tenants/{id}/impersonate` | body: `{ reason }` (required, min 10 chars, `422` otherwise). Issues a 30-minute token scoped to a single `impersonate` ability for the tenant's owner. Notifies the owner (in-app + email) and audits the start. |
+| `POST /super/impersonation/stop` | **not** super-admin-gated — called with the impersonation token itself, from inside the impersonated session, to end it early |
+| `POST /super/impersonation/{id}/revoke` | ends a live impersonation **from the super-admin's own session** — the super-admin no longer has to ask the impersonated session to call `stop` |
+| `GET /super/impersonations` | every impersonation currently in progress (not yet ended), with tenant/admin/target-user info |
 
 **Impersonation flow:**
-1. `POST /super/tenants/42/impersonate` → `{ token, expires_at }`
-2. Use the returned token as `Authorization: Bearer <token>` for subsequent requests
-3. `POST /super/impersonation/stop` to revoke when done
+1. `POST /super/tenants/42/impersonate` with `{ "reason": "..." }` → `{ impersonation_id, token, expires_at }`
+2. Use the returned token as `Authorization: Bearer <token>` for subsequent requests — it expires
+   after 30 minutes regardless
+3. End it either from inside the session (`POST /super/impersonation/stop`, no `super_admin`
+   gate — the token itself proves the session) or remotely from the super-admin's own session
+   (`POST /super/impersonation/{id}/revoke`)
+4. Both start and stop write an `audit_logs` row (`impersonation.started`/`impersonation.stopped`)
 
 **Tenant suspension:** every tenant-scoped route (guarded by the `ensure.tenant` middleware)
 403s with `{ "code": "tenant_suspended" }` once a tenant's status leaves `trialing`/`active`,

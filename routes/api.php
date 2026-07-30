@@ -221,6 +221,11 @@ Route::prefix('v1')->group(function () {
         Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convert'])->middleware('permission:pos.create');
     });
 
+    // Called from *inside* an impersonated session (the tenant owner's own token, not a
+    // super-admin token) — deliberately outside the super_admin-gated group below.
+    Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
+        ->middleware(['auth:sanctum']);
+
     // T31-T33 — Super-admin (separate guard, no tenant scope)
     Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
         Route::get('tenants', [SuperAdminController::class, 'tenants']);
@@ -234,6 +239,7 @@ Route::prefix('v1')->group(function () {
 
         // T33
         Route::post('tenants/{tenant}/impersonate', [SuperAdminController::class, 'impersonate']);
-        Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
+        Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
+        Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
     });
 });

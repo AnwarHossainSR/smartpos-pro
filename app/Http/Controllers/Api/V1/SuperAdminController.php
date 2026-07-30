@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ImpersonationStartedMail;
+use App\Models\AppNotification;
+use App\Models\Impersonation;
 use App\Models\Sale;
 use App\Models\Subscription;
 use App\Models\Tenant;
@@ -10,6 +13,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
@@ -121,34 +125,114 @@ class SuperAdminController extends Controller
     // T33 — Tenant impersonation
     // ------------------------------------------------------------------
 
+    protected const IMPERSONATION_MINUTES = 30;
+
     public function impersonate(Tenant $tenant, Request $request): JsonResponse
     {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ]);
+
+        $admin = $request->user();
+
         // Find the owner of this tenant
         $owner = User::where('tenant_id', $tenant->id)
             ->whereHas('roles', fn ($q) => $q->where('slug', 'owner'))
             ->firstOrFail();
 
-        // Issue a short-lived scoped token (24h) with impersonation marker
+        // Issue a short-lived, narrowly-scoped token — 30 minutes, impersonate-only ability.
+        $expiresAt = now()->addMinutes(self::IMPERSONATION_MINUTES);
         $token = $owner->createToken(
-            name: 'impersonation:super-admin:'.$request->user()->id,
-            expiresAt: now()->addHours(24),
+            name: 'impersonation:super-admin:'.$admin->id,
+            abilities: ['impersonate'],
+            expiresAt: $expiresAt,
         );
+
+        $impersonation = Impersonation::create([
+            'tenant_id' => $tenant->id,
+            'super_admin_id' => $admin->id,
+            'target_user_id' => $owner->id,
+            'personal_access_token_id' => $token->accessToken->id,
+            'reason' => $data['reason'],
+            'started_at' => now(),
+        ]);
+
+        $this->audit->log('impersonation.started', $impersonation, null, [
+            'tenant_id' => $tenant->id,
+            'target_user_id' => $owner->id,
+            'reason' => $data['reason'],
+        ], $admin, $tenant->id);
+
+        AppNotification::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'type' => 'impersonation.started',
+            'title' => 'Support accessed your account',
+            'body' => "{$admin->name} started a support session on your account. Reason: {$data['reason']}",
+            'data' => ['admin_name' => $admin->name, 'reason' => $data['reason']],
+        ]);
+
+        Mail::to($owner)->queue(new ImpersonationStartedMail($owner, $data['reason'], $admin->name));
 
         return response()->json([
             'data' => [
+                'impersonation_id' => $impersonation->id,
                 'token' => $token->plainTextToken,
                 'tenant' => $tenant->only('id', 'name', 'slug'),
                 'user' => $owner->only('id', 'name', 'email'),
-                'expires_at' => now()->addHours(24)->toISOString(),
+                'expires_at' => $expiresAt->toISOString(),
             ],
         ]);
     }
 
+    /** Called from inside the impersonated session to end it early. */
     public function stopImpersonation(Request $request): JsonResponse
     {
-        // Revoke the impersonation token used in this request
-        $request->user()->currentAccessToken()->delete();
+        $tokenId = $request->user()->currentAccessToken()->id;
+
+        $this->endImpersonation($tokenId, $request->user());
 
         return response()->json(['message' => 'Impersonation ended.']);
+    }
+
+    /** Called from the super-admin's own session to revoke a live impersonation remotely. */
+    public function revokeImpersonation(Request $request, int $impersonation): JsonResponse
+    {
+        $record = Impersonation::whereKey($impersonation)->whereNull('ended_at')->firstOrFail();
+
+        $this->endImpersonation($record->personal_access_token_id, $request->user(), $record);
+
+        return response()->json(['message' => 'Impersonation revoked.']);
+    }
+
+    /** Every impersonation currently in progress (not yet ended). */
+    public function activeImpersonations(): JsonResponse
+    {
+        $records = Impersonation::whereNull('ended_at')
+            ->with(['tenant:id,name', 'superAdmin:id,name,email', 'targetUser:id,name,email'])
+            ->latest('started_at')
+            ->get();
+
+        return response()->json(['data' => $records]);
+    }
+
+    protected function endImpersonation(?int $tokenId, User $endedBy, ?Impersonation $record = null): void
+    {
+        $record ??= $tokenId
+            ? Impersonation::where('personal_access_token_id', $tokenId)->whereNull('ended_at')->first()
+            : null;
+
+        if ($tokenId) {
+            PersonalAccessToken::whereKey($tokenId)->delete();
+        }
+
+        if ($record) {
+            $record->update(['ended_at' => now(), 'ended_by' => $endedBy->id]);
+
+            $this->audit->log('impersonation.stopped', $record, null, [
+                'tenant_id' => $record->tenant_id,
+                'target_user_id' => $record->target_user_id,
+            ], $endedBy, $record->tenant_id);
+        }
     }
 }

@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 8 | 0 | 5 | 13 |
+| 7 · Security & money integrity | 9 | 0 | 4 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **83** | **0** | **16** | **99** |
+| **Total** | **84** | **0** | **15** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -140,7 +140,7 @@ T87 → T88.
 | T76 | Server-side pricing + permission-gated overrides | ✅ | | `SaleService` prices every line from the catalog; client `unit_price`/`discount_amount` only honoured with `pos.price_override`/`pos.discount` (403 otherwise); sale-level discount capped at subtotal (422); honoured overrides write an `audit_logs` row via new `AuditLogService`; POS cart shows price/discount inputs only when permitted |
 | T77 | Coupon enforcement inside the sale transaction | ✅ | | `SaleService` re-validates `coupon_code` inside the checkout transaction (active/date/min-spend/limit), row-locks the coupon and increments `used_count`, derives `coupon_discount` server-side; new `coupon_id`/`coupon_discount` columns on `sales`; `POST coupons/validate` unchanged (pre-check only) |
 | T78 | Audit trail — writer, API, UI | ✅ | | New `Auditable` trait auto-logs created/updated/deleted on `Sale`, `SaleReturn`, `Purchase`, `Expense`, `JournalEntry`, `User`, `Role`, `Business`, `Coupon`; explicit `auth.login`/`auth.login_failed` events; `GET /v1/audit-logs` (`audit.view`) with actor/action/model/date filters + pagination; Settings → Audit Log page (`DataTable`/`ListToolbar`, detail dialog), fully translated (en/de/bn/ja/ar) |
-| T79 | Impersonation hardening | ⬜ | | **High** — 24h full-owner token, no reason, no log, no revoke |
+| T79 | Impersonation hardening | ✅ | | `reason` required (min 10 chars, 422 otherwise); token TTL 24h → 30min with a single `impersonate` ability; new `impersonations` table records who/why/when; `POST super/impersonation/{id}/revoke` ends a live session from the super-admin's own session (the pre-existing `stop` endpoint — for use from inside the impersonated session — was actually unreachable since it sat behind the `super_admin` gate; moved out of it); `GET super/impersonations` lists active sessions; owner gets an in-app notification + email; start/stop both audited |
 | T80 | Token lifecycle: expiry, abilities, sessions | ✅ | | `sanctum.expiration` set (14d default, env-overridable) + daily `sanctum:prune-expired`; tokens issued with abilities scoped to the user's permissions (not `*`, except owner/super-admin); `GET/DELETE auth/sessions`, `POST auth/sessions/revoke-all` (device name/IP/last-used); frontend token moved out of localStorage into memory + a `Secure`/`SameSite=Strict` cookie, Settings → Sessions & devices card with revoke buttons — verified end-to-end with Playwright against the running app |
 | T81 | Tenant suspension enforcement + token revocation | ✅ | | `EnsureTenant` 403s (`code: tenant_suspended`) once a tenant leaves `trialing`/`active`; login refuses the same; `suspendTenant()` deletes every live token for the tenant's users and audits the action; frontend shows a blocking "account suspended" screen on that code |
 | T82 | API rate limiting | ✅ | | `throttleApi()` wired in `bootstrap/app.php`; named limiters in `AppServiceProvider` — global 120/min per-token, `reports` 20/min on report/PDF routes, `login` 5/min per-email + 20/min per-IP on login/register; 429s carry `Retry-After`; frontend `api()` toasts on 429 |
