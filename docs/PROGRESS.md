@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-29_
+_Last updated: 2026-07-30_
 
 ## Summary
 
@@ -17,7 +17,10 @@ _Last updated: 2026-07-29_
 | 3 · Frontend | 23 | 0 | 0 | 23 |
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
-| **Total** | **74** | **0** | **0** | **74** |
+| 6 · Printable documents | 1 | 0 | 0 | 1 |
+| 7 · Security & money integrity | 13 | 0 | 0 | 13 |
+| 8 · Product depth | 0 | 0 | 11 | 11 |
+| **Total** | **88** | **0** | **11** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -125,3 +128,44 @@ Plan: [`REDESIGN_I18N_PLAN.md`](REDESIGN_I18N_PLAN.md).
 | ID | Task | Status | PR | Notes |
 | -- | ---- | ------ | -- | ----- |
 | T75 | Invoice & cash-register payment-slip PDFs | ✅ | | barryvdh/laravel-dompdf; `pdf.invoice`/`pdf.cash-slip` Blade templates; `GET sales/{sale}/invoice`, `GET cash-register-sessions/{session}/slip` (`?download=1`); wired into POS receipt, sales list, cash-register page. Also fixed the cash-register frontend, which was calling endpoints/fields that didn't match the backend at all (`opening_balance` vs `opening_cash`, wrong close/movement URLs) — added the missing `GET cash-registers/{id}/current-session` endpoint the frontend already expected. Verified end-to-end with Playwright against the running app (8 new/updated backend feature tests, all green). |
+
+## Phase 7 — Security & money integrity
+
+Plan: [`NEXT_PHASE_PLAN.md`](NEXT_PHASE_PLAN.md) — each task lists the review finding it
+closes. Suggested order: T76 → T77 → T78 → T83 → T81 → T82 → T86 → T80 → T79 → T84 → T85 →
+T87 → T88.
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T76 | Server-side pricing + permission-gated overrides | ✅ | | `SaleService` prices every line from the catalog; client `unit_price`/`discount_amount` only honoured with `pos.price_override`/`pos.discount` (403 otherwise); sale-level discount capped at subtotal (422); honoured overrides write an `audit_logs` row via new `AuditLogService`; POS cart shows price/discount inputs only when permitted |
+| T77 | Coupon enforcement inside the sale transaction | ✅ | | `SaleService` re-validates `coupon_code` inside the checkout transaction (active/date/min-spend/limit), row-locks the coupon and increments `used_count`, derives `coupon_discount` server-side; new `coupon_id`/`coupon_discount` columns on `sales`; `POST coupons/validate` unchanged (pre-check only) |
+| T78 | Audit trail — writer, API, UI | ✅ | | New `Auditable` trait auto-logs created/updated/deleted on `Sale`, `SaleReturn`, `Purchase`, `Expense`, `JournalEntry`, `User`, `Role`, `Business`, `Coupon`; explicit `auth.login`/`auth.login_failed` events; `GET /v1/audit-logs` (`audit.view`) with actor/action/model/date filters + pagination; Settings → Audit Log page (`DataTable`/`ListToolbar`, detail dialog), fully translated (en/de/bn/ja/ar) |
+| T79 | Impersonation hardening | ✅ | | `reason` required (min 10 chars, 422 otherwise); token TTL 24h → 30min with a single `impersonate` ability; new `impersonations` table records who/why/when; `POST super/impersonation/{id}/revoke` ends a live session from the super-admin's own session (the pre-existing `stop` endpoint — for use from inside the impersonated session — was actually unreachable since it sat behind the `super_admin` gate; moved out of it); `GET super/impersonations` lists active sessions; owner gets an in-app notification + email; start/stop both audited |
+| T80 | Token lifecycle: expiry, abilities, sessions | ✅ | | `sanctum.expiration` set (14d default, env-overridable) + daily `sanctum:prune-expired`; tokens issued with abilities scoped to the user's permissions (not `*`, except owner/super-admin); `GET/DELETE auth/sessions`, `POST auth/sessions/revoke-all` (device name/IP/last-used); frontend token moved out of localStorage into memory + a `Secure`/`SameSite=Strict` cookie, Settings → Sessions & devices card with revoke buttons — verified end-to-end with Playwright against the running app |
+| T81 | Tenant suspension enforcement + token revocation | ✅ | | `EnsureTenant` 403s (`code: tenant_suspended`) once a tenant leaves `trialing`/`active`; login refuses the same; `suspendTenant()` deletes every live token for the tenant's users and audits the action; frontend shows a blocking "account suspended" screen on that code |
+| T82 | API rate limiting | ✅ | | `throttleApi()` wired in `bootstrap/app.php`; named limiters in `AppServiceProvider` — global 120/min per-token, `reports` 20/min on report/PDF routes, `login` 5/min per-email + 20/min per-IP on login/register; 429s carry `Retry-After`; frontend `api()` toasts on 429 |
+| T83 | Role-escalation guard in user management | ✅ | | `UserController::update` blocks self-role changes, blocks granting/revoking `owner` unless caller is owner/super-admin, and blocks editing users outside a branch-scoped caller's assigned branches; `RoleController::update` blocks editing the `owner` role's permissions the same way; role-assignment changes are audited |
+| T84 | Password reset + email verification | ✅ | | `POST auth/forgot-password`/`reset-password` (signed-token round trip, 60min single-use, throttled, revokes existing sessions on reset); `User implements MustVerifyEmail`, `GET auth/email/verify/{id}/{hash}` (signed) + `POST auth/email/resend`; billing-sensitive `subscription/*` routes gated behind `verified`; invited team members get a "set your password" email instead of an undelivered random password; frontend forgot/reset pages + a dismissible "verify your email" banner — verified end-to-end with Playwright against the running app (log mailer, real reset link, full round trip) |
+| T85 | Two-factor auth (TOTP) + login lockout | ✅ | | In-house RFC 6238 TOTP (no external dependency, verified against the RFC's test vectors) — `POST auth/2fa/enable`/`confirm`/`disable`/`recovery-codes/regenerate`; login returns `requires_2fa`+`challenge_token` for enrolled accounts, completed via `POST auth/2fa/challenge` (code or single-use recovery code); progressive per-account lockout (1/2/4/…/60min) after 5 failed attempts across login and the 2FA challenge; tenant-level `settings.require_2fa` surfaces `requires_two_factor_setup`; frontend: QR enrollment + recovery codes in Settings → Security, login challenge screen — verified end-to-end with Playwright against the running app (real QR scan simulated via a JS TOTP generator, wrong-code rejection, correct-code login, recovery-code login) |
+| T86 | Query & config hardening | ✅ | | `sort`/`direction` whitelisted (`ValidatesSort` trait) on Products/Customers/Suppliers (422 on unknown); `is_super_admin`/`tenant_id` dropped from `User::$fillable`; `config/cors.php` restricted to `FRONTEND_URL`; idempotency keys scoped to tenant+key+method+path with a payload hash (409 on reuse with a different body) + hourly 24h prune; baseline security headers middleware on every API response |
+| T87 | Tenant scope fail-closed + job tenant binding | ✅ | | `TenantScope` now throws when no tenant is bound instead of silently running unscoped; two explicit escape hatches — `Model::withoutTenancy()` (query-level) and the new `TenantContext::runUnscoped()` (for framework internals like the password-reset broker); audited and fixed every public/super-admin call site that relied on the old silent-skip behavior (login, 2FA challenge, email verification, revenue metrics, impersonation, etc.); `SendDailyReportJob` already bound its tenant correctly. Full suite (94 tests) + seeders + a live server smoke test all green after the change. |
+| T88 | CI security gates | ✅ | #9 | `composer audit` and `bun audit --audit-level=high` (curated ignore-list for unfixable transitive dev-tooling CVEs) now fail the build; PHPStan gate is no longer advisory — a curated `phpstan-baseline.neon` (283 pre-existing larastan false-positives, mostly `Model` vs `User` narrowing across `withoutTenancy()` chains) absorbs the historical noise so `vendor/bin/phpstan analyse` fails CI on any *new* error; new `web` CI job runs `bun run lint`/`build`/`test` on every PR; new `secret-scan` job runs gitleaks; `.github/dependabot.yml` covers composer + bun + github-actions weekly |
+
+## Phase 8 — Product depth
+
+Detail in [`NEXT_PHASE_PLAN.md`](NEXT_PHASE_PLAN.md). T89–T91 unlock revenue; T92–T99 are
+vertical depth — pick a lane rather than building all of them.
+
+| ID | Task | Status | PR | Notes |
+| -- | ---- | ------ | -- | ----- |
+| T89 | Manager approval workflow at POS | ⬜ | | Manager PIN for the actions gated in T76 |
+| T90 | Security settings page | ⬜ | | One surface for T80/T84/T85 |
+| T91 | Subscription billing gateway | ⬜ | | Plans/Subscriptions exist but nothing can charge a card |
+| T92 | Stocktake / cycle counting | ⬜ | | Shrinkage is currently invisible |
+| T93 | Reorder suggestions → draft POs | ⬜ | | All inputs already exist; loop not closed |
+| T94 | Accounts payable & receivable aging | ⬜ | | Supplier bills + payments missing |
+| T95 | Hardware integration | ⬜ | | ESC/POS, cash drawer, scale, label printing |
+| T96 | Tax compliance profiles | ⬜ | | NBR / GST / EU VAT |
+| T97 | Restaurant mode | ⬜ | | Tables, KOT, modifiers, split bills |
+| T98 | Offline sync conflict resolution | ⬜ | | Server side of T60's offline queue |
+| T99 | AI assist | ⬜ | | Forecasting, NL reports, receipt OCR |

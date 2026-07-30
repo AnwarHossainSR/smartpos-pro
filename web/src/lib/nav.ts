@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
-  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
+  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText,
 } from "lucide-react";
 
 export interface NavItem {
@@ -71,6 +71,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/subscription", key: "subscription", icon: Crown },
       { href: "/notifications", key: "notifications", icon: Bell },
+      { href: "/audit-log", key: "auditLog", icon: ScrollText },
       { href: "/settings", key: "settings", icon: Settings },
     ],
   },

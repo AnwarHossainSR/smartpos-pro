@@ -32,7 +32,8 @@
     "loyalty": "Loyalty & Coupons",
     "subscription": "Subscription",
     "notifications": "Notifications",
-    "settings": "Settings"
+    "settings": "Settings",
+    "auditLog": "Audit Log"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",
@@ -80,7 +81,25 @@
     "marketingBody": "Sales, inventory, purchases and accounting — synced in real time across every till.",
     "feature1": "Multi-tenant, multi-till ready",
     "feature2": "Live stock & accounting ledgers",
-    "feature3": "Role-based access for every teammate"
+    "feature3": "Role-based access for every teammate",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtitle": "Enter your email and we'll send you a reset link",
+    "sendResetLink": "Send reset link",
+    "sendingResetLink": "Sending…",
+    "resetLinkSentTitle": "Check your email",
+    "resetLinkSentBody": "If that email is registered, a reset link is on its way.",
+    "backToLogin": "Back to sign in",
+    "resetPasswordTitle": "Set a new password",
+    "resetPasswordSubtitle": "Choose a new password for your account",
+    "newPassword": "New password",
+    "resetPassword": "Reset password",
+    "resettingPassword": "Resetting…",
+    "resetPasswordSuccess": "Password reset. Sign in with your new password.",
+    "resetPasswordMissingLink": "This reset link is missing or invalid. Request a new one.",
+    "verifyBannerText": "Please verify your email address.",
+    "resendVerification": "Resend email",
+    "verificationSent": "Verification email sent."
   },
   "settings": {
     "title": "Settings",
@@ -103,7 +122,20 @@
     "language": "Language",
     "account": "Account",
     "name": "Name",
-    "roles": "Roles"
+    "roles": "Roles",
+    "security": "Sessions & devices",
+    "securityHint": "Every device currently signed in to your account.",
+    "sessionCurrent": "This device",
+    "sessionLastActive": "Last active",
+    "sessionRevoke": "Revoke",
+    "sessionRevokeAll": "Sign out other devices",
+    "sessionRevokeConfirmTitle": "Revoke this session?",
+    "sessionRevokeConfirmBody": "The device will be signed out immediately.",
+    "sessionRevokeAllConfirmTitle": "Sign out every other device?",
+    "sessionRevokeAllConfirmBody": "You'll stay signed in on this device.",
+    "sessionRevoked": "Session revoked.",
+    "sessionsRevokedAll": "All other sessions revoked.",
+    "sessionsEmpty": "No other active sessions."
   },
   "products": {
     "title": "Products",

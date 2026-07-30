@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { ShieldAlert } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
@@ -13,7 +14,32 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { useTranslation } from "@/i18n/provider";
+
+function isTenantSuspendedError(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 403) return false;
+  const payload = error.payload as { code?: string } | null;
+  return payload?.code === "tenant_suspended";
+}
+
+function SuspendedScreen() {
+  const logout = useAuth((s) => s.logout);
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <ShieldAlert className="h-10 w-10 text-[var(--color-danger)]" />
+      <h1 className="text-lg font-semibold">This account has been suspended</h1>
+      <p className="max-w-sm text-sm text-[var(--muted)]">
+        Access to this business has been suspended. Contact support if you believe this is a
+        mistake.
+      </p>
+      <Button variant="outline" onClick={logout}>
+        Log out
+      </Button>
+    </div>
+  );
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -41,10 +67,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setSidebarOpen(false);
   }
 
-  const { data } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ["me"],
     queryFn: () => api<{ data: AuthUser }>("/auth/me"),
     enabled: !!token,
+    retry: (failureCount, err) => !isTenantSuspendedError(err) && failureCount < 3,
   });
 
   useEffect(() => {
@@ -61,6 +88,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (isTenantSuspendedError(error)) {
+    return <SuspendedScreen />;
+  }
+
   const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
@@ -74,6 +105,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
+          <VerifyEmailBanner />
           {/* Re-mounting on locale/currency change guarantees every formatCurrency()/formatNumber()
               call in the page tree picks up the new value — those helpers read the stores
               imperatively (via getState()), so pages that don't otherwise subscribe to either

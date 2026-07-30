@@ -219,7 +219,9 @@ function PaymentModal({
 
 /* ---- main POS page ---- */
 export default function POSPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
+  const canOverridePrice = can("pos.price_override");
+  const canDiscount = can("pos.discount");
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -274,6 +276,10 @@ export default function POSPage() {
       setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, qty } : i)));
     }
   };
+  const updatePrice = (id: number, unit_price: number) =>
+    setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, unit_price: Math.max(0, unit_price) } : i)));
+  const updateDiscount = (id: number, discount: number) =>
+    setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, discount: Math.max(0, discount) } : i)));
 
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
@@ -324,7 +330,8 @@ export default function POSPage() {
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
     onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Checkout failed", "error");
+      const detail = e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Checkout failed";
+      toast(detail, "error");
     },
   });
 
@@ -459,6 +466,36 @@ export default function POSPage() {
                   </div>
                   <span className="text-sm font-semibold">{formatCurrency(item.unit_price * item.qty)}</span>
                 </div>
+                {(canOverridePrice || canDiscount) && (
+                  <div className="mt-2 flex items-center gap-2 text-xs">
+                    {canOverridePrice && (
+                      <label className="flex flex-1 items-center gap-1 text-[var(--muted)]">
+                        Price
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={item.unit_price}
+                          onChange={(e) => updatePrice(item.product.id, Number(e.target.value))}
+                          className="h-7 px-2 text-xs"
+                        />
+                      </label>
+                    )}
+                    {canDiscount && (
+                      <label className="flex flex-1 items-center gap-1 text-[var(--muted)]">
+                        Discount/unit
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={item.discount}
+                          onChange={(e) => updateDiscount(item.product.id, Number(e.target.value))}
+                          className="h-7 px-2 text-xs"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}

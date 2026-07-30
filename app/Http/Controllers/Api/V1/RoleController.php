@@ -8,6 +8,7 @@ use App\Http\Resources\RoleResource;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Support\Rbac\PermissionCatalog;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -43,6 +44,12 @@ class RoleController extends Controller
 
     public function update(StoreRoleRequest $request, Role $role): RoleResource
     {
+        $actor = $request->user();
+
+        if ($role->slug === 'owner' && ! ($actor->hasRole('owner') || $actor->is_super_admin)) {
+            throw new AuthorizationException('Only the business owner can modify the owner role.');
+        }
+
         $data = $request->validated();
         $role->update(['name' => $data['name'], 'description' => $data['description'] ?? $role->description]);
 

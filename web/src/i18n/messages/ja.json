@@ -32,7 +32,8 @@
     "loyalty": "ポイント・クーポン",
     "subscription": "サブスクリプション",
     "notifications": "通知",
-    "settings": "設定"
+    "settings": "設定",
+    "auditLog": "監査ログ"
   },
   "sidebar": {
     "collapse": "サイドバーを折りたたむ",
@@ -80,7 +81,25 @@
     "marketingBody": "販売、在庫、仕入れ、会計をすべてのレジでリアルタイムに同期。",
     "feature1": "マルチテナント・マルチレジに対応",
     "feature2": "リアルタイムの在庫・会計台帳",
-    "feature3": "メンバーごとのロールベースアクセス"
+    "feature3": "メンバーごとのロールベースアクセス",
+    "forgotPassword": "パスワードをお忘れですか?",
+    "forgotPasswordTitle": "パスワードをリセット",
+    "forgotPasswordSubtitle": "メールアドレスを入力すると、リセットリンクをお送りします",
+    "sendResetLink": "リセットリンクを送信",
+    "sendingResetLink": "送信中…",
+    "resetLinkSentTitle": "メールを確認してください",
+    "resetLinkSentBody": "そのメールアドレスが登録されている場合、リセットリンクが送信されます。",
+    "backToLogin": "サインインに戻る",
+    "resetPasswordTitle": "新しいパスワードを設定",
+    "resetPasswordSubtitle": "アカウントの新しいパスワードを選択してください",
+    "newPassword": "新しいパスワード",
+    "resetPassword": "パスワードをリセット",
+    "resettingPassword": "リセット中…",
+    "resetPasswordSuccess": "パスワードがリセットされました。新しいパスワードでサインインしてください。",
+    "resetPasswordMissingLink": "このリセットリンクが見つからないか無効です。新しいリンクをリクエストしてください。",
+    "verifyBannerText": "メールアドレスを確認してください。",
+    "resendVerification": "メールを再送信",
+    "verificationSent": "確認メールを送信しました。"
   },
   "settings": {
     "title": "設定",
@@ -103,7 +122,20 @@
     "language": "言語",
     "account": "アカウント",
     "name": "名前",
-    "roles": "役割"
+    "roles": "役割",
+    "security": "セッションとデバイス",
+    "securityHint": "現在アカウントにサインインしているすべてのデバイス。",
+    "sessionCurrent": "このデバイス",
+    "sessionLastActive": "最終アクティブ",
+    "sessionRevoke": "取り消す",
+    "sessionRevokeAll": "他のデバイスをサインアウト",
+    "sessionRevokeConfirmTitle": "このセッションを取り消しますか?",
+    "sessionRevokeConfirmBody": "このデバイスは直ちにサインアウトされます。",
+    "sessionRevokeAllConfirmTitle": "他のすべてのデバイスをサインアウトしますか?",
+    "sessionRevokeAllConfirmBody": "このデバイスではサインインしたままになります。",
+    "sessionRevoked": "セッションを取り消しました。",
+    "sessionsRevokedAll": "他のすべてのセッションを取り消しました。",
+    "sessionsEmpty": "他にアクティブなセッションはありません。"
   },
   "products": {
     "title": "商品",

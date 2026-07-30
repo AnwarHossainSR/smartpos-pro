@@ -1,4 +1,5 @@
 import { useAuth } from "@/stores/auth";
+import { toast } from "@/components/ui/toast";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
@@ -41,6 +42,14 @@ export async function api<T = unknown>(
 
   if (res.status === 401) {
     useAuth.getState().logout();
+  }
+
+  if (res.status === 429) {
+    const retryAfter = res.headers.get("Retry-After");
+    toast(
+      retryAfter ? `Too many requests. Try again in ${retryAfter}s.` : "Too many requests. Please slow down.",
+      "error",
+    );
   }
 
   const data = res.status === 204 ? null : await res.json().catch(() => null);

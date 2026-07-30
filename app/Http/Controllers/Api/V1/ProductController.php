@@ -9,15 +9,22 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
+use App\Support\Concerns\ValidatesSort;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    use ValidatesSort;
+
+    protected const SORTABLE = ['name', 'sku', 'selling_price', 'purchase_price', 'created_at'];
+
     public function __construct(protected StockLedgerService $ledger) {}
 
     public function index(Request $request)
     {
+        [$sort, $direction] = $this->resolveSort($request, self::SORTABLE, 'name');
+
         $products = Product::query()
             ->with(['category', 'brand'])
             ->withSum('inventoryBalances as stock_quantity', 'quantity')
@@ -30,7 +37,7 @@ class ProductController extends Controller
             ->when($request->brand_id, fn ($q, $id) => $q->where('brand_id', $id))
             ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
             ->when($request->boolean('low_stock'), fn ($q) => $q->havingRaw('stock_quantity <= min_stock_level'))
-            ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
+            ->orderBy($sort, $direction)
             ->paginate($request->integer('per_page', 25));
 
         return ProductResource::collection($products);

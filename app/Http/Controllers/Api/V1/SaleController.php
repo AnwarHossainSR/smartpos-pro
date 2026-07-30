@@ -54,7 +54,7 @@ class SaleController extends Controller
 
     public function show(Sale $sale): SaleResource
     {
-        return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier'));
+        return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier', 'coupon'));
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */

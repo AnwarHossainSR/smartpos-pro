@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CashRegisterController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
@@ -34,13 +36,27 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // ---- Public ----
-    Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
-    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:login');
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('auth/2fa/challenge', [AuthController::class, 'twoFactorChallenge'])->middleware('throttle:login');
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
+    Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->middleware('signed')->name('verification.verify');
 
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:login');
+        Route::get('auth/sessions', [AuthController::class, 'sessions']);
+        Route::delete('auth/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
+        Route::post('auth/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
+
+        Route::post('auth/2fa/enable', [TwoFactorController::class, 'enable']);
+        Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
+        Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
+        Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
@@ -107,7 +123,7 @@ Route::prefix('v1')->group(function () {
         // Sales / POS
         Route::get('sales', [SaleController::class, 'index'])->middleware('permission:sales.view');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view');
-        Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware('permission:sales.view');
+        Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
 
         // Sale returns / refunds
@@ -116,7 +132,7 @@ Route::prefix('v1')->group(function () {
         Route::post('sales/{sale}/returns', [SaleReturnController::class, 'store'])->middleware(['permission:sales.refund', 'idempotency']);
 
         // Reports
-        Route::middleware('permission:reports.view')->prefix('reports')->group(function () {
+        Route::middleware(['permission:reports.view', 'throttle:reports'])->prefix('reports')->group(function () {
             Route::get('sales-summary', [ReportController::class, 'salesSummary']);
             Route::get('sales-by-product', [ReportController::class, 'salesByProduct']);
             Route::get('profit', [ReportController::class, 'profit']);
@@ -143,7 +159,7 @@ Route::prefix('v1')->group(function () {
         Route::post('cash-registers/{cashRegister}/open', [CashRegisterController::class, 'open'])->middleware('permission:accounting.create');
         Route::get('cash-registers/{cashRegister}/current-session', [CashRegisterController::class, 'currentSession'])->middleware('permission:accounting.view');
         Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
-        Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware('permission:accounting.view');
+        Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware(['permission:accounting.view', 'throttle:reports']);
         Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
         Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
 
@@ -167,6 +183,9 @@ Route::prefix('v1')->group(function () {
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
 
+        // Audit trail (immutable — read-only)
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
+
         // Settings — business profile
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
@@ -184,11 +203,12 @@ Route::prefix('v1')->group(function () {
         Route::post('customers/{customer}/loyalty/redeem', [LoyaltyController::class, 'redeem'])->middleware('permission:loyalty.manage');
         Route::post('customers/{customer}/loyalty/adjust', [LoyaltyController::class, 'adjust'])->middleware('permission:loyalty.manage');
 
-        // Subscription & plan usage
+        // Subscription & plan usage. Billing-sensitive: viewing/managing your own subscription
+        // and usage requires a verified email; the public plan catalogue does not.
         Route::get('subscription/plans', [SubscriptionController::class, 'plans'])->middleware('permission:subscriptions.view');
-        Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
-        Route::get('subscription', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
-        Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware('permission:subscriptions.view');
+        Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
+        Route::get('subscription', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
+        Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware(['permission:subscriptions.view', 'verified']);
 
         // T28 — Stock transfers
         Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');
@@ -214,6 +234,11 @@ Route::prefix('v1')->group(function () {
         Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convert'])->middleware('permission:pos.create');
     });
 
+    // Called from *inside* an impersonated session (the tenant owner's own token, not a
+    // super-admin token) — deliberately outside the super_admin-gated group below.
+    Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
+        ->middleware(['auth:sanctum']);
+
     // T31-T33 — Super-admin (separate guard, no tenant scope)
     Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
         Route::get('tenants', [SuperAdminController::class, 'tenants']);
@@ -227,6 +252,7 @@ Route::prefix('v1')->group(function () {
 
         // T33
         Route::post('tenants/{tenant}/impersonate', [SuperAdminController::class, 'impersonate']);
-        Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
+        Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
+        Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
     });
 });

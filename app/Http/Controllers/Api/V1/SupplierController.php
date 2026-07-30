@@ -6,12 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Purchasing\StoreSupplierRequest;
 use App\Http\Resources\SupplierResource;
 use App\Models\Supplier;
+use App\Support\Concerns\ValidatesSort;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    use ValidatesSort;
+
+    protected const SORTABLE = ['name', 'company', 'phone', 'balance', 'created_at'];
+
     public function index(Request $request)
     {
+        [$sort, $direction] = $this->resolveSort($request, self::SORTABLE, 'name');
+
         $suppliers = Supplier::query()
             ->when($request->search, function ($q, $s) {
                 $q->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
@@ -19,7 +26,7 @@ class SupplierController extends Controller
                     ->orWhere('phone', 'like', "%{$s}%"));
             })
             ->when($request->filled('has_due'), fn ($q) => $q->where('balance', '>', 0))
-            ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
+            ->orderBy($sort, $direction)
             ->paginate($request->integer('per_page', 25));
 
         return SupplierResource::collection($suppliers);

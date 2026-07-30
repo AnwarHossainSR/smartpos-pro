@@ -1,0 +1,187 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Eye } from "lucide-react";
+import { api, ApiError, type Paginated } from "@/lib/api";
+import { formatDateTime } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import { useAuth } from "@/stores/auth";
+
+interface AuditLogRow {
+  id: number;
+  action: string;
+  auditable_type: string | null;
+  auditable_id: number | null;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  user: { id: number; name: string; email: string } | null;
+  created_at: string;
+}
+
+function actionTone(action: string): "success" | "warning" | "danger" | "default" {
+  if (action.includes("deleted") || action.includes("failed") || action.includes("revoke")) return "danger";
+  if (action.includes("override") || action.includes("discount") || action.includes("updated")) return "warning";
+  if (action.includes("created") || action.includes("login")) return "success";
+  return "default";
+}
+
+export default function AuditLogPage() {
+  const { can } = useAuth();
+  const [action, setAction] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<AuditLogRow | null>(null);
+
+  const allowed = can("audit.view");
+
+  const { data, isLoading, isError, error } = useQuery<Paginated<AuditLogRow>>({
+    queryKey: ["audit-logs", action, from, to, page],
+    queryFn: () =>
+      api<Paginated<AuditLogRow>>(
+        `/audit-logs?action=${encodeURIComponent(action)}&from=${from}&to=${to}&page=${page}&per_page=20`,
+      ),
+    enabled: allowed,
+  });
+
+  if (!allowed) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">Audit Log</h1>
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
+          You don&apos;t have permission to view the audit log.
+        </div>
+      </div>
+    );
+  }
+
+  const lastPage = data?.meta?.last_page ?? 1;
+
+  const columns: DataTableColumn<AuditLogRow>[] = [
+    {
+      key: "action",
+      header: "Action",
+      render: (r) => <Badge tone={actionTone(r.action)}>{r.action}</Badge>,
+    },
+    {
+      key: "model",
+      header: "Record",
+      render: (r) =>
+        r.auditable_type ? (
+          <span className="text-[var(--muted)]">
+            {r.auditable_type} #{r.auditable_id}
+          </span>
+        ) : (
+          <span className="text-[var(--muted)]">—</span>
+        ),
+    },
+    {
+      key: "user",
+      header: "Actor",
+      render: (r) => (r.user ? r.user.name : <span className="text-[var(--muted)]">System</span>),
+    },
+    { key: "ip", header: "IP", render: (r) => <span className="font-mono text-xs">{r.ip_address ?? "—"}</span> },
+    { key: "when", header: "When", render: (r) => formatDateTime(r.created_at) },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Audit Log</h1>
+
+      <ListToolbar
+        search={action}
+        onSearchChange={(v) => { setAction(v); setPage(1); }}
+        searchPlaceholder="Filter by action (e.g. sale.price_override)…"
+        filters={
+          <div className="flex items-center gap-2">
+            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-auto" />
+            <span className="text-xs text-[var(--muted)]">to</span>
+            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-auto" />
+          </div>
+        }
+      />
+
+      <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+        {isError ? (
+          <div className="p-8 text-center text-sm text-[var(--color-danger)]">
+            {error instanceof ApiError ? error.message : "Failed to load audit log."}
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={data?.data ?? []}
+            rowKey={(r) => r.id}
+            loading={isLoading}
+            emptyMessage={action || from || to ? "No matching audit entries." : "No audit activity yet."}
+            actions={(r) => (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewing(r)}>
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          />
+        )}
+
+        {data?.meta && (
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            onPageChange={setPage}
+            label={`Page ${data.meta.current_page} of ${data.meta.last_page} · ${data.meta.total} entries`}
+          />
+        )}
+      </div>
+
+      <Dialog open={!!viewing} onClose={() => setViewing(null)} title={viewing?.action ?? ""}>
+        {viewing && (
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-xs text-[var(--muted)]">
+              <div>
+                <Label>Actor</Label>
+                <p className="text-[var(--fg)]">{viewing.user?.name ?? "System"}</p>
+              </div>
+              <div>
+                <Label>When</Label>
+                <p className="text-[var(--fg)]">{formatDateTime(viewing.created_at)}</p>
+              </div>
+              <div>
+                <Label>IP address</Label>
+                <p className="text-[var(--fg)]">{viewing.ip_address ?? "—"}</p>
+              </div>
+              <div>
+                <Label>Record</Label>
+                <p className="text-[var(--fg)]">
+                  {viewing.auditable_type ? `${viewing.auditable_type} #${viewing.auditable_id}` : "—"}
+                </p>
+              </div>
+            </div>
+            {viewing.old_values && (
+              <div>
+                <Label>Before</Label>
+                <pre className="mt-1 max-h-40 overflow-auto rounded-[var(--radius)] bg-[var(--surface-2)] p-2 text-xs">
+                  {JSON.stringify(viewing.old_values, null, 2)}
+                </pre>
+              </div>
+            )}
+            {viewing.new_values && (
+              <div>
+                <Label>After</Label>
+                <pre className="mt-1 max-h-40 overflow-auto rounded-[var(--radius)] bg-[var(--surface-2)] p-2 text-xs">
+                  {JSON.stringify(viewing.new_values, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </Dialog>
+    </div>
+  );
+}

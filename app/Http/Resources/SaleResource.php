@@ -20,6 +20,8 @@ class SaleResource extends JsonResource
             'cashier' => $this->whenLoaded('cashier', fn () => ['id' => $this->cashier?->id, 'name' => $this->cashier?->name]),
             'subtotal' => (float) $this->subtotal,
             'discount_amount' => (float) $this->discount_amount,
+            'coupon_code' => $this->whenLoaded('coupon', fn () => $this->coupon?->code),
+            'coupon_discount' => (float) $this->coupon_discount,
             'tax_amount' => (float) $this->tax_amount,
             'shipping_amount' => (float) $this->shipping_amount,
             'total' => (float) $this->total,

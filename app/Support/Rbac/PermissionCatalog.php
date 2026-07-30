@@ -27,6 +27,7 @@ class PermissionCatalog
         'users' => ['view', 'create', 'update', 'delete'],
         'roles' => ['view', 'create', 'update', 'delete'],
         'settings' => ['view', 'update'],
+        'audit' => ['view'],
     ];
 
     /**
@@ -62,7 +63,7 @@ class PermissionCatalog
             'admin' => ['name' => 'Admin', 'permissions' => '*'],
             'branch_manager' => ['name' => 'Branch Manager', 'permissions' => [
                 'dashboard.view', 'products.view', 'inventory.view', 'inventory.approve',
-                'pos.view', 'pos.create', 'pos.refund', 'pos.discount',
+                'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
                 'reports.view', 'reports.export',
             ]],

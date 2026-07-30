@@ -22,10 +22,25 @@ at a call site:
 
 Because reads are constrained by a global scope, even route-model binding
 (`/products/{product}`) is tenant-safe: a product from another tenant resolves to a
-404, not another tenant's data. A `withoutTenancy()` escape hatch exists for
-super-admin / system jobs only.
+404, not another tenant's data.
 
-> **Tested by** `ProductTest::test_products_are_isolated_between_tenants`.
+**The scope fails closed.** A query on a tenant-owned model with no tenant bound
+throws (`TenantScope`) rather than silently running unscoped — an unbound context used
+to mean "no filter," which is a data leak waiting to happen the first time a route or
+job forgot to bind one. There are two explicit, intentional escape hatches:
+- **`Model::withoutTenancy()`** when you control the query directly (super-admin routes,
+  public auth routes that resolve a user by email before a tenant is known).
+- **`TenantContext::runUnscoped(fn () => ...)`** around code you don't control the
+  queries of (e.g. Laravel's password-reset broker, which looks up the user internally).
+
+Queued jobs, console commands, and scheduled closures that operate on a specific
+tenant must bind it explicitly — `TenantContext::runAs($tenantId, fn () => ...)` for a
+callback, or `$context->set($tenantId)` for the lifetime of a job's `handle()` (see
+`SendDailyReportJob`). A job that forgets to bind one fails immediately instead of
+reading every tenant's rows.
+
+> **Tested by** `ProductTest::test_products_are_isolated_between_tenants` and
+> `TenantScopeFailClosedTest`.
 
 ## 2. Immutable stock ledger
 

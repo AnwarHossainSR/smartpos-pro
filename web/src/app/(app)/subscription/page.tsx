@@ -1,9 +1,10 @@
 "use client";
 
+import { MailWarning } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { formatNumber, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -34,9 +35,10 @@ interface SubscriptionResponse {
 }
 
 export default function SubscriptionPage() {
-  const { data: subData, isLoading: subLoading } = useQuery<{ data: SubscriptionResponse }>({
+  const { data: subData, isLoading: subLoading, error } = useQuery<{ data: SubscriptionResponse }>({
     queryKey: ["subscription"],
     queryFn: () => api<{ data: SubscriptionResponse }> ("/subscription"),
+    retry: (failureCount, err) => !(err instanceof ApiError && err.status === 403) && failureCount < 3,
   });
 
   const sub = subData?.data.subscription;
@@ -45,6 +47,20 @@ export default function SubscriptionPage() {
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     active: "success", trialing: "warning", past_due: "danger", canceled: "default",
   };
+
+  if (error instanceof ApiError && error.status === 403) {
+    return (
+      <div className="max-w-2xl space-y-5">
+        <h1 className="text-xl font-semibold">Subscription</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-[var(--muted)]">
+            <MailWarning className="h-6 w-6" />
+            <p>Verify your email address to view billing and subscription details.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl space-y-5">
