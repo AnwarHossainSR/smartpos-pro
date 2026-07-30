@@ -19,6 +19,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { PalettePicker } from "@/components/ui/palette-picker";
 import { LocalePicker } from "@/components/ui/locale-picker";
+import { TwoFactorCard } from "@/components/two-factor-card";
 import { useTranslation } from "@/i18n/provider";
 
 interface Session {
@@ -281,6 +282,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <TwoFactorCard />
       <SessionsCard />
     </div>
   );

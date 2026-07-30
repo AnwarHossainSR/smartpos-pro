@@ -30,7 +30,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'password', 'avatar_path', 'status', 'last_login_at',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     /**
      * @return array<string, string>
@@ -42,7 +42,21 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'last_login_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
+            'locked_until' => 'datetime',
         ];
+    }
+
+    public function hasEnabledTwoFactor(): bool
+    {
+        return ! is_null($this->two_factor_confirmed_at);
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
     }
 
     public function tenant(): BelongsTo

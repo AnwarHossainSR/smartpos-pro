@@ -7,22 +7,36 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Http\Requests\Auth\TwoFactorChallengeRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
+use App\Services\Auth\TotpService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function __construct(protected TenantProvisioner $provisioner, protected AuditLogService $audit) {}
+    protected const LOCKOUT_THRESHOLD = 5;
+
+    protected const LOCKOUT_MAX_MINUTES = 60;
+
+    protected const CHALLENGE_TTL_MINUTES = 5;
+
+    public function __construct(
+        protected TenantProvisioner $provisioner,
+        protected AuditLogService $audit,
+        protected TotpService $totp,
+    ) {}
 
     /** Register a new business: creates the tenant, business, branch, warehouse and owner user. */
     public function register(RegisterRequest $request): JsonResponse
@@ -41,7 +55,17 @@ class AuthController extends Controller
     {
         $user = User::where('email', $request->email)->first();
 
+        if ($user && $user->isLocked()) {
+            throw ValidationException::withMessages([
+                'email' => ["Too many failed attempts. Try again after {$user->locked_until->diffForHumans()}."],
+            ]);
+        }
+
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            if ($user) {
+                $this->registerFailedAttempt($user);
+            }
+
             $this->audit->log('auth.login_failed', $user, null, ['email' => $request->email], $user, $user?->tenant_id);
 
             throw ValidationException::withMessages([
@@ -55,28 +79,112 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! ($user->is_super_admin ?? false) && $user->tenant_id) {
-            $tenant = Tenant::find($user->tenant_id);
+        $this->guardTenantStatus($user);
 
-            if (! $tenant || ! in_array($tenant->status, ['trialing', 'active'], true)) {
-                abort(response()->json([
-                    'message' => 'This account has been suspended.',
-                    'code' => 'tenant_suspended',
-                ], 403));
-            }
+        if ($user->hasEnabledTwoFactor()) {
+            $challengeToken = Str::random(40);
+            Cache::put("2fa_challenge:{$challengeToken}", $user->id, now()->addMinutes(self::CHALLENGE_TTL_MINUTES));
+
+            return response()->json([
+                'requires_2fa' => true,
+                'challenge_token' => $challengeToken,
+                'expires_in' => self::CHALLENGE_TTL_MINUTES * 60,
+            ]);
         }
 
-        $user->forceFill(['last_login_at' => now()])->save();
-        $user->load('roles');
+        return response()->json($this->completeLogin($user, $request));
+    }
+
+    /** Second step of login for accounts with 2FA enabled — code or a single-use recovery code. */
+    public function twoFactorChallenge(TwoFactorChallengeRequest $request): JsonResponse
+    {
+        $userId = Cache::get("2fa_challenge:{$request->challenge_token}");
+
+        abort_if(! $userId, 422, 'This login challenge has expired. Please sign in again.');
+
+        $user = User::findOrFail($userId);
+
+        if ($user->isLocked()) {
+            throw ValidationException::withMessages([
+                'code' => ["Too many failed attempts. Try again after {$user->locked_until->diffForHumans()}."],
+            ]);
+        }
+
+        $ok = $request->filled('recovery_code')
+            ? $this->consumeRecoveryCode($user, $request->string('recovery_code'))
+            : $this->totp->verify($user->two_factor_secret, (string) $request->input('code'));
+
+        if (! $ok) {
+            $this->registerFailedAttempt($user);
+            $this->audit->log('auth.2fa_failed', $user, null, null, $user, $user->tenant_id);
+
+            throw ValidationException::withMessages(['code' => ['Invalid code.']]);
+        }
+
+        Cache::forget("2fa_challenge:{$request->challenge_token}");
+
+        return response()->json($this->completeLogin($user, $request));
+    }
+
+    /** @return array{user: UserResource, token: string} */
+    protected function completeLogin(User $user, Request $request): array
+    {
+        $user->forceFill(['last_login_at' => now(), 'failed_login_attempts' => 0, 'locked_until' => null])->save();
+        $user->load(['roles', 'business']);
 
         $this->audit->log('auth.login', $user, null, null, $user, $user->tenant_id);
 
-        $token = $this->issueToken($user, $request);
-
-        return response()->json([
+        return [
             'user' => new UserResource($user),
-            'token' => $token,
-        ]);
+            'token' => $this->issueToken($user, $request),
+        ];
+    }
+
+    protected function guardTenantStatus(User $user): void
+    {
+        if (($user->is_super_admin ?? false) || ! $user->tenant_id) {
+            return;
+        }
+
+        $tenant = Tenant::find($user->tenant_id);
+
+        if (! $tenant || ! in_array($tenant->status, ['trialing', 'active'], true)) {
+            abort(response()->json([
+                'message' => 'This account has been suspended.',
+                'code' => 'tenant_suspended',
+            ], 403));
+        }
+    }
+
+    /** Progressive lockout: doubles each time the threshold is hit again, capped at an hour. */
+    protected function registerFailedAttempt(User $user): void
+    {
+        $attempts = $user->failed_login_attempts + 1;
+        $locked_until = $user->locked_until;
+
+        if ($attempts >= self::LOCKOUT_THRESHOLD) {
+            $tier = $attempts - self::LOCKOUT_THRESHOLD;
+            $minutes = min(2 ** $tier, self::LOCKOUT_MAX_MINUTES);
+            $locked_until = now()->addMinutes($minutes);
+        }
+
+        $user->forceFill(['failed_login_attempts' => $attempts, 'locked_until' => $locked_until])->save();
+    }
+
+    protected function consumeRecoveryCode(User $user, string $code): bool
+    {
+        $codes = $user->two_factor_recovery_codes ?? [];
+
+        foreach ($codes as $index => $hash) {
+            if (Hash::check($code, $hash)) {
+                unset($codes[$index]);
+                $user->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Always responds the same way regardless of whether the email exists, to avoid leaking account existence. */

@@ -50,8 +50,25 @@ Creates a new business (tenant + business + branch + warehouse + owner) and retu
 ```json
 { "email": "jane@example.com", "password": "password123", "device_name": "web" }
 ```
-`200` → `{ "user": { ... }, "token": "..." }` · `422` on bad credentials · `403` with
-`{ "code": "tenant_suspended" }` for a suspended tenant.
+`200` → `{ "user": { ... }, "token": "..." }` for an account without 2FA · `422` on bad
+credentials · `403` with `{ "code": "tenant_suspended" }` for a suspended tenant · `422`
+"Too many failed attempts…" once the account is locked out (see below).
+
+For an account with two-factor authentication enabled, this returns `200` with
+`{ "requires_2fa": true, "challenge_token": "...", "expires_in": 300 }` instead — **no
+token is issued yet**. Complete the login with:
+
+### `POST /auth/2fa/challenge`
+Public, `throttle:login`. `{ "challenge_token", "code" }` (6-digit TOTP) **or**
+`{ "challenge_token", "recovery_code" }` (single-use). `200` → the same
+`{ "user", "token" }` shape as a normal login. `422` on an invalid/expired challenge token,
+wrong code, or an already-used recovery code. The challenge token expires after 5 minutes.
+
+**Progressive account lockout:** after 5 failed login (or 2FA challenge) attempts for the
+same account, it locks out for a duration that doubles each time the threshold is hit again
+(1, 2, 4, … minutes, capped at 60) — independent of the per-email/per-IP `throttle:login`
+rate limiter, which still applies on top. `login`/`2fa/challenge` return `422` with a
+"too many failed attempts" message while locked, even with the correct password/code.
 
 Tokens expire after `SANCTUM_TOKEN_EXPIRATION` minutes (default 14 days; expired tokens are
 swept daily by `sanctum:prune-expired`) and are issued with **abilities scoped to the user's
@@ -74,6 +91,21 @@ Revokes one session. `404` if the token doesn't belong to the current user.
 
 ### `POST /auth/sessions/revoke-all`
 Revokes every session **except** the one making the request.
+
+### Two-factor authentication (TOTP)
+
+| Method & path | Notes |
+| --- | --- |
+| `POST /auth/2fa/enable` | Generates a pending (unconfirmed) secret. `422` if already enabled. Returns `{ secret, otpauth_url }` — the frontend renders `otpauth_url` as a QR code. |
+| `POST /auth/2fa/confirm` | `{ code }`. Verifies the pending secret and confirms it, returning `{ recovery_codes: string[] }` (8 codes, **shown once**, stored hashed). |
+| `POST /auth/2fa/disable` | `{ password }`. Clears the secret, recovery codes, and confirmation. |
+| `POST /auth/2fa/recovery-codes/regenerate` | `{ password }`. Invalidates existing recovery codes and issues a fresh set. |
+
+Codes are standard 30-second, 6-digit, SHA-1 TOTP (RFC 6238) — compatible with Google
+Authenticator, Authy, 1Password, etc. A tenant can require 2FA for every user by setting
+`settings.require_2fa: true` via `PUT /settings/business`; `GET /auth/me` and the login
+response then include `requires_two_factor_setup: true` for users who haven't enrolled yet
+(this is advisory — it does not itself block API access).
 
 ### `POST /auth/forgot-password`
 Public, `throttle:login`. `{ "email": "..." }` → always `200` with the same generic message

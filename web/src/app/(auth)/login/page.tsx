@@ -11,6 +11,13 @@ import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
 
+interface LoginResult {
+  requires_2fa?: boolean;
+  challenge_token?: string;
+  token?: string;
+  user?: AuthUser;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslation();
@@ -22,6 +29,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+
   // Someone who still has a valid session should not see the form again.
   useEffect(() => {
     if (hydrated && token) router.replace("/dashboard");
@@ -32,17 +43,72 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api<{ token: string; user: AuthUser }>("/auth/login", {
+      const res = await api<LoginResult>("/auth/login", {
         method: "POST",
         body: { email, password, device_name: "web" },
       });
-      setAuth(res.token, res.user);
-      router.replace("/dashboard");
+      if (res.requires_2fa && res.challenge_token) {
+        setChallengeToken(res.challenge_token);
+      } else if (res.token && res.user) {
+        setAuth(res.token, res.user);
+        router.replace("/dashboard");
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function onChallengeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api<{ token: string; user: AuthUser }>("/auth/2fa/challenge", {
+        method: "POST",
+        body: useRecoveryCode
+          ? { challenge_token: challengeToken, recovery_code: code }
+          : { challenge_token: challengeToken, code },
+      });
+      setAuth(res.token, res.user);
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (challengeToken) {
+    return (
+      <AuthShell title="Two-factor authentication" subtitle="Enter the code from your authenticator app">
+        <form onSubmit={onChallengeSubmit} className="space-y-4">
+          <div>
+            <Label>{useRecoveryCode ? "Recovery code" : "6-digit code"}</Label>
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              inputMode={useRecoveryCode ? "text" : "numeric"}
+              maxLength={useRecoveryCode ? 9 : 6}
+              autoFocus
+              required
+            />
+          </div>
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Spinner />} {loading ? t("auth.signingIn") : t("auth.signIn")}
+          </Button>
+          <button
+            type="button"
+            onClick={() => { setUseRecoveryCode((v) => !v); setCode(""); setError(null); }}
+            className="w-full text-center text-xs font-medium text-[var(--primary)]"
+          >
+            {useRecoveryCode ? "Use an authenticator code instead" : "Use a recovery code instead"}
+          </button>
+        </form>
+      </AuthShell>
+    );
   }
 
   return (

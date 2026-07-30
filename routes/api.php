@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
@@ -37,6 +38,7 @@ Route::prefix('v1')->group(function () {
     // ---- Public ----
     Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:login');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('auth/2fa/challenge', [AuthController::class, 'twoFactorChallenge'])->middleware('throttle:login');
     Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
     Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
     Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
@@ -50,6 +52,11 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/sessions', [AuthController::class, 'sessions']);
         Route::delete('auth/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
         Route::post('auth/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
+
+        Route::post('auth/2fa/enable', [TwoFactorController::class, 'enable']);
+        Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
+        Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
+        Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
