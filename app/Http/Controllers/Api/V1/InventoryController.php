@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryBalanceResource;
+use App\Http\Resources\StockMovementResource;
 use App\Models\InventoryBalance;
+use App\Models\StockMovement;
 use App\Services\Inventory\StockLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,24 @@ class InventoryController extends Controller
             ->paginate($request->integer('per_page', 25));
 
         return InventoryBalanceResource::collection($balances);
+    }
+
+    /** Read-only history of the immutable stock ledger, filterable by product/warehouse/type/date. */
+    public function movements(Request $request)
+    {
+        $movements = StockMovement::query()
+            ->with(['product:id,name,sku', 'warehouse:id,name', 'user:id,name'])
+            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
+            ->when($request->warehouse_id, fn ($q, $id) => $q->where('warehouse_id', $id))
+            ->when($request->variant_id, fn ($q, $id) => $q->where('variant_id', $id))
+            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
+            ->when($request->direction, fn ($q, $d) => $q->where('direction', $d))
+            ->when($request->from, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($request->to, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
+            ->latest('id')
+            ->paginate($request->integer('per_page', 25));
+
+        return StockMovementResource::collection($movements);
     }
 
     /** Manual stock adjustment (in/out), recorded through the immutable ledger. */
