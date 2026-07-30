@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
 use App\Services\Auth\TotpService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,7 @@ class AuthController extends Controller
         protected TenantProvisioner $provisioner,
         protected AuditLogService $audit,
         protected TotpService $totp,
+        protected TenantContext $context,
     ) {}
 
     /** Register a new business: creates the tenant, business, branch, warehouse and owner user. */
@@ -53,7 +55,13 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::withoutTenancy()->where('email', $request->email)->first();
+
+        // Bind the tenant as soon as we know it, so every subsequent query in this request
+        // (relation loads, token issuance, etc.) is naturally and correctly scoped.
+        if ($user && ! ($user->is_super_admin ?? false)) {
+            $this->context->set($user->tenant_id);
+        }
 
         if ($user && $user->isLocked()) {
             throw ValidationException::withMessages([
@@ -102,7 +110,11 @@ class AuthController extends Controller
 
         abort_if(! $userId, 422, 'This login challenge has expired. Please sign in again.');
 
-        $user = User::findOrFail($userId);
+        $user = User::withoutTenancy()->findOrFail($userId);
+
+        if (! ($user->is_super_admin ?? false)) {
+            $this->context->set($user->tenant_id);
+        }
 
         if ($user->isLocked()) {
             throw ValidationException::withMessages([
@@ -190,14 +202,16 @@ class AuthController extends Controller
     /** Always responds the same way regardless of whether the email exists, to avoid leaking account existence. */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        Password::sendResetLink($request->only('email'));
+        // The password-reset broker resolves the user internally (framework code we don't
+        // control the query of) on this public, pre-tenant-binding route.
+        $this->context->runUnscoped(fn () => Password::sendResetLink($request->only('email')));
 
         return response()->json(['message' => 'If that email is registered, a reset link has been sent.']);
     }
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $status = Password::reset(
+        $status = $this->context->runUnscoped(fn () => Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
@@ -207,7 +221,7 @@ class AuthController extends Controller
 
                 $this->audit->log('auth.password_reset', $user, null, null, $user, $user->tenant_id);
             },
-        );
+        ));
 
         if ($status !== Password::PASSWORD_RESET) {
             throw ValidationException::withMessages([
@@ -223,7 +237,7 @@ class AuthController extends Controller
     {
         abort_unless($request->hasValidSignature(), 403, 'Invalid or expired verification link.');
 
-        $user = User::findOrFail($id);
+        $user = User::withoutTenancy()->findOrFail($id);
 
         abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403, 'Invalid verification link.');
 

@@ -18,9 +18,9 @@ _Last updated: 2026-07-29_
 | 4 · Quality & delivery | 4 | 0 | 0 | 4 |
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
-| 7 · Security & money integrity | 11 | 0 | 2 | 13 |
+| 7 · Security & money integrity | 12 | 0 | 1 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **86** | **0** | **13** | **99** |
+| **Total** | **87** | **0** | **12** | **99** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -148,7 +148,7 @@ T87 → T88.
 | T84 | Password reset + email verification | ✅ | | `POST auth/forgot-password`/`reset-password` (signed-token round trip, 60min single-use, throttled, revokes existing sessions on reset); `User implements MustVerifyEmail`, `GET auth/email/verify/{id}/{hash}` (signed) + `POST auth/email/resend`; billing-sensitive `subscription/*` routes gated behind `verified`; invited team members get a "set your password" email instead of an undelivered random password; frontend forgot/reset pages + a dismissible "verify your email" banner — verified end-to-end with Playwright against the running app (log mailer, real reset link, full round trip) |
 | T85 | Two-factor auth (TOTP) + login lockout | ✅ | | In-house RFC 6238 TOTP (no external dependency, verified against the RFC's test vectors) — `POST auth/2fa/enable`/`confirm`/`disable`/`recovery-codes/regenerate`; login returns `requires_2fa`+`challenge_token` for enrolled accounts, completed via `POST auth/2fa/challenge` (code or single-use recovery code); progressive per-account lockout (1/2/4/…/60min) after 5 failed attempts across login and the 2FA challenge; tenant-level `settings.require_2fa` surfaces `requires_two_factor_setup`; frontend: QR enrollment + recovery codes in Settings → Security, login challenge screen — verified end-to-end with Playwright against the running app (real QR scan simulated via a JS TOTP generator, wrong-code rejection, correct-code login, recovery-code login) |
 | T86 | Query & config hardening | ✅ | | `sort`/`direction` whitelisted (`ValidatesSort` trait) on Products/Customers/Suppliers (422 on unknown); `is_super_admin`/`tenant_id` dropped from `User::$fillable`; `config/cors.php` restricted to `FRONTEND_URL`; idempotency keys scoped to tenant+key+method+path with a payload hash (409 on reuse with a different body) + hourly 24h prune; baseline security headers middleware on every API response |
-| T87 | Tenant scope fail-closed + job tenant binding | ⬜ | | Medium — `TenantScope` no-ops when no tenant is bound |
+| T87 | Tenant scope fail-closed + job tenant binding | ✅ | | `TenantScope` now throws when no tenant is bound instead of silently running unscoped; two explicit escape hatches — `Model::withoutTenancy()` (query-level) and the new `TenantContext::runUnscoped()` (for framework internals like the password-reset broker); audited and fixed every public/super-admin call site that relied on the old silent-skip behavior (login, 2FA challenge, email verification, revenue metrics, impersonation, etc.); `SendDailyReportJob` already bound its tenant correctly. Full suite (94 tests) + seeders + a live server smoke test all green after the change. |
 | T88 | CI security gates | ⬜ | | Medium — no dependency audit; PHPStan advisory; `web/` never built in CI |
 
 ## Phase 8 — Product depth

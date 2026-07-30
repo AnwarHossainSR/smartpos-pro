@@ -11,6 +11,7 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use App\Support\Scopes\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -43,11 +44,11 @@ class SuperAdminController extends Controller
     {
         $tenant->loadCount(['users', 'businesses']);
 
-        $subscription = Subscription::where('tenant_id', $tenant->id)->with('plan')->latest()->first();
+        $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
 
         $usage = [
-            'sales_count' => Sale::where('tenant_id', $tenant->id)->count(),
-            'users_count' => User::where('tenant_id', $tenant->id)->count(),
+            'sales_count' => Sale::withoutTenancy()->where('tenant_id', $tenant->id)->count(),
+            'users_count' => User::withoutTenancy()->where('tenant_id', $tenant->id)->count(),
         ];
 
         return response()->json(['data' => array_merge($tenant->toArray(), [
@@ -93,7 +94,7 @@ class SuperAdminController extends Controller
         $period = $request->integer('days', 30);
         $from = now()->subDays($period);
 
-        $planDistribution = Subscription::where('status', 'active')
+        $planDistribution = Subscription::withoutTenancy()->where('status', 'active')
             ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
             ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price_monthly) as mrr')
             ->groupBy('plans.id', 'plans.name', 'plans.slug')
@@ -105,7 +106,7 @@ class SuperAdminController extends Controller
 
         $totalMrr = $planDistribution->sum('mrr');
 
-        $recentSubscriptions = Subscription::with(['plan'])
+        $recentSubscriptions = Subscription::withoutTenancy()->with(['plan'])
             ->where('created_at', '>=', $from)
             ->latest()
             ->limit(20)
@@ -136,8 +137,8 @@ class SuperAdminController extends Controller
         $admin = $request->user();
 
         // Find the owner of this tenant
-        $owner = User::where('tenant_id', $tenant->id)
-            ->whereHas('roles', fn ($q) => $q->where('slug', 'owner'))
+        $owner = User::withoutTenancy()->where('tenant_id', $tenant->id)
+            ->whereHas('roles', fn ($q) => $q->withoutGlobalScope(TenantScope::class)->where('slug', 'owner'))
             ->firstOrFail();
 
         // Issue a short-lived, narrowly-scoped token — 30 minutes, impersonate-only ability.
