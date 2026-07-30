@@ -8,10 +8,12 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\SetPasswordNotification;
 use App\Services\Audit\AuditLogService;
 use App\Services\Billing\PlanLimitService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -44,12 +46,21 @@ class UserController extends Controller
             throw new AuthorizationException('Only the business owner can grant the owner role.');
         }
 
+        $invited = ! $request->filled('password');
+
         $data['business_id'] = $request->user()->business_id;
-        $data['password'] = $data['password'] ?? Str::random(16);
-        $data['status'] = $request->filled('password') ? 'active' : 'invited';
+        // A random, unguessable placeholder — invited members never receive this; they
+        // set their own password via the emailed link (same as a password reset).
+        $data['password'] = $data['password'] ?? Str::random(40);
+        $data['status'] = $invited ? 'invited' : 'active';
 
         $user = User::create($data);
         $this->syncRoles($user, $roles, $request->user());
+
+        if ($invited) {
+            $token = Password::createToken($user);
+            $user->notify(new SetPasswordNotification($token));
+        }
 
         return new UserResource($user->load('roles'));
     }

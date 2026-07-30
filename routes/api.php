@@ -37,11 +37,16 @@ Route::prefix('v1')->group(function () {
     // ---- Public ----
     Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:login');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
+    Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->middleware('signed')->name('verification.verify');
 
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:login');
         Route::get('auth/sessions', [AuthController::class, 'sessions']);
         Route::delete('auth/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
         Route::post('auth/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
@@ -191,11 +196,12 @@ Route::prefix('v1')->group(function () {
         Route::post('customers/{customer}/loyalty/redeem', [LoyaltyController::class, 'redeem'])->middleware('permission:loyalty.manage');
         Route::post('customers/{customer}/loyalty/adjust', [LoyaltyController::class, 'adjust'])->middleware('permission:loyalty.manage');
 
-        // Subscription & plan usage
+        // Subscription & plan usage. Billing-sensitive: viewing/managing your own subscription
+        // and usage requires a verified email; the public plan catalogue does not.
         Route::get('subscription/plans', [SubscriptionController::class, 'plans'])->middleware('permission:subscriptions.view');
-        Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
-        Route::get('subscription', [SubscriptionController::class, 'current'])->middleware('permission:subscriptions.view');
-        Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware('permission:subscriptions.view');
+        Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
+        Route::get('subscription', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
+        Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware(['permission:subscriptions.view', 'verified']);
 
         // T28 — Stock transfers
         Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');

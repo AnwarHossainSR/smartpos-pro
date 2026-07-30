@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -72,6 +77,67 @@ class AuthController extends Controller
             'user' => new UserResource($user),
             'token' => $token,
         ]);
+    }
+
+    /** Always responds the same way regardless of whether the email exists, to avoid leaking account existence. */
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        Password::sendResetLink($request->only('email'));
+
+        return response()->json(['message' => 'If that email is registered, a reset link has been sent.']);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->tokens()->delete();
+
+                event(new PasswordReset($user));
+
+                $this->audit->log('auth.password_reset', $user, null, null, $user, $user->tenant_id);
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => [__($status)],
+            ]);
+        }
+
+        return response()->json(['message' => 'Password reset. All existing sessions have been signed out.']);
+    }
+
+    /** Public, signed link — clicked directly from the verification email, no bearer token available. */
+    public function verifyEmail(Request $request, int $id, string $hash): RedirectResponse
+    {
+        abort_unless($request->hasValidSignature(), 403, 'Invalid or expired verification link.');
+
+        $user = User::findOrFail($id);
+
+        abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403, 'Invalid verification link.');
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+            $this->audit->log('auth.email_verified', $user, null, null, $user, $user->tenant_id);
+        }
+
+        return redirect(rtrim((string) config('app.frontend_url'), '/').'/login?verified=1');
+    }
+
+    public function resendVerification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Verification email sent.']);
     }
 
     public function me(Request $request): UserResource

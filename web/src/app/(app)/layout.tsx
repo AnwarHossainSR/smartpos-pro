@@ -15,6 +15,7 @@ import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { useTranslation } from "@/i18n/provider";
 
 function isTenantSuspendedError(error: unknown): boolean {
@@ -104,6 +105,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
+          <VerifyEmailBanner />
           {/* Re-mounting on locale/currency change guarantees every formatCurrency()/formatNumber()
               call in the page tree picks up the new value — those helpers read the stores
               imperatively (via getState()), so pages that don't otherwise subscribe to either

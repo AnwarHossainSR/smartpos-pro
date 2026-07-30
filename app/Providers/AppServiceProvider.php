@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -42,5 +43,15 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(20)->by('ip:'.$request->ip()),
             ];
         });
+
+        // The reset-password flow is entirely frontend-driven (the SPA collects the new
+        // password and posts it back), so the emailed link points at the frontend rather
+        // than a Laravel view.
+        ResetPassword::createUrlUsing(fn ($notifiable, string $token) => sprintf(
+            '%s/reset-password?token=%s&email=%s',
+            rtrim((string) config('app.frontend_url'), '/'),
+            $token,
+            urlencode($notifiable->getEmailForPasswordReset()),
+        ));
     }
 }

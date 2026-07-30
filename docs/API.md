@@ -75,6 +75,35 @@ Revokes one session. `404` if the token doesn't belong to the current user.
 ### `POST /auth/sessions/revoke-all`
 Revokes every session **except** the one making the request.
 
+### `POST /auth/forgot-password`
+Public, `throttle:login`. `{ "email": "..." }` → always `200` with the same generic message
+regardless of whether the email is registered (no account-existence leak). Sends a
+`ResetPassword` notification (log mailer in dev) whose link points at the **frontend**
+(`FRONTEND_URL/reset-password?token=&email=`) — the SPA collects the new password and posts
+it back.
+
+### `POST /auth/reset-password`
+Public, `throttle:login`. `{ "token", "email", "password", "password_confirmation" }`.
+Tokens are single-use and expire after 60 minutes (`config/auth.php`). `200` on success —
+also revokes every existing session for that user. `422` (on `email`) for an invalid/expired
+token.
+
+### `GET /auth/email/verify/{id}/{hash}`
+The link emailed by `MustVerifyEmail` (`signed` middleware — not authenticated, since the
+browser clicking the email link has no bearer token). Marks the email verified and redirects
+to `FRONTEND_URL/login?verified=1`. `403` for an invalid/expired/tampered link.
+
+### `POST /auth/email/resend`
+Authenticated, `throttle:login`. Resends the verification email unless already verified.
+
+**Billing-sensitive gate:** `GET subscription/current` (and its `/subscription` alias) and
+`GET subscription/usage` require a verified email (`verified` middleware) — an unverified
+owner gets `403`. The public plan catalogue (`GET subscription/plans`) does not require it.
+
+**Invited team members** (`POST /users` with no `password`) no longer get an undelivered
+random password — they receive a "set your password" email (same mechanism as password
+reset, just different copy) and their account stays `status: invited` until they use it.
+
 ## Dashboard
 
 ### `GET /dashboard/summary?from=&to=`

@@ -22,6 +22,11 @@ trait CreatesTenants
             'business_name' => 'Test Store '.uniqid(),
         ]);
 
+        // Fully-formed test tenants are "established" — verified, same as any owner who has
+        // gone through onboarding. Tests targeting the verification gate itself create their
+        // own unverified user rather than going through this helper.
+        $owner->forceFill(['email_verified_at' => now()])->save();
+
         app(TenantContext::class)->set($owner->tenant_id);
 
         return $owner->fresh(['roles', 'branch']);
