@@ -147,6 +147,64 @@ class SaleService
     }
 
     /**
+     * Records a payment against an existing due/partial sale (e.g. a customer
+     * settling a credit sale later). Row-locks the sale so two concurrent
+     * payments can never together overpay the outstanding balance.
+     *
+     * @param  array{method:string, amount:float, reference?:string|null}  $payload
+     */
+    public function collectPayment(Sale $sale, array $payload): Sale
+    {
+        return DB::transaction(function () use ($sale, $payload) {
+            /** @var Sale $sale */
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
+
+            if ($sale->status !== 'completed') {
+                throw ValidationException::withMessages([
+                    'sale' => ['Payments can only be recorded against a completed sale.'],
+                ]);
+            }
+
+            $due = round((float) $sale->due_amount, 2);
+
+            if ($due <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => ['This sale has no outstanding balance.'],
+                ]);
+            }
+
+            $amount = round((float) $payload['amount'], 2);
+
+            if ($amount > $due) {
+                throw ValidationException::withMessages([
+                    'amount' => ["The payment amount may not exceed the outstanding balance ({$due})."],
+                ]);
+            }
+
+            $sale->payments()->create([
+                'method' => $payload['method'],
+                'amount' => $amount,
+                'reference' => $payload['reference'] ?? null,
+                'paid_at' => Carbon::now(),
+            ]);
+
+            $newDue = round($due - $amount, 2);
+
+            $sale->update([
+                'paid_amount' => round((float) $sale->paid_amount + $amount, 2),
+                'due_amount' => $newDue,
+                'payment_status' => $newDue <= 0 ? 'paid' : 'partial',
+            ]);
+
+            if ($sale->customer_id) {
+                Customer::whereKey($sale->customer_id)->decrement('balance', $amount);
+            }
+
+            return $sale->fresh(['items', 'payments', 'customer', 'coupon']);
+        });
+    }
+
+    /**
      * Re-validates the coupon inside the checkout transaction and atomically
      * consumes one redemption. Row-locked so two concurrent checkouts against
      * a usage_limit-1 coupon can never both succeed.

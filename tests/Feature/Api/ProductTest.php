@@ -59,6 +59,22 @@ class ProductTest extends TestCase
         $this->assertSame(1, Product::count());
     }
 
+    public function test_product_can_be_looked_up_by_barcode(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->postJson('/api/v1/products', [
+            'name' => 'Cola 500ml', 'purchase_price' => 5, 'selling_price' => 8, 'barcode' => '8901030123456',
+        ])->assertCreated();
+
+        $this->getJson('/api/v1/products/barcode/8901030123456')
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Cola 500ml');
+
+        $this->getJson('/api/v1/products/barcode/does-not-exist')->assertNotFound();
+    }
+
     public function test_search_filters_products_by_name(): void
     {
         $owner = $this->createTenant();

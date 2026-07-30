@@ -75,6 +75,15 @@ class ProductController extends Controller
         return new ProductResource($product->load('category', 'brand', 'unit'));
     }
 
+    /** POS barcode-scanner lookup: resolves a single product by its exact barcode. */
+    public function findByBarcode(string $barcode): ProductResource
+    {
+        $product = Product::where('barcode', $barcode)->firstOrFail();
+        $product->loadSum('inventoryBalances as stock_quantity', 'quantity');
+
+        return new ProductResource($product->load('category', 'brand', 'unit'));
+    }
+
     public function update(UpdateProductRequest $request, Product $product): ProductResource
     {
         $product->update($request->validated());
