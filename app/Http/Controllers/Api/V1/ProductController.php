@@ -38,7 +38,7 @@ class ProductController extends Controller
             ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
             ->when($request->boolean('low_stock'), fn ($q) => $q->havingRaw('stock_quantity <= min_stock_level'))
             ->orderBy($sort, $direction)
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return ProductResource::collection($products);
     }

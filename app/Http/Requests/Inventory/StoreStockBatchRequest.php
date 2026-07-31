@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Inventory;
 
+use App\Rules\VariantMatchesProduct;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class StoreStockBatchRequest extends FormRequest
 
         return [
             'product_id' => ['required', Rule::exists('products', 'id')->where('tenant_id', $tenantId)],
-            'variant_id' => ['nullable', Rule::exists('product_variants', 'id')->where('tenant_id', $tenantId)],
+            'variant_id' => ['nullable', Rule::exists('product_variants', 'id')->where('tenant_id', $tenantId), new VariantMatchesProduct],
             'warehouse_id' => ['required', Rule::exists('warehouses', 'id')->where('tenant_id', $tenantId)],
             'batch_number' => ['required', 'string', 'max:100'],
             'quantity' => ['required', 'numeric', 'min:0.0001'],

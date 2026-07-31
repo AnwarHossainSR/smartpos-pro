@@ -15,7 +15,7 @@ class UnitController extends Controller
         $units = Unit::query()
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('short_name', 'like', "%{$s}%"))
             ->orderBy('name')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return UnitResource::collection($units);
     }

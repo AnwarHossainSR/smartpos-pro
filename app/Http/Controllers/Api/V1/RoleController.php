@@ -21,7 +21,7 @@ class RoleController extends Controller
             ->with('permissions')
             ->withCount('users')
             ->orderBy('name')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return RoleResource::collection($roles);
     }

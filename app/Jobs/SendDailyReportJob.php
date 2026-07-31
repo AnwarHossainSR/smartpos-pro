@@ -52,7 +52,9 @@ class SendDailyReportJob implements ShouldQueue
 
         $summary = DB::table('sales')
             ->where('tenant_id', $this->tenantId)
-            ->whereDate('sold_at', $yesterday)
+            // Half-open range rather than whereDate(): date(sold_at) can't use the index.
+            ->where('sold_at', '>=', $yesterday)
+            ->where('sold_at', '<', $yesterday->copy()->addDay())
             ->selectRaw('count(*) as sale_count, sum(total) as revenue, sum(profit) as profit')
             ->first();
 

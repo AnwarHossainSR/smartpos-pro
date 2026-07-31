@@ -20,7 +20,7 @@ class SaleReturnController extends Controller
         $returns = SaleReturn::query()
             ->when($request->sale_id, fn ($q, $id) => $q->where('sale_id', $id))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return SaleReturnResource::collection($returns);
     }

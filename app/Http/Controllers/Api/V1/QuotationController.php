@@ -21,7 +21,7 @@ class QuotationController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where('reference_number', 'like', "%{$s}%"))
             ->latest()
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($this->perPage($request, 20));
 
         return response()->json($quotations);
     }

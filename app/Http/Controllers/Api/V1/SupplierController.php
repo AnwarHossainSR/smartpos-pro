@@ -27,7 +27,7 @@ class SupplierController extends Controller
             })
             ->when($request->filled('has_due'), fn ($q) => $q->where('balance', '>', 0))
             ->orderBy($sort, $direction)
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return SupplierResource::collection($suppliers);
     }

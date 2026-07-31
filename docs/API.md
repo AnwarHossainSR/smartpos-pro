@@ -6,12 +6,23 @@ Content-Type: `application/json`.
 Collection endpoints are paginated (`?page=`, `?per_page=`) and return Laravel's
 standard `{ data, links, meta }` envelope. Single resources return `{ data: {...} }`.
 
+`per_page` (and the `limit` on "top N" endpoints) is **capped at 200**; a larger value is
+clamped, and a zero/negative one falls back to the endpoint's default. Endpoints taking a
+`from`/`to` day filter treat both bounds as inclusive; an unparseable date returns `422`
+rather than being ignored. Report endpoints additionally reject a range longer than 366 days.
+
 ## Idempotency, CORS & security headers
 
 `Idempotency-Key` is scoped to `tenant + key + method + path` — the same key reused on a
 different route no longer replays a stranger's cached response, and reusing it on the same
 route with a **different** request body returns `409` instead of silently serving the old
 result. Keys are pruned after 24h by a scheduled job.
+
+The key row is also a mutex: it is written *before* the handler runs, so a retry that
+arrives while the original request is still in flight gets `409`
+(`Retry-After: 60`) rather than executing the operation a second time. A claim left behind
+by a request that died is reclaimable after 60s, and a `5xx` releases it immediately so the
+client can retry at once.
 
 CORS (`config/cors.php`) is restricted to `FRONTEND_URL` (comma-separated for multiple
 origins) rather than the framework default of `*`. Every API response carries baseline
@@ -330,11 +341,11 @@ All require `reports.view`; all accept `?from=&to=` (and `branch_id` where relev
 
 | Method & path | Permission | Notes |
 | --- | --- | --- |
-| `GET /accounts` (`?type=&search=`) · `POST /accounts` · `PUT /accounts/{account}` | `accounting.*` | account types: cash, bank, mobile_banking, wallet, income, expense, asset, liability, equity |
+| `GET /accounts` (`?type=&search=`) · `POST /accounts` · `PUT /accounts/{account}` | `accounting.*` | account types: cash, bank, mobile_banking, wallet, income, expense, asset, liability, equity. Each account carries a derived `normal_side` (`debit`/`credit`) — the side its balance increases on |
 | `POST /journals` | `accounting.create` | posts a **balanced** entry; unbalanced debits≠credits → `422` |
 | `GET /journals` (`?from=&to=`) · `GET /journals/{journal}` | `accounting.view` | |
-| `GET /journals/trial-balance` | `accounting.view` | balance per account |
-| `GET /accounts/{account}/ledger` (`?from=&to=`) | `accounting.view` | per-account general ledger |
+| `GET /journals/trial-balance` | `accounting.view` | each account's balance in its normal-side column, plus `total_debit` / `total_credit` |
+| `GET /accounts/{account}/ledger` (`?from=&to=&limit=`) | `accounting.view` | per-account general ledger, oldest first, capped at `limit` (default 200) — narrow with `from`/`to` |
 
 Journal posting adjusts balances by each account's normal side (debit-normal: assets & expenses; credit-normal: liabilities, income, equity):
 ```json

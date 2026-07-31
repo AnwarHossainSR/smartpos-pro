@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Inventory\StockLedgerService;
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
@@ -55,13 +56,33 @@ class QueryConfigHardeningTest extends TestCase
     {
         $owner = $this->createTenant();
 
+        // Neither attribute is fillable. With Model::shouldBeStrict() on outside
+        // production the attempt is rejected outright instead of quietly dropped,
+        // so a payload trying to plant a super-admin can't pass unnoticed.
+        try {
+            User::create([
+                'tenant_id' => 999999,
+                'business_id' => $owner->business_id,
+                'branch_id' => $owner->branch_id,
+                'name' => 'Attacker', 'email' => 'attacker@example.test',
+                'password' => 'password123', 'status' => 'active',
+                'is_super_admin' => true,
+            ]);
+
+            $this->fail('Expected the non-fillable attributes to be rejected.');
+        } catch (MassAssignmentException $e) {
+            $this->assertStringContainsString('tenant_id', $e->getMessage());
+        }
+
+        $this->assertDatabaseMissing('users', ['email' => 'attacker@example.test']);
+
+        // Production keeps the discard silent, so assert the resulting state too: a user
+        // created without those keys still lands in the actor's tenant, never elevated.
         $user = User::create([
-            'tenant_id' => 999999,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
-            'name' => 'Attacker', 'email' => 'attacker@example.test',
+            'name' => 'Member', 'email' => 'member@example.test',
             'password' => 'password123', 'status' => 'active',
-            'is_super_admin' => true,
         ]);
 
         $this->assertFalse((bool) $user->is_super_admin);

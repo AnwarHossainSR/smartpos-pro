@@ -25,7 +25,7 @@ class InventoryController extends Controller
             ->when($request->search, fn ($q, $s) => $q->whereHas('product', fn ($p) => $p->where('name', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%")))
             ->when($request->boolean('low_stock'), fn ($q) => $q->whereColumn('quantity', '<=', DB::raw('(select min_stock_level from products where products.id = inventory_balances.product_id)')))
             ->orderByDesc('quantity')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return InventoryBalanceResource::collection($balances);
     }
@@ -40,10 +40,9 @@ class InventoryController extends Controller
             ->when($request->variant_id, fn ($q, $id) => $q->where('variant_id', $id))
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
             ->when($request->direction, fn ($q, $d) => $q->where('direction', $d))
-            ->when($request->from, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
-            ->when($request->to, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
+            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'created_at'))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return StockMovementResource::collection($movements);
     }

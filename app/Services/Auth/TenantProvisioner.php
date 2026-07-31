@@ -65,8 +65,10 @@ class TenantProvisioner
 
             $this->provisionRoles($tenant);
 
+            // No `tenant_id` here on purpose: it is not fillable on User (a deliberate
+            // hardening choice — see the $fillable docblock) so passing it would be
+            // silently dropped. BelongsToTenant fills it from the context bound above.
             $owner = User::create([
-                'tenant_id' => $tenant->id,
                 'business_id' => $business->id,
                 'branch_id' => $branch->id,
                 'name' => $data['name'],

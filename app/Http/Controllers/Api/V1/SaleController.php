@@ -25,10 +25,9 @@ class SaleController extends Controller
             ->when($request->customer_id, fn ($q, $id) => $q->where('customer_id', $id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->payment_status, fn ($q, $s) => $q->where('payment_status', $s))
-            ->when($request->from, fn ($q, $d) => $q->whereDate('sold_at', '>=', $d))
-            ->when($request->to, fn ($q, $d) => $q->whereDate('sold_at', '<=', $d))
+            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'sold_at'))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return SaleResource::collection($sales);
     }

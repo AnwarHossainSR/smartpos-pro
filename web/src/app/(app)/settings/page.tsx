@@ -178,6 +178,7 @@ export default function SettingsPage() {
   });
 
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
     values: data?.data
       ? {
           name: data.data.name,

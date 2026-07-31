@@ -69,7 +69,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
     enabled: productSearch.length > 0,
   });
 
-  const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<PurchaseValues>({
+  const { register, handleSubmit, control, formState: { errors }, watch } = useForm<PurchaseValues>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: { status: "received", items: [], payments: [] },
   });

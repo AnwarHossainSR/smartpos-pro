@@ -23,7 +23,7 @@ class PurchaseController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->payment_status, fn ($q, $s) => $q->where('payment_status', $s))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return PurchaseResource::collection($purchases);
     }

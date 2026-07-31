@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Sale;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -19,28 +18,38 @@ class DashboardController extends Controller
         $from = $request->date('from') ?? now()->startOfDay();
         $to = $request->date('to') ?? now()->endOfDay();
 
+        // Both headline sale figures in one pass rather than a cloned query each.
+        // toBase() keeps the tenant + soft-delete scopes but returns plain rows: these
+        // aggregates aren't Sale attributes and shouldn't be hydrated as one.
         $salesInRange = Sale::query()
             ->where('status', 'completed')
-            ->whereBetween('sold_at', [$from, $to]);
+            ->whereBetween('sold_at', [$from, $to])
+            ->selectRaw('coalesce(sum(total), 0) as revenue, count(*) as transactions')
+            ->toBase()
+            ->first();
 
         $trend = Sale::query()
             ->where('status', 'completed')
             ->where('sold_at', '>=', now()->subDays(13)->startOfDay())
-            ->selectRaw('date(sold_at) as day, sum(total) as total')
+            ->selectRaw('date(sold_at) as day, coalesce(sum(total), 0) as total')
             ->groupByRaw('date(sold_at)')
             ->orderBy('day')
+            ->toBase()
             ->get();
 
         return response()->json([
             'data' => [
-                'todays_sales' => round((float) (clone $salesInRange)->sum('total'), 2),
-                'todays_transactions' => (clone $salesInRange)->count(),
+                'todays_sales' => round((float) ($salesInRange->revenue ?? 0), 2),
+                'todays_transactions' => (int) ($salesInRange->transactions ?? 0),
                 'total_due' => round((float) Sale::where('payment_status', '!=', 'paid')->sum('due_amount'), 2),
                 'customer_dues' => round((float) Customer::where('balance', '>', 0)->sum('balance'), 2),
                 'total_products' => Product::count(),
                 'total_customers' => Customer::count(),
+                // A join, not a correlated subquery: the latter re-ran a lookup on
+                // `products` for every balance row in the tenant.
                 'low_stock_count' => InventoryBalance::query()
-                    ->whereColumn('quantity', '<=', DB::raw('(select min_stock_level from products where products.id = inventory_balances.product_id)'))
+                    ->join('products', 'products.id', '=', 'inventory_balances.product_id')
+                    ->whereColumn('inventory_balances.quantity', '<=', 'products.min_stock_level')
                     ->count(),
                 'sales_trend' => $trend->map(fn ($row) => [
                     'day' => $row->day,

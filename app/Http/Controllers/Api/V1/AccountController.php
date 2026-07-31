@@ -16,7 +16,7 @@ class AccountController extends Controller
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->orderBy('type')->orderBy('name')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return AccountResource::collection($accounts);
     }

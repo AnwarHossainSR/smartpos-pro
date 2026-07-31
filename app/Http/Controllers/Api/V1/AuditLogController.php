@@ -16,10 +16,9 @@ class AuditLogController extends Controller
             ->when($request->filled('actor'), fn ($q) => $q->where('user_id', $request->integer('actor')))
             ->when($request->filled('action'), fn ($q) => $q->where('action', 'like', "%{$request->string('action')}%"))
             ->when($request->filled('model'), fn ($q) => $q->where('auditable_type', $request->string('model')))
-            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')))
+            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'created_at'))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return response()->json([
             'data' => $logs->map(fn (AuditLog $log) => [

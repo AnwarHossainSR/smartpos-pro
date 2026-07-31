@@ -16,7 +16,7 @@ class CouponController extends Controller
             ->when($request->search, fn ($q, $s) => $q->where('code', 'like', "%{$s}%"))
             ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
             ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return response()->json($coupons);
     }

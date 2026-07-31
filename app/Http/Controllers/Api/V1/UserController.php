@@ -28,7 +28,7 @@ class UserController extends Controller
             ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->orderBy('name')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return UserResource::collection($users);
     }

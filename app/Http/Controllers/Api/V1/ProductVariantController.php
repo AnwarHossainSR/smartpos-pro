@@ -33,7 +33,7 @@ class ProductVariantController extends Controller
             ->when($request->expiring_before, fn ($q, $d) => $q->where('expires_at', '<=', $d))
             ->where('quantity', '>', 0)
             ->orderBy('expires_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return response()->json($batches);
     }
@@ -57,7 +57,7 @@ class ProductVariantController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->serial_number, fn ($q, $sn) => $q->where('serial_number', 'like', "%{$sn}%"))
             ->latest()
-            ->paginate($request->integer('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return response()->json($serials);
     }

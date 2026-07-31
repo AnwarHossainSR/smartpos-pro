@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Trash2, Plus, Minus, X, User, FileText } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, X, User, FileText } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

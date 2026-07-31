@@ -12,6 +12,7 @@ use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Read-only reporting endpoints. Every query is tenant-scoped by the global
@@ -25,22 +26,35 @@ class ReportController extends Controller
     {
         [$from, $to] = $this->range($request);
 
-        $base = Sale::query()
+        // One pass, seven aggregates — the previous shape cloned the query per figure
+        // and scanned the same rows seven times over.
+        $totals = Sale::query()
             ->where('status', 'completed')
             ->whereBetween('sold_at', [$from, $to])
-            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id));
+            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
+            ->selectRaw('count(*) as invoices,
+                coalesce(sum(subtotal), 0) as gross_sales,
+                coalesce(sum(discount_amount), 0) as discounts,
+                coalesce(sum(tax_amount), 0) as tax,
+                coalesce(sum(total), 0) as net_sales,
+                coalesce(sum(paid_amount), 0) as amount_paid,
+                coalesce(sum(due_amount), 0) as amount_due')
+            // toBase() keeps the tenant + soft-delete scopes but returns a plain row:
+            // these aggregates aren't Sale attributes and shouldn't be hydrated as one.
+            ->toBase()
+            ->first();
 
         return response()->json([
             'data' => [
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
-                'invoices' => (clone $base)->count(),
-                'gross_sales' => round((float) (clone $base)->sum('subtotal'), 2),
-                'discounts' => round((float) (clone $base)->sum('discount_amount'), 2),
-                'tax' => round((float) (clone $base)->sum('tax_amount'), 2),
-                'net_sales' => round((float) (clone $base)->sum('total'), 2),
-                'amount_paid' => round((float) (clone $base)->sum('paid_amount'), 2),
-                'amount_due' => round((float) (clone $base)->sum('due_amount'), 2),
+                'invoices' => (int) ($totals->invoices ?? 0),
+                'gross_sales' => round((float) ($totals->gross_sales ?? 0), 2),
+                'discounts' => round((float) ($totals->discounts ?? 0), 2),
+                'tax' => round((float) ($totals->tax ?? 0), 2),
+                'net_sales' => round((float) ($totals->net_sales ?? 0), 2),
+                'amount_paid' => round((float) ($totals->amount_paid ?? 0), 2),
+                'amount_due' => round((float) ($totals->amount_due ?? 0), 2),
             ],
         ]);
     }
@@ -61,7 +75,7 @@ class ReportController extends Controller
                 sum(sale_items.unit_cost * sale_items.quantity) as cost')
             ->groupBy('sale_items.product_id', 'sale_items.name')
             ->orderByDesc('quantity')
-            ->limit($request->integer('limit', 20))
+            ->limit($this->limit($request, 20))
             ->get()
             ->map(fn ($r) => [
                 'product_id' => $r->product_id,
@@ -135,7 +149,7 @@ class ReportController extends Controller
             ->withSum('inventoryBalances as stock_quantity', 'quantity')
             ->havingRaw('coalesce(stock_quantity, 0) <= min_stock_level')
             ->orderByRaw('coalesce(stock_quantity, 0) asc')
-            ->limit($request->integer('limit', 100))
+            ->limit($this->limit($request, 100))
             ->get(['id', 'name', 'sku', 'min_stock_level', 'reorder_quantity'])
             ->map(fn ($p) => [
                 'product_id' => $p->id,
@@ -166,11 +180,30 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Longest reportable window. Reports aggregate over every sale in the range, so an
+     * unbounded `from` ("?from=1970-01-01") turns a throttled endpoint into a full-table
+     * scan of a tenant's entire trading history on demand.
+     */
+    protected const MAX_RANGE_DAYS = 366;
+
     /** @return array{0: Carbon, 1: Carbon} */
     protected function range(Request $request): array
     {
         $from = $request->date('from')?->startOfDay() ?? now()->subDays(30)->startOfDay();
         $to = $request->date('to')?->endOfDay() ?? now()->endOfDay();
+
+        if ($from->greaterThan($to)) {
+            throw ValidationException::withMessages([
+                'from' => ['The from date must not be after the to date.'],
+            ]);
+        }
+
+        if ($from->diffInDays($to) > self::MAX_RANGE_DAYS) {
+            throw ValidationException::withMessages([
+                'from' => ['The reporting range may not exceed '.self::MAX_RANGE_DAYS.' days.'],
+            ]);
+        }
 
         return [$from, $to];
     }

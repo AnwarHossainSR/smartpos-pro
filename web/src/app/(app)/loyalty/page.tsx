@@ -32,13 +32,6 @@ interface Coupon {
   is_active: boolean;
 }
 
-const adjustSchema = z.object({
-  customer_id: z.number(),
-  points: z.number().min(1),
-  type: z.enum(["earn", "adjust"]),
-  note: z.string().optional(),
-});
-
 const couponSchema = z.object({
   code: z.string().min(1),
   type: z.enum(["percentage", "fixed"]),

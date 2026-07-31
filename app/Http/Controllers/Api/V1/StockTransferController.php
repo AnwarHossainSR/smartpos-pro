@@ -19,7 +19,7 @@ class StockTransferController extends Controller
         $transfers = StockTransfer::with(['fromWarehouse', 'toWarehouse', 'requestedBy'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->latest()
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($this->perPage($request, 20));
 
         return response()->json($transfers);
     }

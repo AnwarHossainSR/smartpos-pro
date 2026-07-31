@@ -15,7 +15,7 @@ class NotificationController extends Controller
         $notifications = $this->scoped($request)
             ->when($request->boolean('unread'), fn ($q) => $q->whereNull('read_at'))
             ->latest('id')
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($this->perPage($request, 20));
 
         return response()->json([
             'data' => $notifications->map(fn ($n) => [

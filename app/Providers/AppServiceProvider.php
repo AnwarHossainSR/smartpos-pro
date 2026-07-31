@@ -6,6 +6,7 @@ use App\Models\PersonalAccessToken;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // Turn the silent failure modes into loud ones outside production: lazy loading
+        // (the N+1 that only shows up under real data volume), assigning an attribute
+        // that isn't fillable, and reading one the query never selected. Left off in
+        // production so a missed eager-load degrades performance rather than 500ing.
+        Model::shouldBeStrict(! $this->app->isProduction());
 
         // Global per-token (or per-IP for unauthenticated requests) limit for the whole API.
         RateLimiter::for('api', function (Request $request) {

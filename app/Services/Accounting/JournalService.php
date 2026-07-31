@@ -18,6 +18,18 @@ class JournalService
     private const DEBIT_NORMAL = ['cash', 'bank', 'mobile_banking', 'wallet', 'asset', 'expense'];
 
     /**
+     * Which side of the ledger increases this account type.
+     *
+     * Derived from `type`, not the nullable `normal_side` column — this is the rule
+     * posting actually applies to balances, so anything reporting a debit/credit split
+     * (the trial balance, the API's account resource) must agree with it.
+     */
+    public static function isDebitNormal(string $type): bool
+    {
+        return in_array($type, self::DEBIT_NORMAL, true);
+    }
+
+    /**
      * @param  array{reference?:string, entry_date?:string, description?:string, user_id?:int|null,
      *   lines: array<int, array{account_id:int, type:'debit'|'credit', amount:float, description?:string|null}>}  $data
      */
@@ -68,7 +80,7 @@ class JournalService
 
                 /** @var Account $account */
                 $account = $accounts->get($line['account_id']);
-                $increasesOnDebit = in_array($account->type, self::DEBIT_NORMAL, true);
+                $increasesOnDebit = self::isDebitNormal($account->type);
                 $delta = ($line['type'] === 'debit') === $increasesOnDebit ? $amount : -$amount;
                 $account->increment('balance', $delta);
             }

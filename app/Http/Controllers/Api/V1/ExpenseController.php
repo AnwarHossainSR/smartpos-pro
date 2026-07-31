@@ -18,10 +18,9 @@ class ExpenseController extends Controller
             ->when($request->expense_category_id, fn ($q, $id) => $q->where('expense_category_id', $id))
             ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->from, fn ($q, $d) => $q->whereDate('spent_at', '>=', $d))
-            ->when($request->to, fn ($q, $d) => $q->whereDate('spent_at', '<=', $d))
+            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'spent_at'))
             ->latest('spent_at')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         return ExpenseResource::collection($expenses);
     }
