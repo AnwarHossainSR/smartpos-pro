@@ -313,6 +313,60 @@ parameters:
 			path: app/Http/Resources/AccountResource.php
 
 		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$is_default\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\BranchResource\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/BranchResource.php
+
+		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\BrandResource\:\:\$created_at\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1231,6 +1285,90 @@ parameters:
 			path: app/Http/Resources/SaleReturnResource.php
 
 		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$direction\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$quantity_after\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$reference_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$reference_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$unit_cost\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$variant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\StockMovementResource\:\:\$warehouse\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/StockMovementResource.php
+
+		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\SupplierResource\:\:\$address\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1427,6 +1565,60 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$branch\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$branch_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$is_default\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WarehouseResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WarehouseResource.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>profit" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'

@@ -20,7 +20,9 @@ _Last updated: 2026-07-30_
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
 | 7 · Security & money integrity | 13 | 0 | 0 | 13 |
 | 8 · Product depth | 0 | 0 | 11 | 11 |
-| **Total** | **88** | **0** | **11** | **99** |
+| 9 · Gap fixes + missing endpoints | 5 | 0 | 0 | 5 |
+| 10 · Further gaps identified, not yet built | 0 | 0 | 6 | 6 |
+| **Total** | **93** | **0** | **17** | **110** |
 
 ## Phase 1 — Backend foundation & modules
 
@@ -169,3 +171,31 @@ vertical depth — pick a lane rather than building all of them.
 | T97 | Restaurant mode | ⬜ | | Tables, KOT, modifiers, split bills |
 | T98 | Offline sync conflict resolution | ⬜ | | Server side of T60's offline queue |
 | T99 | AI assist | ⬜ | | Forecasting, NL reports, receipt OCR |
+
+## Phase 9 — Gap fixes + missing endpoints
+
+A pass over the T28–T33 modules (which shipped with zero feature tests) plus the
+functional dead-ends noted in a follow-up review: the immutable stock ledger was
+write-only via the API, and a due/partial sale could never be settled.
+
+| ID | Task | Status | Notes |
+| -- | ---- | ------ | ----- |
+| T100 | Branch & warehouse management | ✅ | Full CRUD (`BranchController`, extended `WarehouseController`); previously branches had zero endpoints and warehouses were list-only. New `branches`/`warehouses` permission modules; delete guards refuse the default branch/warehouse or one with dependent warehouses/users/sales/stock. |
+| T101 | Credit-sale settlement + barcode lookup | ✅ | `POST sales/{sale}/payments` (row-locked, `sales.update`, idempotency-aware) records a payment against a due/partial sale and decrements the customer's receivable balance; `GET products/barcode/{barcode}` for POS scanning. |
+| T102 | Stock ledger history endpoint | ✅ | `GET inventory/movements` — the `stock_movements` ledger was previously readable only as current balances (`GET inventory/balances`), never as history. |
+| T103 | T28–T30 hardening | ✅ | Fixed a real bug: `inventory.adjust` was required by 6 routes (stock transfers, batch/serial create) but didn't exist in `PermissionCatalog`, so no role could ever be granted it. Fixed a second bug: `GET products/{id}/variants` 500'd on every call (eager-loaded a non-existent `attributes.attribute` relation). Replaced inline, tenant-unscoped `exists:table,id` validation in `StockTransferController`, `ProductVariantController` and `QuotationController` with proper `FormRequest`s scoped by `tenant_id` (a cross-tenant reference could previously pass validation). Added the missing feature tests (`StockTransferTest`, `ProductVariantTest`, `QuotationTest`) that would have caught all of this. |
+| T104 | Rich demo data for the above | ✅ | `RichDemoSeeder` now also seeds: a stock transfer between the two demo branches (request → approve → receive), 3 product variants + a stock batch + 3 serials, a quotation converted to a sale, and a partially-paid credit sale settled via `collectPayment()`. |
+
+## Phase 10 — Further gaps identified, not yet built
+
+Found during the Phase 9 pass; deliberately left as backlog rather than half-implemented.
+Pick a lane the same way as Phase 8.
+
+| ID | Task | Status | Notes |
+| -- | ---- | ------ | ----- |
+| T105 | Purchases: edit / cancel / return | ⬜ | Only `index`/`show`/`store` exist; `purchases.update`/`.delete`/`.approve` permissions exist with no routes behind them. A wrong goods receipt is currently permanent. |
+| T106 | Sale void / cancel | ⬜ | `sales.delete` permission exists, no route; returns are the only correction path today. |
+| T107 | Bulk product import (CSV/XLSX) | ⬜ | Export is client-side CSV only; import was explicitly deferred in T68. Usually the top onboarding blocker for a shop with a large catalog. |
+| T108 | Server-side export endpoints | ⬜ | Eight modules declare `*.export` permissions with no backing endpoint. |
+| T109 | Financial statements | ⬜ | Accounting has trial balance + general ledger only — no P&L or balance sheet. |
+| T110 | Public API keys / webhooks | ⬜ | No way to integrate an external storefront or push to external accounting; the one SaaS-tier gap not already covered by Phase 8. |

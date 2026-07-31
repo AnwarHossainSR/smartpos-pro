@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\ConvertQuotationRequest;
+use App\Http\Requests\Sales\StoreQuotationRequest;
+use App\Http\Requests\Sales\UpdateQuotationRequest;
 use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
 use Illuminate\Http\JsonResponse;
@@ -23,23 +26,9 @@ class QuotationController extends Controller
         return response()->json($quotations);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreQuotationRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'branch_id' => 'required|integer|exists:branches,id',
-            'customer_id' => 'nullable|integer|exists:customers,id',
-            'note' => 'nullable|string|max:2000',
-            'terms' => 'nullable|string|max:2000',
-            'valid_until' => 'nullable|date|after:today',
-            'status' => 'nullable|in:draft,sent',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer|exists:products,id',
-            'items.*.quantity' => 'required|numeric|min:0.0001',
-            'items.*.unit_price' => 'nullable|numeric|min:0',
-            'items.*.discount' => 'nullable|numeric|min:0',
-        ]);
-
-        $quotation = $this->service->create($validated, $request->user());
+        $quotation = $this->service->create($request->validated(), $request->user());
 
         return response()->json(['data' => $quotation], 201);
     }
@@ -49,10 +38,9 @@ class QuotationController extends Controller
         return response()->json(['data' => $quotation->load(['items.product', 'customer', 'user', 'convertedToSale'])]);
     }
 
-    public function update(Request $request, Quotation $quotation): JsonResponse
+    public function update(UpdateQuotationRequest $request, Quotation $quotation): JsonResponse
     {
-        $request->validate(['status' => 'sometimes|in:draft,sent,accepted,rejected']);
-        $quotation->update($request->only(['status', 'note', 'terms', 'valid_until']));
+        $quotation->update($request->validated());
 
         return response()->json(['data' => $quotation]);
     }
@@ -64,16 +52,9 @@ class QuotationController extends Controller
         return response()->json(null, 204);
     }
 
-    public function convert(Request $request, Quotation $quotation): JsonResponse
+    public function convert(ConvertQuotationRequest $request, Quotation $quotation): JsonResponse
     {
-        $validated = $request->validate([
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'payments' => 'nullable|array',
-            'payments.*.method' => 'required|string',
-            'payments.*.amount' => 'required|numeric|min:0',
-        ]);
-
-        $sale = $this->service->convertToSale($quotation, $validated, $request->user());
+        $sale = $this->service->convertToSale($quotation, $request->validated(), $request->user());
 
         return response()->json(['data' => $sale->load(['items.product', 'payments'])], 201);
     }

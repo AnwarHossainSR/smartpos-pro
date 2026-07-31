@@ -5,15 +5,22 @@ namespace Database\Seeders;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Coupon;
+use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\LoyaltyTransaction;
+use App\Models\Product;
 use App\Models\Sale;
+use App\Models\StockBatch;
+use App\Models\StockSerial;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Inventory\StockTransferService;
+use App\Services\Sales\QuotationService;
 use App\Services\Sales\SaleReturnService;
+use App\Services\Sales\SaleService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -232,7 +239,115 @@ class RichDemoSeeder extends Seeder
             }
         }
 
-        $this->command?->info('Rich demo data seeded: branch 2, returns, journals, expenses, coupons, loyalty.');
+        // ------------------------------------------------------------------
+        // 7. Stock transfer from branch 1 to the new Downtown branch
+        // ------------------------------------------------------------------
+        $transferProduct = Product::inRandomOrder()->first();
+        $wh1 = Warehouse::where('business_id', $owner->business_id)->where('id', '!=', $wh2->id)->first();
+
+        if ($transferProduct && $wh1) {
+            $transfers = app(StockTransferService::class);
+            $transfer = $transfers->request([
+                'from_warehouse_id' => $wh1->id,
+                'to_warehouse_id' => $wh2->id,
+                'note' => 'Restocking the Downtown branch',
+                'items' => [['product_id' => $transferProduct->id, 'quantity' => 10]],
+            ], $owner);
+            $transfer = $transfers->approve($transfer, $owner);
+            $transfers->receive($transfer, [
+                'items' => $transfer->items->map(fn ($item) => [
+                    'transfer_item_id' => $item->id,
+                    'quantity_received' => (float) $item->quantity_requested,
+                ])->all(),
+            ], $owner);
+        }
+
+        // ------------------------------------------------------------------
+        // 8. Product variants, a stock batch and a serial number
+        // ------------------------------------------------------------------
+        $variantProduct = Product::inRandomOrder()->first();
+
+        if ($variantProduct) {
+            foreach (['Small', 'Medium', 'Large'] as $size) {
+                $variantProduct->variants()->create([
+                    'name' => "{$variantProduct->name} - {$size}",
+                    'sku' => $variantProduct->sku.'-'.strtoupper(substr($size, 0, 1)),
+                    'attributes' => ['size' => $size],
+                    'selling_price' => $variantProduct->selling_price,
+                ]);
+            }
+        }
+
+        $batchProduct = Product::inRandomOrder()->first();
+        if ($batchProduct && $wh1) {
+            StockBatch::create([
+                'product_id' => $batchProduct->id,
+                'warehouse_id' => $wh1->id,
+                'batch_number' => 'BATCH-'.now()->format('Ym').'-001',
+                'quantity' => 40,
+                'unit_cost' => $batchProduct->purchase_price,
+                'manufactured_at' => now()->subMonths(2),
+                'expires_at' => now()->addMonths(4),
+            ]);
+        }
+
+        $serialProduct = Product::inRandomOrder()->first();
+        if ($serialProduct && $wh1) {
+            foreach (range(1, 3) as $n) {
+                StockSerial::create([
+                    'product_id' => $serialProduct->id,
+                    'warehouse_id' => $wh1->id,
+                    'serial_number' => 'SN-'.strtoupper(Str::random(8)),
+                    'status' => 'in_stock',
+                ]);
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 9. A quotation converted into a sale
+        // ------------------------------------------------------------------
+        $quoteProduct = Product::inRandomOrder()->first();
+        if ($quoteProduct && $wh1) {
+            $quotations = app(QuotationService::class);
+            $quotation = $quotations->create([
+                'branch_id' => $branch1Id,
+                'note' => 'Bulk order quote for a walk-in customer',
+                'items' => [['product_id' => $quoteProduct->id, 'quantity' => 5]],
+            ], $owner);
+
+            $quotations->convertToSale($quotation, [
+                'warehouse_id' => $wh1->id,
+                'payments' => [['method' => 'cash', 'amount' => (float) $quotation->total]],
+            ], $owner);
+        }
+
+        // ------------------------------------------------------------------
+        // 10. A partially-settled credit sale, to showcase collecting the rest
+        // ------------------------------------------------------------------
+        $creditCustomer = Customer::inRandomOrder()->first();
+        $creditProduct = Product::inRandomOrder()->first();
+
+        if ($creditCustomer && $creditProduct && $wh1) {
+            $sales = app(SaleService::class);
+            $creditSale = $sales->create([
+                'branch_id' => $branch1Id,
+                'warehouse_id' => $wh1->id,
+                'customer_id' => $creditCustomer->id,
+                'items' => [['product_id' => $creditProduct->id, 'quantity' => 4]],
+                'payments' => [['method' => 'cash', 'amount' => round((float) $creditProduct->selling_price * 4 * 0.4, 2)]],
+            ], $owner);
+
+            // Customer pays down part of the remaining balance, leaving it "partial".
+            if ((float) $creditSale->due_amount > 0) {
+                $sales->collectPayment($creditSale, [
+                    'method' => 'bank',
+                    'amount' => round((float) $creditSale->due_amount / 2, 2),
+                ]);
+            }
+        }
+
+        $this->command?->info('Rich demo data seeded: branch 2, returns, journals, expenses, coupons, loyalty,');
+        $this->command?->info('stock transfer, variants/batch/serial, a converted quotation, and a partially-paid credit sale.');
         $this->command?->info('Branch 2 cashier: cashier2@smartpos.test / password123');
     }
 }

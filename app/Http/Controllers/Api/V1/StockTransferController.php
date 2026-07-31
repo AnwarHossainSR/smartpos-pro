@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\ReceiveStockTransferRequest;
+use App\Http\Requests\Inventory\StoreStockTransferRequest;
 use App\Models\StockTransfer;
 use App\Services\Inventory\StockTransferService;
 use Illuminate\Http\JsonResponse;
@@ -22,20 +24,9 @@ class StockTransferController extends Controller
         return response()->json($transfers);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreStockTransferRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'from_warehouse_id' => 'required|integer|exists:warehouses,id',
-            'to_warehouse_id' => 'required|integer|exists:warehouses,id',
-            'note' => 'nullable|string|max:1000',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer|exists:products,id',
-            'items.*.variant_id' => 'nullable|integer|exists:product_variants,id',
-            'items.*.quantity' => 'required|numeric|min:0.0001',
-            'items.*.unit_cost' => 'nullable|numeric|min:0',
-        ]);
-
-        $transfer = $this->service->request($validated, $request->user());
+        $transfer = $this->service->request($request->validated(), $request->user());
 
         return response()->json(['data' => $transfer], 201);
     }
@@ -52,15 +43,9 @@ class StockTransferController extends Controller
         return response()->json(['data' => $transfer]);
     }
 
-    public function receive(StockTransfer $stockTransfer, Request $request): JsonResponse
+    public function receive(StockTransfer $stockTransfer, ReceiveStockTransferRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'items' => 'sometimes|array',
-            'items.*.transfer_item_id' => 'required|integer',
-            'items.*.quantity_received' => 'required|numeric|min:0',
-        ]);
-
-        $transfer = $this->service->receive($stockTransfer, $validated, $request->user());
+        $transfer = $this->service->receive($stockTransfer, $request->validated(), $request->user());
 
         return response()->json(['data' => $transfer]);
     }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\StoreStockBatchRequest;
+use App\Http\Requests\Inventory\StoreStockSerialRequest;
 use App\Models\Product;
 use App\Models\StockBatch;
 use App\Models\StockSerial;
@@ -18,9 +20,7 @@ class ProductVariantController extends Controller
 
     public function variants(Product $product): JsonResponse
     {
-        $variants = $product->variants()->with('attributes.attribute')->get();
-
-        return response()->json(['data' => $variants]);
+        return response()->json(['data' => $product->variants]);
     }
 
     // ---------- Batches ----------
@@ -38,20 +38,9 @@ class ProductVariantController extends Controller
         return response()->json($batches);
     }
 
-    public function storeBatch(Request $request): JsonResponse
+    public function storeBatch(StoreStockBatchRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|integer|exists:products,id',
-            'variant_id' => 'nullable|integer|exists:product_variants,id',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'batch_number' => 'required|string|max:100',
-            'quantity' => 'required|numeric|min:0.0001',
-            'unit_cost' => 'nullable|numeric|min:0',
-            'manufactured_at' => 'nullable|date',
-            'expires_at' => 'nullable|date',
-        ]);
-
-        $batch = StockBatch::create(array_merge($validated, [
+        $batch = StockBatch::create(array_merge($request->validated(), [
             'tenant_id' => $request->user()->tenant_id,
         ]));
 
@@ -73,16 +62,9 @@ class ProductVariantController extends Controller
         return response()->json($serials);
     }
 
-    public function storeSerial(Request $request): JsonResponse
+    public function storeSerial(StoreStockSerialRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|integer|exists:products,id',
-            'variant_id' => 'nullable|integer|exists:product_variants,id',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'serial_number' => 'required|string|max:200',
-        ]);
-
-        $serial = StockSerial::create(array_merge($validated, [
+        $serial = StockSerial::create(array_merge($request->validated(), [
             'tenant_id' => $request->user()->tenant_id,
             'status' => 'in_stock',
         ]));
