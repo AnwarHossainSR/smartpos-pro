@@ -3,8 +3,9 @@
 namespace App\Services\Purchasing;
 
 use App\Domain\Enums\PaymentStatus;
-use App\Domain\Enums\PurchaseStatus;
 use App\Domain\Enums\StockMovementType;
+use App\Domain\Purchasing\Data\CreatePurchaseData;
+use App\Domain\Purchasing\Data\PurchaseLineData;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
@@ -23,71 +24,66 @@ class PurchaseService
 {
     public function __construct(protected StockLedgerService $ledger) {}
 
-    /**
-     * @param  array{
-     *   warehouse_id:int, supplier_id?:int|null, status?:string, note?:string|null,
-     *   discount_amount?:float, shipping_amount?:float,
-     *   items: array<int, array{product_id:int, quantity:float, unit_cost:float, variant_id?:int|null, discount_amount?:float, tax_amount?:float}>,
-     *   payments?: array<int, array{method:string, amount:float, reference?:string|null}>
-     * }  $payload
-     */
-    public function create(array $payload, User $user): Purchase
+    public function create(CreatePurchaseData $data, User $user): Purchase
     {
-        return DB::transaction(function () use ($payload, $user) {
-            $status = PurchaseStatus::coerce($payload['status'] ?? null, PurchaseStatus::Received);
-            $receivesStock = $status->affectsStock();
+        return DB::transaction(function () use ($data, $user) {
+            $receivesStock = $data->status->affectsStock();
 
-            $lines = $this->buildLines($payload['items']);
+            $this->assertProductsExist($data->items);
 
-            $subtotal = array_sum(array_column($lines, 'line_total'));
-            $taxTotal = array_sum(array_column($lines, 'tax_amount'));
-            $discount = round((float) ($payload['discount_amount'] ?? 0), 2);
-            $shipping = round((float) ($payload['shipping_amount'] ?? 0), 2);
-            $total = round($subtotal + $taxTotal + $shipping - $discount, 2);
+            $subtotal = round(array_sum(array_map($this->netOf(...), $data->items)), 2);
+            $taxTotal = round(array_sum(array_map(static fn (PurchaseLineData $l) => $l->taxAmount, $data->items)), 2);
+            $total = round($subtotal + $taxTotal + $data->shippingAmount - $data->discountAmount, 2);
 
-            $payments = $payload['payments'] ?? [];
-            $paid = round((float) array_sum(array_column($payments, 'amount')), 2);
+            $paid = $data->paidAmount();
             $due = max(0, round($total - $paid, 2));
 
             $purchase = Purchase::create([
                 'business_id' => $user->business_id,
-                'warehouse_id' => $payload['warehouse_id'],
-                'supplier_id' => $payload['supplier_id'] ?? null,
+                'warehouse_id' => $data->warehouseId,
+                'supplier_id' => $data->supplierId,
                 'user_id' => $user->id,
                 'reference_number' => 'PENDING-'.uniqid(),
-                'status' => $status,
+                'status' => $data->status,
                 'payment_status' => PaymentStatus::fromAmounts($paid, $total),
-                'subtotal' => round($subtotal, 2),
-                'discount_amount' => $discount,
-                'tax_amount' => round($taxTotal, 2),
-                'shipping_amount' => $shipping,
+                'subtotal' => $subtotal,
+                'discount_amount' => $data->discountAmount,
+                'tax_amount' => $taxTotal,
+                'shipping_amount' => $data->shippingAmount,
                 'total' => $total,
                 'paid_amount' => min($paid, $total),
                 'due_amount' => $due,
-                'note' => $payload['note'] ?? null,
+                'note' => $data->note,
                 'purchased_at' => Carbon::now(),
             ]);
 
             $purchase->update(['reference_number' => 'PUR-'.str_pad((string) $purchase->id, 6, '0', STR_PAD_LEFT)]);
 
-            foreach ($lines as $line) {
-                $purchase->items()->create($line['attributes']);
+            foreach ($data->items as $line) {
+                $purchase->items()->create([
+                    'product_id' => $line->productId,
+                    'variant_id' => $line->variantId,
+                    'quantity' => $line->quantity,
+                    'unit_cost' => $line->unitCost,
+                    'discount_amount' => $line->discountAmount,
+                    'tax_amount' => $line->taxAmount,
+                    'line_total' => round($this->netOf($line) + $line->taxAmount, 2),
+                ]);
 
                 if ($receivesStock) {
                     $this->ledger->record([
-                        'product_id' => $line['attributes']['product_id'],
-                        'variant_id' => $line['attributes']['variant_id'],
-                        'warehouse_id' => $payload['warehouse_id'],
-                        'quantity' => $line['attributes']['quantity'],
-                        'unit_cost' => $line['attributes']['unit_cost'],
+                        'product_id' => $line->productId,
+                        'variant_id' => $line->variantId,
+                        'warehouse_id' => $data->warehouseId,
+                        'quantity' => $line->quantity,
+                        'unit_cost' => $line->unitCost,
                         'type' => StockMovementType::Purchase,
                         'reference' => $purchase,
                         'user_id' => $user->id,
                     ]);
 
                     // Keep the product's default cost in step with the latest purchase.
-                    Product::whereKey($line['attributes']['product_id'])
-                        ->update(['purchase_price' => $line['attributes']['unit_cost']]);
+                    Product::whereKey($line->productId)->update(['purchase_price' => $line->unitCost]);
                 }
             }
 
@@ -99,43 +95,25 @@ class PurchaseService
         });
     }
 
-    /**
-     * @param  array<int, array<string, mixed>>  $items
-     * @return array<int, array{attributes: array<string, mixed>, line_total: float, tax_amount: float}>
-     */
-    protected function buildLines(array $items): array
+    /** Line cost net of its discount and excluding tax. */
+    private function netOf(PurchaseLineData $line): float
     {
-        $productIds = collect($items)->pluck('product_id')->unique();
-        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+        return round(max(0, ($line->unitCost * $line->quantity) - $line->discountAmount), 2);
+    }
 
-        $lines = [];
+    /**
+     * The form request already scopes `exists:` by tenant; this guards the
+     * service against internal callers that bypass it.
+     *
+     * @param  array<int, PurchaseLineData>  $items
+     */
+    private function assertProductsExist(array $items): void
+    {
+        $ids = array_map(static fn (PurchaseLineData $l) => $l->productId, $items);
+        $found = Product::whereIn('id', $ids)->pluck('id')->all();
 
-        foreach ($items as $item) {
-            if (! $products->has($item['product_id'])) {
-                throw new \InvalidArgumentException("Product #{$item['product_id']} does not exist in this tenant.");
-            }
-
-            $quantity = round((float) $item['quantity'], 4);
-            $unitCost = round((float) $item['unit_cost'], 4);
-            $discount = round((float) ($item['discount_amount'] ?? 0), 2);
-            $tax = round((float) ($item['tax_amount'] ?? 0), 2);
-            $lineTotal = max(0, ($unitCost * $quantity) - $discount);
-
-            $lines[] = [
-                'attributes' => [
-                    'product_id' => (int) $item['product_id'],
-                    'variant_id' => $item['variant_id'] ?? null,
-                    'quantity' => $quantity,
-                    'unit_cost' => $unitCost,
-                    'discount_amount' => $discount,
-                    'tax_amount' => $tax,
-                    'line_total' => round($lineTotal + $tax, 2),
-                ],
-                'line_total' => round($lineTotal, 2),
-                'tax_amount' => $tax,
-            ];
+        foreach (array_diff($ids, $found) as $missing) {
+            throw new \InvalidArgumentException("Product #{$missing} does not exist in this tenant.");
         }
-
-        return $lines;
     }
 }

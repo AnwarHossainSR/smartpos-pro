@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Domain\Sales\Data;
+
+use App\Domain\Enums\SaleStatus;
+
+/**
+ * Everything a checkout request asks for, typed.
+ *
+ * Replaces the `array $payload` the sale service used to take, whose shape lived
+ * only in a docblock — so a renamed key was a runtime `Undefined array key`
+ * rather than a static error, and the request, the service and the docblock
+ * could all disagree without anything noticing.
+ */
+final readonly class CreateSaleData
+{
+    /**
+     * @param  array<int, SaleLineData>  $items
+     * @param  array<int, PaymentData>  $payments
+     */
+    public function __construct(
+        public int $branchId,
+        public int $warehouseId,
+        public array $items,
+        public array $payments = [],
+        public ?int $customerId = null,
+        public SaleStatus $status = SaleStatus::Completed,
+        public ?string $note = null,
+        public float $discountAmount = 0.0,
+        public float $shippingAmount = 0.0,
+        public ?string $couponCode = null,
+    ) {}
+
+    /** @param  array<string, mixed>  $data */
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            branchId: (int) $data['branch_id'],
+            warehouseId: (int) $data['warehouse_id'],
+            items: SaleLineData::collection($data['items']),
+            payments: PaymentData::collection($data['payments'] ?? []),
+            customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
+            status: SaleStatus::coerce($data['status'] ?? null, SaleStatus::Completed),
+            note: $data['note'] ?? null,
+            discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),
+            shippingAmount: round((float) ($data['shipping_amount'] ?? 0), 2),
+            couponCode: ($data['coupon_code'] ?? null) ?: null,
+        );
+    }
+
+    public function paidAmount(): float
+    {
+        return PaymentData::total($this->payments);
+    }
+}

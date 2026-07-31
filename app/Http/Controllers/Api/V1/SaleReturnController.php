@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Sales\Data\CreateSaleReturnData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sales\StoreSaleReturnRequest;
 use App\Http\Resources\SaleReturnResource;
@@ -34,7 +35,11 @@ class SaleReturnController extends Controller
     /** Create a return/refund against a completed sale. */
     public function store(StoreSaleReturnRequest $request, Sale $sale): JsonResponse
     {
-        $return = $this->returns->create($sale, $request->validated(), $request->user());
+        $return = $this->returns->create(
+            $sale,
+            CreateSaleReturnData::fromArray($request->validated()),
+            $request->user(),
+        );
 
         return (new SaleReturnResource($return))->response()->setStatusCode(201);
     }

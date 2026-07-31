@@ -3,6 +3,7 @@
 namespace App\Services\Sales;
 
 use App\Domain\Enums\QuotationStatus;
+use App\Domain\Sales\Data\CreateSaleData;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
@@ -74,14 +75,14 @@ class QuotationService
                 'unit_price' => $qi->unit_price,
             ])->all();
 
-            $sale = $this->saleService->create([
+            $sale = $this->saleService->create(CreateSaleData::fromArray([
                 'branch_id' => $quotation->branch_id,
                 'warehouse_id' => $payload['warehouse_id'],
                 'customer_id' => $quotation->customer_id,
                 'items' => $items,
                 'payments' => $payload['payments'] ?? [],
                 'note' => "Converted from quotation {$quotation->reference_number}",
-            ], $user);
+            ]), $user);
 
             $quotation->update([
                 'status' => QuotationStatus::Converted,

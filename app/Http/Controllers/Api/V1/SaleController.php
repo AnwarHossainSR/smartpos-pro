@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Enums\PaymentStatus;
 use App\Domain\Enums\SaleStatus;
+use App\Domain\Sales\Data\CollectPaymentData;
+use App\Domain\Sales\Data\CreateSaleData;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sales\StoreSalePaymentRequest;
@@ -41,7 +43,7 @@ class SaleController extends Controller
     public function store(StoreSaleRequest $request): JsonResponse
     {
         try {
-            $sale = $this->sales->create($request->validated(), $request->user());
+            $sale = $this->sales->create(CreateSaleData::fromArray($request->validated()), $request->user());
         } catch (InsufficientStockException $e) {
             return response()->json([
                 'message' => 'One or more items do not have enough stock.',
@@ -65,7 +67,9 @@ class SaleController extends Controller
     /** Records a settlement payment against a due/partial sale. Idempotent when an Idempotency-Key header is supplied. */
     public function addPayment(StoreSalePaymentRequest $request, Sale $sale): SaleResource
     {
-        return new SaleResource($this->sales->collectPayment($sale, $request->validated()));
+        return new SaleResource(
+            $this->sales->collectPayment($sale, CollectPaymentData::fromArray($request->validated())),
+        );
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */
