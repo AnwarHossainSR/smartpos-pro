@@ -15,7 +15,7 @@ class Branch extends Model
 
     protected $fillable = [
         'tenant_id', 'business_id', 'name', 'code', 'phone', 'email',
-        'address', 'is_default', 'is_active',
+        'address', 'country_code', 'state', 'postcode', 'is_default', 'is_active',
     ];
 
     protected function casts(): array
