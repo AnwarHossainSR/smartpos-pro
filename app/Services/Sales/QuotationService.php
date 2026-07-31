@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales;
 
+use App\Domain\Enums\QuotationStatus;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
@@ -33,7 +34,7 @@ class QuotationService
                 'customer_id' => $payload['customer_id'] ?? null,
                 'user_id' => $user->id,
                 'reference_number' => 'QUO-'.strtoupper(uniqid()),
-                'status' => $payload['status'] ?? 'draft',
+                'status' => QuotationStatus::from($payload['status'] ?? QuotationStatus::Draft->value),
                 'subtotal' => $subtotal,
                 'discount_amount' => 0,
                 'tax_amount' => $taxAmount,
@@ -58,7 +59,7 @@ class QuotationService
      */
     public function convertToSale(Quotation $quotation, array $payload, User $user): Sale
     {
-        if (! in_array($quotation->status, ['draft', 'sent', 'accepted'])) {
+        if (! in_array($quotation->status, [QuotationStatus::Draft, QuotationStatus::Sent, QuotationStatus::Accepted], true)) {
             throw ValidationException::withMessages(['status' => 'Only draft/sent/accepted quotations can be converted.']);
         }
         if ($quotation->isExpired()) {
@@ -83,7 +84,7 @@ class QuotationService
             ], $user);
 
             $quotation->update([
-                'status' => 'converted',
+                'status' => QuotationStatus::Converted,
                 'converted_to_sale_id' => $sale->id,
             ]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -23,7 +24,7 @@ class SubscriptionController extends Controller
     /** The current tenant's active subscription with plan and live usage snapshot. */
     public function current(): JsonResponse
     {
-        $subscription = Subscription::with('plan')->where('status', 'active')->latest('id')->first();
+        $subscription = Subscription::with('plan')->where('status', SubscriptionStatus::Active)->latest('id')->first();
 
         return response()->json([
             'data' => [

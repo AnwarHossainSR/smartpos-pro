@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\BusinessType;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ class Business extends Model
     protected function casts(): array
     {
         return [
+            'type' => BusinessType::class,
             'settings' => 'array',
             'onboarding_completed' => 'boolean',
         ];

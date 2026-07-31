@@ -2,6 +2,8 @@
 
 namespace App\Services\Inventory;
 
+use App\Domain\Enums\StockMovementType;
+use App\Domain\Enums\TransferStatus;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
 use App\Models\User;
@@ -33,7 +35,7 @@ class StockTransferService
                 'from_warehouse_id' => $payload['from_warehouse_id'],
                 'to_warehouse_id' => $payload['to_warehouse_id'],
                 'requested_by' => $user->id,
-                'status' => 'pending',
+                'status' => TransferStatus::Pending,
                 'note' => $payload['note'] ?? null,
                 'requested_at' => now(),
             ]);
@@ -58,7 +60,7 @@ class StockTransferService
      */
     public function approve(StockTransfer $transfer, User $user): StockTransfer
     {
-        if ($transfer->status !== 'pending') {
+        if ($transfer->status !== TransferStatus::Pending) {
             throw ValidationException::withMessages(['status' => 'Only pending transfers can be approved.']);
         }
 
@@ -68,9 +70,8 @@ class StockTransferService
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
                     'warehouse_id' => $transfer->from_warehouse_id,
-                    'direction' => 'out',
                     'quantity' => (float) $item->quantity_requested,
-                    'type' => 'transfer_out',
+                    'type' => StockMovementType::TransferOut,
                     'unit_cost' => (float) $item->unit_cost,
                     'user_id' => $user->id,
                     'note' => "Transfer {$transfer->reference_number}: dispatched",
@@ -79,7 +80,7 @@ class StockTransferService
             }
 
             $transfer->update([
-                'status' => 'in_transit',
+                'status' => TransferStatus::InTransit,
                 'approved_by' => $user->id,
                 'approved_at' => now(),
             ]);
@@ -95,7 +96,7 @@ class StockTransferService
      */
     public function receive(StockTransfer $transfer, array $payload, User $user): StockTransfer
     {
-        if ($transfer->status !== 'in_transit') {
+        if ($transfer->status !== TransferStatus::InTransit) {
             throw ValidationException::withMessages(['status' => 'Only in-transit transfers can be received.']);
         }
 
@@ -110,9 +111,8 @@ class StockTransferService
                         'product_id' => $item->product_id,
                         'variant_id' => $item->variant_id,
                         'warehouse_id' => $transfer->to_warehouse_id,
-                        'direction' => 'in',
                         'quantity' => $received,
-                        'type' => 'transfer_in',
+                        'type' => StockMovementType::TransferIn,
                         'unit_cost' => (float) $item->unit_cost,
                         'user_id' => $user->id,
                         'note' => "Transfer {$transfer->reference_number}: received",
@@ -124,7 +124,7 @@ class StockTransferService
             }
 
             $transfer->update([
-                'status' => 'received',
+                'status' => TransferStatus::Received,
                 'received_by' => $user->id,
                 'received_at' => now(),
             ]);
@@ -135,11 +135,11 @@ class StockTransferService
 
     public function cancel(StockTransfer $transfer, User $user): StockTransfer
     {
-        if (! in_array($transfer->status, ['pending'])) {
+        if ($transfer->status !== TransferStatus::Pending) {
             throw ValidationException::withMessages(['status' => 'Only pending transfers can be cancelled.']);
         }
 
-        $transfer->update(['status' => 'cancelled']);
+        $transfer->update(['status' => TransferStatus::Cancelled]);
 
         return $transfer;
     }

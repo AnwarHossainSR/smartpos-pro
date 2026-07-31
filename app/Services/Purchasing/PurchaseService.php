@@ -2,6 +2,9 @@
 
 namespace App\Services\Purchasing;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\PurchaseStatus;
+use App\Domain\Enums\StockMovementType;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
@@ -31,8 +34,8 @@ class PurchaseService
     public function create(array $payload, User $user): Purchase
     {
         return DB::transaction(function () use ($payload, $user) {
-            $status = $payload['status'] ?? 'received';
-            $receivesStock = $status === 'received';
+            $status = PurchaseStatus::coerce($payload['status'] ?? null, PurchaseStatus::Received);
+            $receivesStock = $status->affectsStock();
 
             $lines = $this->buildLines($payload['items']);
 
@@ -53,7 +56,7 @@ class PurchaseService
                 'user_id' => $user->id,
                 'reference_number' => 'PENDING-'.uniqid(),
                 'status' => $status,
-                'payment_status' => $due <= 0 ? 'paid' : ($paid > 0 ? 'partial' : 'due'),
+                'payment_status' => PaymentStatus::fromAmounts($paid, $total),
                 'subtotal' => round($subtotal, 2),
                 'discount_amount' => $discount,
                 'tax_amount' => round($taxTotal, 2),
@@ -75,10 +78,9 @@ class PurchaseService
                         'product_id' => $line['attributes']['product_id'],
                         'variant_id' => $line['attributes']['variant_id'],
                         'warehouse_id' => $payload['warehouse_id'],
-                        'direction' => 'in',
                         'quantity' => $line['attributes']['quantity'],
                         'unit_cost' => $line['attributes']['unit_cost'],
-                        'type' => 'purchase',
+                        'type' => StockMovementType::Purchase,
                         'reference' => $purchase,
                         'user_id' => $user->id,
                     ]);

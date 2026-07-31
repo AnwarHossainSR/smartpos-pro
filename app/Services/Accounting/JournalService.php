@@ -2,6 +2,8 @@
 
 namespace App\Services\Accounting;
 
+use App\Domain\Enums\AccountType;
+use App\Domain\Enums\JournalLineType;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use Illuminate\Support\Carbon;
@@ -15,31 +17,28 @@ use Illuminate\Validation\ValidationException;
  */
 class JournalService
 {
-    private const DEBIT_NORMAL = ['cash', 'bank', 'mobile_banking', 'wallet', 'asset', 'expense'];
-
     /**
-     * Which side of the ledger increases this account type.
+     * Which side of the ledger increases an account now lives on {@see AccountType},
+     * so the posting rule and anything reporting a debit/credit split (the trial balance,
+     * the API's account resource) read it from one place.
      *
-     * Derived from `type`, not the nullable `normal_side` column — this is the rule
-     * posting actually applies to balances, so anything reporting a debit/credit split
-     * (the trial balance, the API's account resource) must agree with it.
-     */
-    public static function isDebitNormal(string $type): bool
-    {
-        return in_array($type, self::DEBIT_NORMAL, true);
-    }
-
-    /**
      * @param  array{reference?:string, entry_date?:string, description?:string, user_id?:int|null,
-     *   lines: array<int, array{account_id:int, type:'debit'|'credit', amount:float, description?:string|null}>}  $data
+     *   lines: array<int, array{account_id:int, type:JournalLineType|string, amount:float, description?:string|null}>}  $data
      */
     public function post(array $data): JournalEntry
     {
         return DB::transaction(function () use ($data) {
-            $lines = $data['lines'];
+            // Callers may pass either the enum or its wire value; normalise once up front.
+            $lines = array_map(function (array $line): array {
+                $line['type'] = $line['type'] instanceof JournalLineType
+                    ? $line['type']
+                    : JournalLineType::from($line['type']);
 
-            $debit = round((float) collect($lines)->where('type', 'debit')->sum('amount'), 2);
-            $credit = round((float) collect($lines)->where('type', 'credit')->sum('amount'), 2);
+                return $line;
+            }, $data['lines']);
+
+            $debit = round((float) collect($lines)->where('type', JournalLineType::Debit)->sum('amount'), 2);
+            $credit = round((float) collect($lines)->where('type', JournalLineType::Credit)->sum('amount'), 2);
 
             if ($debit <= 0 || $debit !== $credit) {
                 throw ValidationException::withMessages([
@@ -80,8 +79,8 @@ class JournalService
 
                 /** @var Account $account */
                 $account = $accounts->get($line['account_id']);
-                $increasesOnDebit = self::isDebitNormal($account->type);
-                $delta = ($line['type'] === 'debit') === $increasesOnDebit ? $amount : -$amount;
+                $increasesOnDebit = $account->type->isDebitNormal();
+                $delta = ($line['type'] === JournalLineType::Debit) === $increasesOnDebit ? $amount : -$amount;
                 $account->increment('balance', $delta);
             }
 

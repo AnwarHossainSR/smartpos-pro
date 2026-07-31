@@ -2,6 +2,8 @@
 
 namespace App\Services\Accounting;
 
+use App\Domain\Enums\CashMovementType;
+use App\Domain\Enums\CashSessionStatus;
 use App\Models\CashRegister;
 use App\Models\CashRegisterSession;
 use App\Models\User;
@@ -31,12 +33,12 @@ class CashRegisterService
             'user_id' => $user->id,
             'opening_cash' => round($openingCash, 2),
             'expected_cash' => round($openingCash, 2),
-            'status' => 'open',
+            'status' => CashSessionStatus::Open,
             'opened_at' => Carbon::now(),
         ]);
     }
 
-    public function movement(CashRegisterSession $session, string $type, float $amount, ?string $reason, User $user): CashRegisterSession
+    public function movement(CashRegisterSession $session, CashMovementType $type, float $amount, ?string $reason, User $user): CashRegisterSession
     {
         return DB::transaction(function () use ($session, $type, $amount, $reason, $user) {
             $this->assertOpen($session);
@@ -49,9 +51,9 @@ class CashRegisterService
                 'reason' => $reason,
             ]);
 
-            $column = $type === 'in' ? 'cash_in' : 'cash_out';
+            $column = $type === CashMovementType::In ? 'cash_in' : 'cash_out';
             $session->increment($column, $amount);
-            $session->increment('expected_cash', $type === 'in' ? $amount : -$amount);
+            $session->increment('expected_cash', $amount * $type->sign());
 
             return $session->fresh();
         });
@@ -65,7 +67,7 @@ class CashRegisterService
         $session->update([
             'actual_cash' => round($actualCash, 2),
             'difference' => round($actualCash - $expected, 2),
-            'status' => 'closed',
+            'status' => CashSessionStatus::Closed,
             'note' => $note,
             'closed_at' => Carbon::now(),
         ]);
@@ -87,7 +89,7 @@ class CashRegisterService
 
     protected function assertOpen(CashRegisterSession $session): void
     {
-        if ($session->status !== 'open') {
+        if ($session->status !== CashSessionStatus::Open) {
             throw ValidationException::withMessages([
                 'session' => ['This register session is already closed.'],
             ]);

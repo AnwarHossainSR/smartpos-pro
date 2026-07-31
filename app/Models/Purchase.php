@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\PurchaseStatus;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +24,8 @@ class Purchase extends Model
     protected function casts(): array
     {
         return [
+            'status' => PurchaseStatus::class,
+            'payment_status' => PaymentStatus::class,
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'tax_amount' => 'decimal:2',

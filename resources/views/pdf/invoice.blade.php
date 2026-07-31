@@ -142,7 +142,7 @@
 <table class="meta-table">
     @foreach($sale->payments as $payment)
     <tr>
-        <td style="text-transform: capitalize;">{{ str_replace('_', ' ', $payment->method) }}</td>
+        <td>{{ $payment->method->label() }}</td>
         <td class="text-right">{{ \App\Support\Money::format((float) $payment->amount, $business->currency) }}</td>
     </tr>
     @endforeach

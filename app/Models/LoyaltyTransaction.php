@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\LoyaltyTransactionType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,10 @@ class LoyaltyTransaction extends Model
 
     protected function casts(): array
     {
-        return ['points' => 'integer', 'balance_after' => 'integer'];
+        return [
+            'type' => LoyaltyTransactionType::class,
+            'points' => 'integer',
+            'balance_after' => 'integer',
+        ];
     }
 }

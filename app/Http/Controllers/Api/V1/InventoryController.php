@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\StockDirection;
+use App\Domain\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryBalanceResource;
 use App\Http\Resources\StockMovementResource;
@@ -55,19 +57,22 @@ class InventoryController extends Controller
         $data = $request->validate([
             'product_id' => ['required', Rule::exists('products', 'id')->where('tenant_id', $tenantId)],
             'warehouse_id' => ['required', Rule::exists('warehouses', 'id')->where('tenant_id', $tenantId)],
-            'direction' => ['required', 'in:in,out'],
+            'direction' => ['required', StockDirection::rule()],
             'quantity' => ['required', 'numeric', 'gt:0'],
             'unit_cost' => ['nullable', 'numeric', 'min:0'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $type = StockDirection::from($data['direction']) === StockDirection::In
+            ? StockMovementType::AdjustmentIn
+            : StockMovementType::AdjustmentOut;
+
         $movement = DB::transaction(fn () => $this->ledger->record([
             'product_id' => (int) $data['product_id'],
             'warehouse_id' => (int) $data['warehouse_id'],
-            'direction' => $data['direction'],
             'quantity' => (float) $data['quantity'],
             'unit_cost' => (float) ($data['unit_cost'] ?? 0),
-            'type' => $data['direction'] === 'in' ? 'adjustment_in' : 'adjustment_out',
+            'type' => $type,
             'user_id' => $request->user()->id,
             'note' => $data['note'] ?? null,
         ]));

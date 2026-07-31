@@ -11,9 +11,6 @@ use Symfony\Component\HttpFoundation\Response;
 /** Rejects requests that reach tenant-scoped routes without a resolved, usable tenant. */
 class EnsureTenant
 {
-    /** Tenant statuses that may still use the API. Anything else (suspended, cancelled, …) is blocked. */
-    protected const USABLE_STATUSES = ['trialing', 'active'];
-
     public function __construct(protected TenantContext $context) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -26,7 +23,7 @@ class EnsureTenant
 
         $tenant = Tenant::find($this->context->id());
 
-        if (! $tenant || ! in_array($tenant->status, self::USABLE_STATUSES, true)) {
+        if (! $tenant || ! $tenant->status->hasApiAccess()) {
             abort(response()->json([
                 'message' => 'This account has been suspended.',
                 'code' => 'tenant_suspended',

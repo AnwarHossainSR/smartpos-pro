@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Enums\StockMovementType;
 use App\Models\IdempotencyKey;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -177,8 +178,8 @@ class ApiHardeningTest extends TestCase
 
         app(StockLedgerService::class)->record([
             'product_id' => $product->id, 'variant_id' => $variant->id,
-            'warehouse_id' => $warehouse->id, 'direction' => 'in',
-            'quantity' => 5, 'unit_cost' => 5, 'type' => 'opening',
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 5, 'unit_cost' => 5, 'type' => StockMovementType::Opening,
         ]);
 
         $this->postJson('/api/v1/sales', [

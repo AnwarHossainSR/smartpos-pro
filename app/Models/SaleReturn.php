@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\RefundMethod;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ class SaleReturn extends Model
     protected function casts(): array
     {
         return [
+            'refund_method' => RefundMethod::class,
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',

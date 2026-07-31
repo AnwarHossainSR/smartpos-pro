@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Domain\Enums\UserStatus;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Permission;
@@ -74,7 +75,7 @@ class TenantProvisioner
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
-                'status' => 'active',
+                'status' => UserStatus::Active,
             ]);
 
             $owner->assignRole('owner');

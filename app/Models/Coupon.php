@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\DiscountType;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,7 @@ class Coupon extends Model
     protected function casts(): array
     {
         return [
+            'type' => DiscountType::class,
             'value' => 'decimal:2',
             'min_purchase' => 'decimal:2',
             'max_discount' => 'decimal:2',
@@ -51,9 +53,7 @@ class Coupon extends Model
             return ['valid' => false, 'reason' => "Minimum purchase of {$this->min_purchase} required."];
         }
 
-        $discount = $this->type === 'percentage'
-            ? round($cartTotal * ((float) $this->value / 100), 2)
-            : (float) $this->value;
+        $discount = $this->type->apply((float) $this->value, $cartTotal);
 
         if ($this->max_discount !== null) {
             $discount = min($discount, (float) $this->max_discount);

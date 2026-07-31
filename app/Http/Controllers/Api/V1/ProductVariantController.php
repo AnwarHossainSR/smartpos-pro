@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\SerialStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\StoreStockBatchRequest;
 use App\Http\Requests\Inventory\StoreStockSerialRequest;
@@ -66,7 +67,7 @@ class ProductVariantController extends Controller
     {
         $serial = StockSerial::create(array_merge($request->validated(), [
             'tenant_id' => $request->user()->tenant_id,
-            'status' => 'in_stock',
+            'status' => SerialStatus::InStock,
         ]));
 
         return response()->json(['data' => $serial], 201);

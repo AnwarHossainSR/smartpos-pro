@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\UserStatus;
 use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
 use App\Support\Concerns\Auditable;
@@ -40,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected function casts(): array
     {
         return [
+            'status' => UserStatus::class,
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',

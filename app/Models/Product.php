@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\ProductType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'type' => ProductType::class,
             'purchase_price' => 'decimal:2',
             'selling_price' => 'decimal:2',
             'wholesale_price' => 'decimal:2',

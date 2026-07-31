@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\JournalLineType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,12 @@ class JournalLine extends Model
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'debit' => 'decimal:2', 'credit' => 'decimal:2'];
+        return [
+            'type' => JournalLineType::class,
+            'amount' => 'decimal:2',
+            'debit' => 'decimal:2',
+            'credit' => 'decimal:2',
+        ];
     }
 
     public function account(): BelongsTo

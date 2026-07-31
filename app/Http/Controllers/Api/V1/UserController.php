@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -52,7 +53,7 @@ class UserController extends Controller
         // A random, unguessable placeholder — invited members never receive this; they
         // set their own password via the emailed link (same as a password reset).
         $data['password'] = $data['password'] ?? Str::random(40);
-        $data['status'] = $invited ? 'invited' : 'active';
+        $data['status'] = $invited ? UserStatus::Invited : UserStatus::Active;
 
         $user = User::create($data);
         $this->syncRoles($user, $roles, $request->user());

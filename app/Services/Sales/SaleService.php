@@ -2,6 +2,9 @@
 
 namespace App\Services\Sales;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\SaleStatus;
+use App\Domain\Enums\StockMovementType;
 use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Product;
@@ -38,8 +41,8 @@ class SaleService
     public function create(array $payload, User $cashier): Sale
     {
         return DB::transaction(function () use ($payload, $cashier) {
-            $status = $payload['status'] ?? 'completed';
-            $affectsStock = $status === 'completed';
+            $status = SaleStatus::coerce($payload['status'] ?? null, SaleStatus::Completed);
+            $affectsStock = $status->affectsStock();
 
             [$lines, $overridden] = $this->buildLines($payload['items'], $cashier);
 
@@ -85,7 +88,7 @@ class SaleService
                 'coupon_id' => $coupon?->id,
                 'invoice_number' => 'PENDING-'.uniqid(),
                 'status' => $status,
-                'payment_status' => $due <= 0 ? 'paid' : ($paid > 0 ? 'partial' : 'due'),
+                'payment_status' => PaymentStatus::fromAmounts($paid, $total),
                 'subtotal' => round($subtotal, 2),
                 'discount_amount' => $discount,
                 'coupon_discount' => round($couponDiscount, 2),
@@ -110,10 +113,9 @@ class SaleService
                         'product_id' => $line['attributes']['product_id'],
                         'variant_id' => $line['attributes']['variant_id'],
                         'warehouse_id' => $payload['warehouse_id'],
-                        'direction' => 'out',
                         'quantity' => $line['attributes']['quantity'],
                         'unit_cost' => $line['attributes']['unit_cost'],
-                        'type' => 'sale',
+                        'type' => StockMovementType::Sale,
                         'reference' => $sale,
                         'user_id' => $cashier->id,
                     ]);
@@ -159,7 +161,7 @@ class SaleService
             /** @var Sale $sale */
             $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-            if ($sale->status !== 'completed') {
+            if ($sale->status !== SaleStatus::Completed) {
                 throw ValidationException::withMessages([
                     'sale' => ['Payments can only be recorded against a completed sale.'],
                 ]);
@@ -193,7 +195,7 @@ class SaleService
             $sale->update([
                 'paid_amount' => round((float) $sale->paid_amount + $amount, 2),
                 'due_amount' => $newDue,
-                'payment_status' => $newDue <= 0 ? 'paid' : 'partial',
+                'payment_status' => $newDue <= 0 ? PaymentStatus::Paid : PaymentStatus::Partial,
             ]);
 
             if ($sale->customer_id) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\CashMovementType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,6 @@ class CashRegisterTransaction extends Model
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2'];
+        return ['type' => CashMovementType::class, 'amount' => 'decimal:2'];
     }
 }

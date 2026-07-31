@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Enums\QuotationStatus;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\User;
@@ -74,7 +75,7 @@ class QuotationTest extends TestCase
 
         $response->assertCreated();
         $this->assertEquals(100, $response->json('data.total'));
-        $this->assertSame('converted', Quotation::find($quotation['id'])->status);
+        $this->assertSame(QuotationStatus::Converted, Quotation::find($quotation['id'])->status);
         $this->assertEqualsWithDelta(8, $product->fresh()->totalStock(), 0.001);
     }
 

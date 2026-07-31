@@ -2,6 +2,8 @@
 
 namespace App\Services\Sales;
 
+use App\Domain\Enums\RefundMethod;
+use App\Domain\Enums\StockMovementType;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -45,7 +47,7 @@ class SaleReturnService
                 'customer_id' => $sale->customer_id,
                 'user_id' => $user->id,
                 'reference_number' => 'PENDING-'.uniqid(),
-                'refund_method' => $payload['refund_method'] ?? 'cash',
+                'refund_method' => RefundMethod::from($payload['refund_method'] ?? RefundMethod::Cash->value),
                 'note' => $payload['note'] ?? null,
                 'returned_at' => Carbon::now(),
             ]);
@@ -94,10 +96,9 @@ class SaleReturnService
                     'product_id' => $saleItem->product_id,
                     'variant_id' => $saleItem->variant_id,
                     'warehouse_id' => $warehouseId,
-                    'direction' => 'in',
                     'quantity' => $quantity,
                     'unit_cost' => (float) $saleItem->unit_cost,
-                    'type' => 'sale_return',
+                    'type' => StockMovementType::SaleReturn,
                     'reference' => $return,
                     'user_id' => $user->id,
                 ]);

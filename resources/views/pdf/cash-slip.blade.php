@@ -62,7 +62,7 @@
         </td>
         <td style="width: 45%; vertical-align: top;">
             <div class="doc-title">CASH REGISTER SLIP</div>
-            <div class="doc-sub">{{ $session->register->name }} &middot; <span class="badge badge-{{ $session->status }}">{{ $session->status }}</span></div>
+            <div class="doc-sub">{{ $session->register->name }} &middot; <span class="badge badge-{{ $session->status->value }}">{{ $session->status->label() }}</span></div>
         </td>
     </tr>
 </table>
@@ -116,9 +116,10 @@
         @foreach($session->transactions as $tx)
         <tr @if($loop->even) class="alt" @endif>
             <td>{{ $tx->created_at?->format('H:i') }}</td>
-            <td style="text-transform: capitalize;">Cash {{ $tx->type }}</td>
+            <td>Cash {{ $tx->type->value }}</td>
             <td>{{ $tx->reason ?? '—' }}</td>
-            <td class="text-right {{ $tx->type === 'in' ? 'amount-in' : 'amount-out' }}">{{ $tx->type === 'in' ? '+' : '-' }}{{ \App\Support\Money::format((float) $tx->amount, $business->currency) }}</td>
+            @php($isIn = $tx->type === \App\Domain\Enums\CashMovementType::In)
+            <td class="text-right {{ $isIn ? 'amount-in' : 'amount-out' }}">{{ $isIn ? '+' : '-' }}{{ \App\Support\Money::format((float) $tx->amount, $business->currency) }}</td>
         </tr>
         @endforeach
     </tbody>

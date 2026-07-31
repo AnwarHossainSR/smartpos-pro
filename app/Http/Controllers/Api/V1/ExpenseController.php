@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\ExpenseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreExpenseRequest;
 use App\Http\Resources\ExpenseResource;
@@ -43,7 +44,7 @@ class ExpenseController extends Controller
 
     public function approve(Expense $expense): ExpenseResource
     {
-        $expense->update(['status' => 'approved']);
+        $expense->update(['status' => ExpenseStatus::Approved]);
 
         return new ExpenseResource($expense->load('category'));
     }

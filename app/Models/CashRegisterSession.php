@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\CashSessionStatus;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ class CashRegisterSession extends Model
     protected function casts(): array
     {
         return [
+            'status' => CashSessionStatus::class,
             'opening_cash' => 'decimal:2',
             'cash_in' => 'decimal:2',
             'cash_out' => 'decimal:2',

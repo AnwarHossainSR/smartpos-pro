@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\QuotationStatus;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,7 @@ class Quotation extends Model
     protected function casts(): array
     {
         return [
+            'status' => QuotationStatus::class,
             'subtotal' => 'decimal:4',
             'discount_amount' => 'decimal:4',
             'tax_amount' => 'decimal:4',

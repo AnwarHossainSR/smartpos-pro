@@ -86,14 +86,14 @@ class JournalController extends Controller
             ->get(['id', 'name', 'type', 'account_number', 'balance'])
             ->map(function ($a) {
                 $balance = round((float) $a->balance, 2);
-                $isDebit = JournalService::isDebitNormal($a->type);
+                $isDebit = $a->type->isDebitNormal();
 
                 return [
                     'account_id' => $a->id,
                     'name' => $a->name,
                     'account_number' => $a->account_number,
                     'type' => $a->type,
-                    'normal_side' => $isDebit ? 'debit' : 'credit',
+                    'normal_side' => $a->type->normalSide(),
                     'debit' => $isDebit ? $balance : 0.0,
                     'credit' => $isDebit ? 0.0 : $balance,
                 ];

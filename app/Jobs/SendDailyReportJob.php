@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Domain\Enums\TenantStatus;
 use App\Mail\DailyReportMail;
 use App\Models\Business;
 use App\Models\Tenant;
@@ -37,7 +38,7 @@ class SendDailyReportJob implements ShouldQueue
         $context->set($this->tenantId);
 
         $tenant = Tenant::find($this->tenantId);
-        if (! $tenant || $tenant->status !== 'active') {
+        if (! $tenant || $tenant->status !== TenantStatus::Active) {
             return;
         }
 
