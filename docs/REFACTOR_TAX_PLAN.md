@@ -8,6 +8,36 @@ performance, SEO and code quality across both codebases.
 **Baseline at plan time** — commit `6e44c22`, branch `dev`. `php artisan test`: 146 passed,
 543 assertions. Roadmap T1–T104 shipped; T105–T110 backlog.
 
+## Status
+
+| Step | State | Commit | Notes |
+| ---- | ----- | ------ | ----- |
+| R1 Enums + Money | ✅ | `6fec1ae` | 22 backed enums; `Money` value object; ledger direction derived from movement type |
+| R2 Query pipeline | ✅ | `a93df5c` | All ~20 list endpoints; **breaking:** `?direction=` → `?sort=-column` |
+| R3 DTOs + pricing split | ✅ | `48017d7` | Money paths typed; `SaleLineBuilder` / `CouponRedeemer` extracted |
+| R6 Tax schema | ✅ | `fe2e52f` | 9 tables, back-fill migration, 5 country profiles |
+| R7 Tax engine | ✅ | `fe2e52f` | Resolver / calculator / rounder; 16 unit tests |
+| R8 Tax in checkout | ✅ | `65e387b` | **Breaking:** `products.tax_rate` no longer read; 9 e2e tests |
+| R8b Tax in returns / purchases / quotations | ⬜ | | Returns must reverse snapshotted components, not recompute |
+| R9 Tax API + reports | ⬜ | | CRUD for rates/groups/zones; `reports/tax-summary`, `reports/tax-return` |
+| R10 Compliant documents | ⬜ | | Invoice/receipt tax breakdown + profile-required fields |
+| R11 POS backend depth | ⬜ | | Held sales, void, `pos/bootstrap` |
+| R12–R17 Frontend | ⬜ | | Feature folders, POS rewrite, tax UI, performance, SEO |
+| R4 Response/error contract | ⬜ | | Deferred behind the tax work |
+| R5 Event listeners | ⬜ | | Deferred; do before R8b's journal posting |
+| R18–R19 Gates + docs | ⬜ | | |
+
+Test suite: **225 passing** (baseline was 146). `vendor/bin/pint --test` clean.
+
+### Resuming
+
+Next step is **R8b**: `SaleReturnService` still computes tax by pro-rating
+`sale_items.tax_amount`. It must instead read the line's `sale_item_taxes` rows
+and reverse them proportionally into `sale_return_item_taxes` — a rate change
+between sale and return must not change the refund. `PurchaseService` similarly
+still takes a client-supplied `tax_amount` per line rather than resolving input
+tax through the engine.
+
 ## Decisions taken
 
 | Decision | Choice | Consequence |
