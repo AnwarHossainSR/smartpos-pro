@@ -20,12 +20,19 @@ class TerminalChannel
 
         $lines = array_map(fn ($line) => is_string($line) ? $line : $line->toHtml(), $message->introLines);
 
-        Log::channel('stderr')->info(sprintf(
-            "\n[LOCAL EMAIL] to=%s subject=\"%s\"\n%s\n%s\n",
+        $text = sprintf(
+            "LOCAL EMAIL to=%s subject=\"%s\"\n%s\n%s",
             $notifiable->routeNotificationFor('mail', $notification) ?? $notifiable->email ?? 'unknown',
             $message->subject,
             implode("\n", $lines),
             $message->actionUrl ? "-> {$message->actionText}: {$message->actionUrl}" : '',
-        ));
+        );
+
+        // `php artisan serve` strips any output line starting with "[" (it mistakes it for
+        // its own request-log format — see ServeCommand::flushOutputBuffer), which eats both
+        // Monolog's bracketed header and a bracketed tag. Write raw to STDERR with no leading
+        // "[" to survive that, and mirror to the log file as a durable fallback.
+        fwrite(STDERR, "\n{$text}\n\n");
+        Log::channel('single')->info($text);
     }
 }
