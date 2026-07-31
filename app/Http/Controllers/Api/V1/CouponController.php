@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Marketing\StoreCouponRequest;
 use App\Models\Coupon;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,11 +14,11 @@ class CouponController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $coupons = Coupon::query()
-            ->when($request->search, fn ($q, $s) => $q->where('code', 'like', "%{$s}%"))
-            ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $coupons = QueryPipeline::for(Coupon::query(), $request)
+            ->search(['code'])
+            ->allow(AllowedFilter::boolean('is_active'))
+            ->sortable(['id', 'code', 'expires_at'], default: '-id')
+            ->paginate();
 
         return response()->json($coupons);
     }

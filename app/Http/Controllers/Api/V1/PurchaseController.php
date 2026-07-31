@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\PurchaseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Purchasing\StorePurchaseRequest;
 use App\Http\Resources\PurchaseResource;
 use App\Models\Purchase;
 use App\Services\Purchasing\PurchaseService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,14 +20,16 @@ class PurchaseController extends Controller
 
     public function index(Request $request)
     {
-        $purchases = Purchase::query()
-            ->with('supplier')
-            ->when($request->search, fn ($q, $s) => $q->where('reference_number', 'like', "%{$s}%"))
-            ->when($request->supplier_id, fn ($q, $id) => $q->where('supplier_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->payment_status, fn ($q, $s) => $q->where('payment_status', $s))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $purchases = QueryPipeline::for(Purchase::query()->with('supplier'), $request)
+            ->search(['reference_number'])
+            ->allow(
+                AllowedFilter::exact('supplier_id'),
+                AllowedFilter::enum('status', PurchaseStatus::class),
+                AllowedFilter::enum('payment_status', PaymentStatus::class),
+                AllowedFilter::dateRange('purchased_at'),
+            )
+            ->sortable(['id', 'reference_number', 'total', 'purchased_at'], default: '-id')
+            ->paginate();
 
         return PurchaseResource::collection($purchases);
     }

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\QuotationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sales\ConvertQuotationRequest;
 use App\Http\Requests\Sales\StoreQuotationRequest;
 use App\Http\Requests\Sales\UpdateQuotationRequest;
 use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,11 +20,15 @@ class QuotationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $quotations = Quotation::with(['customer', 'user'])
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn ($q, $s) => $q->where('reference_number', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate($this->perPage($request, 20));
+        $quotations = QueryPipeline::for(Quotation::with(['customer', 'user']), $request)
+            ->search(['reference_number'])
+            ->allow(
+                AllowedFilter::enum('status', QuotationStatus::class),
+                AllowedFilter::exact('customer_id'),
+                AllowedFilter::dateRange('valid_until'),
+            )
+            ->sortable(['id', 'valid_until', 'total'], default: '-id')
+            ->paginate(20);
 
         return response()->json($quotations);
     }

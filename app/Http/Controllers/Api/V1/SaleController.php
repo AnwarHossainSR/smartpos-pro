@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\SaleStatus;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sales\StoreSalePaymentRequest;
@@ -9,6 +11,8 @@ use App\Http\Requests\Sales\StoreSaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Sale;
 use App\Services\Sales\SaleService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,16 +22,17 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
-        $sales = Sale::query()
-            ->with(['customer', 'cashier'])
-            ->when($request->search, fn ($q, $s) => $q->where('invoice_number', 'like', "%{$s}%"))
-            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
-            ->when($request->customer_id, fn ($q, $id) => $q->where('customer_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->payment_status, fn ($q, $s) => $q->where('payment_status', $s))
-            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'sold_at'))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $sales = QueryPipeline::for(Sale::query()->with(['customer', 'cashier']), $request)
+            ->search(['invoice_number'])
+            ->allow(
+                AllowedFilter::exact('branch_id'),
+                AllowedFilter::exact('customer_id'),
+                AllowedFilter::enum('status', SaleStatus::class),
+                AllowedFilter::enum('payment_status', PaymentStatus::class),
+                AllowedFilter::dateRange('sold_at'),
+            )
+            ->sortable(['id', 'invoice_number', 'total', 'sold_at'], default: '-id')
+            ->paginate();
 
         return SaleResource::collection($sales);
     }

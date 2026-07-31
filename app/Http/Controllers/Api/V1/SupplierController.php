@@ -6,28 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Purchasing\StoreSupplierRequest;
 use App\Http\Resources\SupplierResource;
 use App\Models\Supplier;
-use App\Support\Concerns\ValidatesSort;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
-    use ValidatesSort;
-
-    protected const SORTABLE = ['name', 'company', 'phone', 'balance', 'created_at'];
-
     public function index(Request $request)
     {
-        [$sort, $direction] = $this->resolveSort($request, self::SORTABLE, 'name');
-
-        $suppliers = Supplier::query()
-            ->when($request->search, function ($q, $s) {
-                $q->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
-                    ->orWhere('company', 'like', "%{$s}%")
-                    ->orWhere('phone', 'like', "%{$s}%"));
-            })
-            ->when($request->filled('has_due'), fn ($q) => $q->where('balance', '>', 0))
-            ->orderBy($sort, $direction)
-            ->paginate($this->perPage($request, 25));
+        $suppliers = QueryPipeline::for(Supplier::query(), $request)
+            ->search(['name', 'company', 'phone'])
+            ->allow(
+                AllowedFilter::flag('has_due', fn (Builder $q) => $q->where('balance', '>', 0)),
+            )
+            ->sortable(['name', 'company', 'phone', 'balance', 'created_at'], default: 'name')
+            ->paginate();
 
         return SupplierResource::collection($suppliers);
     }

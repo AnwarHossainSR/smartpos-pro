@@ -6,16 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\StoreUnitRequest;
 use App\Http\Resources\UnitResource;
 use App\Models\Unit;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
     public function index(Request $request)
     {
-        $units = Unit::query()
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('short_name', 'like', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($this->perPage($request, 50));
+        $units = QueryPipeline::for(Unit::query(), $request)
+            ->search(['name', 'short_name'])
+            ->sortable(['name', 'short_name'], default: 'name')
+            ->paginate(50);
 
         return UnitResource::collection($units);
     }

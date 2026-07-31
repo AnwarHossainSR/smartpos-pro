@@ -2,21 +2,27 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\AccountType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreAccountRequest;
 use App\Http\Resources\AccountResource;
 use App\Models\Account;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
     public function index(Request $request)
     {
-        $accounts = Account::query()
-            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->orderBy('type')->orderBy('name')
-            ->paginate($this->perPage($request, 50));
+        $accounts = QueryPipeline::for(Account::query()->orderBy('type'), $request)
+            ->search(['name', 'account_number'])
+            ->allow(
+                AllowedFilter::enum('type', AccountType::class),
+                AllowedFilter::boolean('is_active'),
+            )
+            ->sortable(['name', 'balance'], default: 'name')
+            ->paginate(50);
 
         return AccountResource::collection($accounts);
     }

@@ -8,6 +8,8 @@ use App\Http\Resources\BranchResource;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -15,13 +17,11 @@ class BranchController extends Controller
 {
     public function index(Request $request)
     {
-        $branches = Branch::query()
-            ->withCount('warehouses')
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%"))
-            ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->orderByDesc('is_default')
-            ->orderBy('name')
-            ->paginate($this->perPage($request, 25));
+        $branches = QueryPipeline::for(Branch::query()->withCount('warehouses')->orderByDesc('is_default'), $request)
+            ->search(['name', 'code'])
+            ->allow(AllowedFilter::boolean('is_active'))
+            ->sortable(['name', 'code', 'created_at'], default: 'name')
+            ->paginate();
 
         return BranchResource::collection($branches);
     }

@@ -9,6 +9,8 @@ use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Services\Accounting\JournalService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,10 +20,11 @@ class JournalController extends Controller
 
     public function index(Request $request)
     {
-        $entries = JournalEntry::query()
-            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'entry_date'))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $entries = QueryPipeline::for(JournalEntry::query(), $request)
+            ->search(['reference', 'description'])
+            ->allow(AllowedFilter::dateRange('entry_date'))
+            ->sortable(['id', 'entry_date'], default: '-id')
+            ->paginate();
 
         return JournalEntryResource::collection($entries);
     }

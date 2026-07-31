@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\StoreBrandRequest;
 use App\Http\Resources\BrandResource;
 use App\Models\Brand;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -13,12 +15,11 @@ class BrandController extends Controller
 {
     public function index(Request $request)
     {
-        $brands = Brand::query()
-            ->withCount('products')
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->orderBy('name')
-            ->paginate($this->perPage($request, 25));
+        $brands = QueryPipeline::for(Brand::query()->withCount('products'), $request)
+            ->search(['name'])
+            ->allow(AllowedFilter::boolean('is_active'))
+            ->sortable(['name', 'created_at'], default: 'name')
+            ->paginate();
 
         return BrandResource::collection($brands);
     }

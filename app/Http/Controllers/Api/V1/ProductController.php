@@ -9,36 +9,33 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
-use App\Support\Concerns\ValidatesSort;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    use ValidatesSort;
-
-    protected const SORTABLE = ['name', 'sku', 'selling_price', 'purchase_price', 'created_at'];
-
     public function __construct(protected StockLedgerService $ledger) {}
 
     public function index(Request $request)
     {
-        [$sort, $direction] = $this->resolveSort($request, self::SORTABLE, 'name');
-
-        $products = Product::query()
-            ->with(['category', 'brand'])
-            ->withSum('inventoryBalances as stock_quantity', 'quantity')
-            ->when($request->search, function ($q, $s) {
-                $q->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
-                    ->orWhere('sku', 'like', "%{$s}%")
-                    ->orWhere('barcode', 'like', "%{$s}%"));
-            })
-            ->when($request->category_id, fn ($q, $id) => $q->where('category_id', $id))
-            ->when($request->brand_id, fn ($q, $id) => $q->where('brand_id', $id))
-            ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->when($request->boolean('low_stock'), fn ($q) => $q->havingRaw('stock_quantity <= min_stock_level'))
-            ->orderBy($sort, $direction)
-            ->paginate($this->perPage($request, 25));
+        $products = QueryPipeline::for(
+            Product::query()
+                ->with(['category', 'brand'])
+                ->withSum('inventoryBalances as stock_quantity', 'quantity'),
+            $request,
+        )
+            ->search(['name', 'sku', 'barcode'])
+            ->allow(
+                AllowedFilter::exact('category_id'),
+                AllowedFilter::exact('brand_id'),
+                AllowedFilter::boolean('is_active'),
+                AllowedFilter::flag('low_stock', fn (Builder $q) => $q->havingRaw('stock_quantity <= min_stock_level')),
+            )
+            ->sortable(['name', 'sku', 'selling_price', 'purchase_price', 'created_at'], default: 'name')
+            ->paginate();
 
         return ProductResource::collection($products);
     }

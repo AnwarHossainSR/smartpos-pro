@@ -8,6 +8,8 @@ use App\Http\Resources\SaleReturnResource;
 use App\Models\Sale;
 use App\Models\SaleReturn;
 use App\Services\Sales\SaleReturnService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,10 +19,14 @@ class SaleReturnController extends Controller
 
     public function index(Request $request)
     {
-        $returns = SaleReturn::query()
-            ->when($request->sale_id, fn ($q, $id) => $q->where('sale_id', $id))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $returns = QueryPipeline::for(SaleReturn::query(), $request)
+            ->allow(
+                AllowedFilter::exact('sale_id'),
+                AllowedFilter::exact('customer_id'),
+                AllowedFilter::dateRange('returned_at'),
+            )
+            ->sortable(['id', 'total', 'returned_at'], default: '-id')
+            ->paginate();
 
         return SaleReturnResource::collection($returns);
     }

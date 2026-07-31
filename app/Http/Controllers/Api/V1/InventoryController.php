@@ -10,6 +10,9 @@ use App\Http\Resources\StockMovementResource;
 use App\Models\InventoryBalance;
 use App\Models\StockMovement;
 use App\Services\Inventory\StockLedgerService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -21,13 +24,19 @@ class InventoryController extends Controller
     /** Live stock balances across warehouses, with search + low-stock filter. */
     public function index(Request $request)
     {
-        $balances = InventoryBalance::query()
-            ->with(['product', 'warehouse'])
-            ->when($request->warehouse_id, fn ($q, $id) => $q->where('warehouse_id', $id))
-            ->when($request->search, fn ($q, $s) => $q->whereHas('product', fn ($p) => $p->where('name', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%")))
-            ->when($request->boolean('low_stock'), fn ($q) => $q->whereColumn('quantity', '<=', DB::raw('(select min_stock_level from products where products.id = inventory_balances.product_id)')))
-            ->orderByDesc('quantity')
-            ->paginate($this->perPage($request, 25));
+        $balances = QueryPipeline::for(InventoryBalance::query()->with(['product', 'warehouse']), $request)
+            ->allow(
+                AllowedFilter::exact('warehouse_id'),
+                AllowedFilter::exact('product_id'),
+                AllowedFilter::searchRelation('search', 'product', ['name', 'sku']),
+                AllowedFilter::flag('low_stock', fn (Builder $q) => $q->whereColumn(
+                    'quantity',
+                    '<=',
+                    DB::raw('(select min_stock_level from products where products.id = inventory_balances.product_id)'),
+                )),
+            )
+            ->sortable(['quantity', 'average_cost'], default: '-quantity')
+            ->paginate();
 
         return InventoryBalanceResource::collection($balances);
     }
@@ -35,16 +44,20 @@ class InventoryController extends Controller
     /** Read-only history of the immutable stock ledger, filterable by product/warehouse/type/date. */
     public function movements(Request $request)
     {
-        $movements = StockMovement::query()
-            ->with(['product:id,name,sku', 'warehouse:id,name', 'user:id,name'])
-            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
-            ->when($request->warehouse_id, fn ($q, $id) => $q->where('warehouse_id', $id))
-            ->when($request->variant_id, fn ($q, $id) => $q->where('variant_id', $id))
-            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
-            ->when($request->direction, fn ($q, $d) => $q->where('direction', $d))
-            ->tap(fn ($q) => $this->filterByDateRange($q, $request, 'created_at'))
-            ->latest('id')
-            ->paginate($this->perPage($request, 25));
+        $movements = QueryPipeline::for(
+            StockMovement::query()->with(['product:id,name,sku', 'warehouse:id,name', 'user:id,name']),
+            $request,
+        )
+            ->allow(
+                AllowedFilter::exact('product_id'),
+                AllowedFilter::exact('warehouse_id'),
+                AllowedFilter::exact('variant_id'),
+                AllowedFilter::enum('type', StockMovementType::class),
+                AllowedFilter::enum('direction', StockDirection::class),
+                AllowedFilter::dateRange('created_at'),
+            )
+            ->sortable(['id', 'created_at', 'quantity'], default: '-id')
+            ->paginate();
 
         return StockMovementResource::collection($movements);
     }

@@ -27,7 +27,8 @@ class QueryConfigHardeningTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('sort');
 
-        $this->getJson('/api/v1/products?sort=name&direction=asc')->assertOk();
+        $this->getJson('/api/v1/products?sort=name')->assertOk();
+        $this->getJson('/api/v1/products?sort=-name')->assertOk();
     }
 
     public function test_customers_sort_whitelist_rejects_unknown_column(): void
@@ -41,13 +42,54 @@ class QueryConfigHardeningTest extends TestCase
             ->assertJsonValidationErrors('sort');
     }
 
-    public function test_suppliers_sort_whitelist_rejects_unknown_direction(): void
+    /**
+     * Descending order is a `-` prefix on the column, not a separate `direction`
+     * parameter — so a bogus direction can only arrive as a bogus column name and
+     * is caught by the same allow-list.
+     */
+    public function test_suppliers_sort_whitelist_rejects_a_prefixed_unknown_column(): void
     {
         $owner = $this->createTenant();
         Supplier::create(['name' => 'Acme Supplies']);
         Sanctum::actingAs($owner);
 
-        $this->getJson('/api/v1/suppliers?sort=name&direction=drop')
+        $this->getJson('/api/v1/suppliers?sort=-password')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('sort');
+
+        $this->getJson('/api/v1/suppliers?sort=-name')->assertOk();
+    }
+
+    /**
+     * A query key nothing declares is rejected: an unfiltered list is
+     * indistinguishable from a correctly filtered one, so a typo'd filter would
+     * otherwise look like a legitimate result.
+     */
+    public function test_an_undeclared_query_parameter_is_rejected(): void
+    {
+        $owner = $this->createTenant();
+        Supplier::create(['name' => 'Acme Supplies']);
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/suppliers?has_dew=1')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('has_dew');
+
+        $this->getJson('/api/v1/suppliers?has_due=1')->assertOk();
+    }
+
+    /**
+     * `direction` is a real column on stock_movements. It must reach the filter
+     * rather than being swallowed by the sort protocol.
+     */
+    public function test_direction_is_a_filter_not_a_sort_parameter(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/inventory/movements?direction=in')->assertOk();
+
+        $this->getJson('/api/v1/inventory/movements?direction=sideways')
             ->assertStatus(422)
             ->assertJsonValidationErrors('direction');
     }

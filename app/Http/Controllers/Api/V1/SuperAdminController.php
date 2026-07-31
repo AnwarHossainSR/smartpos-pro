@@ -13,6 +13,8 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,11 +35,11 @@ class SuperAdminController extends Controller
 
     public function tenants(Request $request): JsonResponse
     {
-        $tenants = Tenant::withCount(['users', 'businesses'])
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate($this->perPage($request, 25));
+        $tenants = QueryPipeline::for(Tenant::withCount(['users', 'businesses']), $request)
+            ->search(['name', 'slug'])
+            ->allow(AllowedFilter::enum('status', TenantStatus::class))
+            ->sortable(['id', 'name', 'created_at'], default: '-id')
+            ->paginate();
 
         return response()->json($tenants);
     }
