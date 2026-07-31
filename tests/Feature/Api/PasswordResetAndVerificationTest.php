@@ -3,9 +3,9 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
+use App\Notifications\ResetPassword;
 use App\Notifications\SetPasswordNotification;
-use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;

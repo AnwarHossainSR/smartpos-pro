@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
@@ -118,6 +119,24 @@ class TokenLifecycleTest extends TestCase
         $this->withHeader('Authorization', "Bearer {$tokenB}")
             ->getJson('/api/v1/auth/me')
             ->assertUnauthorized();
+    }
+
+    public function test_authenticating_with_a_token_works_before_any_tenant_is_bound(): void
+    {
+        // Regression: Sanctum resolves the token's owner (a tenant-scoped User) before the
+        // `tenant` route middleware has bound anything into TenantContext, on every request —
+        // not just in this test. Simulate that "cold" state explicitly instead of relying on
+        // whatever createTenant() left bound, since a real request never starts pre-bound.
+        $owner = $this->createTenant();
+        $token = $owner->createToken('phone')->plainTextToken;
+
+        app(TenantContext::class)->forget();
+        auth()->forgetGuards();
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.email', $owner->email);
     }
 
     public function test_a_user_cannot_revoke_another_users_session(): void
