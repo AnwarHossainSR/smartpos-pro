@@ -3,32 +3,44 @@
 namespace App\Domain\Sales\Pricing;
 
 use App\Domain\Sales\Data\SaleLineData;
+use App\Domain\Tax\TaxableLine;
+use App\Domain\Tax\TaxContext;
+use App\Domain\Tax\TaxEngine;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use InvalidArgumentException;
 
 /**
- * Prices a basket against the live catalogue.
+ * Prices a basket against the live catalogue and hands it to the tax engine.
  *
  * The client never sets a price: it may *request* one, and the request is only
  * honoured when the cashier holds the matching permission. Everything else —
- * cost, tax rate, name — is read from the product and snapshotted onto the line,
- * so a later catalogue edit cannot rewrite history.
+ * cost, name, and the whole tax position — is derived server-side and
+ * snapshotted onto the line.
+ *
+ * Whether the quoted price includes tax is a tenant setting, so the same basket
+ * is priced differently in a VAT-inclusive market (the shelf price is the gross,
+ * and tax is extracted from it) than in a net-quoting one (tax is added on top).
+ * That decision lives in {@see TaxContext}, not here.
  */
 class SaleLineBuilder
 {
+    public function __construct(protected TaxEngine $tax) {}
+
     /** @param  array<int, SaleLineData>  $items */
-    public function build(array $items, User $cashier): PricedBasket
+    public function build(array $items, User $cashier, TaxContext $context): PricedBasket
     {
         $products = Product::whereIn('id', array_map(static fn (SaleLineData $i) => $i->productId, $items))
+            ->with(TaxEngine::PRODUCT_RELATIONS)
             ->get()
             ->keyBy('id');
 
-        $lines = [];
+        $resolved = [];
+        $taxable = [];
         $hasOverride = false;
 
-        foreach ($items as $item) {
+        foreach ($items as $index => $item) {
             /** @var Product|null $product */
             $product = $products->get($item->productId);
 
@@ -48,42 +60,41 @@ class SaleLineBuilder
                 $hasOverride = true;
             }
 
-            $lines[] = $this->price($product, $item, $catalogPrice);
+            $unitPrice = $item->unitPrice !== null ? round($item->unitPrice, 2) : $catalogPrice;
+            $quantity = round($item->quantity, 4);
+
+            // The taxable base is the discounted line, never the gross one.
+            $amount = max(0, ($unitPrice * $quantity) - $item->discountAmount);
+
+            $resolved[$index] = ['product' => $product, 'item' => $item, 'unitPrice' => $unitPrice, 'quantity' => $quantity];
+            $taxable[$index] = new TaxableLine($amount, $quantity, $product);
         }
 
-        return new PricedBasket($lines, $hasOverride);
-    }
+        $breakdown = $this->tax->taxDocument($taxable, $context);
 
-    private function price(Product $product, SaleLineData $item, float $catalogPrice): PricedLine
-    {
-        $quantity = round($item->quantity, 4);
-        $unitPrice = $item->unitPrice !== null ? round($item->unitPrice, 2) : $catalogPrice;
+        $lines = [];
 
-        // The taxable base is the discounted line, never the gross one.
-        $taxable = max(0, ($unitPrice * $quantity) - $item->discountAmount);
-        $rate = (float) $product->tax_rate;
+        foreach ($resolved as $index => $r) {
+            $lineTax = $breakdown->lineFor($index);
 
-        // An inclusive price already contains its tax, so the tax is extracted from
-        // the line rather than added on top — otherwise the shelf price and the
-        // charged price disagree.
-        $taxAmount = $product->tax_inclusive
-            ? round($taxable - ($taxable / (1 + ($rate / 100))), 2)
-            : round($taxable * ($rate / 100), 2);
+            $lines[] = new PricedLine(
+                productId: $r['product']->id,
+                variantId: $r['item']->variantId,
+                name: $r['product']->name,
+                quantity: $r['quantity'],
+                unitPrice: $r['unitPrice'],
+                unitCost: (float) $r['product']->purchase_price,
+                discountAmount: $r['item']->discountAmount,
+                taxRate: $lineTax->effectiveRate(),
+                taxAmount: $lineTax->tax->toFloat(),
+                lineTotal: $lineTax->gross()->toFloat(),
+                netTotal: $lineTax->net->toFloat(),
+                tracksInventory: (bool) $r['product']->track_inventory,
+                taxComponents: $lineTax->components,
+            );
+        }
 
-        return new PricedLine(
-            productId: $product->id,
-            variantId: $item->variantId,
-            name: $product->name,
-            quantity: $quantity,
-            unitPrice: $unitPrice,
-            unitCost: (float) $product->purchase_price,
-            discountAmount: $item->discountAmount,
-            taxRate: $rate,
-            taxAmount: $taxAmount,
-            lineTotal: round($product->tax_inclusive ? $taxable : $taxable + $taxAmount, 2),
-            netTotal: round($product->tax_inclusive ? $taxable - $taxAmount : $taxable, 2),
-            tracksInventory: (bool) $product->track_inventory,
-        );
+        return new PricedBasket($lines, $hasOverride, $breakdown);
     }
 
     private function authorize(User $cashier, string $permission): void

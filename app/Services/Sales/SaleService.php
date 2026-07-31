@@ -10,6 +10,10 @@ use App\Domain\Sales\Data\CreateSaleData;
 use App\Domain\Sales\Pricing\CouponRedeemer;
 use App\Domain\Sales\Pricing\PricedLine;
 use App\Domain\Sales\Pricing\SaleLineBuilder;
+use App\Domain\Tax\TaxContext;
+use App\Domain\Tax\TaxResolver;
+use App\Models\Branch;
+use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\User;
@@ -40,6 +44,7 @@ class SaleService
         protected AuditLogService $audit,
         protected SaleLineBuilder $lineBuilder,
         protected CouponRedeemer $coupons,
+        protected TaxResolver $taxes,
     ) {}
 
     public function create(CreateSaleData $data, User $cashier): Sale
@@ -47,7 +52,7 @@ class SaleService
         return DB::transaction(function () use ($data, $cashier) {
             $affectsStock = $data->status->affectsStock();
 
-            $basket = $this->lineBuilder->build($data->items, $cashier);
+            $basket = $this->lineBuilder->build($data->items, $cashier, $this->taxContextFor($data, $cashier));
             $subtotal = $basket->subtotal();
 
             $discount = $this->resolveSaleDiscount($data, $subtotal, $cashier);
@@ -199,11 +204,33 @@ class SaleService
         return $data->discountAmount;
     }
 
+    /**
+     * The jurisdiction and pricing rules for this sale. Resolved once per
+     * document — every line on one invoice is taxed under the same regime — from
+     * the selling branch (origin sourcing) and the customer (destination
+     * sourcing, and exemptions).
+     */
+    private function taxContextFor(CreateSaleData $data, User $cashier): TaxContext
+    {
+        return $this->taxes->contextFor(
+            $cashier->business ?? Business::findOrFail($cashier->business_id),
+            Branch::find($data->branchId),
+            $data->customerId !== null ? Customer::find($data->customerId) : null,
+        );
+    }
+
     /** @param  array<int, PricedLine>  $lines */
     private function recordLines(Sale $sale, array $lines, CreateSaleData $data, User $cashier, bool $affectsStock): void
     {
         foreach ($lines as $line) {
-            $sale->items()->create($line->toItemAttributes());
+            $item = $sale->items()->create($line->toItemAttributes());
+
+            // The per-component split is what an invoice prints, a return
+            // reverses, and a VAT/GST return sums — none of which can be
+            // recovered from the single `tax_amount` column afterwards.
+            foreach ($line->taxComponents as $component) {
+                $item->taxes()->create($component->toAttributes());
+            }
 
             if ($affectsStock && $line->tracksInventory) {
                 $this->ledger->record([
