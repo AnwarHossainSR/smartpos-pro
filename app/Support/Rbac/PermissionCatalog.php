@@ -11,8 +11,10 @@ class PermissionCatalog
     /** module => list of actions available on that module. */
     public const MATRIX = [
         'dashboard' => ['view'],
+        'branches' => ['view', 'create', 'update', 'delete'],
+        'warehouses' => ['view', 'create', 'update', 'delete'],
         'products' => ['view', 'create', 'update', 'delete', 'export'],
-        'inventory' => ['view', 'create', 'update', 'export', 'approve'],
+        'inventory' => ['view', 'create', 'update', 'adjust', 'export', 'approve'],
         'pos' => ['view', 'create', 'refund', 'discount', 'price_override'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
         'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export'],
@@ -62,7 +64,8 @@ class PermissionCatalog
         return [
             'admin' => ['name' => 'Admin', 'permissions' => '*'],
             'branch_manager' => ['name' => 'Branch Manager', 'permissions' => [
-                'dashboard.view', 'products.view', 'inventory.view', 'inventory.approve',
+                'dashboard.view', 'branches.view', 'warehouses.view',
+                'products.view', 'inventory.view', 'inventory.adjust', 'inventory.approve',
                 'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
                 'reports.view', 'reports.export',

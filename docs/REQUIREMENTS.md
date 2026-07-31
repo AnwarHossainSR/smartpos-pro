@@ -384,3 +384,96 @@ T92–T99 are vertical depth — pick a lane rather than building all of them.
   the existing report endpoints, and receipt/bill OCR for expense entry.
 - **Done when:** each surface returns useful output on the demo dataset with a clear
   confidence display.
+
+## Phase 9 — Gap fixes + missing endpoints  (`api`)
+
+Found by re-reading T28–T33 against their own routes/permissions/tests (which didn't exist).
+
+### T100 · Branch & warehouse management
+- **Scope:** `BranchController` (index/show/store/update/destroy) — previously there was no
+  way to create a branch outside registration. Extend `WarehouseController` with
+  store/update/destroy (it was index-only). New `branches`/`warehouses` permission modules.
+  Destroy refuses the default branch/warehouse, or one with dependent warehouses, assigned
+  users, or sales history.
+- **Done when:** an owner can create/rename/retire a branch or warehouse via the API; a
+  cashier can't; deleting the default or a still-referenced one 422s.
+
+### T101 · Credit-sale settlement + barcode lookup
+- **Scope:** `POST sales/{sale}/payments` (`sales.update`, idempotency-aware) records a
+  payment against a due/partial sale inside a row-locked transaction, updates
+  `paid_amount`/`due_amount`/`payment_status`, and decrements the customer's `balance`.
+  `GET products/barcode/{barcode}` for POS scanning.
+- **Done when:** a partial sale can be paid down to `paid` in one or more calls; overpaying
+  the outstanding balance 422s; a barcode resolves to its product or 404s.
+
+### T102 · Stock ledger history endpoint
+- **Scope:** `GET inventory/movements` (`inventory.view`), filterable by
+  product/warehouse/variant/type/direction/date, paginated. The `stock_movements` ledger —
+  the architecture's centerpiece — was previously readable only as current balances.
+- **Done when:** every movement type (opening, sale, adjustment, transfer) is visible with
+  its running `quantity_after`.
+
+### T103 · T28–T30 hardening
+- **Scope:** fix two live bugs found while writing the tests these tasks shipped without:
+  (a) `inventory.adjust` was required by 6 routes but absent from `PermissionCatalog`, so no
+  role could ever hold it; (b) `GET products/{id}/variants` 500'd on every call (eager-loaded
+  a relation, `attributes.attribute`, that doesn't exist on `ProductVariant`). Replace the
+  inline `$request->validate(['...id' => 'exists:table,id'])` calls in
+  `StockTransferController`, `ProductVariantController` and `QuotationController` — which
+  don't scope by tenant, unlike every `FormRequest` elsewhere in the codebase — with proper
+  `FormRequest`s using `Rule::exists(...)->where('tenant_id', ...)`.
+- **Done when:** `php artisan test` covers stock transfers, variants/batches/serials and
+  quotations end to end, including a cross-tenant-reference rejection test for each.
+
+### T104 · Rich demo data for the above
+- **Scope:** extend `RichDemoSeeder`: a stock transfer between the two demo branches
+  (request → approve → receive), 3 product variants + a stock batch + 3 serials, a
+  quotation converted to a sale, and a partially-paid credit sale settled via
+  `collectPayment()`.
+- **Done when:** `php artisan migrate:fresh --seed` produces at least one record for every
+  T100–T103 feature, verifiable via tinker.
+
+## Phase 10 — Further gaps identified, not yet built  (`api` + `web`)
+
+Found during the Phase 9 pass. Left as backlog rather than half-implemented — pick a lane
+the same way as Phase 8.
+
+### T105 · Purchases: edit / cancel / return
+- **Scope:** `purchases.update`/`.delete`/`.approve` permissions already exist with no
+  routes behind them; only `index`/`show`/`store` exist. Add edit (before goods receipt),
+  cancel, and a purchase return / debit note.
+- **Done when:** a wrong goods receipt can be corrected without going straight to the
+  database.
+
+### T106 · Sale void / cancel
+- **Scope:** `sales.delete` permission exists, no route. Returns are the only correction
+  path today; a cashier's mis-rung sale can't be voided.
+- **Done when:** a completed sale can be voided (stock and payments reversed through the
+  same services returns already use) with an audited reason.
+
+### T107 · Bulk product import (CSV/XLSX)
+- **Scope:** import was explicitly deferred in T68 (export is client-side CSV only).
+  Usually the top onboarding blocker for a shop with a large existing catalog.
+- **Done when:** a CSV/XLSX of products can be uploaded, previewed, and committed with
+  row-level error reporting.
+
+### T108 · Server-side export endpoints
+- **Scope:** eight modules (`products`, `inventory`, `sales`, `purchases`, `customers`,
+  `suppliers`, `reports`, `accounting`) declare `*.export` permissions with no backing
+  endpoint — export today is client-side only.
+- **Done when:** each module's list can be exported server-side (CSV, and PDF where a
+  template already exists).
+
+### T109 · Financial statements
+- **Scope:** accounting currently has chart of accounts, journals, general ledger and trial
+  balance only — no P&L (income statement) or balance sheet.
+- **Done when:** both statements are generated from the existing journal data for a given
+  period.
+
+### T110 · Public API keys / webhooks
+- **Scope:** tenant-scoped API keys (separate from user Sanctum tokens) and outbound
+  webhooks (sale completed, stock low, etc.) — no way today to integrate an external
+  storefront or push to external accounting. The one SaaS-tier gap not already covered by
+  Phase 8.
+- **Done when:** a tenant can mint/revoke an API key scoped to a permission subset, and
+  register a webhook URL that receives signed event payloads with retries.

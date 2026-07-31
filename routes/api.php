@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CashRegisterController;
 use App\Http\Controllers\Api\V1\CategoryController;
@@ -61,7 +62,19 @@ Route::prefix('v1')->group(function () {
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
 
-        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('permission:inventory.view');
+        // Organization — branches
+        Route::get('branches', [BranchController::class, 'index'])->middleware('permission:branches.view');
+        Route::get('branches/{branch}', [BranchController::class, 'show'])->middleware('permission:branches.view');
+        Route::post('branches', [BranchController::class, 'store'])->middleware('permission:branches.create');
+        Route::put('branches/{branch}', [BranchController::class, 'update'])->middleware('permission:branches.update');
+        Route::delete('branches/{branch}', [BranchController::class, 'destroy'])->middleware('permission:branches.delete');
+
+        // Organization — warehouses
+        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('permission:warehouses.view');
+        Route::get('warehouses/{warehouse}', [WarehouseController::class, 'show'])->middleware('permission:warehouses.view');
+        Route::post('warehouses', [WarehouseController::class, 'store'])->middleware('permission:warehouses.create');
+        Route::put('warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:warehouses.update');
+        Route::delete('warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:warehouses.delete');
 
         // Catalog — categories
         Route::get('categories', [CategoryController::class, 'index'])->middleware('permission:products.view');
@@ -83,6 +96,7 @@ Route::prefix('v1')->group(function () {
 
         // Catalog — products
         Route::get('products', [ProductController::class, 'index'])->middleware('permission:products.view');
+        Route::get('products/barcode/{barcode}', [ProductController::class, 'findByBarcode'])->middleware('permission:products.view');
         Route::get('products/{product}', [ProductController::class, 'show'])->middleware('permission:products.view');
         Route::post('products', [ProductController::class, 'store'])->middleware('permission:products.create');
         Route::put('products/{product}', [ProductController::class, 'update'])->middleware('permission:products.update');
@@ -90,6 +104,7 @@ Route::prefix('v1')->group(function () {
 
         // Inventory
         Route::get('inventory/balances', [InventoryController::class, 'index'])->middleware('permission:inventory.view');
+        Route::get('inventory/movements', [InventoryController::class, 'movements'])->middleware('permission:inventory.view');
         Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->middleware('permission:inventory.update');
 
         // Customers
@@ -125,6 +140,7 @@ Route::prefix('v1')->group(function () {
         Route::get('sales/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view');
         Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
+        Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
 
         // Sale returns / refunds
         Route::get('sale-returns', [SaleReturnController::class, 'index'])->middleware('permission:sales.view');

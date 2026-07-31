@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\StoreSalePaymentRequest;
 use App\Http\Requests\Sales\StoreSaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Sale;
@@ -55,6 +56,12 @@ class SaleController extends Controller
     public function show(Sale $sale): SaleResource
     {
         return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier', 'coupon'));
+    }
+
+    /** Records a settlement payment against a due/partial sale. Idempotent when an Idempotency-Key header is supplied. */
+    public function addPayment(StoreSalePaymentRequest $request, Sale $sale): SaleResource
+    {
+        return new SaleResource($this->sales->collectPayment($sale, $request->validated()));
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */

@@ -428,6 +428,9 @@ means unlimited.
 
 ## Stock transfers (T28)
 
+`from_warehouse_id`/`to_warehouse_id`/`product_id`/`variant_id` are now validated against the
+caller's own tenant (previously `exists:warehouses,id` etc. accepted any tenant's row).
+
 | Method & path | Permission | Notes |
 | --- | --- | --- |
 | `GET /stock-transfers` | `inventory.view` | list with `?status=pending\|approved\|in_transit\|received\|cancelled` |
@@ -451,6 +454,10 @@ means unlimited.
 
 ## Product variants, batches & serials (T29)
 
+`product_id`/`variant_id`/`warehouse_id` on batch and serial creation are now tenant-scoped
+(same fix as T28). `GET /products/{id}/variants` no longer 500s — it eager-loaded a
+relationship (`attributes.attribute`) that didn't exist on the model.
+
 | Method & path | Permission | Notes |
 | --- | --- | --- |
 | `GET /products/{id}/variants` | `inventory.view` | list variants with attribute values |
@@ -460,6 +467,9 @@ means unlimited.
 | `POST /stock/serials` | `inventory.adjust` | register new serial number |
 
 ## Quotations (T30)
+
+`branch_id`/`customer_id`/`items.*.product_id`/`warehouse_id` (on convert) are now
+tenant-scoped (same fix as T28).
 
 | Method & path | Permission | Notes |
 | --- | --- | --- |
@@ -561,3 +571,55 @@ echo.private(`tenant.${tenantId}`)
 | Hourly | Auto-expire trialing tenants whose `trial_ends_at` has passed |
 
 Enable via cron: `* * * * * php /var/www/smartpos/artisan schedule:run >> /dev/null 2>&1`
+
+## Branches & warehouses (T100)
+
+Full CRUD — previously branches had no management endpoints at all, and warehouses were
+list-only (both only ever created by the registration bootstrap).
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /branches` | `branches.view` | `?search=&is_active=` |
+| `GET /branches/{id}` | `branches.view` | |
+| `POST /branches` | `branches.create` | |
+| `PUT /branches/{id}` | `branches.update` | |
+| `DELETE /branches/{id}` | `branches.delete` | `422` if it's the default branch, still has warehouses, has assigned users, or has sales history |
+| `GET /warehouses` | `warehouses.view` | active warehouses (unchanged shape) |
+| `GET /warehouses/{id}` | `warehouses.view` | |
+| `POST /warehouses` | `warehouses.create` | `branch_id` optional |
+| `PUT /warehouses/{id}` | `warehouses.update` | |
+| `DELETE /warehouses/{id}` | `warehouses.delete` | `422` if it's the default warehouse, still holds stock, or has sales history |
+
+## Credit-sale settlement (T101)
+
+`Sale.due_amount` could only ever go up (set once at checkout) — there was no way to record
+a customer paying down a due/partial sale afterwards.
+
+### `POST /sales/{sale}/payments`
+Requires `sales.update`. Honours the `Idempotency-Key` header. Records a payment against an
+existing **completed** sale, row-locked so two concurrent payments can never together exceed
+the outstanding balance.
+```json
+{ "method": "cash", "amount": 30, "reference": null }
+```
+`200` → the updated sale (`paid_amount`, `due_amount`, `payment_status`). If the sale has an
+attached customer, their `balance` (accounts-receivable total) is decremented by the same
+amount. `422` when the sale isn't completed, has no outstanding balance, or the amount
+exceeds it.
+
+### `GET /products/barcode/{barcode}`
+Requires `products.view`. POS barcode-scanner lookup — resolves a single product by its
+exact barcode (`404` if not found). Previously the only way to find a product by barcode was
+the general `?search=` filter on `GET /products`.
+
+## Stock ledger history (T102)
+
+The `stock_movements` ledger — the architectural centerpiece described in
+[`ARCHITECTURE.md`](ARCHITECTURE.md) — was write-only via the API (only current balances and
+the adjustment endpoint were exposed).
+
+### `GET /inventory/movements`
+Requires `inventory.view`. `?product_id=&warehouse_id=&variant_id=&type=&direction=&from=&to=`,
+paginated, newest first. Returns each movement's `type`, `direction`, `quantity`,
+`quantity_after` (the running balance at that point), `unit_cost`, `reference_type`/
+`reference_id` (e.g. the sale or transfer that caused it), and the acting user.
