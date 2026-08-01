@@ -23,7 +23,7 @@ class ProductController extends Controller
     {
         $products = QueryPipeline::for(
             Product::query()
-                ->with(['category', 'brand'])
+                ->with(['category', 'brand', 'taxGroup'])
                 ->withSum('inventoryBalances as stock_quantity', 'quantity'),
             $request,
         )
@@ -62,14 +62,14 @@ class ProductController extends Controller
             );
         }
 
-        return new ProductResource($product->load('category', 'brand'));
+        return new ProductResource($product->load('category', 'brand', 'taxGroup'));
     }
 
     public function show(Product $product): ProductResource
     {
         $product->loadSum('inventoryBalances as stock_quantity', 'quantity');
 
-        return new ProductResource($product->load('category', 'brand', 'unit'));
+        return new ProductResource($product->load('category', 'brand', 'unit', 'taxGroup'));
     }
 
     /** POS barcode-scanner lookup: resolves a single product by its exact barcode. */
@@ -78,14 +78,14 @@ class ProductController extends Controller
         $product = Product::where('barcode', $barcode)->firstOrFail();
         $product->loadSum('inventoryBalances as stock_quantity', 'quantity');
 
-        return new ProductResource($product->load('category', 'brand', 'unit'));
+        return new ProductResource($product->load('category', 'brand', 'unit', 'taxGroup'));
     }
 
     public function update(UpdateProductRequest $request, Product $product): ProductResource
     {
         $product->update($request->validated());
 
-        return new ProductResource($product->load('category', 'brand'));
+        return new ProductResource($product->load('category', 'brand', 'taxGroup'));
     }
 
     public function destroy(Product $product)

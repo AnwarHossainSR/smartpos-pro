@@ -19,6 +19,7 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'parent_id' => ['nullable', Rule::exists('categories', 'id')->where('tenant_id', $tenantId)],
+            'tax_group_id' => ['nullable', Rule::exists('tax_groups', 'id')->where('tenant_id', $tenantId)],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_active' => ['boolean'],
         ];

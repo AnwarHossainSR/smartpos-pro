@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TaxProfileResource;
 use App\Models\Business;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,8 @@ class SettingsController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'tax_number' => ['nullable', 'string', 'max:100'],
+            'tax_profile_id' => ['nullable', 'exists:tax_profiles,id'],
+            'price_display' => ['sometimes', 'in:inclusive,exclusive'],
             'currency' => ['sometimes', 'string', 'size:3'],
             'timezone' => ['sometimes', 'string', 'max:64'],
             'logo_path' => ['nullable', 'string', 'max:2048'],
@@ -55,6 +58,9 @@ class SettingsController extends Controller
             'email' => $business->email,
             'phone' => $business->phone,
             'tax_number' => $business->tax_number,
+            'tax_profile_id' => $business->tax_profile_id,
+            'tax_profile' => $business->taxProfile ? new TaxProfileResource($business->taxProfile) : null,
+            'price_display' => $business->price_display,
             'currency' => $business->currency,
             'timezone' => $business->timezone,
             'logo_path' => $business->logo_path,
