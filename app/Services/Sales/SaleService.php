@@ -7,6 +7,7 @@ use App\Domain\Enums\SaleStatus;
 use App\Domain\Enums\StockMovementType;
 use App\Domain\Sales\Data\CollectPaymentData;
 use App\Domain\Sales\Data\CreateSaleData;
+use App\Domain\Sales\Data\PaymentData;
 use App\Domain\Sales\Pricing\CouponRedeemer;
 use App\Domain\Sales\Pricing\PricedLine;
 use App\Domain\Sales\Pricing\SaleLineBuilder;
@@ -169,15 +170,140 @@ class SaleService
         });
     }
 
+    /**
+     * Finalises a held cart: moves the stock it was deliberately deferring,
+     * records any tender taken at the till now, and completes the sale. The
+     * lines and their tax were already priced and snapshotted when the cart
+     * was held — resuming never re-runs the pricing or tax engine, so a menu
+     * or rate change while a cart sat held cannot change what the customer
+     * was quoted.
+     *
+     * @param  array<int, PaymentData>  $payments
+     */
+    public function resume(Sale $sale, array $payments, User $cashier): Sale
+    {
+        return DB::transaction(function () use ($sale, $payments, $cashier) {
+            /** @var Sale $sale */
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
+
+            if ($sale->status !== SaleStatus::Held && $sale->status !== SaleStatus::Draft) {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a held or draft sale can be resumed.'],
+                ]);
+            }
+
+            $sale->load('items.product');
+
+            foreach ($sale->items as $item) {
+                if ($item->product?->track_inventory ?? true) {
+                    $this->ledger->record([
+                        'product_id' => $item->product_id,
+                        'variant_id' => $item->variant_id,
+                        'warehouse_id' => $sale->warehouse_id,
+                        'quantity' => (float) $item->quantity,
+                        'unit_cost' => (float) $item->unit_cost,
+                        'type' => StockMovementType::Sale,
+                        'reference' => $sale,
+                        'user_id' => $cashier->id,
+                    ]);
+                }
+            }
+
+            foreach ($payments as $payment) {
+                $sale->payments()->create([
+                    'method' => $payment->method,
+                    'amount' => $payment->amount,
+                    'reference' => $payment->reference,
+                    'paid_at' => Carbon::now(),
+                ]);
+            }
+
+            $total = round((float) $sale->total, 2);
+            $paid = round((float) $sale->paid_amount + PaymentData::total($payments), 2);
+            $change = max(0, round($paid - $total, 2));
+            $due = max(0, round($total - $paid, 2));
+
+            $sale->update([
+                'status' => SaleStatus::Completed,
+                'payment_status' => PaymentStatus::fromAmounts($paid, $total),
+                'paid_amount' => min($paid, $total),
+                'change_amount' => $change,
+                'due_amount' => $due,
+                'sold_at' => Carbon::now(),
+            ]);
+
+            if ($due > 0 && $sale->customer_id) {
+                Customer::whereKey($sale->customer_id)->increment('balance', $due);
+            }
+
+            $this->awardLoyalty($sale, $cashier, true);
+
+            return $sale->fresh(['items', 'payments', 'customer', 'coupon']);
+        });
+    }
+
+    /**
+     * Cancels a completed sale: reverses the stock it moved and, if the
+     * customer owed anything on it, clears that receivable. Cash already
+     * collected is not auto-refunded — voiding corrects a mistaken sale, it
+     * is not a refund workflow (that is {@see \App\Services\Sales\SaleReturnService}).
+     */
+    public function void(Sale $sale, User $user, ?string $reason = null): Sale
+    {
+        return DB::transaction(function () use ($sale, $user, $reason) {
+            /** @var Sale $sale */
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
+
+            if ($sale->status !== SaleStatus::Completed) {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a completed sale can be voided.'],
+                ]);
+            }
+
+            $sale->load('items.product');
+
+            foreach ($sale->items as $item) {
+                if ($item->product?->track_inventory ?? true) {
+                    $this->ledger->record([
+                        'product_id' => $item->product_id,
+                        'variant_id' => $item->variant_id,
+                        'warehouse_id' => $sale->warehouse_id,
+                        'quantity' => (float) $item->quantity,
+                        'unit_cost' => (float) $item->unit_cost,
+                        'type' => StockMovementType::AdjustmentIn,
+                        'reference' => $sale,
+                        'user_id' => $user->id,
+                    ]);
+                }
+            }
+
+            $due = round((float) $sale->due_amount, 2);
+            if ($due > 0 && $sale->customer_id) {
+                Customer::whereKey($sale->customer_id)->decrement('balance', $due);
+            }
+
+            $sale->update(['status' => SaleStatus::Cancelled, 'due_amount' => 0]);
+
+            $this->audit->log('sale.void', $sale, null, ['reason' => $reason], $user);
+
+            return $sale->fresh(['items', 'payments', 'customer']);
+        });
+    }
+
     /** Renders a sale as a printable/downloadable invoice PDF. */
     public function invoicePdf(Sale $sale): PdfDocument
     {
-        $sale->loadMissing(['items', 'payments', 'customer', 'cashier', 'branch.business']);
+        $sale->loadMissing(['items.taxes', 'payments', 'customer', 'cashier', 'branch.business']);
+        $business = $sale->branch->business;
 
         return Pdf::loadView('pdf.invoice', [
             'sale' => $sale,
             'branch' => $sale->branch,
-            'business' => $sale->branch->business,
+            'business' => $business,
+            // A profile-required field (e.g. GSTIN) and the label it's shown
+            // under vary by jurisdiction — the document must reflect whichever
+            // profile this business actually trades under, not a hardcoded one.
+            'profile' => $business->effectiveTaxProfile(),
         ]);
     }
 

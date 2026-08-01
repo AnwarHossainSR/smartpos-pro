@@ -6,10 +6,13 @@ use App\Domain\Enums\PaymentStatus;
 use App\Domain\Enums\SaleStatus;
 use App\Domain\Sales\Data\CollectPaymentData;
 use App\Domain\Sales\Data\CreateSaleData;
+use App\Domain\Sales\Data\PaymentData;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\ResumeSaleRequest;
 use App\Http\Requests\Sales\StoreSalePaymentRequest;
 use App\Http\Requests\Sales\StoreSaleRequest;
+use App\Http\Requests\Sales\VoidSaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Sale;
 use App\Services\Sales\SaleService;
@@ -70,6 +73,20 @@ class SaleController extends Controller
         return new SaleResource(
             $this->sales->collectPayment($sale, CollectPaymentData::fromArray($request->validated())),
         );
+    }
+
+    /** Finalises a held or draft cart into a completed sale. */
+    public function resume(ResumeSaleRequest $request, Sale $sale): SaleResource
+    {
+        $payments = PaymentData::collection($request->validated()['payments'] ?? []);
+
+        return new SaleResource($this->sales->resume($sale, $payments, $request->user()));
+    }
+
+    /** Cancels a completed sale and reverses the stock it moved. */
+    public function void(VoidSaleRequest $request, Sale $sale): SaleResource
+    {
+        return new SaleResource($this->sales->void($sale, $request->user(), $request->validated()['reason'] ?? null));
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */

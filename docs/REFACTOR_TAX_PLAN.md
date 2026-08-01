@@ -18,25 +18,22 @@ performance, SEO and code quality across both codebases.
 | R6 Tax schema | ✅ | `fe2e52f` | 9 tables, back-fill migration, 5 country profiles |
 | R7 Tax engine | ✅ | `fe2e52f` | Resolver / calculator / rounder; 16 unit tests |
 | R8 Tax in checkout | ✅ | `65e387b` | **Breaking:** `products.tax_rate` no longer read; 9 e2e tests |
-| R8b Tax in returns / purchases / quotations | ⬜ | | Returns must reverse snapshotted components, not recompute |
-| R9 Tax API + reports | ⬜ | | CRUD for rates/groups/zones; `reports/tax-summary`, `reports/tax-return` |
-| R10 Compliant documents | ⬜ | | Invoice/receipt tax breakdown + profile-required fields |
-| R11 POS backend depth | ⬜ | | Held sales, void, `pos/bootstrap` |
-| R12–R17 Frontend | ⬜ | | Feature folders, POS rewrite, tax UI, performance, SEO |
-| R4 Response/error contract | ⬜ | | Deferred behind the tax work |
-| R5 Event listeners | ⬜ | | Deferred; do before R8b's journal posting |
-| R18–R19 Gates + docs | ⬜ | | |
-
-Test suite: **225 passing** (baseline was 146). `vendor/bin/pint --test` clean.
+| R8b Tax in returns / purchases / quotations | ✅ | (pending commit) | Returns reverse snapshotted `sale_item_taxes` via `TaxContext::asExclusive()`; purchases resolve input tax through the engine; quotations too |
+| R9 Tax API + reports | ✅ | (pending commit) | CRUD for `tax-rates`/`tax-groups`/`tax-zones`, read-only `tax-profiles`; `reports/tax-summary`, `reports/tax-return`; `taxes` permission module |
+| R10 Compliant documents | ✅ | (pending commit) | Invoice PDF: per-component tax breakdown, profile-aware tax number label, customer exemption/tax number, `required_invoice_fields` footer |
+| R11 POS backend depth | ✅ | (pending commit) | `sales/{id}/resume` (held→completed, no re-pricing), `sales/{id}/void` (stock reversal), `GET pos/bootstrap` |
+| Product/category tax wiring | ✅ | (pending commit) | `products`/`categories` create/update/resource now use `tax_group_id`; the dead `tax_rate`/`tax_inclusive` fields removed from the API surface |
+| R12–R17 Frontend | 🔄 | | Delegated to a background agent (feature architecture, tax admin + report UI, POS tax display, page migration, POS rewrite, perf, SEO) — see its report when it lands |
+| R4 Response/error contract | ⬜ deferred | | No domain exception currently needs it more than the tax work did |
+| R5 Event listeners | ⬜ deferred | | Nothing currently posts to the journal on sale/purchase automatically (checked: no observer exists) — not a blocker for anything shipped so far |
+| R18–R19 Gates + docs | 🔄 | | Full suite run pending frontend agent's completion |
 
 ### Resuming
 
-Next step is **R8b**: `SaleReturnService` still computes tax by pro-rating
-`sale_items.tax_amount`. It must instead read the line's `sale_item_taxes` rows
-and reverse them proportionally into `sale_return_item_taxes` — a rate change
-between sale and return must not change the refund. `PurchaseService` similarly
-still takes a client-supplied `tax_amount` per line rather than resolving input
-tax through the engine.
+Backend tax work (R8b–R11) is done. What's left: wait for the frontend agent's
+report, then run `php artisan test`, `vendor/bin/pint --test`, `npm run lint`,
+`npm run build` and fix whatever breaks, then update `docs/API.md` and
+`docs/PROGRESS.md` and commit everything in focused, per-step commits.
 
 ## Decisions taken
 
