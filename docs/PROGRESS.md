@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-31_
+_Last updated: 2026-08-01_
 
 ## Summary
 
@@ -19,11 +19,23 @@ _Last updated: 2026-07-31_
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
 | 7 · Security & money integrity | 13 | 0 | 0 | 13 |
-| 8 · Product depth | 0 | 0 | 11 | 11 |
+| 8 · Product depth | 1 | 0 | 10 | 11 |
 | 9 · Gap fixes + missing endpoints | 5 | 0 | 0 | 5 |
-| 10 · Further gaps identified, not yet built | 0 | 0 | 6 | 6 |
+| 10 · Further gaps identified, not yet built | 1 | 0 | 5 | 6 |
 | 11 · Audit pass (correctness, load safety, contract drift) | 6 | 0 | 2 | 8 |
-| **Total** | **99** | **0** | **19** | **118** |
+| **Total** | **101** | **0** | **17** | **118** |
+
+## 2026-08-01 — backend refactor, tax engine, and frontend overhaul
+
+A separate, larger initiative than the task-by-task work above: reusable domain
+primitives (enums, `Money`, a declarative query pipeline, typed DTOs), a full
+jurisdiction-aware tax engine wired through checkout/returns/purchases/quotations
+with an admin API and reports, POS backend depth (held/resume/void, `pos/bootstrap`),
+and a first pass at the frontend (shared list architecture, tax admin + report UI,
+POS tax display, SEO baseline). Plan, decisions and per-step status:
+[`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md). `php artisan test`: 239 passing
+(was 146 at the start). Frontend feature-folder migration beyond tax/POS, list
+virtualization, and per-auth-page metadata remain — see that doc's status table.
 
 ## Phase 1 — Backend foundation & modules
 
@@ -168,7 +180,7 @@ vertical depth — pick a lane rather than building all of them.
 | T93 | Reorder suggestions → draft POs | ⬜ | | All inputs already exist; loop not closed |
 | T94 | Accounts payable & receivable aging | ⬜ | | Supplier bills + payments missing |
 | T95 | Hardware integration | ⬜ | | ESC/POS, cash drawer, scale, label printing |
-| T96 | Tax compliance profiles | ⬜ | | NBR / GST / EU VAT |
+| T96 | Tax compliance profiles | ✅ | | Full jurisdiction engine — see [`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md): country profiles (BD_VAT/IN_GST/EU_VAT/US_SALES_TAX/GENERIC), multi-component tax groups, zones, per-line/component/invoice rounding, tax-inclusive pricing, exemptions, `taxes` permission module, admin + report UI |
 | T97 | Restaurant mode | ⬜ | | Tables, KOT, modifiers, split bills |
 | T98 | Offline sync conflict resolution | ⬜ | | Server side of T60's offline queue |
 | T99 | AI assist | ⬜ | | Forecasting, NL reports, receipt OCR |
@@ -195,7 +207,7 @@ Pick a lane the same way as Phase 8.
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
 | T105 | Purchases: edit / cancel / return | ⬜ | Only `index`/`show`/`store` exist; `purchases.update`/`.delete`/`.approve` permissions exist with no routes behind them. A wrong goods receipt is currently permanent. |
-| T106 | Sale void / cancel | ⬜ | `sales.delete` permission exists, no route; returns are the only correction path today. |
+| T106 | Sale void / cancel | ✅ | `POST sales/{sale}/void` reverses stock and cancels a completed sale; does not auto-refund cash (that's still `POST sales/{sale}/returns`). See [`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md). |
 | T107 | Bulk product import (CSV/XLSX) | ⬜ | Export is client-side CSV only; import was explicitly deferred in T68. Usually the top onboarding blocker for a shop with a large catalog. |
 | T108 | Server-side export endpoints | ⬜ | Eight modules declare `*.export` permissions with no backing endpoint. |
 | T109 | Financial statements | ⬜ | Accounting has trial balance + general ledger only — no P&L or balance sheet. |

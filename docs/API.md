@@ -261,7 +261,41 @@ Requires `sales.view`. Returns the sale with items, payments, customer and cashi
 ### `GET /sales/{sale}/invoice`
 Requires `sales.view`. Renders the sale as a PDF invoice (`application/pdf`). Streamed inline
 by default so it opens in the browser's PDF viewer; add `?download=1` to force a
-`Content-Disposition: attachment` download instead.
+`Content-Disposition: attachment` download instead. Prints tax per component (e.g. CGST and
+SGST as separate lines, not one blended figure), the tax profile's own tax-number label, the
+customer's tax number or exemption reason, and the profile's required invoice fields.
+
+Every sale item in every response above also carries its per-component tax breakdown:
+```json
+{ "tax_amount": 18, "tax_rate": 18, "taxes": [
+  { "name": "CGST", "rate": 9, "amount": 9 }, { "name": "SGST", "rate": 9, "amount": 9 }
+] }
+```
+
+### `POST /sales/{sale}/resume`
+Requires `pos.create`. Idempotency-Key aware. Finalises a **held or draft** cart: moves the
+stock it deliberately deferred and records any tender taken now, then completes the sale.
+Pricing and tax are **not** recomputed — both were already snapshotted when the cart was
+held, so a price or rate change while a cart sat held cannot change what the customer was
+quoted. Body: `{ "payments": [{ "method": "cash", "amount": 100 }] }` (optional — a sale can
+be resumed with no payment, leaving it fully due). `422` if the sale isn't held/draft.
+
+### `POST /sales/{sale}/void`
+Requires `sales.delete`. Cancels a **completed** sale and reverses the stock it moved. Does
+**not** auto-refund cash already collected — voiding corrects a mistaken sale; refunding is
+`POST /sales/{sale}/returns` below. Body: `{ "reason": "optional string" }`. `422` if the
+sale isn't completed.
+
+### `GET /pos/bootstrap`
+Requires `pos.view`. One call for everything the terminal needs to open a register:
+```json
+{ "branch": { "id": 1, "name": "Main" }, "warehouse": { "id": 1, "name": "Main WH" },
+  "cash_register": { "id": 1, "name": "Front till" }, "session": { "...": "or null" },
+  "tax_profile": { "code": "BD_VAT", "...": "..." },
+  "price_display": "inclusive", "currency": "BDT",
+  "payment_methods": [{ "value": "cash", "label": "Cash" }, "..."] }
+```
+`?branch_id=` overrides the caller's own branch (e.g. a multi-branch manager).
 
 ## Errors
 
@@ -293,7 +327,9 @@ Standard Laravel JSON errors: `401` unauthenticated, `403` missing tenant/permis
 ### `POST /purchases`
 Requires `purchases.create`. Idempotency-Key aware. When `status = received`, each line
 increments stock through the ledger, refreshes the product's cost, and increases the
-supplier's payable balance by any unpaid amount.
+supplier's payable balance by any unpaid amount. **Input tax is resolved server-side** from
+each product's tax group (always against the net cost, regardless of how this tenant
+displays *sale* prices) — a client-supplied `tax_amount` is not accepted.
 ```json
 {
   "warehouse_id": 1, "supplier_id": 2, "status": "received",
@@ -318,10 +354,15 @@ supplier's payable balance by any unpaid amount.
 ### `POST /sales/{sale}/returns`
 Requires `sales.refund`. Returned quantities flow back into stock via the ledger; the
 refund reduces any outstanding customer due first. Over-returning beyond the sold (net of
-prior returns) quantity is rejected with `422`.
+prior returns) quantity is rejected with `422`. Tax is **reversed proportionally from the
+original sale line's snapshotted components**, never recomputed — a tax rate changed after
+the sale cannot change what a return refunds.
 ```json
 { "items": [{ "sale_item_id": 10, "quantity": 2 }], "refund_method": "cash" }
 ```
+Each returned item carries the same per-component breakdown: `"taxes": [{ "name": "CGST",
+"rate": 9, "amount": 9 }, "..."]`.
+
 `GET /sale-returns` (`?sale_id=`) · `GET /sale-returns/{saleReturn}` — `sales.view`.
 
 ## Reports
@@ -336,6 +377,29 @@ All require `reports.view`; all accept `?from=&to=` (and `branch_id` where relev
 | `GET /reports/inventory-valuation` | stock value (qty × avg cost) per warehouse |
 | `GET /reports/low-stock` | products at/below minimum stock level |
 | `GET /reports/dues` | customer receivables & supplier payables |
+
+`GET /reports/tax-summary` and `GET /reports/tax-return` require `taxes.view` instead (not
+`reports.view`) — see [Tax administration](#tax-administration) below.
+
+## Tax administration
+
+Global jurisdiction rules and a tenant's own rates/groups/zones. `taxes.view` for reads,
+`taxes.manage` for writes.
+
+| Method & path | Notes |
+| --- | --- |
+| `GET/POST /tax-rates` · `PUT/DELETE /tax-rates/{taxRate}` | one component: `{ name, code, rate, type: percentage\|fixed, is_compound, is_active }` |
+| `GET/POST /tax-groups` · `PUT/DELETE /tax-groups/{taxGroup}` | an ordered set of components — what actually attaches to a product/category. Body: `{ name, rates: [{ tax_rate_id, priority }] }`; `PUT` **syncs** the set (re-ordering or dropping a component), it doesn't append |
+| `GET/POST /tax-zones` · `PUT/DELETE /tax-zones/{taxZone}` | a jurisdiction match rule (`country_code`/`state`/`postcode_pattern`) pointing at a default `tax_group_id`; matched against the branch (origin sourcing) or customer (destination sourcing) per the active profile |
+| `GET /tax-profiles` · `GET /tax-profiles/{taxProfile}` | **read-only** global catalogue (not tenant-owned): `GENERIC`, `BD_VAT`, `IN_GST`, `EU_VAT`, `US_SALES_TAX`. Each carries `sourcing`, `rounding_scope` (`line`\|`component`\|`invoice`), `rounding_mode`, `price_display`, `tax_number_label`, `required_invoice_fields` |
+| `GET /reports/tax-summary` (`?from=&to=&branch_id=`) | output tax (charged on sales) vs. input tax (paid on purchases) by component, and `net_payable`. Read from the snapshotted `*_item_taxes` rows, not recomputed |
+| `GET /reports/tax-return` (`?from=&to=&branch_id=`) | the same figures shaped for filing: the business's tax number under the active profile's own label, plus the profile's required invoice fields |
+
+A product or category selects a `tax_group_id` (`GET/POST/PUT /products`, `/categories`);
+resolution falls back product → category → zone default, and a product with no group
+anywhere is untaxed — a real answer, not a missing one. `GET /settings/business` returns
+`tax_profile_id`, `tax_profile` (full object or `null`), and `price_display`
+(`inclusive`\|`exclusive`); `PUT /settings/business` accepts both.
 
 ## Accounting (chart of accounts + double-entry journals)
 

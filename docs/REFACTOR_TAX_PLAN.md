@@ -23,17 +23,25 @@ performance, SEO and code quality across both codebases.
 | R10 Compliant documents | ✅ | (pending commit) | Invoice PDF: per-component tax breakdown, profile-aware tax number label, customer exemption/tax number, `required_invoice_fields` footer |
 | R11 POS backend depth | ✅ | (pending commit) | `sales/{id}/resume` (held→completed, no re-pricing), `sales/{id}/void` (stock reversal), `GET pos/bootstrap` |
 | Product/category tax wiring | ✅ | (pending commit) | `products`/`categories` create/update/resource now use `tax_group_id`; the dead `tax_rate`/`tax_inclusive` fields removed from the API surface |
-| R12–R17 Frontend | 🔄 | | Delegated to a background agent (feature architecture, tax admin + report UI, POS tax display, page migration, POS rewrite, perf, SEO) — see its report when it lands |
+| R12 Frontend architecture | ✅ | `b1e4aae` | `lib/query-keys.ts`, `lib/use-resource-list.ts` (search+filter+sort+pagination synced to URL) |
+| R13 Page migration | 🔶 partial | `b1e4aae` | Only `tax` and POS's tax logic moved into `src/features/`; the remaining 17 pages are still directly under `src/app/(app)/` |
+| R14 POS terminal rewrite | 🔶 partial | `b1e4aae` | Split-tender payments, F2/F9 shortcuts, barcode focus-trap+Enter lookup, per-component tax breakdown in cart/receipt. Held carts already existed at the API level (R11); no product-grid virtualization (deliberately — capped at 30 items) |
+| R15 Tax admin + report UI | ✅ | `b1e4aae` | `settings/tax` (profile, price-display, tax number, rates/groups/zones CRUD with an orderable component builder) and `reports/tax` (output/input/net-payable, dynamically-imported recharts chart, print-friendly return view) |
+| R16 Frontend performance | 🔶 partial | `b1e4aae` | `optimizePackageImports` for lucide-react; recharts dynamically imported (`ssr:false`). No virtualization, no bundle-budget CI check |
+| R17 SEO | 🔶 partial | `b1e4aae` | `robots.ts`, `sitemap.ts`, `noindex` on every `(app)` route via a server/client layout split. No per-route metadata on individual public/auth pages, no JSON-LD, no OG image route |
 | R4 Response/error contract | ⬜ deferred | | No domain exception currently needs it more than the tax work did |
 | R5 Event listeners | ⬜ deferred | | Nothing currently posts to the journal on sale/purchase automatically (checked: no observer exists) — not a blocker for anything shipped so far |
-| R18–R19 Gates + docs | 🔄 | | Full suite run pending frontend agent's completion |
+| R18 Gates | ✅ | `331b584`, `b1e4aae` | `php artisan test`: 239/239, 781 assertions. `pint --test`: clean. `tsc --noEmit`: clean. `eslint`: 0 errors (6 pre-existing-pattern warnings). `npm run build`: succeeds |
+| R19 Docs | ✅ | (pending commit) | `docs/API.md` (Tax administration section + resume/void/bootstrap/returns updates), `docs/PROGRESS.md` (T96, T106 marked done), this file |
 
 ### Resuming
 
-Backend tax work (R8b–R11) is done. What's left: wait for the frontend agent's
-report, then run `php artisan test`, `vendor/bin/pint --test`, `npm run lint`,
-`npm run build` and fix whatever breaks, then update `docs/API.md` and
-`docs/PROGRESS.md` and commit everything in focused, per-step commits.
+The backend (R1–R11) and this doc's Stage 5 gates are done and green. What's left
+for a future session, in priority order: finish the R13 page migration (`pos` and
+`products` are the biggest and most-tangled — see the frontend agent's report for
+exactly what it touched vs. didn't), then R16/R17's remaining items, then R4/R5 if
+the codebase grows a second money-adjacent domain exception or a second listener
+consumer that actually needs them.
 
 ## Decisions taken
 
