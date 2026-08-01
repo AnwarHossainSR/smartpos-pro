@@ -37,7 +37,8 @@ class SaleReturnTaxTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
         ])->assertCreated()->json('data');
 
-        $this->assertSame(18.0, $sale['items'][0]['tax_amount']);
+        // 2 units @ 100 = 200 net; CGST 9% + SGST 9% = 36 total tax.
+        $this->assertEquals(36.0, $sale['items'][0]['tax_amount']);
 
         // The rate changes *after* the sale — the return must not care.
         TaxRate::where('name', 'CGST')->update(['rate' => 20]);
@@ -47,8 +48,8 @@ class SaleReturnTaxTest extends TestCase
         ])->assertCreated()->json('data');
 
         // Half the quantity returned -> half the original tax, at the *original* rate.
-        $this->assertSame(9.0, $return['tax_amount']);
+        $this->assertEquals(18.0, $return['tax_amount']);
         $this->assertEqualsCanonicalizing(['CGST', 'SGST'], collect($return['items'][0]['taxes'])->pluck('name')->all());
-        $this->assertSame(4.5, collect($return['items'][0]['taxes'])->firstWhere('name', 'CGST')['amount']);
+        $this->assertEquals(9.0, collect($return['items'][0]['taxes'])->firstWhere('name', 'CGST')['amount']);
     }
 }

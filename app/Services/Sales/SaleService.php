@@ -246,7 +246,7 @@ class SaleService
      * Cancels a completed sale: reverses the stock it moved and, if the
      * customer owed anything on it, clears that receivable. Cash already
      * collected is not auto-refunded — voiding corrects a mistaken sale, it
-     * is not a refund workflow (that is {@see \App\Services\Sales\SaleReturnService}).
+     * is not a refund workflow (that is {@see SaleReturnService}).
      */
     public function void(Sale $sale, User $user, ?string $reason = null): Sale
     {

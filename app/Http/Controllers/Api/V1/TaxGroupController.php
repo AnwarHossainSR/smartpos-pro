@@ -8,8 +8,8 @@ use App\Http\Resources\TaxGroupResource;
 use App\Models\TaxGroup;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TaxGroupController extends Controller
 {

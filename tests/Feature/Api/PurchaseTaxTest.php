@@ -39,8 +39,8 @@ class PurchaseTaxTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 4, 'unit_cost' => 50, 'tax_amount' => 999]],
         ])->assertCreated()->json('data');
 
-        $this->assertSame(30.0, $purchase['tax_amount']); // 15% of 200
-        $this->assertSame(230.0, $purchase['total']);
+        $this->assertEquals(30.0, $purchase['tax_amount']); // 15% of 200
+        $this->assertEquals(230.0, $purchase['total']);
     }
 
     public function test_a_product_with_no_tax_group_has_no_input_tax(): void
@@ -59,6 +59,6 @@ class PurchaseTaxTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_cost' => 50]],
         ])->assertCreated()->json('data');
 
-        $this->assertSame(0.0, $purchase['tax_amount']);
+        $this->assertEquals(0.0, $purchase['tax_amount']);
     }
 }

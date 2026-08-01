@@ -5,7 +5,6 @@ namespace Tests\Feature\Api;
 use App\Domain\Enums\StockMovementType;
 use App\Models\CashRegister;
 use App\Models\Product;
-use App\Models\Sale;
 use App\Services\Inventory\StockLedgerService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -99,7 +98,7 @@ class PosBackendTest extends TestCase
         Sanctum::actingAs($owner);
 
         $register = CashRegister::create(['branch_id' => $owner->branch_id, 'name' => 'Front till', 'is_active' => true]);
-        $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 100])->assertOk();
+        $this->postJson("/api/v1/cash-registers/{$register->id}/open", ['opening_cash' => 100])->assertCreated();
 
         $bootstrap = $this->getJson('/api/v1/pos/bootstrap')->assertOk()->json('data');
 

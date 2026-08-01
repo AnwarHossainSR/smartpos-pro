@@ -2,10 +2,12 @@
 
 namespace App\Domain\Purchasing\Data;
 
+use App\Domain\Tax\TaxEngine;
+
 /**
  * One line on a goods receipt. Cost is supplier-supplied, unlike a sale's
  * price. Tax is not: input tax is resolved from the product's tax group by
- * the {@see \App\Domain\Tax\TaxEngine}, the same way a sale's is, so a client
+ * the {@see TaxEngine}, the same way a sale's is, so a client
  * cannot understate what was reclaimed.
  */
 final readonly class PurchaseLineData
