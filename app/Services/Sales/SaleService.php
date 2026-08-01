@@ -112,7 +112,7 @@ class SaleService
                 ], $cashier);
             }
 
-            return $sale->load('items', 'payments', 'customer', 'coupon');
+            return $sale->load('items.taxes', 'payments', 'customer', 'coupon');
         });
     }
 
@@ -166,7 +166,7 @@ class SaleService
                 Customer::whereKey($sale->customer_id)->decrement('balance', $data->amount);
             }
 
-            return $sale->fresh(['items', 'payments', 'customer', 'coupon']);
+            return $sale->fresh(['items.taxes', 'payments', 'customer', 'coupon']);
         });
     }
 
@@ -238,7 +238,7 @@ class SaleService
 
             $this->awardLoyalty($sale, $cashier, true);
 
-            return $sale->fresh(['items', 'payments', 'customer', 'coupon']);
+            return $sale->fresh(['items.taxes', 'payments', 'customer', 'coupon']);
         });
     }
 
@@ -286,7 +286,7 @@ class SaleService
 
             $this->audit->log('sale.void', $sale, null, ['reason' => $reason], $user);
 
-            return $sale->fresh(['items', 'payments', 'customer']);
+            return $sale->fresh(['items.taxes', 'payments', 'customer']);
         });
     }
 

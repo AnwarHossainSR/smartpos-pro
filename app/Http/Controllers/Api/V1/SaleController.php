@@ -64,7 +64,7 @@ class SaleController extends Controller
 
     public function show(Sale $sale): SaleResource
     {
-        return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier', 'coupon'));
+        return new SaleResource($sale->load('items.taxes', 'payments', 'customer', 'cashier', 'coupon'));
     }
 
     /** Records a settlement payment against a due/partial sale. Idempotent when an Idempotency-Key header is supplied. */
