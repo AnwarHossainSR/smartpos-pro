@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Plus, Minus, X, User, FileText } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,8 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
+import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
 
 /* ---- types ---- */
 interface Product {
@@ -21,8 +24,13 @@ interface Product {
   sku: string | null;
   selling_price: number;
   purchase_price: number;
+  /** Legacy single-rate fields — still what `/products` returns today. Kept as the fallback
+   *  path below so the cart keeps working even before the API adds `tax_group`. */
   tax_rate: number;
   tax_inclusive: boolean;
+  /** Not yet returned by `/products` (only `/tax-groups` has it so far) — read defensively so
+   *  the multi-component breakdown activates automatically once the API adds this relation. */
+  tax_group?: TaxGroup | null;
   stock: number;
   is_active: boolean;
   category: { id: number; name: string } | null;
@@ -60,29 +68,61 @@ interface SaleResult {
     due_amount: number;
     sold_at: string;
     customer?: { id: number; name: string };
-    items: { name: string; quantity: number; unit_price: number; line_total: number }[];
+    items: {
+      name: string;
+      quantity: number;
+      unit_price: number;
+      line_total: number;
+      tax_amount?: number;
+      /** Not yet returned by `/sales` (only reversed on `/sale-returns` so far) — rendered when
+       *  present, falls back to the blended `tax_amount` line below when absent. */
+      taxes?: { name: string; rate: number; amount: number }[];
+    }[];
     payments: { method: string; amount: number }[];
   };
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Mirrors SaleService::buildLines() on the server: tax is snapshotted per product, so the cart
- *  has to apply the same per-line rounding or the amount tendered lands a few paisa short of the
- *  server's total and the sale silently books a due balance. */
-function lineTotals({ product, qty, unit_price, discount }: CartItem) {
+/**
+ * Per-line tax, with the full per-component breakdown (e.g. CGST 9% + SGST 9% shown
+ * separately) — mirrors the backend's `App\Domain\Tax\TaxCalculator::forLine()`
+ * (see `src/features/tax/calc.ts`) so the amount tendered matches the server's total to 2dp.
+ *
+ * Falls back to the legacy single blended rate when a product hasn't got a `tax_group`
+ * yet (today's `/products` response) — see the `Product` type above for why that's optional.
+ */
+function lineTotals({ product, qty, unit_price, discount }: CartItem, priceDisplay: PriceDisplay) {
   const taxable = Math.max(0, unit_price * qty - discount * qty);
+
+  if (product.tax_group?.rates?.length) {
+    const result = calculateLineTax(taxable, qty, product.tax_group.rates, priceDisplay);
+    return { net: result.net, tax: result.tax, components: result.components as TaxComponentResult[] };
+  }
+
   const rate = product.tax_rate ?? 0;
   const tax = product.tax_inclusive
     ? round2(taxable - taxable / (1 + rate / 100))
     : round2(taxable * (rate / 100));
+  const net = product.tax_inclusive ? round2(taxable - tax) : round2(taxable);
+  const components: TaxComponentResult[] =
+    tax > 0 ? [{ name: "Tax", rate, type: "percentage", is_compound: false, base_amount: net, amount: tax }] : [];
 
-  return { net: product.tax_inclusive ? round2(taxable - tax) : round2(taxable), tax };
+  return { net, tax, components };
 }
 
 /* ---- receipt modal ---- */
 function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: () => void }) {
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+
+  // Aggregate each item's own component breakdown when the API provides one (today, only
+  // sale returns do — see the `taxes` comment on SaleResult above); falls back to the single
+  // blended `tax_amount` line so the receipt still works against the current `/sales` response.
+  const taxComponents = mergeTaxComponents(
+    sale.items?.map((item) =>
+      item.taxes?.map((t) => ({ name: t.name, rate: t.rate, type: "percentage" as const, is_compound: false, base_amount: 0, amount: t.amount })) ?? [],
+    ) ?? [],
+  );
 
   const viewInvoice = async () => {
     setLoadingInvoice(true);
@@ -119,9 +159,17 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
               <div className="flex justify-between text-[var(--muted)]">
                 <span>Subtotal</span><span>{formatCurrency(sale.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-[var(--muted)]">
-                <span>Tax</span><span>{formatCurrency(sale.tax_amount)}</span>
-              </div>
+              {taxComponents.length > 0 ? (
+                taxComponents.map((c) => (
+                  <div key={`${c.name}@${c.rate}`} className="flex justify-between text-[var(--muted)]">
+                    <span>{c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}</span><span>{formatCurrency(c.amount)}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-between text-[var(--muted)]">
+                  <span>Tax</span><span>{formatCurrency(sale.tax_amount)}</span>
+                </div>
+              )}
             </>
           )}
           <div className="flex justify-between font-semibold">
@@ -154,7 +202,22 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
   );
 }
 
-/* ---- payment modal ---- */
+const PAYMENT_METHODS = [
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card" },
+  { value: "mobile_banking", label: "Mobile banking" },
+  { value: "bank", label: "Bank transfer" },
+  { value: "wallet", label: "Wallet" },
+  { value: "due", label: "Due / Credit" },
+];
+
+interface PaymentRow { id: number; method: string; amount: string; }
+let paymentRowSeq = 0;
+
+/** Split tender: the checkout endpoint already accepts a `payments` array (e.g. part cash,
+ *  part card on one sale) — this was previously a UI gap where only a single row could be
+ *  entered. Row 1 defaults to the full amount due so the common single-method case is still
+ *  a one-field flow; "Add payment" only shows up when it's actually needed. */
 function PaymentModal({
   total,
   onConfirm,
@@ -166,13 +229,23 @@ function PaymentModal({
   onClose: () => void;
   loading: boolean;
 }) {
-  const [method, setMethod] = useState<string>("cash");
-  const [amount, setAmount] = useState<string>(total.toFixed(2));
+  const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: ++paymentRowSeq, method: "cash", amount: total.toFixed(2) }]);
+
+  const tendered = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const remaining = round2(total - tendered);
+
+  const addRow = () =>
+    setRows((prev) => [...prev, { id: ++paymentRowSeq, method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
+  const removeRow = (id: number) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+  const updateRow = (id: number, patch: Partial<Omit<PaymentRow, "id">>) =>
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   const handleSubmit = () => {
-    const paid = parseFloat(amount);
-    if (isNaN(paid) || paid <= 0) { toast("Enter a valid amount", "error"); return; }
-    onConfirm([{ method, amount: paid }]);
+    const payments = rows
+      .map((r) => ({ method: r.method, amount: round2(parseFloat(r.amount) || 0) }))
+      .filter((p) => p.amount > 0);
+    if (payments.length === 0) { toast("Enter a valid amount", "error"); return; }
+    onConfirm(payments);
   };
 
   return (
@@ -182,30 +255,42 @@ function PaymentModal({
           <Label>Amount due</Label>
           <p className="text-2xl font-bold">{formatCurrency(total)}</p>
         </div>
-        <div>
-          <Label>Payment method</Label>
-          <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-            <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="mobile_banking">Mobile banking</option>
-            <option value="bank">Bank transfer</option>
-            <option value="wallet">Wallet</option>
-            <option value="due">Due / Credit</option>
-          </Select>
+
+        <div className="space-y-2">
+          {rows.map((row, i) => (
+            <div key={row.id} className="flex items-center gap-2">
+              <Select
+                className="w-40 shrink-0"
+                value={row.method}
+                onChange={(e) => updateRow(row.id, { method: e.target.value })}
+              >
+                {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </Select>
+              <Input
+                type="number"
+                step="0.01"
+                value={row.amount}
+                onChange={(e) => updateRow(row.id, { amount: e.target.value })}
+                autoFocus={i === 0}
+              />
+              {rows.length > 1 && (
+                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addRow}>
+            <Plus className="h-3.5 w-3.5" /> Add payment (split tender)
+          </Button>
         </div>
-        <div>
-          <Label>Amount tendered</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            autoFocus
-          />
-        </div>
-        {parseFloat(amount) > total && (
-          <p className="text-sm text-green-600">Change: {formatCurrency(parseFloat(amount) - total)}</p>
-        )}
+
+        {remaining > 0.001 ? (
+          <p className="text-sm text-amber-600">Remaining: {formatCurrency(remaining)} (recorded as due if you confirm now)</p>
+        ) : remaining < -0.001 ? (
+          <p className="text-sm text-green-600">Change: {formatCurrency(-remaining)}</p>
+        ) : null}
+
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">Cancel</Button>
           <Button onClick={handleSubmit} disabled={loading} className="flex-1">
@@ -229,6 +314,7 @@ export default function POSPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
     queryKey: ["pos-products", search],
@@ -246,6 +332,14 @@ export default function POSPage() {
     queryKey: ["warehouses-all"],
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
   });
+
+  // Same query key as Settings → Business and the app shell's currency sync, so this is a
+  // cache hit in practice rather than an extra request just for the POS screen.
+  const { data: businessSettings } = useQuery({
+    queryKey: queryKeys.businessSettings,
+    queryFn: () => api<{ data: { price_display: PriceDisplay } }>("/settings/business"),
+  });
+  const priceDisplay: PriceDisplay = businessSettings?.data?.price_display ?? "exclusive";
 
   const defaultWarehouse = useMemo(
     () => warehousesData?.data?.find((w) => w.is_default) ?? warehousesData?.data?.[0],
@@ -269,6 +363,49 @@ export default function POSPage() {
     });
   }, []);
 
+  /** Enter in the search box first tries an exact barcode match (what a scanner "types" +
+   *  Enter looks like) before falling back to the live text search already wired to `search`. */
+  const tryBarcodeLookup = useCallback(async (code: string) => {
+    if (!code.trim()) return;
+    try {
+      const found = await api<{ data: Product }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
+      if (found?.data) {
+        addToCart(found.data);
+        setSearch("");
+      }
+    } catch {
+      // Not a barcode (or not found) — leave it as a normal search term.
+    }
+  }, [addToCart]);
+
+  // Keyboard-first operation: F2 refocuses the scanner/search input from anywhere on the
+  // screen, F9 jumps straight to payment, and any bare alphanumeric keystroke while nothing
+  // else is focused is treated as scanner input and routed into the search box — a barcode
+  // scanner is just a very fast keyboard, so if focus drifted (e.g. right after adding an
+  // item) its keystrokes shouldn't be silently dropped.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "F2") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (e.key === "F9") {
+        e.preventDefault();
+        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+        return;
+      }
+
+      const active = document.activeElement;
+      const isTypingElsewhere = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+      if (!isTypingElsewhere && !showPayment && !receipt && /^[a-zA-Z0-9]$/.test(e.key)) {
+        searchInputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cart.length, showPayment, receipt]);
+
   const updateQty = (id: number, qty: number) => {
     if (qty <= 0) {
       setCart((prev) => prev.filter((i) => i.product.id !== id));
@@ -283,21 +420,21 @@ export default function POSPage() {
 
   const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
-  const { cartSubtotal, cartTax, cartTotal } = useMemo(() => {
-    const totals = cart.reduce(
-      (acc, item) => {
-        const { net, tax } = lineTotals(item);
-        return { net: acc.net + net, tax: acc.tax + tax };
-      },
+  const { cartSubtotal, cartTotal, cartTaxComponents } = useMemo(() => {
+    const perLine = cart.map((item) => lineTotals(item, priceDisplay));
+    const totals = perLine.reduce(
+      (acc, { net, tax }) => ({ net: acc.net + net, tax: acc.tax + tax }),
       { net: 0, tax: 0 },
     );
 
     return {
       cartSubtotal: round2(totals.net),
-      cartTax: round2(totals.tax),
       cartTotal: round2(totals.net + totals.tax),
+      // Per-component totals across the whole basket — "CGST 9%: ৳18.00 / SGST 9%: ৳18.00"
+      // rather than one blended "Tax" line, which is the whole point of the tax engine.
+      cartTaxComponents: mergeTaxComponents(perLine.map((l) => l.components)),
     };
-  }, [cart]);
+  }, [cart, priceDisplay]);
 
   const checkoutMutation = useMutation({
     mutationFn: (payments: { method: string; amount: number }[]) => {
@@ -342,10 +479,14 @@ export default function POSPage() {
         <div className="relative">
           <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
           <Input
+            ref={searchInputRef}
             className="ps-9"
-            placeholder="Search products…"
+            placeholder="Search or scan a barcode… (F2)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") tryBarcodeLookup(search);
+            }}
             autoFocus
           />
         </div>
@@ -507,12 +648,15 @@ export default function POSPage() {
             <span className="text-[var(--muted)]">Subtotal</span>
             <span>{formatCurrency(cartSubtotal)}</span>
           </div>
-          {cartTax > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-[var(--muted)]">Tax</span>
-              <span>{formatCurrency(cartTax)}</span>
+          {/* Per-component breakdown, e.g. "CGST 9%" and "SGST 9%" shown separately — not one
+              blended "Tax" line. Falls back to a single "Tax" row for legacy single-rate
+              products (see lineTotals() above). */}
+          {cartTaxComponents.map((c) => (
+            <div key={`${c.name}@${c.rate}`} className="flex justify-between text-sm">
+              <span className="text-[var(--muted)]">{c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}</span>
+              <span>{formatCurrency(c.amount)}</span>
             </div>
-          )}
+          ))}
           <div className="flex justify-between font-semibold">
             <span>Total</span>
             <span>{formatCurrency(cartTotal)}</span>

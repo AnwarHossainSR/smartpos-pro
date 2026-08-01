@@ -21,6 +21,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { useTranslation } from "@/i18n/provider";
+import { useAllTaxGroups } from "@/features/tax/hooks";
+import type { TaxGroup } from "@/features/tax/types";
 
 /* ---- types ---- */
 interface Category { id: number; name: string; }
@@ -39,6 +41,11 @@ interface Product {
   is_active: boolean;
   category: Category | null;
   brand: Brand | null;
+  /** Optional: the backend's products endpoint doesn't return this relation yet as of this
+   *  writing, only the tax-groups endpoints under Settings → Tax do. Read defensively so the
+   *  form still works today and picks up the value automatically once the API adds it. */
+  tax_group?: TaxGroup | null;
+  tax_group_id?: number | null;
 }
 
 /* ---- form schema ---- */
@@ -49,6 +56,7 @@ const schema = z.object({
   category_id: z.number().optional(),
   brand_id: z.number().optional(),
   unit_id: z.number().optional(),
+  tax_group_id: z.number().nullable().optional(),
   purchase_price: z.number().min(0, "Must be ≥ 0"),
   selling_price: z.number().min(0.01, "Must be > 0"),
   is_active: z.boolean(),
@@ -88,6 +96,7 @@ function ProductForm({
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
     enabled: !isEdit,
   });
+  const { data: taxGroups } = useAllTaxGroups();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -167,6 +176,17 @@ function ProductForm({
             {units?.data?.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label>{t("products.form.taxGroup")}</Label>
+        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? Number(v) : null) })}>
+          <option value="">{t("products.form.taxGroupNone")}</option>
+          {taxGroups?.data?.map((g) => (
+            <option key={g.id} value={g.id}>{g.name}{g.is_default ? ` (${t("products.form.default")})` : ""}</option>
+          ))}
+        </Select>
+        <p className="mt-1 text-xs text-[var(--muted)]">{t("products.form.taxGroupHint")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -377,6 +397,7 @@ export default function ProductsPage() {
                   is_active: editing.is_active,
                   category_id: editing.category?.id,
                   brand_id: editing.brand?.id,
+                  tax_group_id: editing.tax_group?.id ?? editing.tax_group_id ?? null,
                 }
               : undefined
           }

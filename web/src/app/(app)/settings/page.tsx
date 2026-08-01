@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Laptop, Smartphone } from "lucide-react";
+import { Laptop, Smartphone, Percent, ChevronRight } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -256,6 +257,21 @@ export default function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
+          <Card>
+            <CardContent className="p-0">
+              <Link
+                href="/settings/tax"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Percent className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">Tax</p>
+                  <p className="text-xs text-[var(--muted)]">Rates, groups, jurisdictions & price display</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader><CardTitle>{t("settings.appearance")}</CardTitle></CardHeader>
             <CardContent>

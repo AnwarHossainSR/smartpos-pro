@@ -33,7 +33,9 @@
     "subscription": "Subscription",
     "notifications": "Notifications",
     "settings": "Settings",
-    "auditLog": "Audit Log"
+    "auditLog": "Audit Log",
+    "taxSettings": "Tax Settings",
+    "taxReport": "Tax Report"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",
@@ -172,6 +174,9 @@
       "category": "Category",
       "brand": "Brand",
       "unit": "Unit",
+      "taxGroup": "Tax group",
+      "taxGroupNone": "— No tax —",
+      "taxGroupHint": "Determines which tax components (e.g. CGST + SGST) apply to this product. Manage groups under Settings → Tax.",
       "none": "— None —",
       "costPrice": "Cost price",
       "sellPrice": "Sell price",
