@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleReturnItem extends Model
 {
@@ -13,6 +14,12 @@ class SaleReturnItem extends Model
         'tenant_id', 'sale_return_id', 'sale_item_id', 'product_id', 'variant_id',
         'quantity', 'unit_price', 'unit_cost', 'line_total',
     ];
+
+    /** The reversed per-component tax, derived from the original sale line. */
+    public function taxes(): HasMany
+    {
+        return $this->hasMany(SaleReturnItemTax::class);
+    }
 
     protected function casts(): array
     {

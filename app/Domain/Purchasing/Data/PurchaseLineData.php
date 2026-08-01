@@ -2,7 +2,12 @@
 
 namespace App\Domain\Purchasing\Data;
 
-/** One line on a goods receipt. Cost is supplier-supplied, unlike a sale's price. */
+/**
+ * One line on a goods receipt. Cost is supplier-supplied, unlike a sale's
+ * price. Tax is not: input tax is resolved from the product's tax group by
+ * the {@see \App\Domain\Tax\TaxEngine}, the same way a sale's is, so a client
+ * cannot understate what was reclaimed.
+ */
 final readonly class PurchaseLineData
 {
     public function __construct(
@@ -11,7 +16,6 @@ final readonly class PurchaseLineData
         public float $unitCost,
         public ?int $variantId = null,
         public float $discountAmount = 0.0,
-        public float $taxAmount = 0.0,
     ) {}
 
     /** @param  array<string, mixed>  $data */
@@ -23,7 +27,6 @@ final readonly class PurchaseLineData
             unitCost: round((float) $data['unit_cost'], 4),
             variantId: isset($data['variant_id']) ? (int) $data['variant_id'] : null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),
-            taxAmount: round((float) ($data['tax_amount'] ?? 0), 2),
         );
     }
 

@@ -40,4 +40,14 @@ final readonly class TaxContext
     {
         return ! $this->customerExempt;
     }
+
+    /**
+     * A purchase's unit cost is always the net price paid to the supplier,
+     * regardless of how this tenant displays *sale* prices to its own
+     * customers — those are independent settings.
+     */
+    public function asExclusive(): self
+    {
+        return new self($this->profile, PriceDisplay::Exclusive, $this->currency, $this->customerExempt, $this->zoneGroup);
+    }
 }

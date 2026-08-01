@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseItem extends Model
 {
@@ -14,6 +15,12 @@ class PurchaseItem extends Model
         'tenant_id', 'purchase_id', 'product_id', 'variant_id', 'quantity',
         'unit_cost', 'discount_amount', 'tax_amount', 'line_total',
     ];
+
+    /** Input tax, per component — the reclaimable side of a VAT/GST return. */
+    public function taxes(): HasMany
+    {
+        return $this->hasMany(PurchaseItemTax::class);
+    }
 
     protected function casts(): array
     {

@@ -53,7 +53,7 @@ class SaleReturnService
 
             foreach ($data->items as $line) {
                 /** @var SaleItem|null $saleItem */
-                $saleItem = $sale->items()->whereKey($line->saleItemId)->first();
+                $saleItem = $sale->items()->with('taxes')->whereKey($line->saleItemId)->first();
 
                 if (! $saleItem) {
                     throw ValidationException::withMessages([
@@ -70,14 +70,16 @@ class SaleReturnService
                     ]);
                 }
 
-                $lineTotal = round((float) $saleItem->unit_price * $quantity, 2);
-                $lineTax = $saleItem->quantity > 0
-                    ? round((float) $saleItem->tax_amount * ($quantity / (float) $saleItem->quantity), 2)
-                    : 0;
-                $subtotal += $lineTotal;
-                $taxTotal += $lineTax;
+                // What fraction of the original line is being reversed. Applied to
+                // each snapshotted component rather than recomputed at today's
+                // rate, so a rate change between sale and return cannot change
+                // the refund.
+                $ratio = (float) $saleItem->quantity > 0 ? $quantity / (float) $saleItem->quantity : 0.0;
 
-                $return->items()->create([
+                $lineTotal = round((float) $saleItem->unit_price * $quantity, 2);
+                $subtotal += $lineTotal;
+
+                $returnItem = $return->items()->create([
                     'sale_item_id' => $saleItem->id,
                     'product_id' => $saleItem->product_id,
                     'variant_id' => $saleItem->variant_id,
@@ -86,6 +88,21 @@ class SaleReturnService
                     'unit_cost' => (float) $saleItem->unit_cost,
                     'line_total' => $lineTotal,
                 ]);
+
+                foreach ($saleItem->taxes as $component) {
+                    $amount = round((float) $component->amount * $ratio, 2);
+                    $taxTotal += $amount;
+
+                    $returnItem->taxes()->create([
+                        'tax_rate_id' => $component->tax_rate_id,
+                        'name' => $component->name,
+                        'rate' => $component->rate,
+                        'type' => $component->type,
+                        'is_compound' => $component->is_compound,
+                        'base_amount' => round((float) $component->base_amount * $ratio, 2),
+                        'amount' => $amount,
+                    ]);
+                }
 
                 // Return the goods to stock via the immutable ledger.
                 $this->ledger->record([
@@ -116,7 +133,7 @@ class SaleReturnService
                 }
             }
 
-            return $return->load('items');
+            return $return->load('items.taxes');
         });
     }
 }

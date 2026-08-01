@@ -46,6 +46,6 @@ class SaleReturnController extends Controller
 
     public function show(SaleReturn $saleReturn): SaleReturnResource
     {
-        return new SaleReturnResource($saleReturn->load('items'));
+        return new SaleReturnResource($saleReturn->load('items.taxes'));
     }
 }

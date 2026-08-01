@@ -31,7 +31,6 @@ class StorePurchaseRequest extends FormRequest
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_amount' => ['nullable', 'numeric', 'min:0'],
 
             'payments' => ['nullable', 'array'],
             'payments.*.method' => ['required_with:payments', 'in:cash,card,bank,mobile_banking,wallet'],
