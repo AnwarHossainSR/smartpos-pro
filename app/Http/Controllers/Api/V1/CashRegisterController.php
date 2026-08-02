@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\CashMovementType;
+use App\Domain\Enums\CashSessionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CashRegisterSessionResource;
 use App\Models\CashRegister;
@@ -26,7 +28,7 @@ class CashRegisterController extends Controller
                 'name' => $r->name,
                 'branch_id' => $r->branch_id,
                 'is_active' => (bool) $r->is_active,
-                'has_open_session' => $r->sessions->firstWhere('status', 'open') !== null,
+                'has_open_session' => $r->sessions->contains('status', CashSessionStatus::Open),
             ]);
 
         return response()->json(['data' => $registers]);
@@ -64,12 +66,18 @@ class CashRegisterController extends Controller
     public function movement(Request $request, CashRegisterSession $session): CashRegisterSessionResource
     {
         $data = $request->validate([
-            'type' => ['required', 'in:in,out'],
+            'type' => ['required', CashMovementType::rule()],
             'amount' => ['required', 'numeric', 'gt:0'],
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $session = $this->service->movement($session, $data['type'], (float) $data['amount'], $data['reason'] ?? null, $request->user());
+        $session = $this->service->movement(
+            $session,
+            CashMovementType::from($data['type']),
+            (float) $data['amount'],
+            $data['reason'] ?? null,
+            $request->user(),
+        );
 
         return new CashRegisterSessionResource($session);
     }

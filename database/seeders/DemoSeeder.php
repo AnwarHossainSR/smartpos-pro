@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Sales\Data\CreateSaleData;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Customer;
@@ -131,13 +132,13 @@ class DemoSeeder extends Seeder
                     'quantity' => fake()->numberBetween(1, 3),
                 ])->values()->all();
 
-                $sale = $sales->create([
+                $sale = $sales->create(CreateSaleData::fromArray([
                     'branch_id' => $branch->id,
                     'warehouse_id' => $warehouse->id,
                     'customer_id' => fake()->boolean(60) ? $customers->random()->id : null,
                     'items' => $items,
                     'payments' => [], // filled below once total is known
-                ], $owner);
+                ]), $owner);
 
                 // Record a matching cash payment and backdate the sale.
                 $sale->payments()->create(['method' => 'cash', 'amount' => $sale->total, 'paid_at' => now()->subDays($d)]);

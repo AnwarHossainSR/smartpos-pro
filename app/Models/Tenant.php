@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\TenantStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +16,7 @@ class Tenant extends Model
     protected function casts(): array
     {
         return [
+            'status' => TenantStatus::class,
             'trial_ends_at' => 'datetime',
             'feature_limits' => 'array',
         ];

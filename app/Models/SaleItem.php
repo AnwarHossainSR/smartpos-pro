@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleItem extends Model
 {
@@ -26,6 +27,12 @@ class SaleItem extends Model
             'tax_amount' => 'decimal:2',
             'line_total' => 'decimal:2',
         ];
+    }
+
+    /** Per-component breakdown of this line's tax — what a compliant invoice prints. */
+    public function taxes(): HasMany
+    {
+        return $this->hasMany(SaleItemTax::class);
     }
 
     public function product(): BelongsTo

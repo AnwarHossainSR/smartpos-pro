@@ -20,6 +20,7 @@ class SaleCheckoutTest extends TestCase
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),
             'purchase_price' => $price / 2, 'selling_price' => $price, 'tax_rate' => $tax,
+            'tax_group_id' => $tax > 0 ? $this->taxGroup($tax)->id : null,
             'min_stock_level' => 0,
         ]);
         app(StockLedgerService::class)

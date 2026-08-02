@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
+import { Percent } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues";
@@ -44,7 +45,12 @@ export default function ReportsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Reports</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold">Reports</h1>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/reports/tax"><Percent className="h-3.5 w-3.5" /> Tax report</Link>
+          </Button>
+        </div>
         <div className="flex items-center gap-2 text-sm">
           <Label className="mb-0">From</Label>
           <Input type="date" className="h-9 w-36" value={from} onChange={(e) => setFrom(e.target.value)} />

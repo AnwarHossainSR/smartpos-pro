@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\SubscriptionStatus;
+use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
@@ -11,6 +13,8 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,11 +35,11 @@ class SuperAdminController extends Controller
 
     public function tenants(Request $request): JsonResponse
     {
-        $tenants = Tenant::withCount(['users', 'businesses'])
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate($request->integer('per_page', 25));
+        $tenants = QueryPipeline::for(Tenant::withCount(['users', 'businesses']), $request)
+            ->search(['name', 'slug'])
+            ->allow(AllowedFilter::enum('status', TenantStatus::class))
+            ->sortable(['id', 'name', 'created_at'], default: '-id')
+            ->paginate();
 
         return response()->json($tenants);
     }
@@ -59,7 +63,7 @@ class SuperAdminController extends Controller
 
     public function suspendTenant(Request $request, Tenant $tenant): JsonResponse
     {
-        $tenant->update(['status' => 'suspended']);
+        $tenant->update(['status' => TenantStatus::Suspended]);
 
         $userIds = User::withoutTenancy()->where('tenant_id', $tenant->id)->pluck('id');
         PersonalAccessToken::where('tokenable_type', User::class)->whereIn('tokenable_id', $userIds)->delete();
@@ -71,7 +75,7 @@ class SuperAdminController extends Controller
 
     public function activateTenant(Request $request, Tenant $tenant): JsonResponse
     {
-        $tenant->update(['status' => 'active']);
+        $tenant->update(['status' => TenantStatus::Active]);
 
         $this->audit->log('tenant.activated', $tenant, null, ['tenant_id' => $tenant->id], $request->user(), $tenant->id);
 
@@ -94,15 +98,15 @@ class SuperAdminController extends Controller
         $period = $request->integer('days', 30);
         $from = now()->subDays($period);
 
-        $planDistribution = Subscription::withoutTenancy()->where('status', 'active')
+        $planDistribution = Subscription::withoutTenancy()->where('status', SubscriptionStatus::Active)
             ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
             ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price_monthly) as mrr')
             ->groupBy('plans.id', 'plans.name', 'plans.slug')
             ->get();
 
         $newTenants = Tenant::where('created_at', '>=', $from)->count();
-        $activeTenants = Tenant::where('status', 'active')->count();
-        $suspendedTenants = Tenant::where('status', 'suspended')->count();
+        $activeTenants = Tenant::where('status', TenantStatus::Active)->count();
+        $suspendedTenants = Tenant::where('status', TenantStatus::Suspended)->count();
 
         $totalMrr = $planDistribution->sum('mrr');
 

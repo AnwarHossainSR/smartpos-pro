@@ -2,6 +2,8 @@
 
 namespace App\Services\Inventory;
 
+use App\Domain\Enums\StockDirection;
+use App\Domain\Enums\StockMovementType;
 use App\Exceptions\InsufficientStockException;
 use App\Models\InventoryBalance;
 use App\Models\StockMovement;
@@ -24,15 +26,20 @@ use Illuminate\Support\Facades\DB;
 class StockLedgerService
 {
     /**
+     * The movement `type` is the only input that decides which way stock moves —
+     * `direction` is derived from it rather than passed alongside, so a caller can
+     * no longer record a `purchase` that decrements stock.
+     *
      * @param  array{
-     *   product_id:int, warehouse_id:int, direction:'in'|'out', quantity:float,
-     *   type:string, variant_id?:int|null, unit_cost?:float, user_id?:int|null,
+     *   product_id:int, warehouse_id:int, quantity:float, type:StockMovementType,
+     *   variant_id?:int|null, unit_cost?:float, user_id?:int|null,
      *   note?:string|null, reference?:Model|null, allow_negative?:bool
      * }  $data
      */
     public function record(array $data): StockMovement
     {
-        $direction = $data['direction'];
+        $type = $data['type'];
+        $direction = $type->direction();
         $quantity = round((float) $data['quantity'], 4);
         $unitCost = round((float) ($data['unit_cost'] ?? 0), 4);
         $variantId = $data['variant_id'] ?? null;
@@ -45,7 +52,7 @@ class StockLedgerService
 
         $current = (float) $balance->quantity;
 
-        if ($direction === 'out') {
+        if ($direction === StockDirection::Out) {
             $available = $current - (float) $balance->reserved_quantity;
             if (! ($data['allow_negative'] ?? false) && $available < $quantity) {
                 throw new InsufficientStockException(
@@ -74,7 +81,7 @@ class StockLedgerService
             'product_id' => $data['product_id'],
             'variant_id' => $variantId,
             'warehouse_id' => $data['warehouse_id'],
-            'type' => $data['type'],
+            'type' => $type,
             'direction' => $direction,
             'quantity' => $quantity,
             'quantity_after' => $newQuantity,
@@ -115,10 +122,9 @@ class StockLedgerService
         return DB::transaction(fn () => $this->record([
             'product_id' => $productId,
             'warehouse_id' => $warehouseId,
-            'direction' => 'in',
             'quantity' => $quantity,
             'unit_cost' => $unitCost,
-            'type' => 'opening',
+            'type' => StockMovementType::Opening,
         ]));
     }
 }

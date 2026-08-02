@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Domain\Enums\TenantStatus;
 use App\Mail\DailyReportMail;
 use App\Models\Business;
 use App\Models\Tenant;
@@ -37,7 +38,7 @@ class SendDailyReportJob implements ShouldQueue
         $context->set($this->tenantId);
 
         $tenant = Tenant::find($this->tenantId);
-        if (! $tenant || $tenant->status !== 'active') {
+        if (! $tenant || $tenant->status !== TenantStatus::Active) {
             return;
         }
 
@@ -52,7 +53,9 @@ class SendDailyReportJob implements ShouldQueue
 
         $summary = DB::table('sales')
             ->where('tenant_id', $this->tenantId)
-            ->whereDate('sold_at', $yesterday)
+            // Half-open range rather than whereDate(): date(sold_at) can't use the index.
+            ->where('sold_at', '>=', $yesterday)
+            ->where('sold_at', '<', $yesterday->copy()->addDay())
             ->selectRaw('count(*) as sale_count, sum(total) as revenue, sum(profit) as profit')
             ->first();
 

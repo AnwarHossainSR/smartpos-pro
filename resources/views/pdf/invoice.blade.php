@@ -57,7 +57,7 @@
                 @if($branch->address)<div class="muted">{{ $branch->address }}</div>@endif
                 @if($branch->phone)<div class="muted">{{ $branch->phone }}</div>@endif
             @endif
-            @if($business->tax_number)<div class="muted">Tax No: {{ $business->tax_number }}</div>@endif
+            @if($business->tax_number)<div class="muted">{{ $profile->tax_number_label ?? 'Tax No' }}: {{ $business->tax_number }}</div>@endif
         </td>
         <td style="width: 42%;">
             <div class="invoice-title">INVOICE</div>
@@ -83,6 +83,11 @@
 <div class="bill-to-label">Billed to</div>
 <div style="font-weight: bold;">{{ $sale->customer->name ?? 'Walk-in customer' }}</div>
 @if($sale->customer?->phone)<div class="muted">{{ $sale->customer->phone }}</div>@endif
+@if($sale->customer?->tax_exempt)
+    <div class="muted">Tax exempt{{ $sale->customer->tax_exemption_reference ? ' ('.$sale->customer->tax_exemption_reference.')' : '' }}</div>
+@elseif($sale->customer?->tax_number)
+    <div class="muted">{{ $profile->tax_number_label ?? 'Tax No' }}: {{ $sale->customer->tax_number }}</div>
+@endif
 
 <table class="items-table fixed">
     <colgroup>
@@ -113,15 +118,33 @@
     </tbody>
 </table>
 
+@php
+    // Aggregated across every line rather than shown per-line: a GST invoice
+    // prints CGST and SGST as their own totals, not folded into one "Tax" figure.
+    $taxComponents = $sale->items->flatMap->taxes->groupBy('name')->map(fn ($rows) => [
+        'name' => $rows->first()->name,
+        'rate' => (float) $rows->first()->rate,
+        'is_percentage' => $rows->first()->type === \App\Domain\Enums\TaxType::Percentage,
+        'amount' => (float) $rows->sum('amount'),
+    ])->values();
+@endphp
+
 <div class="totals-card">
     <table class="totals-table">
         <tr><td class="label">Subtotal</td><td class="text-right">{{ \App\Support\Money::format((float) $sale->subtotal, $business->currency) }}</td></tr>
         @if((float) $sale->discount_amount > 0)
         <tr><td class="label">Discount</td><td class="text-right">-{{ \App\Support\Money::format((float) $sale->discount_amount, $business->currency) }}</td></tr>
         @endif
-        @if((float) $sale->tax_amount > 0)
-        <tr><td class="label">Tax</td><td class="text-right">{{ \App\Support\Money::format((float) $sale->tax_amount, $business->currency) }}</td></tr>
-        @endif
+        @forelse($taxComponents as $component)
+        <tr>
+            <td class="label">{{ $component['name'] }}{{ $component['is_percentage'] ? ' ('.rtrim(rtrim(number_format($component['rate'], 2), '0'), '.').'%)' : '' }}</td>
+            <td class="text-right">{{ \App\Support\Money::format($component['amount'], $business->currency) }}</td>
+        </tr>
+        @empty
+            @if((float) $sale->tax_amount > 0)
+            <tr><td class="label">Tax</td><td class="text-right">{{ \App\Support\Money::format((float) $sale->tax_amount, $business->currency) }}</td></tr>
+            @endif
+        @endforelse
         @if((float) $sale->shipping_amount > 0)
         <tr><td class="label">Shipping</td><td class="text-right">{{ \App\Support\Money::format((float) $sale->shipping_amount, $business->currency) }}</td></tr>
         @endif
@@ -142,11 +165,16 @@
 <table class="meta-table">
     @foreach($sale->payments as $payment)
     <tr>
-        <td style="text-transform: capitalize;">{{ str_replace('_', ' ', $payment->method) }}</td>
+        <td>{{ $payment->method->label() }}</td>
         <td class="text-right">{{ \App\Support\Money::format((float) $payment->amount, $business->currency) }}</td>
     </tr>
     @endforeach
 </table>
+@endif
+
+@if(!empty($profile->required_invoice_fields))
+<div class="section-gap"></div>
+<div class="muted" style="font-size: 8.5px;">{{ implode(' &middot; ', $profile->required_invoice_fields) }}</div>
 @endif
 
 <div class="footer">

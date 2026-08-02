@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\ProductType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ class Product extends Model
     use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'category_id', 'brand_id', 'unit_id', 'name', 'slug', 'sku',
+        'tenant_id', 'category_id', 'brand_id', 'unit_id', 'tax_group_id', 'name', 'slug', 'sku',
         'barcode', 'type', 'description', 'image_path', 'purchase_price', 'selling_price',
         'wholesale_price', 'tax_rate', 'tax_inclusive', 'min_stock_level', 'max_stock_level',
         'reorder_quantity', 'track_inventory', 'track_batches', 'track_serials',
@@ -23,6 +24,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'type' => ProductType::class,
             'purchase_price' => 'decimal:2',
             'selling_price' => 'decimal:2',
             'wholesale_price' => 'decimal:2',
@@ -53,6 +55,11 @@ class Product extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function taxGroup(): BelongsTo
+    {
+        return $this->belongsTo(TaxGroup::class);
     }
 
     public function variants(): HasMany

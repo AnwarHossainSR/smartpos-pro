@@ -6,7 +6,7 @@ when it finishes a task.
 
 **Status legend:** ✅ done · 🚧 in progress · ⬜ todo
 
-_Last updated: 2026-07-30_
+_Last updated: 2026-08-01_
 
 ## Summary
 
@@ -19,10 +19,23 @@ _Last updated: 2026-07-30_
 | 5 · Design system refresh + i18n & currency | 10 | 0 | 0 | 10 |
 | 6 · Printable documents | 1 | 0 | 0 | 1 |
 | 7 · Security & money integrity | 13 | 0 | 0 | 13 |
-| 8 · Product depth | 0 | 0 | 11 | 11 |
+| 8 · Product depth | 1 | 0 | 10 | 11 |
 | 9 · Gap fixes + missing endpoints | 5 | 0 | 0 | 5 |
-| 10 · Further gaps identified, not yet built | 0 | 0 | 6 | 6 |
-| **Total** | **93** | **0** | **17** | **110** |
+| 10 · Further gaps identified, not yet built | 1 | 0 | 5 | 6 |
+| 11 · Audit pass (correctness, load safety, contract drift) | 6 | 0 | 2 | 8 |
+| **Total** | **101** | **0** | **17** | **118** |
+
+## 2026-08-01 — backend refactor, tax engine, and frontend overhaul
+
+A separate, larger initiative than the task-by-task work above: reusable domain
+primitives (enums, `Money`, a declarative query pipeline, typed DTOs), a full
+jurisdiction-aware tax engine wired through checkout/returns/purchases/quotations
+with an admin API and reports, POS backend depth (held/resume/void, `pos/bootstrap`),
+and a first pass at the frontend (shared list architecture, tax admin + report UI,
+POS tax display, SEO baseline). Plan, decisions and per-step status:
+[`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md). `php artisan test`: 239 passing
+(was 146 at the start). Frontend feature-folder migration beyond tax/POS, list
+virtualization, and per-auth-page metadata remain — see that doc's status table.
 
 ## Phase 1 — Backend foundation & modules
 
@@ -167,7 +180,7 @@ vertical depth — pick a lane rather than building all of them.
 | T93 | Reorder suggestions → draft POs | ⬜ | | All inputs already exist; loop not closed |
 | T94 | Accounts payable & receivable aging | ⬜ | | Supplier bills + payments missing |
 | T95 | Hardware integration | ⬜ | | ESC/POS, cash drawer, scale, label printing |
-| T96 | Tax compliance profiles | ⬜ | | NBR / GST / EU VAT |
+| T96 | Tax compliance profiles | ✅ | | Full jurisdiction engine — see [`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md): country profiles (BD_VAT/IN_GST/EU_VAT/US_SALES_TAX/GENERIC), multi-component tax groups, zones, per-line/component/invoice rounding, tax-inclusive pricing, exemptions, `taxes` permission module, admin + report UI |
 | T97 | Restaurant mode | ⬜ | | Tables, KOT, modifiers, split bills |
 | T98 | Offline sync conflict resolution | ⬜ | | Server side of T60's offline queue |
 | T99 | AI assist | ⬜ | | Forecasting, NL reports, receipt OCR |
@@ -194,8 +207,24 @@ Pick a lane the same way as Phase 8.
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
 | T105 | Purchases: edit / cancel / return | ⬜ | Only `index`/`show`/`store` exist; `purchases.update`/`.delete`/`.approve` permissions exist with no routes behind them. A wrong goods receipt is currently permanent. |
-| T106 | Sale void / cancel | ⬜ | `sales.delete` permission exists, no route; returns are the only correction path today. |
+| T106 | Sale void / cancel | ✅ | `POST sales/{sale}/void` reverses stock and cancels a completed sale; does not auto-refund cash (that's still `POST sales/{sale}/returns`). See [`REFACTOR_TAX_PLAN.md`](REFACTOR_TAX_PLAN.md). |
 | T107 | Bulk product import (CSV/XLSX) | ⬜ | Export is client-side CSV only; import was explicitly deferred in T68. Usually the top onboarding blocker for a shop with a large catalog. |
 | T108 | Server-side export endpoints | ⬜ | Eight modules declare `*.export` permissions with no backing endpoint. |
 | T109 | Financial statements | ⬜ | Accounting has trial balance + general ledger only — no P&L or balance sheet. |
 | T110 | Public API keys / webhooks | ⬜ | No way to integrate an external storefront or push to external accounting; the one SaaS-tier gap not already covered by Phase 8. |
+
+## Phase 11 — Audit pass (correctness, load safety, contract drift)
+
+A full-repo audit of the running app rather than a module review. Findings were ranked by
+blast radius; T111–T116 are done, T117–T118 are the two that are feature-sized.
+
+| ID | Task | Status | Notes |
+| -- | ---- | ------ | ----- |
+| T111 | Idempotency mutex | ✅ | The key row only replayed once an outcome was recorded, so a retry arriving **while the first request was still running** — the usual case, since clients retry on their own timeout — fell through and ran the checkout twice. The row is now claimed before the handler runs: an in-flight duplicate gets `409` + `Retry-After`, a claim abandoned by a dead worker is reclaimable after 60s via a conditional update, a `5xx` or thrown exception releases it immediately, and losing the insert race is caught and treated as the other request's claim. |
+| T112 | Variant/product integrity | ✅ | `items.*.variant_id` was validated only as "exists within this tenant", never as belonging to the line's `product_id` — so a sale could snapshot product A while the ledger decremented a variant of product B, corrupting stock for two products at once. New `App\Rules\VariantMatchesProduct` (resolves the sibling `product_id` from the attribute under validation), applied to sales, purchases, stock transfers, batches and serials. |
+| T113 | Page-size & range ceilings | ✅ | All 25 list endpoints took `per_page` straight off the query string, as did the report `limit`s — `?per_page=1000000` was a one-request DoS. `Controller::perPage()`/`limit()` clamp to 200; reports reject a range over 366 days or an inverted one; the general ledger, previously an unbounded `->get()` of an account's whole history, is capped. |
+| T114 | Sargable date filters + `sold_at` index | ✅ | 13 `whereDate()` filters wrapped the column in `date()`, making them non-sargable so no index could be used. Replaced with half-open bounds via `Controller::filterByDateRange()` (malformed dates now `422` instead of a `500` from Postgres). Added `(tenant_id, sold_at)` and `(tenant_id, status, sold_at)` — every sales list, KPI and report filters `sold_at` but only `created_at` was indexed. |
+| T115 | Query collapse + strict Eloquent | ✅ | `salesSummary` cloned its query for each of 7 figures (7 scans of the same rows) and the dashboard did 8 plus a correlated subquery per balance row; both are now single-pass `selectRaw` via `toBase()`, the subquery a join. `Model::shouldBeStrict()` on outside production — it immediately caught `TenantProvisioner` passing a non-fillable `tenant_id` to `User::create()`, where the value was silently dropped and came from ambient context instead. |
+| T116 | Accounting module contract drift | ✅ | The whole Accounting page was written against an API that doesn't exist: `POST /journal-entries`, `GET /journal-entries` and `GET /accounts/trial-balance` all 404'd, the post body sent `posted_at`/`direction` where the API takes `entry_date`/`type`, and the list read `entry_number`/`posted_at`/`code` where the resources return `reference`/`entry_date`/`account_number`. Frontend realigned; backend gained the one thing genuinely missing — `trial-balance` now returns each balance in its normal-side column with `total_debit`/`total_credit` (a single `balance` figure isn't a trial balance), and `AccountResource` exposes the derived `normal_side`. `JournalService::isDebitNormal()` is now the single source of that rule. |
+| T117 | Post journals from trading activity | ⬜ | **Largest remaining gap.** `JournalService` is called only by `JournalController` — no sale, purchase, expense, return or cash-register movement posts an entry, so the trial balance and general ledger only ever reflect manually-typed journals and never the business's actual trading. `JournalService::post()` already accepts `source_type`/`source_id` for exactly this. Prerequisite for T109. |
+| T118 | Per-tenant invoice numbering | ⬜ | `invoice_number` is derived from the **global** `sales.id` (`INV-000042`), so each tenant's sequence has gaps that leak other tenants' volume, and it costs a second write per sale (insert with a `PENDING-` placeholder, then update). Most jurisdictions require a gapless per-business sequence. |

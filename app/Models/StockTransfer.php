@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\TransferStatus;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class StockTransfer extends Model
     protected function casts(): array
     {
         return [
+            'status' => TransferStatus::class,
             'requested_at' => 'datetime',
             'approved_at' => 'datetime',
             'received_at' => 'datetime',

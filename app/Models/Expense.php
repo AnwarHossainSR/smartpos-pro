@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\ExpenseStatus;
+use App\Domain\Enums\PaymentMethod;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +21,12 @@ class Expense extends Model
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'spent_at' => 'date'];
+        return [
+            'status' => ExpenseStatus::class,
+            'payment_method' => PaymentMethod::class,
+            'amount' => 'decimal:2',
+            'spent_at' => 'date',
+        ];
     }
 
     public function category(): BelongsTo

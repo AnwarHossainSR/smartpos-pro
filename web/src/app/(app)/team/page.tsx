@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";

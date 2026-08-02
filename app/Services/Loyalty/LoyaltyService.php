@@ -2,6 +2,7 @@
 
 namespace App\Services\Loyalty;
 
+use App\Domain\Enums\LoyaltyTransactionType;
 use App\Models\Customer;
 use App\Models\LoyaltyTransaction;
 use Illuminate\Support\Facades\DB;
@@ -16,20 +17,20 @@ class LoyaltyService
 {
     public function earn(Customer $customer, int $points, ?int $saleId = null, ?int $userId = null, ?string $note = null): LoyaltyTransaction
     {
-        return $this->record($customer, 'earn', abs($points), $saleId, $userId, $note);
+        return $this->record($customer, LoyaltyTransactionType::Earn, abs($points), $saleId, $userId, $note);
     }
 
     public function redeem(Customer $customer, int $points, ?int $userId = null, ?string $note = null): LoyaltyTransaction
     {
-        return $this->record($customer, 'redeem', -abs($points), null, $userId, $note);
+        return $this->record($customer, LoyaltyTransactionType::Redeem, -abs($points), null, $userId, $note);
     }
 
     public function adjust(Customer $customer, int $points, ?int $userId = null, ?string $note = null): LoyaltyTransaction
     {
-        return $this->record($customer, 'adjust', $points, null, $userId, $note);
+        return $this->record($customer, LoyaltyTransactionType::Adjust, $points, null, $userId, $note);
     }
 
-    protected function record(Customer $customer, string $type, int $points, ?int $saleId, ?int $userId, ?string $note): LoyaltyTransaction
+    protected function record(Customer $customer, LoyaltyTransactionType $type, int $points, ?int $saleId, ?int $userId, ?string $note): LoyaltyTransaction
     {
         if ($points === 0) {
             throw ValidationException::withMessages(['points' => ['Points must be non-zero.']]);

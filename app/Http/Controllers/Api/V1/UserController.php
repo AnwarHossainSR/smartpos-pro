@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -11,6 +12,8 @@ use App\Models\User;
 use App\Notifications\SetPasswordNotification;
 use App\Services\Audit\AuditLogService;
 use App\Services\Billing\PlanLimitService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -22,13 +25,14 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = User::query()
-            ->with('roles')
-            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%")))
-            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 25));
+        $users = QueryPipeline::for(User::query()->with('roles'), $request)
+            ->search(['name', 'email'])
+            ->allow(
+                AllowedFilter::exact('branch_id'),
+                AllowedFilter::enum('status', UserStatus::class),
+            )
+            ->sortable(['name', 'email', 'created_at'], default: 'name')
+            ->paginate();
 
         return UserResource::collection($users);
     }
@@ -52,7 +56,7 @@ class UserController extends Controller
         // A random, unguessable placeholder — invited members never receive this; they
         // set their own password via the emailed link (same as a password reset).
         $data['password'] = $data['password'] ?? Str::random(40);
-        $data['status'] = $invited ? 'invited' : 'active';
+        $data['status'] = $invited ? UserStatus::Invited : UserStatus::Active;
 
         $user = User::create($data);
         $this->syncRoles($user, $roles, $request->user());

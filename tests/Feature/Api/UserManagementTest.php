@@ -34,7 +34,7 @@ class UserManagementTest extends TestCase
     {
         $owner = $this->createTenant();
         $cashier = User::create([
-            'tenant_id' => $owner->tenant_id, 'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
+            'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
             'name' => 'Cashier', 'email' => 'cashier@example.test', 'password' => 'password123', 'status' => 'active',
         ]);
         $cashier->assignRole('cashier');
@@ -47,7 +47,7 @@ class UserManagementTest extends TestCase
     {
         $owner = $this->createTenant();
         $admin = User::create([
-            'tenant_id' => $owner->tenant_id, 'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
+            'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
             'name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'password123', 'status' => 'active',
         ]);
         $admin->assignRole('admin');

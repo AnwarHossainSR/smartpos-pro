@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Domain\Enums\UserStatus;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Permission;
@@ -65,14 +66,16 @@ class TenantProvisioner
 
             $this->provisionRoles($tenant);
 
+            // No `tenant_id` here on purpose: it is not fillable on User (a deliberate
+            // hardening choice — see the $fillable docblock) so passing it would be
+            // silently dropped. BelongsToTenant fills it from the context bound above.
             $owner = User::create([
-                'tenant_id' => $tenant->id,
                 'business_id' => $business->id,
                 'branch_id' => $branch->id,
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
-                'status' => 'active',
+                'status' => UserStatus::Active,
             ]);
 
             $owner->assignRole('owner');

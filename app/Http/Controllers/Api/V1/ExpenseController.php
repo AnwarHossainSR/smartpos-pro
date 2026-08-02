@@ -2,26 +2,29 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\ExpenseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $expenses = Expense::query()
-            ->with('category')
-            ->when($request->search, fn ($q, $s) => $q->where('reference', 'like', "%{$s}%")->orWhere('note', 'like', "%{$s}%"))
-            ->when($request->expense_category_id, fn ($q, $id) => $q->where('expense_category_id', $id))
-            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->from, fn ($q, $d) => $q->whereDate('spent_at', '>=', $d))
-            ->when($request->to, fn ($q, $d) => $q->whereDate('spent_at', '<=', $d))
-            ->latest('spent_at')
-            ->paginate($request->integer('per_page', 25));
+        $expenses = QueryPipeline::for(Expense::query()->with('category'), $request)
+            ->search(['reference', 'note'])
+            ->allow(
+                AllowedFilter::exact('expense_category_id'),
+                AllowedFilter::exact('branch_id'),
+                AllowedFilter::enum('status', ExpenseStatus::class),
+                AllowedFilter::dateRange('spent_at'),
+            )
+            ->sortable(['spent_at', 'amount', 'created_at'], default: '-spent_at')
+            ->paginate();
 
         return ExpenseResource::collection($expenses);
     }
@@ -44,7 +47,7 @@ class ExpenseController extends Controller
 
     public function approve(Expense $expense): ExpenseResource
     {
-        $expense->update(['status' => 'approved']);
+        $expense->update(['status' => ExpenseStatus::Approved]);
 
         return new ExpenseResource($expense->load('category'));
     }

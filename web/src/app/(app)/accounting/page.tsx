@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
@@ -23,30 +22,40 @@ import { useAuth } from "@/stores/auth";
 interface Account {
   id: number;
   name: string;
-  code: string;
+  account_number: string | null;
   type: string;
   normal_side: string;
   balance: number;
   is_active: boolean;
 }
 
+interface TrialBalanceRow {
+  account_id: number;
+  name: string;
+  account_number: string | null;
+  type: string;
+  normal_side: string;
+  debit: number;
+  credit: number;
+}
+
 interface JournalEntry {
   id: number;
-  entry_number: string;
+  reference: string;
   description: string;
   total_debit: number;
-  posted_at: string;
-  lines?: { account: { name: string }; direction: string; amount: number }[];
+  entry_date: string;
+  lines?: { account_id: number; type: string; amount: number }[];
 }
 
 type Tab = "accounts" | "journals" | "trial-balance";
 
 const journalSchema = z.object({
   description: z.string().min(1, "Description required"),
-  posted_at: z.string().min(1),
+  entry_date: z.string().min(1),
   lines: z.array(z.object({
     account_id: z.number(),
-    direction: z.enum(["debit", "credit"]),
+    type: z.enum(["debit", "credit"]),
     amount: z.number().min(0.01),
   })).min(2, "At least 2 lines required"),
 });
@@ -56,22 +65,22 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
   const { data: accounts } = useQuery({ queryKey: ["accounts-all"], queryFn: () => api<Paginated<Account>>("/accounts?per_page=200") });
 
-  const { register, handleSubmit, control, formState: { errors }, watch } = useForm<JournalValues>({
+  const { register, handleSubmit, control, watch } = useForm<JournalValues>({
     resolver: zodResolver(journalSchema),
     defaultValues: {
-      posted_at: new Date().toISOString().slice(0, 10),
-      lines: [{ account_id: 0, direction: "debit", amount: 0 }, { account_id: 0, direction: "credit", amount: 0 }],
+      entry_date: new Date().toISOString().slice(0, 10),
+      lines: [{ account_id: 0, type: "debit", amount: 0 }, { account_id: 0, type: "credit", amount: 0 }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "lines" });
   const lines = watch("lines");
-  const debitTotal = lines.reduce((s, l) => s + (l.direction === "debit" ? (l.amount || 0) : 0), 0);
-  const creditTotal = lines.reduce((s, l) => s + (l.direction === "credit" ? (l.amount || 0) : 0), 0);
+  const debitTotal = lines.reduce((s, l) => s + (l.type === "debit" ? (l.amount || 0) : 0), 0);
+  const creditTotal = lines.reduce((s, l) => s + (l.type === "credit" ? (l.amount || 0) : 0), 0);
   const balanced = Math.abs(debitTotal - creditTotal) < 0.001;
 
   const mutation = useMutation({
-    mutationFn: (data: JournalValues) => api("/journal-entries", { method: "POST", body: data }),
+    mutationFn: (data: JournalValues) => api("/journals", { method: "POST", body: data }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["journals"] }); qc.invalidateQueries({ queryKey: ["accounts"] }); toast("Journal posted"); onSuccess(); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
@@ -79,21 +88,21 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div><Label>Description *</Label><Input {...register("description")} /></div>
-      <div><Label>Date *</Label><Input type="date" {...register("posted_at")} /></div>
+      <div><Label>Date *</Label><Input type="date" {...register("entry_date")} /></div>
 
       <div>
         <div className="mb-2 flex items-center justify-between">
           <Label>Lines *</Label>
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ account_id: 0, direction: "debit", amount: 0 })}>+ Add line</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => append({ account_id: 0, type: "debit", amount: 0 })}>+ Add line</Button>
         </div>
         <div className="space-y-2">
           {fields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
               <Select className="flex-1" {...register(`lines.${idx}.account_id`, { setValueAs: (v) => v ? Number(v) : 0 })}>
                 <option value="">— Account —</option>
-                {accounts?.data?.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
+                {accounts?.data?.map((a) => <option key={a.id} value={a.id}>{a.account_number} {a.name}</option>)}
               </Select>
-              <Select className="w-24" {...register(`lines.${idx}.direction`)}>
+              <Select className="w-24" {...register(`lines.${idx}.type`)}>
                 <option value="debit">Debit</option>
                 <option value="credit">Credit</option>
               </Select>
@@ -129,13 +138,13 @@ export default function AccountingPage() {
 
   const { data: journals, isLoading: jrnLoading } = useQuery<Paginated<JournalEntry>>({
     queryKey: ["journals", page],
-    queryFn: () => api<Paginated<JournalEntry>>(`/journal-entries?page=${page}&per_page=20`),
+    queryFn: () => api<Paginated<JournalEntry>>(`/journals?page=${page}&per_page=20`),
     enabled: tab === "journals",
   });
 
   const { data: trialBalance } = useQuery({
     queryKey: ["trial-balance"],
-    queryFn: () => api<{ data: { accounts: Account[]; total_debit: number; total_credit: number } }>("/accounts/trial-balance"),
+    queryFn: () => api<{ data: { accounts: TrialBalanceRow[]; total_debit: number; total_credit: number } }>("/journals/trial-balance"),
     enabled: tab === "trial-balance",
   });
 
@@ -168,7 +177,7 @@ export default function AccountingPage() {
               {accLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
                 : accounts?.data?.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-mono text-xs">{a.code}</TableCell>
+                    <TableCell className="font-mono text-xs">{a.account_number}</TableCell>
                     <TableCell className="font-medium">{a.name}</TableCell>
                     <TableCell><Badge tone={typeColors[a.type] ?? "default"}>{a.type}</Badge></TableCell>
                     <TableCell className="text-end">{formatCurrency(a.balance)}</TableCell>
@@ -189,9 +198,9 @@ export default function AccountingPage() {
                 : journals?.data?.length === 0 ? <TableRow><TableCell colSpan={4} className="py-8 text-center text-[var(--muted)]">No journal entries yet.</TableCell></TableRow>
                 : journals?.data?.map((j) => (
                   <TableRow key={j.id}>
-                    <TableCell className="font-mono text-xs">{j.entry_number}</TableCell>
+                    <TableCell className="font-mono text-xs">{j.reference}</TableCell>
                     <TableCell>{j.description}</TableCell>
-                    <TableCell className="text-[var(--muted)]">{formatDate(j.posted_at)}</TableCell>
+                    <TableCell className="text-[var(--muted)]">{formatDate(j.entry_date)}</TableCell>
                     <TableCell className="text-end">{formatCurrency(j.total_debit)}</TableCell>
                   </TableRow>
                 ))}
@@ -214,11 +223,11 @@ export default function AccountingPage() {
             <TableHeader><TableRow><TableHead>Account</TableHead><TableHead>Type</TableHead><TableHead className="text-end">Debit</TableHead><TableHead className="text-end">Credit</TableHead></TableRow></TableHeader>
             <TableBody>
               {trialBalance?.data?.accounts?.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.code} {a.name}</TableCell>
+                <TableRow key={a.account_id}>
+                  <TableCell className="font-medium">{a.account_number} {a.name}</TableCell>
                   <TableCell><Badge tone={typeColors[a.type] ?? "default"}>{a.type}</Badge></TableCell>
-                  <TableCell className="text-end">{a.normal_side === "debit" ? formatCurrency(a.balance) : "—"}</TableCell>
-                  <TableCell className="text-end">{a.normal_side === "credit" ? formatCurrency(a.balance) : "—"}</TableCell>
+                  <TableCell className="text-end">{a.normal_side === "debit" ? formatCurrency(a.debit) : "—"}</TableCell>
+                  <TableCell className="text-end">{a.normal_side === "credit" ? formatCurrency(a.credit) : "—"}</TableCell>
                 </TableRow>
               ))}
               <TableRow className="font-semibold bg-[var(--surface-2)]">

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
-  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText,
+  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText, Percent,
 } from "lucide-react";
 
 export interface NavItem {
@@ -62,6 +62,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "insights",
     items: [
+      // More specific routes are listed before their parent so navKeyForPathname()
+      // (a first-match .find()) resolves the page title correctly.
+      { href: "/reports/tax", key: "taxReport", icon: Percent },
       { href: "/reports", key: "reports", icon: BarChart3 },
       { href: "/loyalty", key: "loyalty", icon: Gift },
     ],
@@ -72,6 +75,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/subscription", key: "subscription", icon: Crown },
       { href: "/notifications", key: "notifications", icon: Bell },
       { href: "/audit-log", key: "auditLog", icon: ScrollText },
+      { href: "/settings/tax", key: "taxSettings", icon: Percent },
       { href: "/settings", key: "settings", icon: Settings },
     ],
   },

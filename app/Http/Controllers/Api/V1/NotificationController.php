@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,10 +15,10 @@ class NotificationController extends Controller
     /** Notifications addressed to the current user or broadcast to the whole tenant. */
     public function index(Request $request)
     {
-        $notifications = $this->scoped($request)
-            ->when($request->boolean('unread'), fn ($q) => $q->whereNull('read_at'))
-            ->latest('id')
-            ->paginate($request->integer('per_page', 20));
+        $notifications = QueryPipeline::for($this->scoped($request), $request)
+            ->allow(AllowedFilter::flag('unread', fn (Builder $q) => $q->whereNull('read_at')))
+            ->sortable(['id', 'created_at'], default: '-id')
+            ->paginate(20);
 
         return response()->json([
             'data' => $notifications->map(fn ($n) => [

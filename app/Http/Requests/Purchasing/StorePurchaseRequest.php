@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Purchasing;
 
+use App\Rules\VariantMatchesProduct;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,11 +27,10 @@ class StorePurchaseRequest extends FormRequest
 
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('tenant_id', $tenantId)],
-            'items.*.variant_id' => ['nullable', Rule::exists('product_variants', 'id')->where('tenant_id', $tenantId)],
+            'items.*.variant_id' => ['nullable', Rule::exists('product_variants', 'id')->where('tenant_id', $tenantId), new VariantMatchesProduct],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_amount' => ['nullable', 'numeric', 'min:0'],
 
             'payments' => ['nullable', 'array'],
             'payments.*.method' => ['required_with:payments', 'in:cash,card,bank,mobile_banking,wallet'],

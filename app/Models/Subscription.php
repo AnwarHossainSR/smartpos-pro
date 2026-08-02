@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\SubscriptionStatus;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,11 @@ class Subscription extends Model
 
     protected function casts(): array
     {
-        return ['trial_ends_at' => 'datetime', 'current_period_ends_at' => 'datetime'];
+        return [
+            'status' => SubscriptionStatus::class,
+            'trial_ends_at' => 'datetime',
+            'current_period_ends_at' => 'datetime',
+        ];
     }
 
     public function plan(): BelongsTo

@@ -22,6 +22,7 @@ class PermissionCatalog
         'suppliers' => ['view', 'create', 'update', 'delete', 'export'],
         'expenses' => ['view', 'create', 'update', 'delete', 'approve'],
         'accounting' => ['view', 'create', 'update', 'approve', 'export'],
+        'taxes' => ['view', 'manage'],
         'reports' => ['view', 'export'],
         'coupons' => ['view', 'create', 'update', 'delete'],
         'loyalty' => ['view', 'manage'],
@@ -76,7 +77,7 @@ class PermissionCatalog
             ]],
             'accountant' => ['name' => 'Accountant', 'permissions' => [
                 'dashboard.view', 'accounting.view', 'accounting.create', 'accounting.approve',
-                'expenses.view', 'expenses.create', 'expenses.approve',
+                'expenses.view', 'expenses.create', 'expenses.approve', 'taxes.view', 'taxes.manage',
                 'reports.view', 'reports.export', 'sales.view', 'purchases.view',
             ]],
             'viewer' => ['name' => 'Viewer', 'permissions' => [

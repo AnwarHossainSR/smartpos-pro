@@ -89,7 +89,6 @@ class AuditLogTest extends TestCase
     {
         $owner = $this->createTenant();
         $cashier = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
             'name' => 'Cashier', 'email' => 'cashier@example.test',

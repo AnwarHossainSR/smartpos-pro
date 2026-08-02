@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\StockDirection;
+use App\Domain\Enums\StockMovementType;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +27,8 @@ class StockMovement extends Model
     protected function casts(): array
     {
         return [
+            'type' => StockMovementType::class,
+            'direction' => StockDirection::class,
             'quantity' => 'decimal:4',
             'quantity_after' => 'decimal:4',
             'unit_cost' => 'decimal:4',

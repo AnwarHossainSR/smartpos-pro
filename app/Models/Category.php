@@ -12,11 +12,17 @@ class Category extends Model
 {
     use BelongsToTenant, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'parent_id', 'name', 'slug', 'description', 'is_active'];
+    protected $fillable = ['tenant_id', 'parent_id', 'tax_group_id', 'name', 'slug', 'description', 'is_active'];
 
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
+    }
+
+    /** Optional category-level tax default, so "food is zero-rated" is set once. */
+    public function taxGroup(): BelongsTo
+    {
+        return $this->belongsTo(TaxGroup::class);
     }
 
     public function parent(): BelongsTo

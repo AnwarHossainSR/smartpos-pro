@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Inventory\StockLedgerService;
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
@@ -26,7 +27,8 @@ class QueryConfigHardeningTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('sort');
 
-        $this->getJson('/api/v1/products?sort=name&direction=asc')->assertOk();
+        $this->getJson('/api/v1/products?sort=name')->assertOk();
+        $this->getJson('/api/v1/products?sort=-name')->assertOk();
     }
 
     public function test_customers_sort_whitelist_rejects_unknown_column(): void
@@ -40,13 +42,54 @@ class QueryConfigHardeningTest extends TestCase
             ->assertJsonValidationErrors('sort');
     }
 
-    public function test_suppliers_sort_whitelist_rejects_unknown_direction(): void
+    /**
+     * Descending order is a `-` prefix on the column, not a separate `direction`
+     * parameter — so a bogus direction can only arrive as a bogus column name and
+     * is caught by the same allow-list.
+     */
+    public function test_suppliers_sort_whitelist_rejects_a_prefixed_unknown_column(): void
     {
         $owner = $this->createTenant();
         Supplier::create(['name' => 'Acme Supplies']);
         Sanctum::actingAs($owner);
 
-        $this->getJson('/api/v1/suppliers?sort=name&direction=drop')
+        $this->getJson('/api/v1/suppliers?sort=-password')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('sort');
+
+        $this->getJson('/api/v1/suppliers?sort=-name')->assertOk();
+    }
+
+    /**
+     * A query key nothing declares is rejected: an unfiltered list is
+     * indistinguishable from a correctly filtered one, so a typo'd filter would
+     * otherwise look like a legitimate result.
+     */
+    public function test_an_undeclared_query_parameter_is_rejected(): void
+    {
+        $owner = $this->createTenant();
+        Supplier::create(['name' => 'Acme Supplies']);
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/suppliers?has_dew=1')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('has_dew');
+
+        $this->getJson('/api/v1/suppliers?has_due=1')->assertOk();
+    }
+
+    /**
+     * `direction` is a real column on stock_movements. It must reach the filter
+     * rather than being swallowed by the sort protocol.
+     */
+    public function test_direction_is_a_filter_not_a_sort_parameter(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/inventory/movements?direction=in')->assertOk();
+
+        $this->getJson('/api/v1/inventory/movements?direction=sideways')
             ->assertStatus(422)
             ->assertJsonValidationErrors('direction');
     }
@@ -55,13 +98,33 @@ class QueryConfigHardeningTest extends TestCase
     {
         $owner = $this->createTenant();
 
+        // Neither attribute is fillable. With Model::shouldBeStrict() on outside
+        // production the attempt is rejected outright instead of quietly dropped,
+        // so a payload trying to plant a super-admin can't pass unnoticed.
+        try {
+            User::create([
+                'tenant_id' => 999999,
+                'business_id' => $owner->business_id,
+                'branch_id' => $owner->branch_id,
+                'name' => 'Attacker', 'email' => 'attacker@example.test',
+                'password' => 'password123', 'status' => 'active',
+                'is_super_admin' => true,
+            ]);
+
+            $this->fail('Expected the non-fillable attributes to be rejected.');
+        } catch (MassAssignmentException $e) {
+            $this->assertStringContainsString('tenant_id', $e->getMessage());
+        }
+
+        $this->assertDatabaseMissing('users', ['email' => 'attacker@example.test']);
+
+        // Production keeps the discard silent, so assert the resulting state too: a user
+        // created without those keys still lands in the actor's tenant, never elevated.
         $user = User::create([
-            'tenant_id' => 999999,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
-            'name' => 'Attacker', 'email' => 'attacker@example.test',
+            'name' => 'Member', 'email' => 'member@example.test',
             'password' => 'password123', 'status' => 'active',
-            'is_super_admin' => true,
         ]);
 
         $this->assertFalse((bool) $user->is_super_admin);

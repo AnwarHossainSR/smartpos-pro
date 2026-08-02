@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Sales\Data\CollectPaymentData;
+use App\Domain\Sales\Data\CreateSaleData;
+use App\Domain\Sales\Data\CreateSaleReturnData;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Coupon;
@@ -104,12 +107,12 @@ class RichDemoSeeder extends Seeder
             try {
                 $returnService->create(
                     $sale,
-                    [
+                    CreateSaleReturnData::fromArray([
                         'warehouse_id' => $sale->warehouse_id,
                         'refund_method' => 'cash',
                         'note' => 'Customer returned — wrong size',
                         'items' => [['sale_item_id' => $firstItem->id, 'quantity' => 1]],
-                    ],
+                    ]),
                     $owner,
                 );
             } catch (\Throwable) {
@@ -150,7 +153,7 @@ class RichDemoSeeder extends Seeder
             ['name' => 'Inventory',     'type' => 'asset',    'account_number' => '1200', 'normal_side' => 'debit'],
             ['name' => 'Accounts Pay.', 'type' => 'liability', 'account_number' => '2000', 'normal_side' => 'credit'],
             ['name' => 'Owner Equity',  'type' => 'equity',   'account_number' => '3000', 'normal_side' => 'credit'],
-            ['name' => 'Sales Revenue', 'type' => 'revenue',  'account_number' => '4000', 'normal_side' => 'credit'],
+            ['name' => 'Sales Revenue', 'type' => 'income',   'account_number' => '4000', 'normal_side' => 'credit'],
             ['name' => 'Rent Expense',  'type' => 'expense',  'account_number' => '5000', 'normal_side' => 'debit'],
             ['name' => 'Salary Expense', 'type' => 'expense',  'account_number' => '5001', 'normal_side' => 'debit'],
             ['name' => 'Utility Exp.', 'type' => 'expense',   'account_number' => '5002', 'normal_side' => 'debit'],
@@ -329,20 +332,20 @@ class RichDemoSeeder extends Seeder
 
         if ($creditCustomer && $creditProduct && $wh1) {
             $sales = app(SaleService::class);
-            $creditSale = $sales->create([
+            $creditSale = $sales->create(CreateSaleData::fromArray([
                 'branch_id' => $branch1Id,
                 'warehouse_id' => $wh1->id,
                 'customer_id' => $creditCustomer->id,
                 'items' => [['product_id' => $creditProduct->id, 'quantity' => 4]],
                 'payments' => [['method' => 'cash', 'amount' => round((float) $creditProduct->selling_price * 4 * 0.4, 2)]],
-            ], $owner);
+            ]), $owner);
 
             // Customer pays down part of the remaining balance, leaving it "partial".
             if ((float) $creditSale->due_amount > 0) {
-                $sales->collectPayment($creditSale, [
+                $sales->collectPayment($creditSale, CollectPaymentData::fromArray([
                     'method' => 'bank',
                     'amount' => round((float) $creditSale->due_amount / 2, 2),
-                ]);
+                ]));
             }
         }
 

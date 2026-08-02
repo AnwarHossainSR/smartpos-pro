@@ -2,13 +2,22 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\SaleStatus;
+use App\Domain\Sales\Data\CollectPaymentData;
+use App\Domain\Sales\Data\CreateSaleData;
+use App\Domain\Sales\Data\PaymentData;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\ResumeSaleRequest;
 use App\Http\Requests\Sales\StoreSalePaymentRequest;
 use App\Http\Requests\Sales\StoreSaleRequest;
+use App\Http\Requests\Sales\VoidSaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Sale;
 use App\Services\Sales\SaleService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,17 +27,17 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
-        $sales = Sale::query()
-            ->with(['customer', 'cashier'])
-            ->when($request->search, fn ($q, $s) => $q->where('invoice_number', 'like', "%{$s}%"))
-            ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
-            ->when($request->customer_id, fn ($q, $id) => $q->where('customer_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->payment_status, fn ($q, $s) => $q->where('payment_status', $s))
-            ->when($request->from, fn ($q, $d) => $q->whereDate('sold_at', '>=', $d))
-            ->when($request->to, fn ($q, $d) => $q->whereDate('sold_at', '<=', $d))
-            ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+        $sales = QueryPipeline::for(Sale::query()->with(['customer', 'cashier']), $request)
+            ->search(['invoice_number'])
+            ->allow(
+                AllowedFilter::exact('branch_id'),
+                AllowedFilter::exact('customer_id'),
+                AllowedFilter::enum('status', SaleStatus::class),
+                AllowedFilter::enum('payment_status', PaymentStatus::class),
+                AllowedFilter::dateRange('sold_at'),
+            )
+            ->sortable(['id', 'invoice_number', 'total', 'sold_at'], default: '-id')
+            ->paginate();
 
         return SaleResource::collection($sales);
     }
@@ -37,7 +46,7 @@ class SaleController extends Controller
     public function store(StoreSaleRequest $request): JsonResponse
     {
         try {
-            $sale = $this->sales->create($request->validated(), $request->user());
+            $sale = $this->sales->create(CreateSaleData::fromArray($request->validated()), $request->user());
         } catch (InsufficientStockException $e) {
             return response()->json([
                 'message' => 'One or more items do not have enough stock.',
@@ -55,13 +64,29 @@ class SaleController extends Controller
 
     public function show(Sale $sale): SaleResource
     {
-        return new SaleResource($sale->load('items', 'payments', 'customer', 'cashier', 'coupon'));
+        return new SaleResource($sale->load('items.taxes', 'payments', 'customer', 'cashier', 'coupon'));
     }
 
     /** Records a settlement payment against a due/partial sale. Idempotent when an Idempotency-Key header is supplied. */
     public function addPayment(StoreSalePaymentRequest $request, Sale $sale): SaleResource
     {
-        return new SaleResource($this->sales->collectPayment($sale, $request->validated()));
+        return new SaleResource(
+            $this->sales->collectPayment($sale, CollectPaymentData::fromArray($request->validated())),
+        );
+    }
+
+    /** Finalises a held or draft cart into a completed sale. */
+    public function resume(ResumeSaleRequest $request, Sale $sale): SaleResource
+    {
+        $payments = PaymentData::collection($request->validated()['payments'] ?? []);
+
+        return new SaleResource($this->sales->resume($sale, $payments, $request->user()));
+    }
+
+    /** Cancels a completed sale and reverses the stock it moved. */
+    public function void(VoidSaleRequest $request, Sale $sale): SaleResource
+    {
+        return new SaleResource($this->sales->void($sale, $request->user(), $request->validated()['reason'] ?? null));
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */

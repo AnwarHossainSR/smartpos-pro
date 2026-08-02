@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
 use App\Http\Controllers\Api\V1\PurchaseController;
@@ -29,6 +30,11 @@ use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TaxGroupController;
+use App\Http\Controllers\Api\V1\TaxProfileController;
+use App\Http\Controllers\Api\V1\TaxRateController;
+use App\Http\Controllers\Api\V1\TaxReportController;
+use App\Http\Controllers\Api\V1\TaxZoneController;
 use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -141,6 +147,11 @@ Route::prefix('v1')->group(function () {
         Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
         Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
+        Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
+        Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
+
+        // POS — one request for everything the terminal needs to open a register.
+        Route::get('pos/bootstrap', [PosController::class, 'bootstrap'])->middleware('permission:pos.view');
 
         // Sale returns / refunds
         Route::get('sale-returns', [SaleReturnController::class, 'index'])->middleware('permission:sales.view');
@@ -156,6 +167,32 @@ Route::prefix('v1')->group(function () {
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
         });
+
+        // Reports — tax (output vs input tax, VAT/GST return shape)
+        Route::middleware(['permission:taxes.view', 'throttle:reports'])->prefix('reports')->group(function () {
+            Route::get('tax-summary', [TaxReportController::class, 'summary']);
+            Route::get('tax-return', [TaxReportController::class, 'taxReturn']);
+        });
+
+        // Tax — rates, groups (component sets), zones (jurisdictions), and the
+        // read-only country profile catalogue a business selects from.
+        Route::get('tax-rates', [TaxRateController::class, 'index'])->middleware('permission:taxes.view');
+        Route::post('tax-rates', [TaxRateController::class, 'store'])->middleware('permission:taxes.manage');
+        Route::put('tax-rates/{taxRate}', [TaxRateController::class, 'update'])->middleware('permission:taxes.manage');
+        Route::delete('tax-rates/{taxRate}', [TaxRateController::class, 'destroy'])->middleware('permission:taxes.manage');
+
+        Route::get('tax-groups', [TaxGroupController::class, 'index'])->middleware('permission:taxes.view');
+        Route::post('tax-groups', [TaxGroupController::class, 'store'])->middleware('permission:taxes.manage');
+        Route::put('tax-groups/{taxGroup}', [TaxGroupController::class, 'update'])->middleware('permission:taxes.manage');
+        Route::delete('tax-groups/{taxGroup}', [TaxGroupController::class, 'destroy'])->middleware('permission:taxes.manage');
+
+        Route::get('tax-zones', [TaxZoneController::class, 'index'])->middleware('permission:taxes.view');
+        Route::post('tax-zones', [TaxZoneController::class, 'store'])->middleware('permission:taxes.manage');
+        Route::put('tax-zones/{taxZone}', [TaxZoneController::class, 'update'])->middleware('permission:taxes.manage');
+        Route::delete('tax-zones/{taxZone}', [TaxZoneController::class, 'destroy'])->middleware('permission:taxes.manage');
+
+        Route::get('tax-profiles', [TaxProfileController::class, 'index'])->middleware('permission:taxes.view');
+        Route::get('tax-profiles/{taxProfile}', [TaxProfileController::class, 'show'])->middleware('permission:taxes.view');
 
         // Accounting — chart of accounts
         Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');

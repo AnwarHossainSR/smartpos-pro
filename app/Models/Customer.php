@@ -13,6 +13,7 @@ class Customer extends Model
 
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'customer_group', 'tax_number',
+        'tax_exempt', 'tax_exemption_reference', 'country_code', 'state', 'postcode',
         'billing_address', 'shipping_address', 'credit_limit', 'opening_balance',
         'balance', 'loyalty_points', 'birthday', 'is_active',
     ];
@@ -20,6 +21,7 @@ class Customer extends Model
     protected function casts(): array
     {
         return [
+            'tax_exempt' => 'boolean',
             'credit_limit' => 'decimal:2',
             'opening_balance' => 'decimal:2',
             'balance' => 'decimal:2',

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreRoleRequest;
 use App\Http\Resources\RoleResource;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Support\Query\QueryPipeline;
 use App\Support\Rbac\PermissionCatalog;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -17,11 +18,10 @@ class RoleController extends Controller
 {
     public function index(Request $request)
     {
-        $roles = Role::query()
-            ->with('permissions')
-            ->withCount('users')
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 50));
+        $roles = QueryPipeline::for(Role::query()->with('permissions')->withCount('users'), $request)
+            ->search(['name', 'slug'])
+            ->sortable(['name', 'created_at'], default: 'name')
+            ->paginate(50);
 
         return RoleResource::collection($roles);
     }

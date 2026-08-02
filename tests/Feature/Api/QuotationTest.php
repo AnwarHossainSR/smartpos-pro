@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Enums\QuotationStatus;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\User;
@@ -74,7 +75,7 @@ class QuotationTest extends TestCase
 
         $response->assertCreated();
         $this->assertEquals(100, $response->json('data.total'));
-        $this->assertSame('converted', Quotation::find($quotation['id'])->status);
+        $this->assertSame(QuotationStatus::Converted, Quotation::find($quotation['id'])->status);
         $this->assertEqualsWithDelta(8, $product->fresh()->totalStock(), 0.001);
     }
 
@@ -109,7 +110,7 @@ class QuotationTest extends TestCase
         ])->assertCreated()->json('data');
 
         $cashier = User::create([
-            'tenant_id' => $owner->tenant_id, 'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
+            'business_id' => $owner->business_id, 'branch_id' => $owner->branch_id,
             'name' => 'Cashier', 'email' => 'cashier@example.test', 'password' => 'password123', 'status' => 'active',
         ]);
         $cashier->assignRole('cashier');

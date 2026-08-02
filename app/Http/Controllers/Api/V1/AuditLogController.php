@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
@@ -11,15 +13,15 @@ class AuditLogController extends Controller
     /** Immutable audit trail. Filters: actor (user id), action, model, from/to (date). */
     public function index(Request $request)
     {
-        $logs = AuditLog::query()
-            ->with('user:id,name,email')
-            ->when($request->filled('actor'), fn ($q) => $q->where('user_id', $request->integer('actor')))
-            ->when($request->filled('action'), fn ($q) => $q->where('action', 'like', "%{$request->string('action')}%"))
-            ->when($request->filled('model'), fn ($q) => $q->where('auditable_type', $request->string('model')))
-            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')))
-            ->latest('id')
-            ->paginate($request->integer('per_page', 25));
+        $logs = QueryPipeline::for(AuditLog::query()->with('user:id,name,email'), $request)
+            ->allow(
+                AllowedFilter::exact('actor', 'user_id'),
+                AllowedFilter::partial('action'),
+                AllowedFilter::exact('model', 'auditable_type'),
+                AllowedFilter::dateRange('created_at'),
+            )
+            ->sortable(['id', 'created_at'], default: '-id')
+            ->paginate();
 
         return response()->json([
             'data' => $logs->map(fn (AuditLog $log) => [

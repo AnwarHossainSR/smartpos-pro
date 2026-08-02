@@ -26,6 +26,10 @@ class SaleReturnResource extends JsonResource
                 'quantity' => (float) $i->quantity,
                 'unit_price' => (float) $i->unit_price,
                 'line_total' => (float) $i->line_total,
+                'tax_amount' => (float) $i->taxes->sum('amount'),
+                'taxes' => $i->taxes->map(fn ($t) => [
+                    'name' => $t->name, 'rate' => (float) $t->rate, 'amount' => (float) $t->amount,
+                ]),
             ])),
             'note' => $this->note,
             'returned_at' => $this->returned_at,

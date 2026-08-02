@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\TransferStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\ReceiveStockTransferRequest;
 use App\Http\Requests\Inventory\StoreStockTransferRequest;
 use App\Models\StockTransfer;
 use App\Services\Inventory\StockTransferService;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,10 +19,18 @@ class StockTransferController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $transfers = StockTransfer::with(['fromWarehouse', 'toWarehouse', 'requestedBy'])
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->latest()
-            ->paginate($request->integer('per_page', 20));
+        $transfers = QueryPipeline::for(
+            StockTransfer::with(['fromWarehouse', 'toWarehouse', 'requestedBy']),
+            $request,
+        )
+            ->search(['reference_number'])
+            ->allow(
+                AllowedFilter::enum('status', TransferStatus::class),
+                AllowedFilter::exact('from_warehouse_id'),
+                AllowedFilter::exact('to_warehouse_id'),
+            )
+            ->sortable(['id', 'requested_at'], default: '-id')
+            ->paginate(20);
 
         return response()->json($transfers);
     }

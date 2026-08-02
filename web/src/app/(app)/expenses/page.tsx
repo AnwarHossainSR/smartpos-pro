@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -98,7 +98,7 @@ export default function ExpensesPage() {
 
   const { data, isLoading } = useQuery<Paginated<Expense>>({
     queryKey: ["expenses", search, page],
-    queryFn: () => api<Paginated<Expense>>(`/expenses?page=${page}&per_page=20`),
+    queryFn: () => api<Paginated<Expense>>(`/expenses?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
   });
 
   const payColor: Record<string, "success" | "warning" | "default"> = { approved: "success", pending: "warning", rejected: "danger" as "default" };
@@ -109,6 +109,7 @@ export default function ExpensesPage() {
         <h1 className="text-xl font-semibold">Expenses</h1>
         {can("expenses.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4" />Add expense</Button>}
       </div>
+      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <Table>
           <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead className="text-end">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>

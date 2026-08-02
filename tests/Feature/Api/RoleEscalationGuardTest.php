@@ -18,7 +18,6 @@ class RoleEscalationGuardTest extends TestCase
     private function adminFor(User $owner): User
     {
         $admin = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
             'name' => 'Admin', 'email' => 'admin@example.test',
@@ -45,7 +44,6 @@ class RoleEscalationGuardTest extends TestCase
         $owner = $this->createTenant();
         $admin = $this->adminFor($owner);
         $cashier = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
             'name' => 'Cashier', 'email' => 'cashier@example.test',
@@ -65,7 +63,6 @@ class RoleEscalationGuardTest extends TestCase
     {
         $owner = $this->createTenant();
         $cashier = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
             'name' => 'Cashier', 'email' => 'cashier@example.test',
@@ -110,7 +107,6 @@ class RoleEscalationGuardTest extends TestCase
         $scopedRole->permissions()->sync(Permission::whereIn('slug', ['users.view', 'users.update'])->pluck('id'));
 
         $manager = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $owner->branch_id,
             'name' => 'Branch Manager', 'email' => 'manager@example.test',
@@ -119,7 +115,6 @@ class RoleEscalationGuardTest extends TestCase
         $manager->roles()->attach($scopedRole->id, ['branch_id' => $owner->branch_id]);
 
         $userInOtherBranch = User::create([
-            'tenant_id' => $owner->tenant_id,
             'business_id' => $owner->business_id,
             'branch_id' => $branchB->id,
             'name' => 'Other Branch User', 'email' => 'otherbranch@example.test',

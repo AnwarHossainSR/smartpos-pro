@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Domain\Enums\UserStatus;
+use App\Notifications\ResetPassword;
+use App\Notifications\VerifyEmail;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use App\Support\Concerns\HasRoles;
 use Database\Factories\UserFactory;
-use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +21,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, MustVerifyEmail, Notifiable, SoftDeletes;
+    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable, SoftDeletes;
 
     /**
      * `tenant_id` and `is_super_admin` are deliberately excluded — tenant_id is filled
@@ -38,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected function casts(): array
     {
         return [
+            'status' => UserStatus::class,
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
@@ -62,6 +66,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /** Overrides MustVerifyEmailTrait to print the link to the terminal in local dev instead of emailing it. */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmail);
+    }
+
+    /** Overrides Authenticatable to print the link to the terminal in local dev instead of emailing it. */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPassword($token));
     }
 
     public function business(): BelongsTo

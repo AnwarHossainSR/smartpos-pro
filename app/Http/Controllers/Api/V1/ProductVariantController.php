@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\SerialStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\StoreStockBatchRequest;
 use App\Http\Requests\Inventory\StoreStockSerialRequest;
 use App\Models\Product;
 use App\Models\StockBatch;
 use App\Models\StockSerial;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,13 +31,17 @@ class ProductVariantController extends Controller
 
     public function batches(Request $request): JsonResponse
     {
-        $batches = StockBatch::with(['product', 'warehouse'])
-            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
-            ->when($request->warehouse_id, fn ($q, $id) => $q->where('warehouse_id', $id))
-            ->when($request->expiring_before, fn ($q, $d) => $q->where('expires_at', '<=', $d))
-            ->where('quantity', '>', 0)
-            ->orderBy('expires_at')
-            ->paginate($request->integer('per_page', 50));
+        $batches = QueryPipeline::for(
+            StockBatch::with(['product', 'warehouse'])->where('quantity', '>', 0),
+            $request,
+        )
+            ->allow(
+                AllowedFilter::exact('product_id'),
+                AllowedFilter::exact('warehouse_id'),
+                AllowedFilter::callback('expiring_before', fn (Builder $q, $date) => $q->where('expires_at', '<=', $date)),
+            )
+            ->sortable(['expires_at', 'quantity'], default: 'expires_at')
+            ->paginate(50);
 
         return response()->json($batches);
     }
@@ -51,13 +59,15 @@ class ProductVariantController extends Controller
 
     public function serials(Request $request): JsonResponse
     {
-        $serials = StockSerial::with(['product', 'warehouse'])
-            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
-            ->when($request->warehouse_id, fn ($q, $id) => $q->where('warehouse_id', $id))
-            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->serial_number, fn ($q, $sn) => $q->where('serial_number', 'like', "%{$sn}%"))
-            ->latest()
-            ->paginate($request->integer('per_page', 50));
+        $serials = QueryPipeline::for(StockSerial::with(['product', 'warehouse']), $request)
+            ->allow(
+                AllowedFilter::exact('product_id'),
+                AllowedFilter::exact('warehouse_id'),
+                AllowedFilter::enum('status', SerialStatus::class),
+                AllowedFilter::partial('serial_number'),
+            )
+            ->sortable(['id', 'serial_number'], default: '-id')
+            ->paginate(50);
 
         return response()->json($serials);
     }
@@ -66,7 +76,7 @@ class ProductVariantController extends Controller
     {
         $serial = StockSerial::create(array_merge($request->validated(), [
             'tenant_id' => $request->user()->tenant_id,
-            'status' => 'in_stock',
+            'status' => SerialStatus::InStock,
         ]));
 
         return response()->json(['data' => $serial], 201);

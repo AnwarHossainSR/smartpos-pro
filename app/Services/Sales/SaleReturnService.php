@@ -2,6 +2,8 @@
 
 namespace App\Services\Sales;
 
+use App\Domain\Enums\StockMovementType;
+use App\Domain\Sales\Data\CreateSaleReturnData;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -22,18 +24,14 @@ class SaleReturnService
 {
     public function __construct(protected StockLedgerService $ledger) {}
 
-    /**
-     * @param  array{warehouse_id?:int|null, refund_method?:string, note?:string|null,
-     *   items: array<int, array{sale_item_id:int, quantity:float}>}  $payload
-     */
-    public function create(Sale $sale, array $payload, User $user): SaleReturn
+    public function create(Sale $sale, CreateSaleReturnData $data, User $user): SaleReturn
     {
-        return DB::transaction(function () use ($sale, $payload, $user) {
-            $warehouseId = $payload['warehouse_id'] ?? $sale->warehouse_id;
+        return DB::transaction(function () use ($sale, $data, $user) {
+            $warehouseId = $data->warehouseId ?? $sale->warehouse_id;
 
             // How much of each line has already been returned.
             $alreadyReturned = DB::table('sale_return_items')
-                ->whereIn('sale_item_id', collect($payload['items'])->pluck('sale_item_id'))
+                ->whereIn('sale_item_id', array_map(static fn ($l) => $l->saleItemId, $data->items))
                 ->groupBy('sale_item_id')
                 ->selectRaw('sale_item_id, sum(quantity) as qty')
                 ->pluck('qty', 'sale_item_id');
@@ -45,25 +43,25 @@ class SaleReturnService
                 'customer_id' => $sale->customer_id,
                 'user_id' => $user->id,
                 'reference_number' => 'PENDING-'.uniqid(),
-                'refund_method' => $payload['refund_method'] ?? 'cash',
-                'note' => $payload['note'] ?? null,
+                'refund_method' => $data->refundMethod,
+                'note' => $data->note,
                 'returned_at' => Carbon::now(),
             ]);
 
             $subtotal = 0.0;
             $taxTotal = 0.0;
 
-            foreach ($payload['items'] as $line) {
+            foreach ($data->items as $line) {
                 /** @var SaleItem|null $saleItem */
-                $saleItem = $sale->items()->whereKey($line['sale_item_id'])->first();
+                $saleItem = $sale->items()->with('taxes')->whereKey($line->saleItemId)->first();
 
                 if (! $saleItem) {
                     throw ValidationException::withMessages([
-                        'items' => ["Sale item #{$line['sale_item_id']} does not belong to this sale."],
+                        'items' => ["Sale item #{$line->saleItemId} does not belong to this sale."],
                     ]);
                 }
 
-                $quantity = round((float) $line['quantity'], 4);
+                $quantity = $line->quantity;
                 $returnable = (float) $saleItem->quantity - (float) ($alreadyReturned[$saleItem->id] ?? 0);
 
                 if ($quantity <= 0 || $quantity > $returnable) {
@@ -72,14 +70,16 @@ class SaleReturnService
                     ]);
                 }
 
-                $lineTotal = round((float) $saleItem->unit_price * $quantity, 2);
-                $lineTax = $saleItem->quantity > 0
-                    ? round((float) $saleItem->tax_amount * ($quantity / (float) $saleItem->quantity), 2)
-                    : 0;
-                $subtotal += $lineTotal;
-                $taxTotal += $lineTax;
+                // What fraction of the original line is being reversed. Applied to
+                // each snapshotted component rather than recomputed at today's
+                // rate, so a rate change between sale and return cannot change
+                // the refund.
+                $ratio = (float) $saleItem->quantity > 0 ? $quantity / (float) $saleItem->quantity : 0.0;
 
-                $return->items()->create([
+                $lineTotal = round((float) $saleItem->unit_price * $quantity, 2);
+                $subtotal += $lineTotal;
+
+                $returnItem = $return->items()->create([
                     'sale_item_id' => $saleItem->id,
                     'product_id' => $saleItem->product_id,
                     'variant_id' => $saleItem->variant_id,
@@ -89,15 +89,29 @@ class SaleReturnService
                     'line_total' => $lineTotal,
                 ]);
 
+                foreach ($saleItem->taxes as $component) {
+                    $amount = round((float) $component->amount * $ratio, 2);
+                    $taxTotal += $amount;
+
+                    $returnItem->taxes()->create([
+                        'tax_rate_id' => $component->tax_rate_id,
+                        'name' => $component->name,
+                        'rate' => $component->rate,
+                        'type' => $component->type,
+                        'is_compound' => $component->is_compound,
+                        'base_amount' => round((float) $component->base_amount * $ratio, 2),
+                        'amount' => $amount,
+                    ]);
+                }
+
                 // Return the goods to stock via the immutable ledger.
                 $this->ledger->record([
                     'product_id' => $saleItem->product_id,
                     'variant_id' => $saleItem->variant_id,
                     'warehouse_id' => $warehouseId,
-                    'direction' => 'in',
                     'quantity' => $quantity,
                     'unit_cost' => (float) $saleItem->unit_cost,
-                    'type' => 'sale_return',
+                    'type' => StockMovementType::SaleReturn,
                     'reference' => $return,
                     'user_id' => $user->id,
                 ]);
@@ -119,7 +133,7 @@ class SaleReturnService
                 }
             }
 
-            return $return->load('items');
+            return $return->load('items.taxes');
         });
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
@@ -81,7 +82,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if ($user->status === 'suspended') {
+        if ($user->status === UserStatus::Suspended) {
             throw ValidationException::withMessages([
                 'email' => ['This account is suspended.'],
             ]);
@@ -160,7 +161,7 @@ class AuthController extends Controller
 
         $tenant = Tenant::find($user->tenant_id);
 
-        if (! $tenant || ! in_array($tenant->status, ['trialing', 'active'], true)) {
+        if (! $tenant || ! $tenant->status->hasApiAccess()) {
             abort(response()->json([
                 'message' => 'This account has been suspended.',
                 'code' => 'tenant_suspended',
