@@ -42,7 +42,7 @@ class TerminalChannel
         // its own request-log format — see ServeCommand::flushOutputBuffer), which eats both
         // Monolog's bracketed header and a bracketed tag. Write raw to STDERR with no leading
         // "[" to survive that, and mirror to the log file as a durable fallback.
-        fwrite(STDERR, "\n{$text}\n\n");
+        fwrite(fopen('php://stderr', 'w'), "\n{$text}\n\n");
         Log::channel('single')->info($text);
     }
 }
