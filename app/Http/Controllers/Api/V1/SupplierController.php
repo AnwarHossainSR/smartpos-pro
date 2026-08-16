@@ -8,6 +8,7 @@ use App\Http\Resources\SupplierResource;
 use App\Models\Supplier;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -34,20 +35,32 @@ class SupplierController extends Controller
         return new SupplierResource(Supplier::create($data));
     }
 
-    public function show(Supplier $supplier): SupplierResource
+    public function show($id): SupplierResource
     {
+        $supplier = app(TenantContext::class)->has()
+            ? Supplier::findOrFail($id)
+            : Supplier::withoutTenancy()->findOrFail($id);
+
         return new SupplierResource($supplier);
     }
 
-    public function update(StoreSupplierRequest $request, Supplier $supplier): SupplierResource
+    public function update(StoreSupplierRequest $request, $id): SupplierResource
     {
+        $supplier = app(TenantContext::class)->has()
+            ? Supplier::findOrFail($id)
+            : Supplier::withoutTenancy()->findOrFail($id);
+
         $supplier->update($request->validated());
 
         return new SupplierResource($supplier);
     }
 
-    public function destroy(Supplier $supplier)
+    public function destroy(Request $request, $id)
     {
+        $supplier = app(TenantContext::class)->has()
+            ? Supplier::findOrFail($id)
+            : Supplier::withoutTenancy()->findOrFail($id);
+
         $supplier->delete();
 
         return response()->noContent();
