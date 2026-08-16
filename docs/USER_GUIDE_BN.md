@@ -1,959 +1,672 @@
-# SmartPOS Pro - Byaboharokari Guide (Bangla)
+# SmartPOS Pro ব্যবহারকারী গাইড
 
-**Sonsorki:** 1.0
-**Tarikh:** August 2026
+## সূচিপত্র
 
----
-
-## Suchipotro
-
-1. [SmartPOS Pro Ki?](#1-smartpos-pro-ki)
-2. [Modulesamuh - Sarosongkhep](#2-modulesamuh)
-3. [Moduler Madhye Somporko](#3-moduler-madhye-somporko)
-4. [Prothombar Setup - Kivabe Shuru Korben](#4-prothombar-setup)
-5. [Dainik Byaboharer Dhap - Ekdiner Probaho](#5-dainik-byaboharer-dhap)
-6. [Module-voittik Bistarito Bakkha](#6-module-voittik-bistarito-bakkha)
-7. [Byaboharokari Bhumika O Onumoti](#7-byaboharokari-bhumika-o-onumoti)
-8. [Settings O Configuration](#8-settings-o-configuration)
-9. [Report O Bishleshon](#9-report-o-bishleshon)
-10. [Shobdaboli](#10-shobdaboli)
-
----
-
-## 1. SmartPOS Pro Ki?
-
-SmartPOS Pro holo ekta **multi-tenant Point of Sale (POS) o Retail SaaS application**. Sohoj bhashay bola jay:
-
-> Eti ekta **digital dokan bastapona sistema** jeta apnar puro byabsakek jaygay chalate sahajjo kore - ponnyo talika theke shuru kore sel, kroy, inventory, hisab-nikesh, kharcha, tax, report ebong grahok bastapona porjontto.
-
-### Kader Jonno?
-
-- Choto theke majhari retail dokan (grocery, pharmacy, kaprer dokan, electronics dokan ityadi)
-- Ekadhik shakha ba godam ase emon byabsa
-- Jara sel, stock, ebong hisab eksathe dekhte chan
-- Jara kreta-bikreta partner track korte chan
-- Jara tax (VAT/GST) sothikbhabe manage korte chan
-
-### Mul Bishishto
-
-| Bishishto | Biboron |
-|-----------|---------|
-| **Multi-Tenant** | Ekti server-e onek byabsa eksathe cholte pare, tothyo aladakrito |
-| **Multi-Shakha** | Ekti byabsar onek shakha o godam thakte pare |
-| **Real-Time** | Sel howar sathe sathe stock, hisab update hoy |
-| **POS Terminal** | Barcode scan ba search kore druto sel |
-| **Hisab-Nikesh** | Dual-entry accounting, journal, trial balance |
-| **Tax Bastapona** | VAT, GST, Sales Tax - desho onujayi configuring |
-| **Report** | Sel, lav, stock, rin, tax - sob dhoroner report |
-| **Loyalty** | Point puraskar o coupon system |
-| **Cash Register** | Dainik cash open/close, X-report, Z-report |
-| **Audit Trail** | Protiti guruttbopurno kajer log rakha hoy |
-| **Bohu Bhasha** | Bangla, English, Arabic, German, Japanese |
+1. [পরিচিতি](#পরিচিতি)
+2. [অ্যাকাউন্ট তৈরি](#অ্যাকাউন্ট-তৈরি)
+3. [লগইন](#লগইন)
+4. [ড্যাশবোর্ড](#ড্যাশবোর্ড)
+5. [পণ্য ব্যবস্থাপনা](#পণ্য-ব্যবস্থাপনা)
+6. [পয়েন্ট অব সেল (POS)](#পয়েন্ট-অব-সেল)
+7. [ইনভেন্টরি](#ইনভেন্টরি)
+8. [বিক্রয়](#বিক্রয়)
+9. [ক্রয়](#ক্রয়)
+10. [গ্রাহক](#গ্রাহক)
+11. [সরবরাহকারী](#সরবরাহকারী)
+12. [খরচ](#খরচ)
+13. [হিসাববিজ্ঞান](#হিসাববিজ্ঞান)
+14. [রিপোর্ট](#রিপোর্ট)
+15. [টিম ব্যবস্থাপনা](#টিম-ব্যবস্থাপনা)
+16. [সেটিংস](#সেটিংস)
+17. [দুই-ফ্যাক্টর প্রমাণীকরণ](#দুই-ফ্যাক্টর-প্রমাণীকরণ)
+18. [ইমেইল যাচাইকরণ](#ইমেইল-যাচাইকরণ)
+19. [সাধারণ জিজ্ঞাসা](#সাধারণ-জিজ্ঞাসা)
 
 ---
 
-## 2. Modulesamuh
+## পরিচিতি
 
-SmartPOS Pro-te mot **21-ti module** ache. Protiti module ekti nirnistho kaj porichalonito kore:
+SmartPOS Pro একটি আধুনিক, ক্লাউড-ভিত্তিক পয়েন্ট অব সেল (POS) এবং খুচরা ব্যবস্থাপনা প্ল্যাটফর্ম। এটি বিক্রয়, ক্রয়, ইনভেন্টরি, হিসাববিজ্ঞান, এবং টিম ব্যবস্থাপনার জন্য একটি সম্পূর্ণ সমাধান প্রদান করে।
 
-| # | Module | Kon Kaje Lage |
-|---|--------|---------------|
-| 1 | **Dashboard** | Sarosongkhep dekha - ajker sel, lav, stock |
-| 2 | **Shakha (Branches)** | Dokan/shakhar talika o bastapona |
-| 3 | **Godam (Warehouses)** | Godamer talika o bastapona |
-| 4 | **Ponnyo (Products)** | Ponnyo toiri, shompadona, category, brand, ekok |
-| 5 | **Inventory** | Stock poriman, stock sorano, somonnoy |
-| 6 | **POS** | Point of Sale - cart, checkout, receipt |
-| 7 | **Sel (Sales)** | Seler talika, bistarito, return |
-| 8 | **Kroy (Purchases)** | Sorborokhari theke ponnyo kena |
-| 9 | **Grahok (Customers)** | Grahok talika, rin, loyalty |
-| 10 | **Sorborokhari (Suppliers)** | Sorborokhari talika o rin |
-| 11 | **Kharcha (Expenses)** | Dainik kharchar hisab |
-| 12 | **Hisab-Nikesh (Accounting)** | Account, journal, trial balance |
-| 13 | **Tax** | Tax rate, group, zone, profile |
-| 14 | **Report** | Sel, lav, stock, rin report |
-| 15 | **Coupon** | Discount coupon toiri o bastapona |
-| 16 | **Loyalty** | Point deya o redeem |
-| 17 | **Subscription** | Plan, payment, simabaddhota |
-| 18 | **Byaboharokari (Users)** | User toiri, shompadona, bhumika nirdharon |
-| 19 | **Bhumika (Roles)** | Role toiri, onumoti set kora |
-| 20 | **Settings** | Byabsar tothyo, theme, bhasha |
-| 21 | **Audit** | Sob karyokoloper log dekha |
+### মূল বৈশিষ্ট্য
+
+- **বহু-শাখা সমর্থন:** একাধিক শাখা এবং গুদাম পরিচালনা করুন
+- **রিয়েল-টাইম ইনভেন্টরি:** স্টক পরিবর্তন তাৎক্ষণিকভাবে আপডেট হয়
+- **নিরাপদ লেনদেন:** সকল অর্থ লেনদেন এনক্রিপ্টেড এবং নিরাপদ
+- **অফলাইন সমর্থন:** ইন্টারনেট ছাড়াও POS কাজ করে
+- **মোবাইল রেসপনসিভ:** যেকোনো ডিভাইসে ব্যবহার করা যায়
 
 ---
 
-## 3. Moduler Madhye Somporko
+## অ্যাকাউন্ট তৈরি
 
-Niche dekhano hocche kivabe modulegulo ekoporere sathe somporkito:
+### নতুন ব্যবসা নিবন্ধন
 
-```
-+------------------------------------------------------------------+
-|                    SmartPOS Pro - Module Somporko                  |
-+------------------------------------------------------------------+
+১. [SmartPOS Pro ওয়েবসাইট](https://smartpos.pro) এ যান
+২. **"নিবন্ধন করুন"** বোতামে ক্লিক করুন
+৩. নিম্নলিখিত তথ্য পূরণ করুন:
+   - **ব্যবসার নাম:** আপনার ব্যবসার পূর্ণ নাম
+   - **আপনার নাম:** পূর্ণ নাম
+   - **ইমেইল:** ব্যবসার ইমেইল ঠিকানা
+   - **পাসওয়ার্ড:** নিরাপদ পাসওয়ার্ড (কমপক্ষে ৮ অক্ষর, অক্ষর ও সংখ্যা অন্তর্ভুক্ত)
+   - **পাসওয়ার্ড নিশ্চিত করুন:** পাসওয়ার্ড আবার লিখুন
+৪. **"অ্যাকাউন্ট তৈরি করুন"** বোতামে ক্লিক করুন
 
-  +----------+     +----------+     +----------+
-  |  Shakha  |---->|  Godam   |---->| Inventory|
-  | (Branch) |     |(Warehouse)|    |          |
-  +----------+     +----------+     +----+-----+
-                                         |
-                          +--------------+--------------+
-                          v              v              v
-                    +----------+  +----------+  +----------+
-                    |   Sel    |  |   Kroy   |  | Stock    |
-                    |  (Sale)  |  |(Purchase)|  | Sorano   |
-                    +----+-----+  +----+-----+  +----------+
-                         |            |
-           +-------------+------------+
-           v             v
-     +----------+  +----------+
-     |  Ponnyo  |  | Sorborokhari|
-     |(Product) |  | (Supplier) |
-     +----+-----+  +------------+
-          |
-  +-------+-------+----------+
-  v       v       v          v
-+------+ +------+ +------+ +------+
-|Catego| |Brand | |Ekok  | |Tax   |
-|ry    | |      | |      | |Group |
-+------+ +------+ +------+ +------+
+### ইমেইল যাচাইকরণ
 
-  +----------+     +----------+     +----------+
-  | Grahok   |---->|Loyalty   |     |  Coupon  |
-  |(Customer)|     |          |     |          |
-  +----+-----+     +----------+     +----+-----+
-       |                                  |
-       +----------+  +-------------------+
-                  v  v
-              +----------+
-              | Sel/POS  |
-              +----+-----+
-                   |
-        +----------+----------+
-        v          v          v
-  +----------+ +----------+ +----------+
-  | Kharcha | |Hisab-    | |Cash      |
-  |(Expense) | |Nikesh    | |Register  |
-  +----------+ +----------+ +----------+
-        |          |          |
-        +----------+----------+
-                   v
-              +----------+
-              | Report   |
-              +----------+
+নিবন্ধনের পর, আপনার ইমেইল ঠিকানায় একটি ৬-অংকের যাচাইকরণ কোড পাঠানো হবে।
 
-  +----------+     +----------+     +----------+
-  |Byaboharokari-->| Bhumika  |---->| Onumoti  |
-  |  (User)  |     |  (Role)  |     |(Permission)|
-  +----------+     +----------+     +----------+
+১. আপনার ইমেইল ইনবক্স চেক করুন
+২. ৬-অংকের কোড কপি করুন
+৩. **"ইমেইল যাচাই করুন"** পৃষ্ঠায় কোড পেস্ট করুন
+৪. **"যাচাই করুন"** বোতামে ক্লিক করুন
 
-  +----------+     +----------+
-  | Settings |     | Audit    |
-  +----------+     +----------+
-```
-
-### Somporko er Bakkha:
-
-**Ponnyo o Inventory:**
-- Protiti ponnyo ekti **category**, **brand**, **ekok** ebong **tax group**-er sathe somporkito
-- Ponnyor protiti godame aladabhabe **stock poriman** thake (InventoryBalance)
-- Protiti sel, kroy, stock sorano - sobkisu ekti **immutable ledger** (StockMovement) toiri kore
-
-**Sel o POS:**
-- POS theke sel hole **stock come** jay shobochalitobhabe
-- Sel-e grahok thakle **grahok-er rin** barete pare
-- Sel-e coupon byabohar hole **coupon-er byabohar gonona** bare
-- Seler por **loyalty point** shobochalitobhabe jog hoy
-- Sel return hole **stock phire ashe** ebong **tax biporit** hoy
-
-**Kroy o Sorborokhari:**
-- Kroy korle **stock bare**
-- Kroy-er sathe **sorborokharir rin** somporkito hoy
-
-**Hisab-Nikesh o Kharcha:**
-- Sel, kroy, kharcha - sobkisu ekti **dual-entry journal** toiri kore
-- **Cash Register** dainik cash flow track kore
-- **Kharcha** onumodon prokria atikromon kore
-
-**Grahok o Loyalty:**
-- Grahok proti sel-e **loyalty point** orjito hoy
-- Point **redeem** kora jay (discount hishebe)
-- Grahok-er **rin balance** track hoy
+> **দ্রষ্টব্য:** কোড ১৫ মিনিটের জন্য বৈধ। কোড না পেলে "কোড পুনরায় পাঠান" বোতামে ক্লিক করুন।
 
 ---
 
-## 4. Prothombar Setup
+## লগইন
 
-### Dhap 1: Registration
+১. [লগইন পৃষ্ঠায়](https://smartpos.pro/login) যান
+২. আপনার ইমেইল এবং পাসওয়ার্ড লিখুন
+৩. **"সাইন ইন"** বোতামে ক্লিক করুন
 
-1. App-e **Register** pejay jan
-2. Nicher tothyo gulo puron korun:
-   - **Byabsar Nam** - apnar dokan/kompanir nam
-   - **Byabsar Dhoron** - Retail, Wholesale, ityadi
-   - **Maliker Nam** - apnar puro nam
-   - **Email** - login-er jonno byabohar hobe
-   - **Password** - shoktishali password din
-3. **Register** button-e click korun
+### দুই-ফ্যাক্টর প্রমাণীকরণ (2FA)
 
-Erpor shobochalitobhabe toiri hobe:
-- Ekti **Tenant** (apnar byabsar jonno alada jayga)
-- Ekti **Business**
-- Ekti **Shakha** (Branch) - default
-- Ekti **Godam** (Warehouse) - default
-- Ekti **CashRegister** - default
-- Apni **Owner** bhumikay thakben - sob onumoti thakbe
+যদি আপনার অ্যাকাউন্টে 2FA সক্রিয় থাকে:
 
-### Dhap 2: Email Jachai
+১. লগইনের পর আপনাকে 6-অংকের কোড লিখতে বলা হবে
+২. আপনার অথেনটিকেটর অ্যাপ (Google Authenticator, Authy ইত্যাদি) থেকে কোড লিখুন
+৩. **"সাইন ইন"** বোতামে ক্লিক করুন
 
-Email-e ekti **jachokoron link** pathano hobe. Link-e click kore email jachai korun.
+### রিকভারি কোড
 
-### Dhap 3: Prathomik Settings
+যদি আপনার ফোন হারিয়ে যায় বা অথেনটিকেটর অ্যাপ অ্যাক্সেস না হয়:
 
-Login korar por **Settings** pejay jan ebong:
-- **Byabsar puro thikana** din
-- **Mudra** select korun (BDT, INR, USD, EUR ityadi)
-- **Tax Profile** select korun (BD_VAT, IN_GST, EU_VAT, US_SALES_TAX)
-- **Mullo Prodashon** select korun (Tax Inclusive ba Tax Exclusive)
-- **Bhasha** select korun (Bangla, English ityadi)
-- **Theme** select korun (Light/Dark, ronger palette)
+১. লগইন পৃষ্ঠায় **"রিকভারি কোড ব্যবহার করুন"** ক্লিক করুন
+২. আপনার রিকভারি কোডগুলোর একটি লিখুন
+৩. **"সাইন ইন"** বোতামে ক্লিক করুন
 
-### Dhap 4: Ponnyo Jog Korun
-
-**Products** pejay jan ebong:
-1. Prothome **Category** toiri korun (jemon: "Grocery", "Paniyo")
-2. **Brand** toiri korun (jemon: "Pran", "Coca-Cola")
-3. **Ekok** toiri korun (jemon: "KG", "Piece", "Litre")
-4. **Ponnyo** toiri korun:
-   - Nam, SKU, Barcode
-   - Krommulyo o Bikrommulyo
-   - Tax group (jodi thake)
-   - Stock poriman (priti godamer jonno)
-
-### Dhap 5: Team Sodossho Jog Korun
-
-**Team** pejay jan:
-1. **Bhumika (Roles)** toiri korun - proyojoniyo onumoti din
-2. **Byaboharokari (Users)** jog korun - tader bhumika din
-
-**Udahoron Bhumika:**
-- **Cashier**: shudhu POS, sel, grahok dekha
-- **Manager**: sob dekha + stock somonnoy + report
-- **Accountant**: hisab-nikesh + kharcha + tax
+> **গুরুত্বপূর্ণ:** প্রতিটি রিকভারি কোড একবারই ব্যবহার করা যায়। নতুন কোড তৈরি করতে "রিকভারি কোড রিজেনারেট করুন" ব্যবহার করুন।
 
 ---
 
-## 5. Dainik Byaboharer Dhap
+## ড্যাশবোর্ড
 
-Niche ekta **sadharon dokaner ekdiner probaho** dekhano hocche:
+লগইনের পর আপনি ড্যাশবোর্ড দেখবেন। এটি আপনার ব্যবসার সারসংক্ষেপ দেখায়।
 
-```
-Sokal 9:00 - Cash Register Khola
-    |
-    v
-Sokal 9:01 - POS Terminal Prostut
-    |
-    v
-Sokal 9:05 - Grahok Ase
-    |
-    +----> Ponnyo Scan/Search
-    |        |
-    |        v
-    |     Cart-e Jog
-    |        |
-    |        v
-    |     Checkout (Payment)
-    |        |
-    |        +----> Stock Come
-    |        +----> Sel Record Toiri
-    |        +----> Loyalty Point Jog
-    |        +----> Receipt Print
-    |
-    v
-Dupur - Kroy Order
-    |
-    +----> Sorborokhari Nirbachon
-    +----> Ponnyo Nirbachon
-    +----> Poriman O Mullo
-    +----> Kroy Somponno -> Stock Bare
-    |
-    v
-Bikel - Kharcha Record
-    |
-    +----> Kharchar Dhoron (Bidyut, Bhara, Beton ityadi)
-    +----> Onumodon Prokria
-    |
-    v
-Sandhya 8:00 - Cash Register Bondho
-    |
-    +----> Noddo Gonna
-    +----> Z-Report
-    +----> Dainik Sarosongkhep
-```
+### মূল পরিসংখ্যান
 
-### Bistarito Dhap:
+- **আজকের বিক্রয়:** আজকের মোট বিক্রয়ের পরিমাণ
+- **আজকের লাভ:** আজকের মোট লাভ
+- **আজকের খরচ:** আজকের মোট খরচ
+- **আজকের ক্রয়:** আজকের মোট ক্রয়ের পরিমাণ
+- **নগদ প্রবাহ:** আয় ও ব্যয়ের পার্থক্য
+- **মোট গ্রাহক:** সকল নিবন্ধিত গ্রাহক
+- **মোট পণ্য:** সকল পণ্যের সংখ্যা
+- **কম স্টক:** স্টক কম পণ্যের সংখ্যা
+- **স্টক শেষ:** স্টক শেষ পণ্যের সংখ্যা
+- **বকেয় পেমেন্ট:** অপেক্ষমাণ পেমেন্ট
 
-#### Dhap 1: Cash Register Khola
+### চার্ট
 
-1. **Cash Register** pejay jan
-2. **Open Session** button-e click korun
-3. **Opening Cash** likhun - koto takay dokan khulchen (jemon: 5000 taka)
-4. **Open** button-e click korun
-
-#### Dhap 2: POS Theke Sel
-
-1. **POS** pejay jan
-2. **Barcode scan** korun athoba **ponnyo-nam search** korun
-3. Ponnyo **cart-e jog** hobe
-4. **Poriman** poriborton korun proyojon hole
-5. **Discount** din (onumoti thakle)
-6. **Checkout** button-e click korun
-7. **Payment poddhoti** nirbachon korun:
-   - **Cash** - noddo payment
-   - **Card** - card payment
-   - **Bank Transfer** - bank transfer
-   - **Mobile Banking** - bKash, Nagad ityadi
-   - **Wallet** - wallet
-   - **Due** - rine (pore debe)
-8. **Complete Sale** button-e click korun
-9. **Receipt** print korun
-
-#### Dhap 3: Sel Batil ba Return
-
-- **Sel Batil (Void)**: Sales pejay geay sel-er bistarite `Void` button-e click korun
-- **Return**: Sales pejay geay `Return` button-e click korun, ferote dite chaoa ponnyo nirbachon korun
-
-#### Dhap 4: Cash Register Bondho
-
-1. **Cash Register** pejay jan
-2. **Close Session** button-e click korun
-3. **Actual Cash** likhun - hate gonno kore koto taka ache
-4. System **Expected Cash** dekhabe ebong **Difference** gonona korbe
-5. **Close** button-e click korun
-6. **Z-Report** (PDF) download korun
+- **বিক্রয় ট্রেন্ড:** গত ১৪ দিনের বিক্রয়ের চার্ট
+- **লাভ ট্রেন্ড:** গত ১৪ দিনের লাভের চার্ট
+- **পেমেন্ট পদ্ধতি:** বিভিন্ন পেমেন্ট পদ্ধতির অংশীদারিত্ব
 
 ---
 
-## 6. Module-Voittik Bistarito Bakkha
+## পণ্য ব্যবস্থাপনা
 
-### 6.1 Dashboard
+### পণ্য তালিকা
 
-**Pejay:** `/dashboard`
+**মেনু:** পণ্য > পণ্য তালিকা
 
-Dashboard apnar byabsar **sarosongkhep** dekhay:
+এখানে সকল পণ্য দেখতে পাবেন। আপনি কর্তৃক অনুসন্ধান, ফিল্টার, এবং সাজানো যায়।
 
-| Tothyo | Ki Dekhay |
-|--------|-----------|
-| **Ajker Sel** | Aj koto takar sel hoyeche |
-| **Ajker Lav** | Aj koto taka lav hoyeche |
-| **Stock-er Obostha** | Kom stock ase emon ponnyo |
-| **Grahok-er Rin** | Grahokder moto bekya |
-| **Sel Trend** | Goti kokkhoner sel-er graph |
-| **Sheersh Ponnyo** | Sobcheye beshi bikri howa ponnyo |
+**অনুসন্ধান:** শিরোনাম বা SKU দিয়ে অনুসন্ধান করুন
+**ফিল্টার:** ক্যাটাগরি, ব্র্যান্ড, অবস্থা অনুযায়ী ফিল্টার করুন
+**সাজানো:** নাম, মূল্য, স্টক অনুযায়ী সাজানো
 
-**Kivabe Byabohar Korben:**
-- Tarikh range select korun (aj, got soptaho, got mash)
-- Shakha filter korun
-- Graph theke trend bujhun
+### নতুন পণ্য যোগ করুন
 
----
+১. **"নতুন পণ্য"** বোতামে ক্লিক করুন
+২. পণ্যের তথ্য পূরণ করুন:
+   - **নাম:** পণ্যের নাম (আবশ্যিক)
+   - **SKU:** স্টক কিপিং ইউনিট (স্বয়ংক্রিয় বা নিজে লিখুন)
+   - **ক্যাটাগরি:** পণ্যের ক্যাটাগরি
+   - **ব্র্যান্ড:** পণ্যের ব্র্যান্ড
+   - **ইউনিট:** পণ্যের একক (পিস, কেজি, লিটার ইত্যাদি)
+   - **ক্রয়মূল্য:** প্রতি এককের ক্রয়মূল্য
+   - **বিক্রয়মূল্য:** প্রতি এককের বিক্রয়মূল্য
+   - **ট্যাক্স হার:** শতকরা হারে ট্যাক্স
+   - **সর্বনিম্ন স্টক:** কম স্টক সতর্কতার সীমা
+   - **সর্বোচ্চ স্টক:** সর্বোচ্চ স্টক সীমা
+   - **খোলা স্টক:** প্রাথমিক স্টক পরিমাণ
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-### 6.2 Ponnyo Bastapona
+### পণ্য সম্পাদনা
 
-**Pejay:** `/products`
+১. তালিকা থেকে পণ্যের পাশে **"সম্পাদনা"** আইকনে ক্লিক করুন
+২. প্রয়োজনীয় পরিবর্তন করুন
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-#### Ponnyo Category (Category)
+### পণ্য মুছুন
 
-Ponnyoguloke **goshtibhuto** korar jonno:
-- Udahoron: "Grocery", "Paniyo", "Patro", "Kapor"
-- Protiti category-te ekti **default tax group** deowa jay
+১. তালিকা থেকে পণ্যের পাশে **"মুছুন"** আইকনে ক্লিক করুন
+২. নিশ্চিত করতে **"মুছুন"** বোতামে ক্লিক করুন
 
-#### Brand (Brand)
-
-Ponnyor brand track korar jonno:
-- Udahoron: "Pran", "Coca-Cola", "Samsung"
-- Report-e brand onujayi sel dekha jay
-
-#### Ekok (Unit)
-
-Ponnyo porimap-er ekok:
-- Udahoron: "KG", "Gram", "Piece", "Litre", "Bosta"
-
-#### Ponnyo Toiri
-
-1. **Products** pejay **Add Product** button-e click korun
-2. Nicher tothyo gulo puron korun:
-
-| Field | Biboron |
-|-------|---------|
-| **Nam** | Ponnyo-r nam |
-| **SKU** | Stock Keeping Unit (unique code) |
-| **Barcode** | Barcode nombor (jodi thake) |
-| **Category** | Kon goshtite pore |
-| **Brand** | Kon brand-er |
-| **Ekok** | Kivabe mapa hoy |
-| **Tax Group** | Kon tax proyojyo |
-| **Krommulyo** | Koto takay kinechen |
-| **Bikrommulyo** | Koto takay bikri korben |
-| **Stock Tracking** | Ha/Na - stock kom-beshi hobe kina |
-| **Stock** | Protiti godame koto ache |
-
-**Guruttbopurno:** Bikrommulyo system thekei neoya hoy - POS-e client theke mullo neoya hoy na. Eti nirokhotar bishishto.
-
-#### Ponnyo-r Variant
-
-Ekti ponnyo-r bibhinno roop thakte pare:
-- Udahoron: Ekti shirt-er 3 size (S, M, L), 4 rong
-- Protiti variant-er alada SKU, barcode, mullo thakte pare
+> **দ্রষ্টব্য:** মুছে ফেলা পণ্য আবার পুনরুদ্ধার করা যায়।
 
 ---
 
-### 6.3 Inventory Bastapona
+## পয়েন্ট অব সেল
 
-**Pejay:** `/inventory`
+### POS টার্মিনাল খুলুন
 
-Inventory holo **stock bastaponar hridoy**.
+**মেনু:** POS > POS টার্মিনাল
 
-#### Stock Balance
+১. ক্যাশ রেজিস্টার খুলুন
+২. খোলার নগদ পরিমাণ লিখুন
+৩. **"রেজিস্টার খুলুন"** বোতামে ক্লিক করুন
 
-- Protiti ponnyo protiti godame koto tuku ache ta dekhun
-- **Kom Stock** filter diye jebono ponnyo shesh hote choleche ta dekhun
-- Stock mullo o gorokharcha dekhun
+### বিক্রয় তৈরি
 
-#### Stock Movement
+১. পণ্য অনুসন্ধান করুন (নাম, বারকোড, বা SKU দিয়ে)
+২. পণ্যে ক্লিক করুন বা বারকোড স্ক্যান করুন
+৩. পরিমাণ নির্ধারণ করুন
+৪. প্রয়োজনে ডিসকাউন্ট প্রয়োগ করুন
+৫. গ্রাহক নির্বাচন করুন (ঐচ্ছিক)
+৬. **"চেকআউট"** বোতামে ক্লিক করুন
 
-Stock kono ponnyo-r **sompurno itihash** dekhun:
-- Kokhon kena hoyeche (kroy)
-- Kokhon bikri hoyeche (sel)
-- Kokhon sorano hoyeche (stock transfer)
-- Kokhon somonnoy kora hoyeche (adjustment)
-- Protiti movement-er por stock koto chilo
+### পেমেন্ট গ্রহণ
 
-#### Stock Somonnoy (Stock Adjustment)
+১. পেমেন্ট পদ্ধতি নির্বাচন করুন:
+   - **নগদ:** নগদ পেমেন্ট
+   - **কার্ড:** ক্রেডিট/ডেবিট কার্ড
+   - **ব্যাংক:** ব্যাংক ট্রান্সফার
+   - **মোবাইল:** মোবাইল ব্যাংকিং
+   - **বকেয়:** পরে পেমেন্ট
+২. পেমেন্ট পরিমাণ লিখুন
+৩. **"পেমেন্ট সম্পন্ন করুন"** বোতামে ক্লিক করুন
 
-Jodi stock mmanuali thik korte hoy:
-1. **Inventory** pejay **Adjust Stock** jan
-2. Ponnyo nirbachon korun
-3. Godam nirbachon korun
-4. **Poriman** likhun (+ ba -)
-5. **Karon** likhun (ken somonnoy korchen)
-6. **Submit** korun
+### রসিদ
 
-#### Stock Transfer
+পেমেন্টের পর রসিদ তৈরি হবে। আপনি পারেন:
+- রসিদ প্রিন্ট করুন
+- রসিদ ইমেইল করুন
+- রসিদ SMS করুন
 
-Ekti godam theke onno godame ponnyo sorano:
-1. **Stock Transfers** section-e **New Transfer** korun
-2. **From Warehouse** o **To Warehouse** nirbachon korun
-3. Ponnyo o poriman nirbachon korun
-4. **Request Transfer** korun
-5. Onumodonkari **Approve** korben
-6. Gontobyer godamer kormochari **Receive** korben
+### হেল্ড বিক্রয়
 
-**Probaho:** Request -> Approve -> Receive (tinti dhap)
+বিক্রয় সাময়িকভাবে বন্ধ করতে:
+১. **"হেল্ড"** বোতামে ক্লিক করুন
+২. পরে চালিয়ে যেতে হেল্ড বিক্রয়ে ক্লিক করুন
 
----
+### বিক্রয় বাতিল
 
-### 6.4 POS (Point of Sale)
-
-**Pejay:** `/pos`
-
-POS holo apnar **dainik kajer mul sthan**.
-
-#### POS Terminal-er Angsho Gulo:
-
-```
-+---------------------------------------------------+
-|                    POS Terminal                      |
-+------------------------+----------------------------+
-|                        |                            |
-|   Ponnyo-r Grid        |       Cart                 |
-|                        |                            |
-|  +-----+ +-----+      |  Ponnyo    Poriman  Mullo  |
-|  |Pn-1 | |Pn-2 |      |  ------------------------ |
-|  +-----+ +-----+      |  Item 1    2       200     |
-|  +-----+ +-----+      |  Item 2    1       150     |
-|  |Pn-3 | |Pn-4 |      |                            |
-|  +-----+ +-----+      |  ------------------------ |
-|  +-----+ +-----+      |  Subtotal:       350      |
-|  |Pn-5 | |Pn-6 |      |  Tax:            35       |
-|  +-----+ +-----+      |  Discount:       -20      |
-|                        |  ------------------------ |
-|  [Barcode Scan]        |  Total:          365      |
-|  [Search...]           |                            |
-|                        |  [Checkout] [Hold] [Clear] |
-|                        |                            |
-+------------------------+----------------------------+
-```
-
-#### POS-e Kaj Korar Dhap:
-
-**1. Ponnyo Jog Korar:**
-- Barcode scanner diye scan korun
-- Athoba search box-e ponnyor nam likhun
-- Athoba grid theke sorasori click korun
-
-**2. Cart Poriborton:**
-- Poriman poriborton: +/- button byabohar korun
-- Item muchun: delete icon-e click korun
-- Discount din: "Discount" button (onumoti lage)
-- Mullo poriborton: "Price Override" button (onumoti lage)
-
-**3. Hold:**
-- Grahokkichukhon dure gele sel "Hold" korun
-- Pore fire eshe "Resume" korun
-
-**4. Checkout:**
-- "Checkout" button-e click korun
-- Payment poddhoti nirbachon korun
-- Grahok nirbachon korun (rin dite chaile)
-- "Complete Sale" korun
-
-**5. Receipt:**
-- PDF receipt toiri hobe
-- Print korun ba email-e pathan
+ভুল বিক্রয় বাতিল করতে:
+১. বিক্রয় তালিকা থেকে বিক্রয় নির্বাচন করুন
+২. **"বাতিল"** বোতামে ক্লিক করুন
+৩. কারণ লিখুন
+৪. নিশ্চিত করুন
 
 ---
 
-### 6.5 Sel Bastapona
+## ইনভেন্টরি
 
-**Pejay:** `/sales`
+### স্টক ব্যালেন্স
 
-#### Seler Talika:
+**মেনু:** ইনভেন্টরি > স্টক ব্যালেন্স
 
-- Sob sel dekhun (tarikh, grahok, poriman, obostha)
-- **Filter:** Tarikh range, shakha, grahok, obostha, payment status
-- **Search:** Invoice nombor ba grahok-nam diye khujun
+সকল পণ্যের বর্তমান স্টক পরিমাণ দেখুন।
 
-#### Seler Obostha (Status):
+**ফিল্টার:**
+- গুদাম অনুযায়ী
+- পণ্য অনুসন্ধান
+- কম স্টক পণ্য
 
-| Obostha | Artho |
-|---------|-------|
-| **Completed** | Sel somponno |
-| **Pending** | Payment baki |
-| **Voided** | Sel batil |
-| **Returned** | Sel return hoyeche |
+### স্টক সমন্বয়
 
-#### Seler Bistarito:
+১. **"স্টক সমন্বয়"** বোতামে ক্লিক করুন
+২. পণ্য নির্বাচন করুন
+৩. গুদাম নির্বাচন করুন
+৪. সমন্বয়ের ধরন নির্বাচন করুন:
+   - **ইন:** স্টক বাড়ান
+   - **আউট:** স্টক কমান
+৫. পরিমাণ লিখুন
+৬. নোট লিখুন (ঐচ্ছিক)
+৭. **"সমন্বয় করুন"** বোতামে ক্লিক করুন
 
-Protiti sel-er bistarito dekhun:
-- Kon ponnyo koto kore bikri hoyeche
-- Kon tax proyojyo chilo
-- Kon coupon byabohar hoyeche
-- Kon payment poddhotite payment hoyeche
-- Invoice PDF download korun
+### স্টক ট্রান্সফার
 
-#### Sel Return:
+১. **"স্টক ট্রান্সফার"** বোতামে ক্লিক করুন
+২. উৎস গুদাম নির্বাচন করুন
+৩. গন্তব্য গুদাম নির্বাচন করুন
+৪. ট্রান্সফার করতে চাওয়া পণ্য এবং পরিমাণ নির্বাচন করুন
+৫. **"ট্রান্সফার অনুরোধ"** বোতামে ক্লিক করুন
 
-Grahok ponnyo fire dile:
-1. Sel-er bistarite **Return** button-e click korun
-2. Ferote dite chaoa ponnyo nirbachon korun
-3. Poriman nirbachon korun
-4. **Refund poddhoti** nirbachon korun
-5. **Submit** korun
-6. Stock shobochalitobhabe phire ashe
-7. Tax shobochalitobhabe biporit hoy
+### স্টক মুভমেন্ট
 
----
+**মেনু:** ইনভেন্টরি > স্টক মুভমেন্ট
 
-### 6.6 Kroy Bastapona
-
-**Pejay:** `/purchases`
-
-#### Kroy Toiri:
-
-1. **New Purchase** button-e click korun
-2. **Sorborokhari** nirbachon korun
-3. **Godam** nirbachon korun (kon godame ponnyo ashbe)
-4. **Ponnyo** nirbachon korun ebong poriman o mullo din
-5. **Kroy Somponno** korun
-
-#### Kroyr Probhav:
-
-- Stock **bare** shobochalitobhabe
-- Sorborokharir **rin balance** update hoy
-- Ekti **stock movement** record hoy
-- **Hisab-Nikesh**-e journal entry toiri hoy (porikolponito)
+সকল স্টক পরিবর্তনের ইতিহাস দেখুন।
 
 ---
 
-### 6.7 Grahok Bastapona
+## বিক্রয়
 
-**Pejay:** `/customers`
+### বিক্রয় তালিকা
 
-#### Grahok Tothyo:
+**মেনু:** বিক্রয় > বিক্রয় তালিকা
 
-| Tothyo | Biboron |
-|--------|---------|
-| **Nam** | Grahok-er puro nam |
-| **Phone** | Mobile nombor |
-| **Email** | Email thikana |
-| **Rin Balance** | Koto taka rin ache |
-| **Loyalty Point** | Koto point joma ache |
-| **Credit Limit** | Sorbochho koto rin dite parben |
-| **Tax Tothyo** | Tax ID/nombor |
+সকল বিক্রয়ের তালিকা দেখুন।
 
-#### Rin Porishodhon:
+**ফিল্টার:**
+- অনুসন্ধান (ইনভয়েস নম্বর, গ্রাহক নাম)
+- শাখা
+- গ্রাহক
+- অবস্থা (সম্পন্ন, বকেয়, বাতিল)
+- তারিখ পরিসীমা
 
-- Grahok rin porishodhon korle **Sales** pejay giye **Add Payment** korun
-- Athoba **POS** theke sel korar somoy "Due" payment nirbachon korun
+### বিক্রয় বিবরণ
 
----
+বিক্রয়ের উপর ক্লিক করে বিস্তারিত দেখুন:
+- বিক্রয়ের তথ্য
+- বিক্রিত পণ্য
+- পেমেন্ট তথ্য
+- রসিদ
 
-### 6.8 Sorborokhari Bastapona
+### বিক্রয় ফেরত
 
-**Pejay:** `/suppliers`
+১. বিক্রয় বিবরণ পৃষ্ঠায় **"ফেরত"** বোতামে ক্লিক করুন
+২. ফেরত করতে চাওয়া পণ্য এবং পরিমাণ নির্বাচন করুন
+৩. **"ফেরত সম্পন্ন করুন"** বোতামে ক্লিক করুন
 
-#### Sorborokhari Tothyo:
+> **দ্রষ্টব্য:** ফেরত দেওয়া পরিমাণ বিক্রিত পরিমাণের চেয়ে বেশি হতে পারে না।
 
-| Tothyo | Biboron |
-|--------|---------|
-| **Nam** | Sorborokharir nam |
-| **Company** | Kompanir nam |
-| **Phone** | Jogajog nombor |
-| **Rin Balance** | Koto taka dite ache |
-| **Opening Balance** | Shurur rin |
+### বিক্রয় প্রতিবেদন
 
----
+**মেনু:** রিপোর্ট > বিক্রয় সারসংক্ষেপ
 
-### 6.9 Kharcha Bastapona
-
-**Pejay:** `/expenses`
-
-#### Kharchar Dhoron:
-
-Bibhinno dhoroner kharcha track korun:
-- Bidyut bil
-- Bhara
-- Beton
-- Rokkhonabekkhon
-- Poribohon
-- Onnanyo
-
-#### Kharcha Toiri O Onumodon:
-
-1. **New Expense** button-e click korun
-2. **Kharchar dhoron** nirbachon korun
-3. **Poriman** likhun
-4. **Shakha** nirbachon korun
-5. **Biboron** likhun
-6. **Submit** korun
-7. Manager/Accountant **onumodon** korben
+বিক্রয়ের পরিসংখ্যান দেখুন:
+- মোট বিক্রয়
+- বিক্রয়ের সংখ্যা
+- গড় বিক্রয়
+- পণ্য অনুযায়ী বিক্রয়
+- গ্রাহক অনুযায়ী বিক্রয়
 
 ---
 
-### 6.10 Hisab-Nikesh
+## ক্রয়
 
-**Pejay:** `/accounting`
+### ক্রয় তৈরি
 
-#### Chart of Accounts:
+১. **"নতুন ক্রয়"** বোতামে ক্লিক করুন
+২. সরবরাহকারী নির্বাচন করুন
+৩. গুদাম নির্বাচন করুন
+৪. ক্রয় করতে চাওয়া পণ্য এবং পরিমাণ লিখুন
+৫. প্রতি এককের মূল্য লিখুন
+৬. পেমেন্ট তথ্য লিখুন
+৭. **"ক্রয় সম্পন্ন করুন"** বোতামে ক্লিক করুন
 
-Byabsar sob account dekhun:
-- **Asset** (Sompad): Noddo, Bank, Inventory
-- **Liability** (Dayo): Sorborokhari rin, rin
-- **Equity** (Muldhon): Maliker muldhon
-- **Revenue** (Aay): Sel, Service
-- **Expense** (Kharcha): Bidyut, Bhara, Beton
+### ক্রয় গ্রহণ
 
-#### Journal Entry:
+মাল পেলে:
+১. ক্রয় তালিকা থেকে ক্রয় নির্বাচন করুন
+২. **"গ্রহণ করুন"** বোতামে ক্লিক করুন
+৩. গৃহীত পরিমাণ নিশ্চিত করুন
+৪. **"নিশ্চিত করুন"** বোতামে ক্লিক করুন
 
-Dual-entry accounting:
-1. **New Journal** button-e click korun
-2. **Biboron** likhun
-3. **Debit** o **Credit** line jog korun
-4. Debit o Credit soman hobe
-5. **Post** korun
+> **দ্রষ্টব্য:** মাল গ্রহণের পর স্টক স্বয়ংক্রিয়ভাবে আপডেট হবে।
 
-#### Trial Balance:
+### ক্রয় ফেরত
 
-Sob account-er bortoman balance dekhun - debit o Credit soman ache kina jachai korun.
-
-#### Cash Register:
-
-- **Cash Register khulun** (Opening Cash shoho)
-- **Cash in/out** record korun dinker moddhe
-- **Bondho korun** (Actual Cash shoho)
-- **X-Report** (kholar por) ba **Z-Report** (bondhoder por) PDF download korun
+১. ক্রয় বিবরণ পৃষ্ঠায় **"ফেরত"** বোতামে ক্লিক করুন
+২. ফেরত করতে চাওয়া পণ্য এবং পরিমাণ নির্বাচন করুন
+৩. **"ফেরত সম্পন্ন করুন"** বোতামে ক্লিক করুন
 
 ---
 
-### 6.11 Tax Bastapona
+## গ্রাহক
 
-**Pejay:** `/settings/tax`
+### গ্রাহক তালিকা
 
-#### Tax Rate:
+**মেনু:** গ্রাহক > গ্রাহক তালিকা
 
-Bibhinno tax rate set korun:
-- Udahoron: "VAT 15%", "SD 5%", "Advance Income Tax 2%"
+সকল গ্রাহকের তালিকা দেখুন।
 
-#### Tax Group:
+### নতুন গ্রাহক যোগ করুন
 
-Ekadhik tax rate eksathe jure din:
-- Udahoron: "VAT+SD" = VAT 15% + SD 5%
+১. **"নতুন গ্রাহক"** বোতামে ক্লিক করুন
+২. গ্রাহকের তথ্য পূরণ করুন:
+   - **নাম:** গ্রাহকের নাম (আবশ্যিক)
+   - **ফোন:** ফোন নম্বর
+   - **ইমেইল:** ইমেইল ঠিকানা
+   - **গ্রাহক গোষ্ঠী:** গ্রাহকের ধরন
+   - **ক্রেডিট লিমিট:** সর্বোচ্চ বকেয় পরিমাণ
+   - **ঠিকানা:** পূর্ণ ঠিকানা
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-#### Tax Zone:
+### গ্রাহক ব্যালেন্স
 
-Bibhinno elakay bhinnno tax:
-- Udahoron: "Dhaka" = 15% VAT, "Chattogram" = 10% VAT
+গ্রাহকের উপর ক্লিক করে দেখুন:
+- মোট বকেয়
+- বকেয়ের ইতিহাস
+- বিক্রয়ের ইতিহাস
+- পেমেন্টের ইতিহাস
 
-#### Tax Profile:
+### বকেয় পেমেন্ট সংগ্রহ
 
-Desho onujayi tax system:
-- **BD_VAT** - Bangladesh VAT
-- **IN_GST** - Bharot GST
-- **EU_VAT** - Europio VAT
-- **US_SALES_TAX** - American Sales Tax
-- **GENERIC** - Sadharon
-
-#### Kivabe Kaj Kore:
-
-1. Ponnyo ekti **tax group** deowa hoy
-2. Sel-er somoy shei group-er sob tax rate **shobochalitobhabe** proyojyo hoy
-3. Protiti sel item-e tax **snapshot** hishebe songrokkhito hoy
-4. Return-er somoy mul snapshot theke **biporit** hoy (punorgonona hoy na)
-
----
-
-### 6.12 Coupon O Loyalty
-
-**Pejay:** `/loyalty`
-
-#### Coupon:
-
-Discount coupon toiri korun:
-- **Percentage** - 10% discount
-- **Fixed** - 500 taka discount
-- **Minimum Purchase** - kompokkhe koto takar sele coupon kaj korbe
-- **Byaboharer Sima** - mot kokhbar byabohar kora jabe
-- **Tarikh Range** - kokhon theke kokhon porjonto karyokor
-
-POS-e coupon byabohar:
-1. Cart-e ponnyo jog korun
-2. "Apply Coupon" button-e click korun
-3. Coupon code likhun
-4. Discount shobochalitobhabe proyojyo hobe
-
-#### Loyalty Point:
-
-- Grahok proti sel-e **point orjon** kore (shobochalit)
-- Point **redeem** kora jay (discount hishebe)
-- Point **somonnoy** kora jay (manuali beshano/kamano)
+১. গ্রাহকের বিবরণ পৃষ্ঠায় **"পেমেন্ট সংগ্রহ"** বোতামে ক্লিক করুন
+২. পেমেন্ট পরিমাণ লিখুন
+৩. পেমেন্ট পদ্ধতি নির্বাচন করুন
+৪. **"পেমেন্ট সংগ্রহ করুন"** বোতামে ক্লিক করুন
 
 ---
 
-### 6.13 Report
+## সরবরাহকারী
 
-**Pejay:** `/reports`
+### সরবরাহকারী তালিকা
 
-#### Sel Summary Report:
+**মেনু:** সরবরাহকারী > সরবরাহকারী তালিকা
 
-- Nirnistho tarikh range-e moto sel, kharcha, lav
-- Shakha onujayi tulona
+সকল সরবরাহকারীর তালিকা দেখুন।
 
-#### Ponnyo Onujayi Sel:
+### নতুন সরবরাহকারী যোগ করুন
 
-- Kon ponnyo sobcheye beshi bikri hoyeche
-- Kon ponnyo kom bikri hoyeche
-
-#### Lav Report:
-
-- Protiti sel-er lav (bikrommulyo - krommulyo)
-- Samagric lav-er hisab
-
-#### Stock Mulloyan:
-
-- Godame moto koto takar stock ache
-- Ponnyo onujayi stock mullo
-
-#### Kom Stock Report:
-
-- Jebono ponnyo-r stock come geche
-- Punorjonno korte hobe emon ponnyo
-
-#### Rin Report:
-
-- Grahokder moto bekya
-- Grahok onujayi rin-er talika
-
-#### Tax Report:
-
-- **Tax Summary**: Moto koto tax songrohito hoyeche
-- **Tax Return**: Sarkari tax return form
+১. **"নতুন সরবরাহকারী"** বোতামে ক্লিক করুন
+২. সরবরাহকারীর তথ্য পূরণ করুন:
+   - **নাম:** সরবরাহকারীর নাম (আবশ্যিক)
+   - **কোম্পানি:** কোম্পানির নাম
+   - **ফোন:** ফোন নম্বর
+   - **ইমেইল:** ইমেইল ঠিকানা
+   - **ঠিকানা:** পূর্ণ ঠিকানা
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
 ---
 
-### 6.14 Team O Onumoti
+## খরচ
 
-**Pejay:** `/team`
+### খরচ তালিকা
 
-#### Bhumika (Roles):
+**মেনু:** খরচ > খরচ তালিকা
 
-Notun bhumika toiri korun ebong proyojoniyo onumoti din:
+সকল খরচের তালিকা দেখুন।
 
-**Udahoron:**
+### নতুন খরচ যোগ করুন
 
-| Bhumika | Onumoti |
-|---------|---------|
-| **Cashier** | POS, sel, grahok |
-| **Manager** | Sob + stock somonnoy + report |
-| **Accountant** | Hisab-nikesh + kharcha + tax |
-| **Godam Kormochari** | Inventory + kroy |
+১. **"নতুন খরচ"** বোতামে ক্লিক করুন
+২. খরচের তথ্য পূরণ করুন:
+   - **বিবরণ:** খরচের বিবরণ (আবশ্যিক)
+   - **পরিমাণ:** খরচের পরিমাণ (আবশ্যিক)
+   - **ক্যাটাগরি:** খরচের ক্যাটাগরি
+   - **তারিখ:** খরচের তারিখ
+   - **পেমেন্ট পদ্ধতি:** পেমেন্ট পদ্ধতি
+   - **শাখা:** শাখা নির্বাচন
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-#### Onumoti Prokar (21 Module x 76 Onumoti):
+### খরচ অনুমোদন
 
-Protiti module-er jonno alada onumoti:
-- **view** - dekhte parben
-- **create** - toiri korte parben
-- **update** - shompadona korte parben
-- **delete** - muchte parben
-- **export** - export korte parben
-- **approve** - onumodon korte parben
-- **manage** - sompurno bastapona
-
----
-
-### 6.15 Subscription
-
-**Pejay:** `/subscription`
-
-#### Plan:
-
-Bibhinno plan theke pochondo-shoi plan nirbachon korun:
-
-| Simabaddhota | Artho |
-|-------------|-------|
-| **Shakha Sima** | Sorbochho koto-ti shakha toiri kora jabe |
-| **Godam Sima** | Sorbochho koto-ti godam toiri kora jabe |
-| **Byaboharokari Sima** | Sorbochho kotojon user thakbe |
-| **Ponnyo Sima** | Sorbochho koto-ti ponnyo toiri kora jabe |
-| **Masik Sel Sima** | Mash-e koto takar sel kora jabe |
-
-`null` sima = simahin (joto khushi)
+অনুমোদন প্রয়োজনীয় খরচ:
+১. খরচের উপর ক্লিক করুন
+২. **"অনুমোদন"** বোতামে ক্লিক করুন
+৩. নিশ্চিত করুন
 
 ---
 
-### 6.16 Notification
+## হিসাববিজ্ঞান
 
-**Pejay:** `/notifications`
+### হিসাব খাতা
 
-- Ghtnaboliye tothyo dekhun
-- Poridhito notification dekhun
-- Notification muchhe din
+**মেনু:** হিসাববিজ্ঞান > হিসাব খাতা
 
----
+সকল হিসাব খাতার তালিকা দেখুন।
 
-### 6.17 Audit Log
+### হিসাব খাতা তৈরি
 
-**Pejay:** `/audit-log`
+১. **"নতুন হিসাব"** বোতামে ক্লিক করুন
+২. হিসাবের তথ্য পূরণ করুন:
+   - **নাম:** হিসাবের নাম (আবশ্যিক)
+   - **ধরন:** হিসাবের ধরন (নগদ, ব্যাংক, আয়, ব্যয়, সম্পদ, দায়, মূলধন)
+   - **কোড:** হিসাবের কোড
+৩. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-- Kon user ki kaj koreche ta dekhun
-- Sob guruttbopurno kajer log thake
-- Actor, action, model, tarikh onujayi filter korun
+### জার্নাল এন্ট্রি
 
----
+১. **"নতুন জার্নাল"** বোতামে ক্লিক করুন
+২. বিবরণ লিখুন
+৩. ডেবিট এবং ক্রেডিট লাইন যোগ করুন
+৪. নিশ্চিত করুন যে ডেবিট = ক্রেডিট
+৫. **"সংরক্ষণ করুন"** বোতামে ক্লিক করুন
 
-## 7. Byaboharokari Bhumika O Onumoti
+### ট্রায়াল ব্যালেন্স
 
-### Default Bhumika (Registration-e Provisioned)
+**মেনু:** হিসাববিজ্ঞান > ট্রায়াল ব্যালেন্স
 
-| Bhumika | Slug | Onumoti |
-|---------|------|---------|
-| **Owner** | (implicit) | SOB ONUMOTI (implicitly code-e granted) |
-| **Admin** | `admin` | SOB ONUMOTI (`*`) |
-| **Branch Manager** | `branch_manager` | dashboard.view, branches.view, warehouses.view, products.view, inventory.view/adjust/approve, pos.view/create/refund/discount/price_override, sales.view/refund, customers.view/create, reports.view/export |
-| **Cashier** | `cashier` | dashboard.view, products.view, pos.view/create, sales.view, customers.view/create |
-| **Accountant** | `accountant` | dashboard.view, accounting.view/create/approve, expenses.view/create/approve, taxes.view/manage, reports.view/export, sales.view, purchases.view |
-| **Viewer** | `viewer` | dashboard.view, products.view, sales.view, reports.view |
+সকল হিসাবের ব্যালেন্স দেখুন।
 
-### Bhumika-Nirdharon Nirokhotar Niyom
+### সাধারণ খাতা
 
-- User **nijeke bhumika poriborton** korte pare na (403)
-- Shudhu **owner** (ba super-admin) `owner` role grant/revoke korte pare
-- Shakha-scoped user **shakhar bahire user shompadon** korte pare na
-- `owner` role-er onumoti **non-owner** edit korte pare na
-- Sob role-poriborton **audit** hoy
+**মেনু:** হিসাববিজ্ঞান > সাধারণ খাতা
 
----
+নির্দিষ্ট হিসাবের সকল লেনদেন দেখুন।
 
-## 8. Settings O Configuration
+### ক্যাশ রেজিস্টার
 
-### Business Settings
+**মেনু:** হিসাববিজ্ঞান > ক্যাশ রেজিস্টার
 
-**Pejay:** `/settings`
-
-- **Business Name** - Byabsar nam
-- **Business Type** - Byabsar dhoron
-- **Currency** - Mudra (BDT, INR, USD, EUR ityadi)
-- **Tax Profile** - Tax system (BD_VAT, IN_GST, EU_VAT, US_SALES_TAX)
-- **Price Display** - Tax Inclusive ba Tax Exclusive
-- **Address** - Byabsar thikana
-- **Phone** - Jogajog nombor
-- **Email** - Byabsar email
-
-### Appearance
-
-- **Theme** - Light ba Dark
-- **Color Palette** - 6-ti ronger palette theke nirbachon
-- **Sidebar** - Collapsed ba Expanded
-
-### Localization
-
-- **Language** - Bangla, English, Arabic, German, Japanese
-- **Number Locale** - Songo rupokh
-- **Date Locale** - Tarikh rupokh
-
-### Notification
-
-- Email notification on/off
-- In-app notification
+ক্যাশ রেজিস্টার খুলুন, নগদ প্রবেশ/প্রস্থান রেকর্ড করুন, এবং রেজিস্টার বন্ধ করুন।
 
 ---
 
-## 9. Report O Bishleshon
+## রিপোর্ট
 
-### Kothay Report Dekhte Parben
+### উপলব্ধ রিপোর্ট
 
-| Report Pejay | Ki Dekhte Parben |
-|-------------|------------------|
-| `/reports` | Sel Summary, Ponnyo Onujayi Sel, Lav, Stock Mulloyan, Kom Stock, Rin |
-| `/reports/tax` | Tax Summary, Tax Return |
-| `/loyalty` | Loyalty Point, Coupon |
-| `/dashboard` | Dainik Sarosongkhep, Sel Trend |
+**মেনু:** রিপোর্ট
 
-### Report Kivabe Byabohar Korben
+- **বিক্রয় সারসংক্ষেপ:** বিক্রয়ের পরিসংখ্যান
+- **পণ্য অনুযায়ী বিক্রয়:** পণ্যভিত্তিক বিক্রয়
+- **লাভ:** রাজস্ব, খরচ এবং লাভ
+- **ইনভেন্টরি মূল্যায়ন:** স্টকের মোট মূল্য
+- **কম স্টক:** স্টক কম পণ্য
+- **বকেয়:** গ্রাহক ও সরবরাহকারীর বকেয়
+- **ট্যাক্স সারসংক্ষেপ:** ট্যাক্সের পরিসংখ্যান
+- **ট্যাক্স রিটার্ন:** ট্যাক্স ফাইলিংয়ের জন্য প্রতিবেদন
 
-1. Report pejay jan
-2. **Tarikh range** select korun
-3. **Shakha** filter korun (jodi ekadhik shakha thake)
-4. **Generate** button-e click korun
-5. Report dekhun
-6. **Export** button diye PDF/Excel-e download korun
+### রিপোর্ট ফিল্টার
 
----
+সকল রিপোর্টে ফিল্টার প্রয়োগ করা যায়:
+- **তারিখ পরিসীমা:** নির্দিষ্ট সময়ের জন্য
+- **শাখা:** নির্দিষ্ট শাখার জন্য
+- **গুদাম:** নির্দিষ্ট গুদামের জন্য
+- **পণ্য:** নির্দিষ্ট পণ্যের জন্য
+- **গ্রাহক:** নির্দিষ্ট গ্রাহকের জন্য
 
-## 10. Shobdaboli
+### রিপোর্ট এক্সপোর্ট
 
-| Shobdo | Artho |
-|--------|-------|
-| **Tenant** | Ekti byabsar jonno alada jayga (multi-tenancy-er angsho) |
-| **Branch** | Dokan/okhil |
-| **Warehouse** | Godam |
-| **SKU** | Stock Keeping Unit - ponnyo-r unique code |
-| **Barcode** | Ponnyo-r scanning code |
-| **Inventory** | Stock bastapona |
-| **Stock Movement** | Stock er itihas (kibeche, kobe, koto) |
-| **Immutable** | Pariborton kora jay na (ledger) |
-| **Dual-Entry** | Prতিটি transaction 2 bar lekha hoy (debit + credit) |
-| **Journal** | Hisab-nikesh-er record |
-| **Trial Balance** | Sob account-er balance-er talika |
-| **Snapshot** | Sel-er somoy mullo/tax er photo (return-e byabohar hoy) |
-| **Idempotency** | Eki request bar bar pathaleo eki folash falbe |
-| **RBAC** | Role-Based Access Control - bhumika-voittik onumoti |
-| **Audit Log** | Kader ki koreche er record |
-| **X-Report** | Cash register kholar por-er report |
-| **Z-Report** | Cash register bondhoder por-er report |
-| **Opening Cash** | Dokan khular somoy cash poriman |
-| **Actual Cash** | Hate gonno kore pawa cash |
-| **Expected Cash** | System-er ganito cash |
-| **Difference** | Actual - Expected |
+রিপোর্ট ডাউনলোড করুন:
+- **PDF:** প্রিন্টেবল ফর্ম্যাট
+- **CSV:** স্প্রেডশিটে খুলতে
 
 ---
 
-**SmartPOS Pro - Byaboharokari Guide Somaponno**
+## টিম ব্যবস্থাপনা
+
+### ব্যবহারকারী তালিকা
+
+**মেনু:** টিম > ব্যবহারকারী
+
+সকল ব্যবহারকারীর তালিকা দেখুন।
+
+### নতুন ব্যবহারকারী আমন্ত্রণ
+
+১. **"নতুন ব্যবহারকারী"** বোতামে ক্লিক করুন
+২. ব্যবহারকারীর তথ্য পূরণ করুন:
+   - **নাম:** ব্যবহারকারীর নাম (আবশ্যিক)
+   - **ইমেইল:** ইমেইল ঠিকানা (আবশ্যিক)
+   - **শাখা:** শাখা নির্বাচন
+   - **ভূমিকা:** ভূমিকা নির্বাচন
+৩. **"আমন্ত্রণ পাঠান"** বোতামে ক্লিক করুন
+
+> **দ্রষ্টব্য:** আমন্ত্রিত ব্যবহারকারীকে ইমেইলে পাসওয়ার্ড সেট করার লিংক পাঠানো হবে।
+
+### ভূমিকা ও অনুমতি
+
+**মেনু:** টিম > ভূমিকা
+
+ভূমিকা তৈরি এবং অনুমতি প্রদান করুন।
+
+**ডিফল্ট ভূমিকা:**
+- **মালিক:** সকল অনুমতি
+- **অ্যাডমিন:** বেশিরভাগ অনুমতি
+- **শাখা ব্যবস্থাপক:** শাখা সম্পর্কিত অনুমতি
+- **ক্যাশিয়ার:** POS এবং বিক্রয় অনুমতি
+- **হিসাবরক্ষক:** হিসাববিজ্ঞান অনুমতি
+- **দর্শক:** শুধুমাত্র দেখার অনুমতি
+
+### সেশন ব্যবস্থাপনা
+
+**মেনু:** সেটিংস > নিরাপত্তা > সেশন
+
+সকল সক্রিয় ডিভাইস/সেশন দেখুন এবং প্রয়োজনে রিভোক করুন।
+
+---
+
+## সেটিংস
+
+### ব্যবসার প্রোফাইল
+
+**মেনু:** সেটিংস > ব্যবসার প্রোফাইল
+
+- ব্যবসার নাম
+- ব্যবসার ধরন
+- লোগো
+- ঠিকানা
+- ফোন নম্বর
+- ইমেইল
+
+### মুদ্রা ও লোক্যাল
+
+**মেনু:** সেটিংস > লোক্যালাইজেশন
+
+- **মুদ্রা:** আপনার ব্যবসার মুদ্রা নির্বাচন করুন
+- **ভাষা:** ইন্টারফেস ভাষা নির্বাচন করুন
+- **তারিখ ফর্ম্যাট:** তারিখ প্রদর্শনের ফর্ম্যাট
+
+### ট্যাক্স সেটিংস
+
+**মেনু:** সেটিংস > ট্যাক্স
+
+- ট্যাক্স প্রোফাইল নির্বাচন
+- মূল্য প্রদর্শন (ট্যাক্স অন্তর্ভুক্ত/বাদসহ)
+- ট্যাক্স রেট পরিচালনা
+- ট্যাক্স গ্রুপ পরিচালনা
+- ট্যাক্স জোন পরিচালনা
+
+### দুই-ফ্যাক্টর প্রমাণীকরণ
+
+**মেনু:** সেটিংস > নিরাপত্তা
+
+২FA সক্রিয়/নিষ্ক্রিয় করুন:
+
+**সক্রিয় করতে:**
+১. **"2FA সক্রিয় করুন"** বোতামে ক্লিক করুন
+২. QR কোড স্ক্যান করুন অথেনটিকেটর অ্যাপে
+৩. 6-অংকের কোড লিখুন
+৪. **"নিশ্চিত করুন"** বোতামে ক্লিক করুন
+৫. রিকভারি কোড সংরক্ষণ করুন
+
+**নিষ্ক্রিয় করতে:**
+১. **"2FA নিষ্ক্রিয় করুন"** বোতামে ক্লিক করুন
+২. পাসওয়ার্ড লিখুন
+৩. **"নিশ্চিত করুন"** বোতামে ক্লিক করুন
+
+---
+
+## দুই-ফ্যাক্টর প্রমাণীকরণ
+
+### 2FA কী?
+
+দুই-ফ্যাক্টর প্রমাণীকরণ আপনার অ্যাকাউন্টে অতিরিক্ত নিরাপত্তা যোগ করে। লগইনের সময় পাসওয়ার্ছের পাশাপাশি আপনাকে একটি 6-অংকের কোডও দিতে হবে।
+
+### অথেনটিকেটর অ্যাপ সেটআপ
+
+১. Google Authenticator, Authy, বা 1Password ডাউনলোড করুন
+২. SmartPOS Pro-তে 2FA সক্রিয় করুন
+৩. QR কোড স্ক্যান করুন অ্যাপে
+৪. অ্যাপে প্রদর্শিত 6-অংকের কোড লিখুন
+
+### রিকভারি কোড
+
+2FA সক্রিয় করার সময় আপনি 8টি রিকভারি কোড পাবেন। এগুলো সংরক্ষণ করুন — ফোন হারিয়ে গেলে এগুলো দিয়ে লগইন করা যাবে।
+
+**গুরুত্বপূর্ণ:**
+- প্রতিটি রিকভারি কোড একবারই ব্যবহার করা যায়
+- রিকভারি কোড গোপনীয় রাখুন
+- নতুন কোড তৈরি করতে "রিকভারি কোড রিজেনারেট করুন" ব্যবহার করুন
+
+---
+
+## ইমেইল যাচাইকরণ
+
+### ইমেইল যাচাইকরণ কী?
+
+নিবন্ধনের পর আপনার ইমেইল ঠিকানা যাচাই করা প্রয়োজন। এটি নিশ্চিত করে যে আপনি সঠিক ইমেইল ঠিকানা ব্যবহার করেছেন।
+
+### যাচাইকরণ প্রক্রিয়া
+
+১. নিবন্ধনের পর আপনার ইমেইলে 6-অংকের কোড পাঠানো হবে
+২. **"ইমেইল যাচাই করুন"** পৃষ্ঠায় কোড লিখুন
+৩. **"যাচাই করুন"** বোতামে ক্লিক করুন
+
+### কোড না পেলে
+
+১. "কোড পুনরায় পাঠান" বোতামে ক্লিক করুন
+২. নতুন কোডের জন্য অপেক্ষা করুন
+৩. স্প্যাম ফোল্ডার চেক করুন
+
+### কোডের মেয়াদ
+
+কোড ১৫ মিনিটের জন্য বৈধ। মেয়াদ শেষ হলে নতুন কোড অনুরোধ করুন।
+
+---
+
+## সাধারণ জিজ্ঞাসা
+
+### পাসওয়ার্ড ভুলে গেছেন?
+
+১. লগইন পৃষ্ঠায় **"পাসওয়ার্ড ভুলে গেছেন?"** ক্লিক করুন
+২. আপনার ইমেইল লিখুন
+৩. **"রিসেট লিংক পাঠান"** বোতামে ক্লিক করুন
+৪. ইমেইলে পাঠানো লিংকে ক্লিক করুন
+৫. নতুন পাসওয়ার্ড লিখুন
+
+### অ্যাকাউন্ট লক হয়ে গেছে?
+
+ভুল পাসওয়ার্ড ৫বার লিখলে অ্যাকাউন্ট লক হয়ে যায়। লক সময় ধীরে ধীরে বাড়ে (১, ২, ৪, ... মিনিট, সর্বোচ্চ ৬০ মিনিট)।
+
+### সেশন রিভোক করুন
+
+**মেনু:** সেটিংস > নিরাপত্তা > সেশন
+
+অপরিচিত ডিভাইস দেখলে সেশন রিভোক করুন।
+
+### অফলাইনে POS ব্যবহার
+
+SmartPOS Pro PWA সমর্থিত। ইন্টারনেট ছাড়াও POS কাজ করে। সেলস অটো-সিঙ্ক হবে ইন্টারনেট ফিরে এলে।
+
+### ডেটা ব্যাকআপ
+
+সকল ডেটা ক্লাউডে সংরক্ষিত হয়। অতিরিক্ত নিরাপত্তার জন্য নিয়মিত ব্যাকআপ নেওয়া উচিত।
+
+### সহায়তা প্রয়োজন?
+
+- **ইমেইল:** support@smartpos.pro
+- **ডকুমেন্টেশন:** docs.smartpos.pro
+- **ইস্যু রিপোর্ট:** github.com/smartpos-pro/issues
+
+---
+
+*এই গাইড SmartPOS Pro v1.0 এর জন্য প্রযোজ্য।*
