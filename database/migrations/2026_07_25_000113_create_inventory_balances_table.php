@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inventory_balances', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();
-            $table->foreignUuid('warehouse_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('product_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('variant_id', 12)->nullable()->constrained('product_variants')->cascadeOnDelete();
+            $table->foreignUlid('warehouse_id', 12)->constrained()->cascadeOnDelete();
             $table->decimal('quantity', 16, 4)->default(0);
             $table->decimal('reserved_quantity', 16, 4)->default(0);
             $table->decimal('average_cost', 14, 4)->default(0);

@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();

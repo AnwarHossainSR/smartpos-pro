@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cash_registers', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('branch_id', 12)->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -21,11 +21,11 @@ return new class extends Migration
         });
 
         Schema::create('cash_register_sessions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('cash_register_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('cash_register_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id', 12)->constrained()->cascadeOnDelete();
             $table->decimal('opening_cash', 16, 2)->default(0);
             $table->decimal('cash_in', 16, 2)->default(0);
             $table->decimal('cash_out', 16, 2)->default(0);
@@ -41,11 +41,11 @@ return new class extends Migration
         });
 
         Schema::create('cash_register_transactions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('cash_register_session_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('cash_register_session_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id', 12)->nullable()->constrained()->nullOnDelete();
             $table->string('type'); // in, out
             $table->decimal('amount', 16, 2);
             $table->string('reason')->nullable();

@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roles', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->nullable()->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('slug');
             $table->string('description')->nullable();
@@ -22,7 +22,7 @@ return new class extends Migration
         });
 
         Schema::create('permissions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
             $table->string('name');
             $table->string('slug')->unique(); // e.g. products.create
@@ -32,15 +32,15 @@ return new class extends Migration
         });
 
         Schema::create('permission_role', function (Blueprint $table) {
-            $table->foreignUuid('permission_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('role_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('permission_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('role_id', 12)->constrained()->cascadeOnDelete();
             $table->primary(['permission_id', 'role_id']);
         });
 
         Schema::create('role_user', function (Blueprint $table) {
-            $table->foreignUuid('role_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('branch_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('role_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('branch_id', 12)->nullable()->constrained()->nullOnDelete();
             $table->primary(['role_id', 'user_id']);
         });
     }

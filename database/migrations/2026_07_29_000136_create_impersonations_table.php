@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('impersonations', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('super_admin_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUuid('target_user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUuid('personal_access_token_id')->nullable()->constrained('personal_access_tokens')->nullOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('super_admin_id', 12)->constrained('users')->cascadeOnDelete();
+            $table->foreignUlid('target_user_id', 12)->constrained('users')->cascadeOnDelete();
+            $table->foreignUlid('personal_access_token_id', 12)->nullable()->constrained('personal_access_tokens')->nullOnDelete();
             $table->string('reason');
             $table->timestamp('started_at');
             $table->timestamp('ended_at')->nullable();
-            $table->foreignUuid('ended_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUlid('ended_by', 12)->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index(['tenant_id', 'ended_at']);

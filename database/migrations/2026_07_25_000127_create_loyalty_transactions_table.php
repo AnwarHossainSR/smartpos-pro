@@ -10,12 +10,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('loyalty_transactions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('customer_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('sale_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('customer_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('sale_id', 12)->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('user_id', 12)->nullable()->constrained()->nullOnDelete();
             $table->string('type'); // earn, redeem, adjust
             $table->integer('points'); // signed: positive earn, negative redeem
             $table->integer('balance_after');

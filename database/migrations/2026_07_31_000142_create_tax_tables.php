@@ -24,7 +24,7 @@ return new class extends Migration
         // Country tax profiles. Global catalogue, not tenant-scoped: these are
         // facts about a jurisdiction, identical for every tenant that trades there.
         Schema::create('tax_profiles', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
             $table->string('code')->unique();          // BD_VAT, IN_GST, EU_VAT, GENERIC
             $table->string('name');
@@ -42,9 +42,9 @@ return new class extends Migration
 
         // A single tax component: "VAT 15%", "CGST 9%", "Eco fee 2.00".
         Schema::create('tax_rates', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
             $table->decimal('rate', 9, 4)->default(0);   // percent, or a flat per-unit amount when type = fixed
@@ -61,9 +61,9 @@ return new class extends Migration
 
         // What actually gets attached to a product: an ordered set of components.
         Schema::create('tax_groups', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
             $table->boolean('is_default')->default(false);
@@ -75,9 +75,9 @@ return new class extends Migration
         });
 
         Schema::create('tax_group_rate', function (Blueprint $table) {
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('tax_group_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('tax_rate_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tax_group_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tax_rate_id', 12)->constrained()->cascadeOnDelete();
             // Compound components must apply after the ones they compound on.
             $table->unsignedSmallInteger('priority')->default(0);
 
@@ -88,14 +88,14 @@ return new class extends Migration
         // A jurisdiction and the group that applies inside it. Matched against the
         // branch address (origin sourcing) or the customer's (destination sourcing).
         Schema::create('tax_zones', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('country_code', 2)->nullable();
             $table->string('state')->nullable();
             $table->string('postcode_pattern')->nullable();
-            $table->foreignUuid('tax_group_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('tax_group_id', 12)->nullable()->constrained()->nullOnDelete();
             // The fallback zone when nothing more specific matches.
             $table->boolean('is_default')->default(false);
             // Most specific match wins; ties break on priority.
@@ -112,12 +112,12 @@ return new class extends Migration
         // `tax_amount` column once rates change.
         $breakdown = function (string $table, string $parentTable, string $parentColumn) {
             Schema::create($table, function (Blueprint $t) use ($parentTable, $parentColumn) {
-                $t->uuid('id')->primary();
+                $t->char('id', 12)->primary();
                 $t->unique('id');
-                $t->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
-                $t->foreignUuid($parentColumn)->constrained($parentTable)->cascadeOnDelete();
+                $t->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+                $t->foreignUlid($parentColumn, 12)->constrained($parentTable)->cascadeOnDelete();
                 // Nullable: the rate may be deleted later, but the invoice must not change.
-                $t->foreignUuid('tax_rate_id')->nullable()->constrained()->nullOnDelete();
+                $t->foreignUlid('tax_rate_id', 12)->nullable()->constrained()->nullOnDelete();
                 $t->string('name');           // snapshotted, so a renamed rate never rewrites history
                 $t->decimal('rate', 9, 4)->default(0);
                 $t->string('type')->default('percentage');
@@ -136,13 +136,13 @@ return new class extends Migration
         $breakdown('sale_return_item_taxes', 'sale_return_items', 'sale_return_item_id');
 
         Schema::table('products', function (Blueprint $table) {
-            $table->foreignUuid('tax_group_id')->nullable()->after('unit_id')->constrained()->nullOnDelete();
+            $table->foreignUlid('tax_group_id', 12)->nullable()->after('unit_id')->constrained()->nullOnDelete();
         });
 
         // Falls back per category so a shop can set "food is zero-rated" once
         // rather than on every product in it.
         Schema::table('categories', function (Blueprint $table) {
-            $table->foreignUuid('tax_group_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('tax_group_id', 12)->nullable()->constrained()->nullOnDelete();
         });
 
         Schema::table('customers', function (Blueprint $table) {
@@ -160,7 +160,7 @@ return new class extends Migration
         });
 
         Schema::table('businesses', function (Blueprint $table) {
-            $table->foreignUuid('tax_profile_id')->nullable()->after('tax_number')->constrained()->nullOnDelete();
+            $table->foreignUlid('tax_profile_id', 12)->nullable()->after('tax_number')->constrained()->nullOnDelete();
             // Denormalised from the profile so a tenant can override the default
             // for its own market without forking the profile.
             $table->string('price_display')->default('exclusive')->after('tax_profile_id');

@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('personal_access_tokens', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->char('id', 12)->primary();
             $table->unique('id');
-            $table->morphs('tokenable');
+            $table->string('tokenable_type');
+            $table->char('tokenable_id', 12);
+            $table->index(['tokenable_type', 'tokenable_id']);
             $table->text('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();

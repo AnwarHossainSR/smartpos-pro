@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            $table->foreignUuid('coupon_id')->nullable()->after('customer_id')->constrained()->nullOnDelete();
+            $table->foreignUlid('coupon_id', 12)->nullable()->after('customer_id')->constrained()->nullOnDelete();
             $table->decimal('coupon_discount', 14, 2)->default(0)->after('discount_amount');
         });
     }
