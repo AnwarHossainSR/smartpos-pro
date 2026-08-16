@@ -30,11 +30,21 @@ class TerminalChannel
 
         $lines = array_map(fn ($line) => is_string($line) ? $line : $line->toHtml(), $message->introLines);
 
+        $formattedLines = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (preg_match('/^\d{6}$/', $trimmed)) {
+                $formattedLines[] = ">>> {$trimmed} <<<";
+            } else {
+                $formattedLines[] = $line;
+            }
+        }
+
         $text = sprintf(
             "LOCAL EMAIL to=%s subject=\"%s\"\n%s\n%s",
             $notifiable->routeNotificationFor('mail', $notification) ?? $notifiable->email ?? 'unknown',
             $message->subject,
-            implode("\n", $lines),
+            implode("\n", $formattedLines),
             $message->actionUrl ? "-> {$message->actionText}: {$message->actionUrl}" : '',
         );
 
@@ -42,7 +52,7 @@ class TerminalChannel
         // its own request-log format — see ServeCommand::flushOutputBuffer), which eats both
         // Monolog's bracketed header and a bracketed tag. Write raw to STDERR with no leading
         // "[" to survive that, and mirror to the log file as a durable fallback.
-        fwrite(STDERR, "\n{$text}\n\n");
+        fwrite(fopen('php://stderr', 'w'), "\n{$text}\n\n");
         Log::channel('single')->info($text);
     }
 }

@@ -250,6 +250,33 @@ class AuthController extends Controller
         return redirect(rtrim((string) config('app.frontend_url'), '/').'/login?verified=1');
     }
 
+    /** Verify email with OTP code — public endpoint for post-registration verification. */
+    public function verifyEmailOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'string', 'size:6'],
+        ]);
+
+        $user = User::withoutTenancy()->where('email', $request->email)->first();
+
+        abort_if(! $user, 422, 'Invalid verification code.');
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        if (! $user->verifyEmailWithOtp($request->code)) {
+            throw ValidationException::withMessages([
+                'code' => ['Invalid or expired verification code.'],
+            ]);
+        }
+
+        $this->audit->log('auth.email_verified', $user, null, null, $user, $user->tenant_id);
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
     public function resendVerification(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -260,7 +287,7 @@ class AuthController extends Controller
 
         $user->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Verification email sent.']);
+        return response()->json(['message' => 'Verification code sent.']);
     }
 
     public function me(Request $request): UserResource
