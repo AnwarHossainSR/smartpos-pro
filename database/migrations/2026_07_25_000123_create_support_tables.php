@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('action');
-            $table->nullableUuidMorphs('auditable');
+            $table->nullableMorphs('auditable');
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->string('ip_address')->nullable();
