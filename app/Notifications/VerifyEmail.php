@@ -23,7 +23,7 @@ class VerifyEmail extends Notification
         return (new MailMessage)
             ->subject('Verify your email address')
             ->line('Your verification code is:')
-            ->line("**{$this->code}**")
+            ->line($this->code)
             ->line('This code will expire in 15 minutes.')
             ->line('If you did not create an account, no further action is required.');
     }
