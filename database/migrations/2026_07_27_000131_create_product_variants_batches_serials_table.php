@@ -11,6 +11,7 @@ return new class extends Migration
         // Product attributes (e.g. "Color", "Size")
         Schema::create('product_attributes', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->string('name');         // e.g. "Color"
             $table->string('slug');
@@ -21,6 +22,7 @@ return new class extends Migration
         // Attribute values (e.g. "Red", "XL")
         Schema::create('product_attribute_values', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('product_attribute_id')->constrained('product_attributes')->cascadeOnDelete();
             $table->string('value');
             $table->timestamps();
@@ -31,6 +33,7 @@ return new class extends Migration
         if (! Schema::hasTable('product_variants')) {
             Schema::create('product_variants', function (Blueprint $table) {
                 $table->uuid('id')->primary();
+                $table->unique('id');
                 $table->foreignUuid('product_id')->constrained('products')->cascadeOnDelete();
                 $table->string('sku')->nullable();
                 $table->string('barcode')->nullable();
@@ -51,6 +54,7 @@ return new class extends Migration
         // Stock batches (track batch numbers and expiry)
         Schema::create('stock_batches', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->foreignUuid('product_id')->constrained('products');
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');
@@ -69,6 +73,7 @@ return new class extends Migration
         // Serial numbers (for high-value, individually tracked items)
         Schema::create('stock_serials', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->foreignUuid('product_id')->constrained('products');
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');

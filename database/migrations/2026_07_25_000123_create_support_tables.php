@@ -12,6 +12,7 @@ return new class extends Migration
         // execute at most once even if the client retries.
         Schema::create('idempotency_keys', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('key');
             $table->string('method');
@@ -25,6 +26,7 @@ return new class extends Migration
 
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('action');
@@ -40,6 +42,7 @@ return new class extends Migration
 
         Schema::create('notifications_center', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('type');

@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('impersonations', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('super_admin_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUuid('target_user_id')->constrained('users')->cascadeOnDelete();

@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('inventory_balances', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();

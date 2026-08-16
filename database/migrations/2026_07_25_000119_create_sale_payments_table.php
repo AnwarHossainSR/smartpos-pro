@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('sale_payments', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_id')->constrained()->cascadeOnDelete();
             $table->string('method'); // cash, card, bank, mobile_banking, wallet, due

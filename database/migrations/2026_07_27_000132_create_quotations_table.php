@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('quotations', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->foreignUuid('branch_id')->constrained('branches');
             $table->foreignUuid('customer_id')->nullable()->constrained('customers');
@@ -32,6 +33,7 @@ return new class extends Migration
 
         Schema::create('quotation_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('quotation_id')->constrained('quotations')->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained('products');
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');

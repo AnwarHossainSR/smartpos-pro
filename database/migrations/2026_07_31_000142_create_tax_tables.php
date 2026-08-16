@@ -25,6 +25,7 @@ return new class extends Migration
         // facts about a jurisdiction, identical for every tenant that trades there.
         Schema::create('tax_profiles', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->string('code')->unique();          // BD_VAT, IN_GST, EU_VAT, GENERIC
             $table->string('name');
             $table->string('country_code', 2)->nullable();
@@ -42,6 +43,7 @@ return new class extends Migration
         // A single tax component: "VAT 15%", "CGST 9%", "Eco fee 2.00".
         Schema::create('tax_rates', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
@@ -60,6 +62,7 @@ return new class extends Migration
         // What actually gets attached to a product: an ordered set of components.
         Schema::create('tax_groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
@@ -86,6 +89,7 @@ return new class extends Migration
         // branch address (origin sourcing) or the customer's (destination sourcing).
         Schema::create('tax_zones', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('country_code', 2)->nullable();
@@ -109,6 +113,7 @@ return new class extends Migration
         $breakdown = function (string $table, string $parentTable, string $parentColumn) {
             Schema::create($table, function (Blueprint $t) use ($parentTable, $parentColumn) {
                 $t->uuid('id')->primary();
+                $t->unique('id');
                 $t->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
                 $t->foreignUuid($parentColumn)->constrained($parentTable)->cascadeOnDelete();
                 // Nullable: the rate may be deleted later, but the invoice must not change.

@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('plan')->default('free'); // free, starter, professional, business, enterprise

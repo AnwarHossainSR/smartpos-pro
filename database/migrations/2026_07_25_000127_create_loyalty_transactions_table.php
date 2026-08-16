@@ -11,6 +11,7 @@ return new class extends Migration
     {
         Schema::create('loyalty_transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('customer_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_id')->nullable()->constrained()->nullOnDelete();

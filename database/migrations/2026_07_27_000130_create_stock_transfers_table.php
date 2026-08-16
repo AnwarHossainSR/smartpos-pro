@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('stock_transfers', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->string('reference_number')->unique();
             $table->foreignUuid('from_warehouse_id')->constrained('warehouses');
@@ -29,6 +30,7 @@ return new class extends Migration
 
         Schema::create('stock_transfer_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('stock_transfer_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained('products');
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');

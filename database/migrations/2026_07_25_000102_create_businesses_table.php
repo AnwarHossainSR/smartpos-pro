@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('businesses', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('type')->default('retail'); // retail, supermarket, pharmacy, restaurant, wholesale

@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
             $table->string('name');
