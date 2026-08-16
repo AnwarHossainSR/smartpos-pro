@@ -1,16 +1,16 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Percent } from "lucide-react";
-import { useAuth } from "@/stores/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { TaxGroupsSection } from "@/features/tax/components/tax-groups-section";
 import { TaxProfileCard } from "@/features/tax/components/tax-profile-card";
 import { TaxRatesSection } from "@/features/tax/components/tax-rates-section";
-import { TaxGroupsSection } from "@/features/tax/components/tax-groups-section";
 import { TaxZonesSection } from "@/features/tax/components/tax-zones-section";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Suspense, useState } from "react";
 
 type Tab = "rates" | "groups" | "zones";
 
@@ -40,9 +40,6 @@ function TaxSettingsBody() {
         <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Percent className="h-5 w-5 text-[var(--primary)]" /> Tax
-        </h1>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
