@@ -26,6 +26,9 @@ interface Supplier {
   company: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  tax_number: string | null;
+  opening_balance: number;
   balance: number;
   is_active: boolean;
 }
@@ -135,7 +138,7 @@ export default function SuppliersPage() {
         )}
       </div>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : "Add supplier"}>
-        <SupplierForm key={editing?.id ?? "new"} isEdit={!!editing} supplierId={editing?.id} defaultValues={editing ? { name: editing.name, company: editing.company ?? undefined, is_active: editing.is_active } : undefined} onSuccess={() => setDrawerOpen(false)} />
+        <SupplierForm key={editing?.id ?? "new"} isEdit={!!editing} supplierId={editing?.id} defaultValues={editing ? { name: editing.name, company: editing.company ?? undefined, email: editing.email ?? undefined, phone: editing.phone ?? undefined, address: editing.address ?? undefined, tax_number: editing.tax_number ?? undefined, opening_balance: editing.opening_balance, is_active: editing.is_active } : undefined} onSuccess={() => setDrawerOpen(false)} />
       </Drawer>
       <Dialog open={!!deleting} onClose={() => setDeleting(null)} title="Delete supplier" description={`Delete "${deleting?.name}"?`} confirmLabel="Delete" confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
     </div>
