@@ -80,6 +80,8 @@ class TenantProvisioner
 
             $owner->assignRole('owner');
 
+            $owner->sendEmailVerificationNotification();
+
             return $owner->load('roles', 'business', 'branch');
         });
     }

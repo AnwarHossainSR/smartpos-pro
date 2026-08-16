@@ -48,6 +48,7 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/2fa/challenge', [AuthController::class, 'twoFactorChallenge'])->middleware('throttle:login');
     Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
     Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
+    Route::post('auth/email/verify', [AuthController::class, 'verifyEmailOtp'])->middleware('throttle:login');
     Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->middleware('signed')->name('verification.verify');
 

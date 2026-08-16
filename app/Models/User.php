@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected $fillable = [
         'business_id', 'branch_id', 'name', 'email', 'phone',
         'password', 'avatar_path', 'status', 'last_login_at',
+        'email_verification_code', 'email_verification_expires_at',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
@@ -71,7 +72,43 @@ class User extends Authenticatable implements MustVerifyEmailContract
     /** Overrides MustVerifyEmailTrait to print the link to the terminal in local dev instead of emailing it. */
     public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new VerifyEmail);
+        $this->generateEmailVerificationOtp();
+        $this->notify(new VerifyEmail($this->email_verification_code));
+    }
+
+    public function generateEmailVerificationOtp(): string
+    {
+        $code = str_pad((string) mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $this->forceFill([
+            'email_verification_code' => $code,
+            'email_verification_expires_at' => now()->addMinutes(15),
+        ])->save();
+
+        return $code;
+    }
+
+    public function verifyEmailWithOtp(string $code): bool
+    {
+        if (
+            $this->email_verification_code === null ||
+            $this->email_verification_expires_at === null ||
+            $this->email_verification_expires_at->isPast()
+        ) {
+            return false;
+        }
+
+        if (! hash_equals($this->email_verification_code, $code)) {
+            return false;
+        }
+
+        $this->forceFill([
+            'email_verified_at' => now(),
+            'email_verification_code' => null,
+            'email_verification_expires_at' => null,
+        ])->save();
+
+        return true;
     }
 
     /** Overrides Authenticatable to print the link to the terminal in local dev instead of emailing it. */

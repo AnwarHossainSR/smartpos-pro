@@ -51,7 +51,11 @@ export default function LoginPage() {
         setChallengeToken(res.challenge_token);
       } else if (res.token && res.user) {
         setAuth(res.token, res.user);
-        router.replace("/dashboard");
+        if (res.user.email_verified_at) {
+          router.replace("/dashboard");
+        } else {
+          router.replace(`/verify-email?email=${encodeURIComponent(res.user.email)}`);
+        }
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
