@@ -31,7 +31,7 @@ class SendDailyReportJob implements ShouldQueue
 
     public int $backoff = 60;
 
-    public function __construct(public readonly int $tenantId) {}
+    public function __construct(public readonly string $tenantId) {}
 
     public function handle(TenantContext $context): void
     {

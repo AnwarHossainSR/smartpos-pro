@@ -18,7 +18,7 @@ function resource(name: string) {
     all: [name] as const,
     lists: () => [name, "list"] as const,
     list: (params?: ListParams) => [name, "list", params ?? {}] as const,
-    detail: (id: number | string) => [name, "detail", id] as const,
+    detail: (id: string) => [name, "detail", id] as const,
   };
 }
 
@@ -42,9 +42,9 @@ export const queryKeys = {
   /** Not paginated lists — parameterised report queries, keyed by their filter bag. */
   taxReports: {
     all: ["tax-reports"] as const,
-    summary: (params: { from: string; to: string; branch_id?: number | null }) =>
+    summary: (params: { from: string; to: string; branch_id?: string | null }) =>
       ["tax-reports", "summary", params] as const,
-    taxReturn: (params: { from: string; to: string; branch_id?: number | null }) =>
+    taxReturn: (params: { from: string; to: string; branch_id?: string | null }) =>
       ["tax-reports", "return", params] as const,
   },
 

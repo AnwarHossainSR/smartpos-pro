@@ -19,7 +19,7 @@ import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
 
 /* ---- types ---- */
 interface Product {
-  id: number;
+  id: string;
   name: string;
   sku: string | null;
   selling_price: number;
@@ -33,18 +33,18 @@ interface Product {
   tax_group?: TaxGroup | null;
   stock: number;
   is_active: boolean;
-  category: { id: number; name: string } | null;
+  category: { id: string; name: string } | null;
 }
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   phone: string | null;
   balance_due: number;
 }
 
 interface Warehouse {
-  id: number;
+  id: string;
   name: string;
   is_default: boolean;
 }
@@ -58,7 +58,7 @@ interface CartItem {
 
 interface SaleResult {
   data: {
-    id: number;
+    id: string;
     invoice_number: string;
     subtotal: number;
     tax_amount: number;
@@ -67,7 +67,7 @@ interface SaleResult {
     change_amount: number;
     due_amount: number;
     sold_at: string;
-    customer?: { id: number; name: string };
+    customer?: { id: string; name: string };
     items: {
       name: string;
       quantity: number;
@@ -211,7 +211,7 @@ const PAYMENT_METHODS = [
   { value: "due", label: "Due / Credit" },
 ];
 
-interface PaymentRow { id: number; method: string; amount: string; }
+interface PaymentRow { id: string; method: string; amount: string; }
 let paymentRowSeq = 0;
 
 /** Split tender: the checkout endpoint already accepts a `payments` array (e.g. part cash,
@@ -229,15 +229,15 @@ function PaymentModal({
   onClose: () => void;
   loading: boolean;
 }) {
-  const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: ++paymentRowSeq, method: "cash", amount: total.toFixed(2) }]);
+  const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) }]);
 
   const tendered = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
   const remaining = round2(total - tendered);
 
   const addRow = () =>
-    setRows((prev) => [...prev, { id: ++paymentRowSeq, method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
-  const removeRow = (id: number) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
-  const updateRow = (id: number, patch: Partial<Omit<PaymentRow, "id">>) =>
+    setRows((prev) => [...prev, { id: String(++paymentRowSeq), method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
+  const removeRow = (id: string) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+  const updateRow = (id: string, patch: Partial<Omit<PaymentRow, "id">>) =>
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   const handleSubmit = () => {
@@ -310,7 +310,7 @@ export default function POSPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
@@ -406,19 +406,19 @@ export default function POSPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cart.length, showPayment, receipt]);
 
-  const updateQty = (id: number, qty: number) => {
+  const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
       setCart((prev) => prev.filter((i) => i.product.id !== id));
     } else {
       setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, qty } : i)));
     }
   };
-  const updatePrice = (id: number, unit_price: number) =>
+  const updatePrice = (id: string, unit_price: number) =>
     setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, unit_price: Math.max(0, unit_price) } : i)));
-  const updateDiscount = (id: number, discount: number) =>
+  const updateDiscount = (id: string, discount: number) =>
     setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, discount: Math.max(0, discount) } : i)));
 
-  const removeItem = (id: number) => setCart((prev) => prev.filter((i) => i.product.id !== id));
+  const removeItem = (id: string) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
   const { cartSubtotal, cartTotal, cartTaxComponents } = useMemo(() => {
     const perLine = cart.map((item) => lineTotals(item, priceDisplay));

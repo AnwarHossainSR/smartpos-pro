@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Domain\Enums\JournalLineType;
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalLine extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasUuids;
 
     public const UPDATED_AT = null;
 

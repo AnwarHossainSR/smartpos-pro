@@ -25,7 +25,7 @@ class SaleTaxTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $warehouseId, float $price, ?TaxGroup $group = null, float $stock = 100): Product
+    private function seedProduct(string $warehouseId, float $price, ?TaxGroup $group = null, float $stock = 100): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),

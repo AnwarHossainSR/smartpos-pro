@@ -12,10 +12,10 @@ final readonly class CreatePurchaseData
      * @param  array<int, PaymentData>  $payments
      */
     public function __construct(
-        public int $warehouseId,
+        public string $warehouseId,
         public array $items,
         public array $payments = [],
-        public ?int $supplierId = null,
+        public ?string $supplierId = null,
         public PurchaseStatus $status = PurchaseStatus::Received,
         public ?string $note = null,
         public float $discountAmount = 0.0,
@@ -26,10 +26,10 @@ final readonly class CreatePurchaseData
     public static function fromArray(array $data): self
     {
         return new self(
-            warehouseId: (int) $data['warehouse_id'],
+            warehouseId: $data['warehouse_id'],
             items: PurchaseLineData::collection($data['items']),
             payments: PaymentData::collection($data['payments'] ?? []),
-            supplierId: isset($data['supplier_id']) ? (int) $data['supplier_id'] : null,
+            supplierId: $data['supplier_id'] ?? null,
             status: PurchaseStatus::coerce($data['status'] ?? null, PurchaseStatus::Received),
             note: $data['note'] ?? null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),

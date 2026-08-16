@@ -11,6 +11,7 @@ use App\Support\Concerns\HasRoles;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable, SoftDeletes;
+    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, HasUuids, MustVerifyEmailTrait, Notifiable, SoftDeletes;
 
     /**
      * `tenant_id` and `is_super_admin` are deliberately excluded — tenant_id is filled

@@ -20,7 +20,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface Account {
-  id: number;
+  id: string;
   name: string;
   account_number: string | null;
   type: string;
@@ -30,7 +30,7 @@ interface Account {
 }
 
 interface TrialBalanceRow {
-  account_id: number;
+  account_id: string;
   name: string;
   account_number: string | null;
   type: string;
@@ -40,12 +40,12 @@ interface TrialBalanceRow {
 }
 
 interface JournalEntry {
-  id: number;
+  id: string;
   reference: string;
   description: string;
   total_debit: number;
   entry_date: string;
-  lines?: { account_id: number; type: string; amount: number }[];
+  lines?: { account_id: string; type: string; amount: number }[];
 }
 
 type Tab = "accounts" | "journals" | "trial-balance";
@@ -54,7 +54,7 @@ const journalSchema = z.object({
   description: z.string().min(1, "Description required"),
   entry_date: z.string().min(1),
   lines: z.array(z.object({
-    account_id: z.number(),
+    account_id: z.string(),
     type: z.enum(["debit", "credit"]),
     amount: z.number().min(0.01),
   })).min(2, "At least 2 lines required"),
@@ -69,7 +69,7 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
     resolver: zodResolver(journalSchema),
     defaultValues: {
       entry_date: new Date().toISOString().slice(0, 10),
-      lines: [{ account_id: 0, type: "debit", amount: 0 }, { account_id: 0, type: "credit", amount: 0 }],
+      lines: [{ account_id: "", type: "debit", amount: 0 }, { account_id: "", type: "credit", amount: 0 }],
     },
   });
 
@@ -93,12 +93,12 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
       <div>
         <div className="mb-2 flex items-center justify-between">
           <Label>Lines *</Label>
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ account_id: 0, type: "debit", amount: 0 })}>+ Add line</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => append({ account_id: "", type: "debit", amount: 0 })}>+ Add line</Button>
         </div>
         <div className="space-y-2">
           {fields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
-              <Select className="flex-1" {...register(`lines.${idx}.account_id`, { setValueAs: (v) => v ? Number(v) : 0 })}>
+              <Select className="flex-1" {...register(`lines.${idx}.account_id`, { setValueAs: (v) => v ? String(v) : "" })}>
                 <option value="">— Account —</option>
                 {accounts?.data?.map((a) => <option key={a.id} value={a.id}>{a.account_number} {a.name}</option>)}
               </Select>

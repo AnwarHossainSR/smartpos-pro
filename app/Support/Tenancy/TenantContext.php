@@ -9,17 +9,17 @@ namespace App\Support\Tenancy;
  */
 class TenantContext
 {
-    protected ?int $tenantId = null;
+    protected ?string $tenantId = null;
 
     /** True only inside runUnscoped() — an explicit, temporary opt-out of the fail-closed guard. */
     protected bool $unscoped = false;
 
-    public function set(?int $tenantId): void
+    public function set(?string $tenantId): void
     {
         $this->tenantId = $tenantId;
     }
 
-    public function id(): ?int
+    public function id(): ?string
     {
         return $this->tenantId;
     }
@@ -48,7 +48,7 @@ class TenantContext
      * @param  callable():T  $callback
      * @return T
      */
-    public function runAs(?int $tenantId, callable $callback): mixed
+    public function runAs(?string $tenantId, callable $callback): mixed
     {
         $previous = $this->tenantId;
         $this->tenantId = $tenantId;

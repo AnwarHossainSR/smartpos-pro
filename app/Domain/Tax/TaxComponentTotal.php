@@ -8,7 +8,7 @@ use App\Support\Money;
 final readonly class TaxComponentTotal
 {
     public function __construct(
-        public ?int $rateId,
+        public ?string $rateId,
         public string $name,
         public float $rate,
         public Money $baseAmount,

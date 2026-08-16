@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 interface Session {
-  id: number;
+  id: string;
   name: string;
   ip_address: string | null;
   last_used_at: string | null;
@@ -45,7 +45,7 @@ function SessionsCard() {
   });
 
   const revokeMutation = useMutation({
-    mutationFn: (id: number) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["auth-sessions"] });
       toast(t("settings.sessionRevoked"));

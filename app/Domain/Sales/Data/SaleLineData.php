@@ -10,9 +10,9 @@ namespace App\Domain\Sales\Data;
 final readonly class SaleLineData
 {
     public function __construct(
-        public int $productId,
+        public string $productId,
         public float $quantity,
-        public ?int $variantId = null,
+        public ?string $variantId = null,
         public ?float $unitPrice = null,
         public float $discountAmount = 0.0,
     ) {}
@@ -21,9 +21,9 @@ final readonly class SaleLineData
     public static function fromArray(array $data): self
     {
         return new self(
-            productId: (int) $data['product_id'],
+            productId: $data['product_id'],
             quantity: (float) $data['quantity'],
-            variantId: isset($data['variant_id']) ? (int) $data['variant_id'] : null,
+            variantId: $data['variant_id'] ?? null,
             unitPrice: isset($data['unit_price']) ? (float) $data['unit_price'] : null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),
         );

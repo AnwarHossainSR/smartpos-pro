@@ -20,20 +20,20 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
-interface ExpenseCategory { id: number; name: string; }
+interface ExpenseCategory { id: string; name: string; }
 interface Expense {
-  id: number;
+  id: string;
   reference: string;
   amount: number;
   payment_method: string;
   status: string;
   note: string | null;
   spent_at: string;
-  category: { id: number; name: string } | null;
+  category: { id: string; name: string } | null;
 }
 
 const schema = z.object({
-  category_id: z.number().optional(),
+  category_id: z.string().optional(),
   amount: z.number().min(0.01, "Amount required"),
   payment_method: z.enum(["cash", "card", "bank", "mobile_banking"]),
   note: z.string().optional(),
@@ -57,7 +57,7 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
         <Label>Category</Label>
-        <Select {...register("category_id", { setValueAs: (v) => v ? Number(v) : undefined })}>
+        <Select {...register("category_id", { setValueAs: (v) => v ? String(v) : undefined })}>
           <option value="">— None —</option>
           {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </Select>

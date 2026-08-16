@@ -29,9 +29,9 @@ class QuotationService
 
     /**
      * @param  array{
-     *   branch_id:int, customer_id?:int|null, note?:string|null, terms?:string|null,
+     *   branch_id:string, customer_id?:string|null, note?:string|null, terms?:string|null,
      *   valid_until?:string|null, status?:string,
-     *   items: array<int, array{product_id:int, quantity:float, unit_price?:float, discount?:float}>
+     *   items: array<int, array{product_id:string, quantity:float, unit_price?:float, discount?:float}>
      * }  $payload
      */
     public function create(array $payload, User $user): Quotation
@@ -73,7 +73,7 @@ class QuotationService
     /**
      * Convert a quotation to a confirmed sale.
      *
-     * @param  array{warehouse_id:int, payments?:array}  $payload
+     * @param  array{warehouse_id:string, payments?:array}  $payload
      */
     public function convertToSale(Quotation $quotation, array $payload, User $user): Sale
     {

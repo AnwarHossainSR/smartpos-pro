@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JournalEntry extends Model
 {
-    use Auditable, BelongsToTenant;
+    use Auditable, BelongsToTenant, HasUuids;
 
     public const UPDATED_AT = null;
 

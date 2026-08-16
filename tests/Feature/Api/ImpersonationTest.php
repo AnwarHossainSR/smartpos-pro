@@ -52,7 +52,7 @@ class ImpersonationTest extends TestCase
         ])->assertOk();
 
         $plainToken = $response->json('data.token');
-        $tokenId = (int) explode('|', $plainToken)[0];
+        $tokenId = explode('|', $plainToken)[0];
         $accessToken = PersonalAccessToken::find($tokenId);
 
         $this->assertSame(['impersonate'], $accessToken->abilities);

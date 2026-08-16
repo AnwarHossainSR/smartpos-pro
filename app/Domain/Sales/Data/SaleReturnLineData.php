@@ -6,7 +6,7 @@ namespace App\Domain\Sales\Data;
 final readonly class SaleReturnLineData
 {
     public function __construct(
-        public int $saleItemId,
+        public string $saleItemId,
         public float $quantity,
     ) {}
 
@@ -14,7 +14,7 @@ final readonly class SaleReturnLineData
     public static function fromArray(array $data): self
     {
         return new self(
-            saleItemId: (int) $data['sale_item_id'],
+            saleItemId: $data['sale_item_id'],
             quantity: round((float) $data['quantity'], 4),
         );
     }

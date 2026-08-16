@@ -18,7 +18,7 @@ import type { PriceDisplay, TaxProfile } from "@/features/tax/types";
  *  `["business-settings"]` query key with the main Settings page so both stay in sync. */
 interface BusinessTaxSettings {
   tax_number: string | null;
-  tax_profile_id: number | null;
+  tax_profile_id: string | null;
   tax_profile: TaxProfile | null;
   price_display: PriceDisplay;
 }
@@ -57,7 +57,7 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
   });
 
   const mutation = useMutation({
-    mutationFn: (body: { tax_profile_id: number | null; price_display: PriceDisplay; tax_number: string | null }) =>
+    mutationFn: (body: { tax_profile_id: string | null; price_display: PriceDisplay; tax_number: string | null }) =>
       api("/settings/business", { method: "PUT", body }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.businessSettings });
@@ -72,7 +72,7 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
 
   function onSubmit(values: FormValues) {
     mutation.mutate({
-      tax_profile_id: values.tax_profile_id ? Number(values.tax_profile_id) : null,
+      tax_profile_id: values.tax_profile_id || null,
       price_display: values.price_display,
       tax_number: values.tax_number || null,
     });

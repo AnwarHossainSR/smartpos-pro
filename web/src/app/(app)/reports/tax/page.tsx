@@ -25,7 +25,7 @@ const TaxReportChart = dynamic(() => import("@/features/tax/components/tax-repor
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
-interface Branch { id: number; name: string; }
+interface Branch { id: string; name: string; }
 
 function firstOfMonth(): string {
   const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10);
@@ -84,7 +84,7 @@ function TaxReportBody() {
   });
 
   const filters = useMemo(
-    () => ({ from, to, branch_id: branchId ? Number(branchId) : null }),
+    () => ({ from, to, branch_id: branchId ? branchId : null }),
     [from, to, branchId],
   );
 

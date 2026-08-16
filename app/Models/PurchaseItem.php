@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseItem extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'purchase_id', 'product_id', 'variant_id', 'quantity',

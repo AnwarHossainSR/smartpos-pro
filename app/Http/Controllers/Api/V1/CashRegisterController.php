@@ -36,9 +36,8 @@ class CashRegisterController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $tenantId = $request->user()->tenant_id;
         $data = $request->validate([
-            'branch_id' => ['required', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
+            'branch_id' => ['required', Rule::exists('branches', 'id')],
             'name' => ['required', 'string', 'max:255'],
         ]);
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class TaxGroup extends Model
 {
-    use Auditable, BelongsToTenant;
+    use Auditable, BelongsToTenant, HasUuids;
 
     protected $fillable = ['tenant_id', 'name', 'code', 'is_default', 'is_active'];
 

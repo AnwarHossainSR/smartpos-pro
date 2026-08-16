@@ -10,8 +10,9 @@ return new class extends Migration
     {
         // Product attributes (e.g. "Color", "Size")
         Schema::create('product_attributes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants');
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained('tenants');
             $table->string('name');         // e.g. "Color"
             $table->string('slug');
             $table->timestamps();
@@ -20,8 +21,9 @@ return new class extends Migration
 
         // Attribute values (e.g. "Red", "XL")
         Schema::create('product_attribute_values', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_attribute_id')->constrained('product_attributes')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('product_attribute_id')->constrained('product_attributes')->cascadeOnDelete();
             $table->string('value');
             $table->timestamps();
         });
@@ -30,8 +32,9 @@ return new class extends Migration
         // This migration should not recreate the table if it already exists (earlier migration creates it).
         if (! Schema::hasTable('product_variants')) {
             Schema::create('product_variants', function (Blueprint $table) {
-                $table->id();
-                $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+                $table->uuid('id')->primary();
+                $table->unique('id');
+                $table->foreignUuid('product_id')->constrained('products')->cascadeOnDelete();
                 $table->string('sku')->nullable();
                 $table->string('barcode')->nullable();
                 $table->decimal('purchase_price', 12, 4)->nullable();
@@ -43,18 +46,19 @@ return new class extends Migration
 
         // Which attribute values make up each variant
         Schema::create('product_variant_attributes', function (Blueprint $table) {
-            $table->foreignId('variant_id')->constrained('product_variants')->cascadeOnDelete();
-            $table->foreignId('attribute_value_id')->constrained('product_attribute_values')->cascadeOnDelete();
+            $table->foreignUuid('variant_id')->constrained('product_variants')->cascadeOnDelete();
+            $table->foreignUuid('attribute_value_id')->constrained('product_attribute_values')->cascadeOnDelete();
             $table->primary(['variant_id', 'attribute_value_id']);
         });
 
         // Stock batches (track batch numbers and expiry)
         Schema::create('stock_batches', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants');
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('variant_id')->nullable()->constrained('product_variants');
-            $table->foreignId('warehouse_id')->constrained('warehouses');
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained('tenants');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');
+            $table->foreignUuid('warehouse_id')->constrained('warehouses');
             $table->string('batch_number');
             $table->date('manufactured_at')->nullable();
             $table->date('expires_at')->nullable();
@@ -68,14 +72,15 @@ return new class extends Migration
 
         // Serial numbers (for high-value, individually tracked items)
         Schema::create('stock_serials', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants');
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('variant_id')->nullable()->constrained('product_variants');
-            $table->foreignId('warehouse_id')->constrained('warehouses');
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained('tenants');
+            $table->foreignUuid('product_id')->constrained('products');
+            $table->foreignUuid('variant_id')->nullable()->constrained('product_variants');
+            $table->foreignUuid('warehouse_id')->constrained('warehouses');
             $table->string('serial_number');
             $table->enum('status', ['in_stock', 'sold', 'returned', 'damaged'])->default('in_stock');
-            $table->foreignId('sale_id')->nullable()->constrained('sales');
+            $table->foreignUuid('sale_id')->nullable()->constrained('sales');
             $table->timestamps();
 
             $table->unique(['tenant_id', 'serial_number']);

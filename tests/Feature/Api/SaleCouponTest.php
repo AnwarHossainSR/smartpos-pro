@@ -17,7 +17,7 @@ class SaleCouponTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $warehouseId, float $stock, float $price): Product
+    private function seedProduct(string $warehouseId, float $stock, float $price): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),
@@ -29,7 +29,7 @@ class SaleCouponTest extends TestCase
         return $product;
     }
 
-    private function checkout(int $branchId, int $warehouseId, Product $product, ?string $couponCode = null): TestResponse
+    private function checkout(string $branchId, string $warehouseId, Product $product, ?string $couponCode = null): TestResponse
     {
         return $this->postJson('/api/v1/sales', [
             'branch_id' => $branchId,

@@ -16,8 +16,8 @@ final readonly class PricedLine
 {
     /** @param  array<int, RoundedTaxComponent>  $taxComponents */
     public function __construct(
-        public int $productId,
-        public ?int $variantId,
+        public string $productId,
+        public ?string $variantId,
         public string $name,
         public float $quantity,
         public float $unitPrice,

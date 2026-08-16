@@ -15,22 +15,22 @@ use Illuminate\Validation\ValidationException;
  */
 class LoyaltyService
 {
-    public function earn(Customer $customer, int $points, ?int $saleId = null, ?int $userId = null, ?string $note = null): LoyaltyTransaction
+    public function earn(Customer $customer, int $points, ?string $saleId = null, ?string $userId = null, ?string $note = null): LoyaltyTransaction
     {
         return $this->record($customer, LoyaltyTransactionType::Earn, abs($points), $saleId, $userId, $note);
     }
 
-    public function redeem(Customer $customer, int $points, ?int $userId = null, ?string $note = null): LoyaltyTransaction
+    public function redeem(Customer $customer, int $points, ?string $userId = null, ?string $note = null): LoyaltyTransaction
     {
         return $this->record($customer, LoyaltyTransactionType::Redeem, -abs($points), null, $userId, $note);
     }
 
-    public function adjust(Customer $customer, int $points, ?int $userId = null, ?string $note = null): LoyaltyTransaction
+    public function adjust(Customer $customer, int $points, ?string $userId = null, ?string $note = null): LoyaltyTransaction
     {
         return $this->record($customer, LoyaltyTransactionType::Adjust, $points, null, $userId, $note);
     }
 
-    protected function record(Customer $customer, LoyaltyTransactionType $type, int $points, ?int $saleId, ?int $userId, ?string $note): LoyaltyTransaction
+    protected function record(Customer $customer, LoyaltyTransactionType $type, int $points, ?string $saleId, ?string $userId, ?string $note): LoyaltyTransaction
     {
         if ($points === 0) {
             throw ValidationException::withMessages(['points' => ['Points must be non-zero.']]);
