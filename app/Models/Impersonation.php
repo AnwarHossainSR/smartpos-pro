@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Records who impersonated whom, why, and for how long — not tenant-scoped since it's a super-admin resource. */
 class Impersonation extends Model
 {
+    use HasShortUuids;
+
     protected $fillable = [
         'tenant_id', 'super_admin_id', 'target_user_id', 'personal_access_token_id',
         'reason', 'started_at', 'ended_at', 'ended_by',

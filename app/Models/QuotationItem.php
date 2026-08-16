@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QuotationItem extends Model
 {
+    use HasShortUuids;
+
     protected $fillable = [
         'quotation_id', 'product_id', 'variant_id',
         'quantity', 'unit_price', 'discount', 'tax_rate', 'subtotal',

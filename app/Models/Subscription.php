@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Domain\Enums\SubscriptionStatus;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     protected $fillable = [
         'tenant_id', 'plan_id', 'status', 'trial_ends_at', 'current_period_ends_at',

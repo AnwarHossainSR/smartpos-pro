@@ -9,11 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inventory_balances', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();
-            $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();
+            $table->foreignUuid('warehouse_id')->constrained()->cascadeOnDelete();
             $table->decimal('quantity', 16, 4)->default(0);
             $table->decimal('reserved_quantity', 16, 4)->default(0);
             $table->decimal('average_cost', 14, 4)->default(0);

@@ -6,11 +6,12 @@ use App\Domain\Enums\CashSessionStatus;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CashRegisterSession extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     public $timestamps = false;
 

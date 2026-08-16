@@ -82,7 +82,7 @@ class PurchaseService
                 'purchased_at' => Carbon::now(),
             ]);
 
-            $purchase->update(['reference_number' => 'PUR-'.str_pad((string) $purchase->id, 6, '0', STR_PAD_LEFT)]);
+            $purchase->update(['reference_number' => 'PUR-'.strtoupper(substr($purchase->id, 0, 8))]);
 
             foreach ($data->items as $index => $line) {
                 $lineTax = $breakdown->lineFor($index);

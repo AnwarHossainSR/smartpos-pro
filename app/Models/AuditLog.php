@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditLog extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     public const UPDATED_AT = null;
 

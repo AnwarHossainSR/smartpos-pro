@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Domain\Enums\CashMovementType;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class CashRegisterTransaction extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     public const UPDATED_AT = null;
 

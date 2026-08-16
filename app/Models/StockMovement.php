@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Enums\StockDirection;
 use App\Domain\Enums\StockMovementType;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class StockMovement extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     public const UPDATED_AT = null; // append-only: no updated_at
 

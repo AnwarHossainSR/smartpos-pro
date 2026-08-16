@@ -13,10 +13,10 @@ use App\Domain\Tax\TaxEngine;
 final readonly class PurchaseLineData
 {
     public function __construct(
-        public int $productId,
+        public string $productId,
         public float $quantity,
         public float $unitCost,
-        public ?int $variantId = null,
+        public ?string $variantId = null,
         public float $discountAmount = 0.0,
     ) {}
 
@@ -24,10 +24,10 @@ final readonly class PurchaseLineData
     public static function fromArray(array $data): self
     {
         return new self(
-            productId: (int) $data['product_id'],
+            productId: $data['product_id'],
             quantity: round((float) $data['quantity'], 4),
             unitCost: round((float) $data['unit_cost'], 4),
-            variantId: isset($data['variant_id']) ? (int) $data['variant_id'] : null,
+            variantId: $data['variant_id'] ?? null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),
         );
     }

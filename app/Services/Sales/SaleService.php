@@ -94,7 +94,7 @@ class SaleService
             ]);
 
             // Deterministic, human-readable invoice number derived from the row id.
-            $sale->update(['invoice_number' => 'INV-'.str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT)]);
+            $sale->update(['invoice_number' => 'INV-'.strtoupper(substr($sale->id, 0, 8))]);
 
             $this->recordLines($sale, $basket->lines, $data, $cashier, $affectsStock);
             $this->recordPayments($sale, $data);

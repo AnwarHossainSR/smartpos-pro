@@ -9,11 +9,12 @@ use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Business extends Model
 {
-    use Auditable, BelongsToTenant, SoftDeletes;
+    use Auditable, BelongsToTenant, HasShortUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'name', 'type', 'legal_name', 'email', 'phone', 'tax_number',

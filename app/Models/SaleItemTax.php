@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Enums\TaxType;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class SaleItemTax extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     protected $fillable = [
         'tenant_id', 'sale_item_id', 'tax_rate_id', 'name', 'rate',

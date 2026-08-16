@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Domain\Enums\TaxType;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Input tax on a purchase line — the reclaimable side of a VAT/GST return. */
 class PurchaseItemTax extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     protected $fillable = [
         'tenant_id', 'purchase_item_id', 'tax_rate_id', 'name', 'rate',

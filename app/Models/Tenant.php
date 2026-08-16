@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Domain\Enums\TenantStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use SoftDeletes;
+    use HasShortUuids, SoftDeletes;
 
     protected $fillable = ['name', 'slug', 'plan', 'status', 'trial_ends_at', 'feature_limits'];
 

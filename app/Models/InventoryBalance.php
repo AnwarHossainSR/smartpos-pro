@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryBalance extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     protected $fillable = [
         'tenant_id', 'product_id', 'variant_id', 'warehouse_id',

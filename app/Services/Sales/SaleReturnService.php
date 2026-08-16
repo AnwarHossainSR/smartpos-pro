@@ -119,7 +119,7 @@ class SaleReturnService
 
             $total = round($subtotal + $taxTotal, 2);
             $return->update([
-                'reference_number' => 'RET-'.str_pad((string) $return->id, 6, '0', STR_PAD_LEFT),
+                'reference_number' => 'RET-'.strtoupper(substr($return->id, 0, 8)),
                 'subtotal' => round($subtotal, 2),
                 'tax_amount' => round($taxTotal, 2),
                 'total' => $total,

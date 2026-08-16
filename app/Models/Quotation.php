@@ -7,11 +7,12 @@ use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quotation extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
     use SoftDeletes;
 
     protected $fillable = [

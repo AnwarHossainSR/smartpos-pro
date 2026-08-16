@@ -56,7 +56,7 @@ class ProductController extends Controller
         if ($opening && (float) $opening['quantity'] > 0) {
             $this->ledger->addOpeningStock(
                 $product->id,
-                (int) $opening['warehouse_id'],
+                $opening['warehouse_id'],
                 (float) $opening['quantity'],
                 (float) $product->purchase_price,
             );

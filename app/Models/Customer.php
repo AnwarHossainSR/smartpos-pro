@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
 {
-    use BelongsToTenant, SoftDeletes;
+    use BelongsToTenant, HasShortUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'customer_group', 'tax_number',

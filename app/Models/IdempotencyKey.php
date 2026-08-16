@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class IdempotencyKey extends Model
 {
+    use HasShortUuids;
+
     protected $fillable = ['tenant_id', 'key', 'method', 'path', 'payload_hash', 'response_status', 'response_body'];
 
     protected function casts(): array

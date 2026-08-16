@@ -9,11 +9,12 @@ use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
-    use Auditable, BelongsToTenant, SoftDeletes;
+    use Auditable, BelongsToTenant, HasShortUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',

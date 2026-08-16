@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Support\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CashRegister extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasShortUuids;
 
     protected $fillable = ['tenant_id', 'branch_id', 'name', 'is_active'];
 

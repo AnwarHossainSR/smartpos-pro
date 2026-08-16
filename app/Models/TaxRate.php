@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Domain\Enums\TaxType;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /** One tax component: "VAT 15%", "CGST 9%", "Bottle deposit 2.00". */
 class TaxRate extends Model
 {
-    use Auditable, BelongsToTenant;
+    use Auditable, BelongsToTenant, HasShortUuids;
 
     protected $fillable = ['tenant_id', 'name', 'code', 'rate', 'type', 'is_compound', 'is_active'];
 

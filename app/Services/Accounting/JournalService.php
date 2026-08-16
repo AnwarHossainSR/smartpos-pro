@@ -22,8 +22,8 @@ class JournalService
      * so the posting rule and anything reporting a debit/credit split (the trial balance,
      * the API's account resource) read it from one place.
      *
-     * @param  array{reference?:string, entry_date?:string, description?:string, user_id?:int|null,
-     *   lines: array<int, array{account_id:int, type:JournalLineType|string, amount:float, description?:string|null}>}  $data
+     * @param  array{reference?:string, entry_date?:string, description?:string, user_id?:string|null,
+     *   lines: array<int, array{account_id:string, type:JournalLineType|string, amount:float, description?:string|null}>}  $data
      */
     public function post(array $data): JournalEntry
     {

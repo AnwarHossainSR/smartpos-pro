@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockTransferItem extends Model
 {
+    use HasShortUuids;
+
     protected $fillable = [
         'stock_transfer_id', 'product_id', 'variant_id',
         'quantity_requested', 'quantity_received', 'unit_cost',

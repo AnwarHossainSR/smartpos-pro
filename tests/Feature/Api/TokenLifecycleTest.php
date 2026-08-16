@@ -36,7 +36,7 @@ class TokenLifecycleTest extends TestCase
         ])->assertOk();
 
         $plainToken = $response->json('token');
-        $tokenId = (int) explode('|', $plainToken)[0];
+        $tokenId = explode('|', $plainToken)[0];
         $accessToken = PersonalAccessToken::find($tokenId);
 
         $this->assertSame(['*'], $accessToken->abilities);
@@ -53,7 +53,7 @@ class TokenLifecycleTest extends TestCase
         ])->assertOk();
 
         $plainToken = $response->json('token');
-        $tokenId = (int) explode('|', $plainToken)[0];
+        $tokenId = explode('|', $plainToken)[0];
         $accessToken = PersonalAccessToken::find($tokenId);
 
         $this->assertNotContains('*', $accessToken->abilities);

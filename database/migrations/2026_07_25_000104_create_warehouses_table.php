@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('warehouses', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('business_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
             $table->text('address')->nullable();

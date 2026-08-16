@@ -18,7 +18,7 @@ class AuditLogTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $warehouseId, float $stock, float $price): Product
+    private function seedProduct(string $warehouseId, float $stock, float $price): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),
