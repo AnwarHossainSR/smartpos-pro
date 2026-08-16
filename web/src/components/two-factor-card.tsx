@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { ShieldCheck, ShieldOff } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { exportRecoveryCodesAsCsv, exportRecoveryCodesAsPdf } from "@/lib/recovery-code-export";
 import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,7 +199,39 @@ export function TwoFactorCard() {
             </div>
           ))}
         </div>
-        <Button className="mt-4 w-full" onClick={() => setRecoveryCodes(null)}>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => {
+              try {
+                exportRecoveryCodesAsCsv(recoveryCodes!);
+                toast("Recovery codes downloaded as CSV.");
+              } catch {
+                toast("Failed to export CSV.", "error");
+              }
+            }}
+          >
+            Download CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => {
+              try {
+                exportRecoveryCodesAsPdf(recoveryCodes!);
+                toast("Recovery codes opened for printing.");
+              } catch {
+                toast("Failed to export PDF.", "error");
+              }
+            }}
+          >
+            Download PDF
+          </Button>
+        </div>
+        <Button className="mt-3 w-full" onClick={() => setRecoveryCodes(null)}>
           I&apos;ve saved these codes
         </Button>
       </Dialog>
