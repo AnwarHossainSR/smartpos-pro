@@ -181,8 +181,8 @@ class RichDemoSeeder extends Seeder
                 'total_credit' => $amount,
             ]);
             JournalLine::insert([
-                ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['5000'], 'debit' => $amount, 'credit' => 0, 'description' => 'Rent expense'],
-                ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['1001'], 'debit' => 0, 'credit' => $amount, 'description' => 'Paid from bank'],
+                ['id' => (string) Str::uuid(), 'tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['5000'], 'debit' => $amount, 'credit' => 0, 'description' => 'Rent expense'],
+                ['id' => (string) Str::uuid(), 'tenant_id' => $owner->tenant_id, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['1001'], 'debit' => 0, 'credit' => $amount, 'description' => 'Paid from bank'],
             ]);
         }
 
@@ -198,8 +198,8 @@ class RichDemoSeeder extends Seeder
             'total_credit' => $salary,
         ]);
         JournalLine::insert([
-            ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['5001'], 'debit' => $salary, 'credit' => 0, 'description' => 'Salary'],
-            ['tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['1000'], 'debit' => 0, 'credit' => $salary, 'description' => 'Cash payment'],
+            ['id' => (string) Str::uuid(), 'tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['5001'], 'debit' => $salary, 'credit' => 0, 'description' => 'Salary'],
+            ['id' => (string) Str::uuid(), 'tenant_id' => $owner->tenant_id, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['1000'], 'debit' => 0, 'credit' => $salary, 'description' => 'Cash payment'],
         ]);
 
         // ------------------------------------------------------------------

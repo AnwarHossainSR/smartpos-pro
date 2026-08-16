@@ -21,11 +21,14 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface Supplier {
-  id: number;
+  id: string;
   name: string;
   company: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  tax_number: string | null;
+  opening_balance: number;
   balance: number;
   is_active: boolean;
 }
@@ -42,7 +45,7 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; supplierId?: number; isEdit: boolean; onSuccess: () => void; }) {
+function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; supplierId?: string; isEdit: boolean; onSuccess: () => void; }) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -90,7 +93,7 @@ export default function SuppliersPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api(`/suppliers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/suppliers/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["suppliers"] }); toast("Supplier deleted"); setDeleting(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
@@ -135,7 +138,7 @@ export default function SuppliersPage() {
         )}
       </div>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : "Add supplier"}>
-        <SupplierForm key={editing?.id ?? "new"} isEdit={!!editing} supplierId={editing?.id} defaultValues={editing ? { name: editing.name, company: editing.company ?? undefined, is_active: editing.is_active } : undefined} onSuccess={() => setDrawerOpen(false)} />
+        <SupplierForm key={editing?.id ?? "new"} isEdit={!!editing} supplierId={editing?.id} defaultValues={editing ? { name: editing.name, company: editing.company ?? undefined, email: editing.email ?? undefined, phone: editing.phone ?? undefined, address: editing.address ?? undefined, tax_number: editing.tax_number ?? undefined, opening_balance: editing.opening_balance, is_active: editing.is_active } : undefined} onSuccess={() => setDrawerOpen(false)} />
       </Drawer>
       <Dialog open={!!deleting} onClose={() => setDeleting(null)} title="Delete supplier" description={`Delete "${deleting?.name}"?`} confirmLabel="Delete" confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
     </div>

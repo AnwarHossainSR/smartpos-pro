@@ -15,7 +15,7 @@ class SaleCheckoutTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $ownerId, int $warehouseId, float $stock, float $price, float $tax = 0): Product
+    private function seedProduct(string $ownerId, string $warehouseId, float $stock, float $price, float $tax = 0): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),

@@ -22,7 +22,7 @@ class ApiHardeningTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $warehouseId, float $stock = 20, float $price = 10): Product
+    private function seedProduct(string $warehouseId, float $stock = 20, float $price = 10): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),

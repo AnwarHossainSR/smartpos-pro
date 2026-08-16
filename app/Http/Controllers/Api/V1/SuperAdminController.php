@@ -201,7 +201,7 @@ class SuperAdminController extends Controller
     }
 
     /** Called from the super-admin's own session to revoke a live impersonation remotely. */
-    public function revokeImpersonation(Request $request, int $impersonation): JsonResponse
+    public function revokeImpersonation(Request $request, string $impersonation): JsonResponse
     {
         $record = Impersonation::whereKey($impersonation)->whereNull('ended_at')->firstOrFail();
 
@@ -221,7 +221,7 @@ class SuperAdminController extends Controller
         return response()->json(['data' => $records]);
     }
 
-    protected function endImpersonation(?int $tokenId, User $endedBy, ?Impersonation $record = null): void
+    protected function endImpersonation(?string $tokenId, User $endedBy, ?Impersonation $record = null): void
     {
         $record ??= $tokenId
             ? Impersonation::where('personal_access_token_id', $tokenId)->whereNull('ended_at')->first()

@@ -15,15 +15,15 @@ import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/stores/auth";
 
 interface AuditLogRow {
-  id: number;
+  id: string;
   action: string;
   auditable_type: string | null;
-  auditable_id: number | null;
+  auditable_id: string | null;
   old_values: Record<string, unknown> | null;
   new_values: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
-  user: { id: number; name: string; email: string } | null;
+  user: { id: string; name: string; email: string } | null;
   created_at: string;
 }
 

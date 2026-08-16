@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Plan extends Model
 {
+    use HasUuids;
+
     protected $fillable = ['name', 'slug', 'price', 'interval', 'limits', 'features', 'is_active'];
 
     protected function casts(): array

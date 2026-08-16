@@ -14,7 +14,7 @@ const schema = z.object({
   country_code: z.string().max(2).optional(),
   state: z.string().optional(),
   postcode_pattern: z.string().optional(),
-  tax_group_id: z.number().nullable(),
+  tax_group_id: z.string().nullable(),
   is_default: z.boolean(),
   priority: z.number().min(0),
   is_active: z.boolean(),
@@ -80,7 +80,7 @@ export function TaxZoneForm({ editing, onSuccess }: { editing?: TaxZone | null; 
       </div>
       <div>
         <Label>Tax group *</Label>
-        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? Number(v) : null) })}>
+        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? String(v) : null) })}>
           <option value="">— Select —</option>
           {groups?.data?.map((g) => (
             <option key={g.id} value={g.id}>{g.name}</option>

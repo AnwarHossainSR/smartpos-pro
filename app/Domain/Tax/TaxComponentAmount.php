@@ -17,7 +17,7 @@ use App\Domain\Enums\TaxType;
 final readonly class TaxComponentAmount
 {
     public function __construct(
-        public ?int $rateId,
+        public ?string $rateId,
         public string $name,
         public float $rate,
         public TaxType $type,

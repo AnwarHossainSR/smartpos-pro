@@ -1,30 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Laptop, Smartphone, Percent, ChevronRight } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { formatDateTime } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
+import { TwoFactorCard } from "@/components/two-factor-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
+import { LocalePicker } from "@/components/ui/locale-picker";
+import { PalettePicker } from "@/components/ui/palette-picker";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
-import { PalettePicker } from "@/components/ui/palette-picker";
-import { LocalePicker } from "@/components/ui/locale-picker";
-import { TwoFactorCard } from "@/components/two-factor-card";
 import { useTranslation } from "@/i18n/provider";
+import { api, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronRight, Laptop, Percent, Smartphone } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 interface Session {
-  id: number;
+  id: string;
   name: string;
   ip_address: string | null;
   last_used_at: string | null;
@@ -45,7 +45,7 @@ function SessionsCard() {
   });
 
   const revokeMutation = useMutation({
-    mutationFn: (id: number) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["auth-sessions"] });
       toast(t("settings.sessionRevoked"));
@@ -204,7 +204,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-5xl space-y-5">
-      <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">

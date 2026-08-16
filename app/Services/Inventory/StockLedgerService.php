@@ -31,8 +31,8 @@ class StockLedgerService
      * no longer record a `purchase` that decrements stock.
      *
      * @param  array{
-     *   product_id:int, warehouse_id:int, quantity:float, type:StockMovementType,
-     *   variant_id?:int|null, unit_cost?:float, user_id?:int|null,
+     *   product_id:string, warehouse_id:string, quantity:float, type:StockMovementType,
+     *   variant_id?:string|null, unit_cost?:float, user_id?:string|null,
      *   note?:string|null, reference?:Model|null, allow_negative?:bool
      * }  $data
      */
@@ -94,7 +94,7 @@ class StockLedgerService
     }
 
     /** Fetch (or create) the balance row and hold a write lock on it. */
-    protected function lockBalance(int $productId, ?int $variantId, int $warehouseId): InventoryBalance
+    protected function lockBalance(string $productId, ?string $variantId, string $warehouseId): InventoryBalance
     {
         $query = fn () => InventoryBalance::query()
             ->where('product_id', $productId)
@@ -117,7 +117,7 @@ class StockLedgerService
     }
 
     /** Convenience helper used by seeders and opening-stock flows. */
-    public function addOpeningStock(int $productId, int $warehouseId, float $quantity, float $unitCost = 0): StockMovement
+    public function addOpeningStock(string $productId, string $warehouseId, float $quantity, float $unitCost = 0): StockMovement
     {
         return DB::transaction(fn () => $this->record([
             'product_id' => $productId,

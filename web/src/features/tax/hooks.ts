@@ -39,13 +39,13 @@ export function useTaxRateMutations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: TaxRateFormValues }) => taxApi.rates.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: TaxRateFormValues }) => taxApi.rates.update(id, data),
     onSuccess: () => { invalidate(); toast("Tax rate updated"); },
     onError: (e) => toast(errorMessage(e, "Could not update tax rate"), "error"),
   });
 
   const remove = useMutation({
-    mutationFn: (id: number) => taxApi.rates.remove(id),
+    mutationFn: (id: string) => taxApi.rates.remove(id),
     onSuccess: () => {
       // Also refetch groups: a deleted rate disappears from any group's component list.
       invalidate();
@@ -98,13 +98,13 @@ export function useTaxGroupMutations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: TaxGroupFormValues }) => taxApi.groups.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: TaxGroupFormValues }) => taxApi.groups.update(id, data),
     onSuccess: () => { invalidate(); toast("Tax group updated"); },
     onError: (e) => toast(errorMessage(e, "Could not update tax group"), "error"),
   });
 
   const remove = useMutation({
-    mutationFn: (id: number) => taxApi.groups.remove(id),
+    mutationFn: (id: string) => taxApi.groups.remove(id),
     onSuccess: () => {
       invalidate();
       qc.invalidateQueries({ queryKey: queryKeys.taxZones.all });
@@ -138,13 +138,13 @@ export function useTaxZoneMutations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: TaxZoneFormValues }) => taxApi.zones.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: TaxZoneFormValues }) => taxApi.zones.update(id, data),
     onSuccess: () => { invalidate(); toast("Tax zone updated"); },
     onError: (e) => toast(errorMessage(e, "Could not update tax zone"), "error"),
   });
 
   const remove = useMutation({
-    mutationFn: (id: number) => taxApi.zones.remove(id),
+    mutationFn: (id: string) => taxApi.zones.remove(id),
     onSuccess: () => { invalidate(); toast("Tax zone deleted"); },
     onError: (e) => toast(errorMessage(e, "Could not delete tax zone"), "error"),
   });

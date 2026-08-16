@@ -16,7 +16,7 @@ class PosBackendTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
-    private function seedProduct(int $warehouseId, float $price, float $stock = 20): Product
+    private function seedProduct(string $warehouseId, float $price, float $stock = 20): Product
     {
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),

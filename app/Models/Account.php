@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Domain\Enums\AccountType;
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Account extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'name', 'type', 'account_number', 'normal_side',

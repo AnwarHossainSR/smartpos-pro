@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Enums\TaxType;
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class SaleReturnItemTax extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'sale_return_item_id', 'tax_rate_id', 'name', 'rate',

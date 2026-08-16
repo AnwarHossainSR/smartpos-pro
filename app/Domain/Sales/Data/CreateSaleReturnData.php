@@ -9,7 +9,7 @@ final readonly class CreateSaleReturnData
     /** @param  array<int, SaleReturnLineData>  $items */
     public function __construct(
         public array $items,
-        public ?int $warehouseId = null,
+        public ?string $warehouseId = null,
         public RefundMethod $refundMethod = RefundMethod::Cash,
         public ?string $note = null,
     ) {}
@@ -22,7 +22,7 @@ final readonly class CreateSaleReturnData
                 static fn (array $item) => SaleReturnLineData::fromArray($item),
                 $data['items'],
             ),
-            warehouseId: isset($data['warehouse_id']) ? (int) $data['warehouse_id'] : null,
+            warehouseId: $data['warehouse_id'] ?? null,
             refundMethod: RefundMethod::coerce($data['refund_method'] ?? null, RefundMethod::Cash),
             note: $data['note'] ?? null,
         );

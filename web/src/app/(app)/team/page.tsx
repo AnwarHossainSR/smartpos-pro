@@ -18,9 +18,9 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
-interface Role { id: number; slug: string; name: string; }
+interface Role { id: string; slug: string; name: string; }
 interface TeamUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string | null;
@@ -37,7 +37,7 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { defaultValues?: Partial<FormValues>; userId?: number; isEdit: boolean; roles: Role[]; onSuccess: () => void }) {
+function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { defaultValues?: Partial<FormValues>; userId?: string; isEdit: boolean; roles: Role[]; onSuccess: () => void }) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -97,7 +97,7 @@ export default function TeamPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api(`/users/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/users/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast("User removed"); setDeleting(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });

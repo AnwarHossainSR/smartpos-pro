@@ -4,15 +4,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface AuthUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   email_verified_at?: string | null;
   two_factor_enabled?: boolean;
   roles?: string[];
   permissions?: string[];
-  business_id?: number | null;
-  branch_id?: number | null;
+  business_id?: string | null;
+  branch_id?: string | null;
 }
 
 interface AuthState {

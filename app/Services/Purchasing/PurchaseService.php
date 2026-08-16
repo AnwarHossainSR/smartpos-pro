@@ -82,7 +82,9 @@ class PurchaseService
                 'purchased_at' => Carbon::now(),
             ]);
 
-            $purchase->update(['reference_number' => 'PUR-'.str_pad((string) $purchase->id, 6, '0', STR_PAD_LEFT)]);
+            // Tail, not head: UUIDv7's leading bytes are a timestamp, so rows
+            // created in the same millisecond would collide on a head slice.
+            $purchase->update(['reference_number' => 'PUR-'.strtoupper(substr($purchase->id, -8))]);
 
             foreach ($data->items as $index => $line) {
                 $lineTax = $breakdown->lineFor($index);

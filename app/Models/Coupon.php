@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Domain\Enums\DiscountType;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class Coupon extends Model
 {
-    use Auditable, BelongsToTenant;
+    use Auditable, BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'code', 'type', 'value', 'min_purchase', 'max_discount',

@@ -18,8 +18,8 @@ class StockTransferService
      * Create a pending transfer request.
      *
      * @param  array{
-     *   from_warehouse_id:int, to_warehouse_id:int, note?:string,
-     *   items: array<int, array{product_id:int, variant_id?:int|null, quantity:float, unit_cost?:float}>
+     *   from_warehouse_id:string, to_warehouse_id:string, note?:string,
+     *   items: array<int, array{product_id:string, variant_id?:string|null, quantity:float, unit_cost?:float}>
      * }  $payload
      */
     public function request(array $payload, User $user): StockTransfer
@@ -92,7 +92,7 @@ class StockTransferService
     /**
      * Receive a transfer at the destination warehouse.
      *
-     * @param  array{items: array<int, array{transfer_item_id:int, quantity_received:float}>}  $payload
+     * @param  array{items: array<int, array{transfer_item_id:string, quantity_received:float}>}  $payload
      */
     public function receive(StockTransfer $transfer, array $payload, User $user): StockTransfer
     {

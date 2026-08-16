@@ -234,7 +234,7 @@ class AuthController extends Controller
     }
 
     /** Public, signed link — clicked directly from the verification email, no bearer token available. */
-    public function verifyEmail(Request $request, int $id, string $hash): RedirectResponse
+    public function verifyEmail(Request $request, string $id, string $hash): RedirectResponse
     {
         abort_unless($request->hasValidSignature(), 403, 'Invalid or expired verification link.');
 
@@ -324,7 +324,7 @@ class AuthController extends Controller
     }
 
     /** Revoke a single device/session — must belong to the current user. */
-    public function revokeSession(Request $request, int $tokenId): JsonResponse
+    public function revokeSession(Request $request, string $tokenId): JsonResponse
     {
         $deleted = $request->user()->tokens()->whereKey($tokenId)->delete();
 

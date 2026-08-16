@@ -94,7 +94,9 @@ class SaleService
             ]);
 
             // Deterministic, human-readable invoice number derived from the row id.
-            $sale->update(['invoice_number' => 'INV-'.str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT)]);
+            // Uses the tail, not the head: UUIDv7's leading bytes are a timestamp,
+            // so rows created in the same millisecond would collide on a head slice.
+            $sale->update(['invoice_number' => 'INV-'.strtoupper(substr($sale->id, -8))]);
 
             $this->recordLines($sale, $basket->lines, $data, $cashier, $affectsStock);
             $this->recordPayments($sale, $data);

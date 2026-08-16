@@ -18,9 +18,9 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
-interface Customer { id: number; name: string; phone: string | null; loyalty_points: number; }
+interface Customer { id: string; name: string; phone: string | null; loyalty_points: number; }
 interface Coupon {
-  id: number;
+  id: string;
   code: string;
   type: string;
   value: number;

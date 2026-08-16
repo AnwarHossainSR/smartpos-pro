@@ -21,7 +21,7 @@ class StoreSaleReturnRequest extends FormRequest
             'refund_method' => ['nullable', 'in:cash,card,bank,store_credit'],
             'note' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.sale_item_id' => ['required', 'integer'],
+            'items.*.sale_item_id' => ['required', 'string'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
         ];
     }

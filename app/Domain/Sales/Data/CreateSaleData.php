@@ -19,11 +19,11 @@ final readonly class CreateSaleData
      * @param  array<int, PaymentData>  $payments
      */
     public function __construct(
-        public int $branchId,
-        public int $warehouseId,
+        public string $branchId,
+        public string $warehouseId,
         public array $items,
         public array $payments = [],
-        public ?int $customerId = null,
+        public ?string $customerId = null,
         public SaleStatus $status = SaleStatus::Completed,
         public ?string $note = null,
         public float $discountAmount = 0.0,
@@ -35,11 +35,11 @@ final readonly class CreateSaleData
     public static function fromArray(array $data): self
     {
         return new self(
-            branchId: (int) $data['branch_id'],
-            warehouseId: (int) $data['warehouse_id'],
+            branchId: $data['branch_id'],
+            warehouseId: $data['warehouse_id'],
             items: SaleLineData::collection($data['items']),
             payments: PaymentData::collection($data['payments'] ?? []),
-            customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
+            customerId: $data['customer_id'] ?? null,
             status: SaleStatus::coerce($data['status'] ?? null, SaleStatus::Completed),
             note: $data['note'] ?? null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),

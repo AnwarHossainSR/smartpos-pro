@@ -130,7 +130,7 @@ class UserController extends Controller
      * A caller whose role assignments are all pinned to specific branches
      * (rather than tenant-wide) may only manage users within those branches.
      */
-    protected function guardBranchScope(User $actor, ?int $targetBranchId): void
+    protected function guardBranchScope(User $actor, ?string $targetBranchId): void
     {
         if ($this->canGrantOwner($actor)) {
             return;

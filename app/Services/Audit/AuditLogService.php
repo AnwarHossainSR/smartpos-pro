@@ -27,7 +27,7 @@ class AuditLogService
         ?array $oldValues = null,
         ?array $newValues = null,
         ?User $actor = null,
-        ?int $tenantId = null,
+        ?string $tenantId = null,
     ): AuditLog {
         $request = RequestFacade::instance();
         $actor ??= $request->user();
