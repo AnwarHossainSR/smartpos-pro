@@ -6,7 +6,7 @@ use App\Domain\Enums\PaymentStatus;
 use App\Domain\Enums\SaleStatus;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
-    use Auditable, BelongsToTenant, HasShortUuids, SoftDeletes;
+    use Auditable, BelongsToTenant, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',

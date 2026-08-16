@@ -6,14 +6,14 @@ use App\Domain\Enums\ExpenseStatus;
 use App\Domain\Enums\PaymentMethod;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
-    use Auditable, BelongsToTenant, HasShortUuids, SoftDeletes;
+    use Auditable, BelongsToTenant, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'branch_id', 'expense_category_id', 'user_id', 'reference',

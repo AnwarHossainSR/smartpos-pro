@@ -11,9 +11,9 @@ return new class extends Migration
         // Idempotency keys guarantee sensitive write operations (e.g. POS checkout)
         // execute at most once even if the client retries.
         Schema::create('idempotency_keys', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('key');
             $table->string('method');
             $table->string('path');
@@ -25,14 +25,12 @@ return new class extends Migration
         });
 
         Schema::create('audit_logs', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignUlid('user_id', 12)->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('action');
-            $table->string('auditable_type')->nullable();
-            $table->char('auditable_id', 12)->nullable();
-            $table->index(['auditable_type', 'auditable_id']);
+            $table->nullableUuidMorphs('auditable');
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->string('ip_address')->nullable();
@@ -43,10 +41,10 @@ return new class extends Migration
         });
 
         Schema::create('notifications_center', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('user_id', 12)->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('type');
             $table->string('title');
             $table->text('body')->nullable();

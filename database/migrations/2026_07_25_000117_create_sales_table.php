@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sales', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('business_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('branch_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('warehouse_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('customer_id', 12)->nullable()->constrained()->nullOnDelete();
-            $table->foreignUlid('user_id', 12)->constrained()->cascadeOnDelete(); // cashier
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('warehouse_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('customer_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete(); // cashier
             $table->string('invoice_number');
             $table->string('status')->default('completed'); // draft, quotation, held, completed, cancelled
             $table->string('payment_status')->default('paid'); // paid, partial, due

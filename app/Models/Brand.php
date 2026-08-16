@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Brand extends Model
 {
-    use BelongsToTenant, HasShortUuids, SoftDeletes;
+    use BelongsToTenant, HasUuids, SoftDeletes;
 
     protected $fillable = ['tenant_id', 'name', 'slug', 'logo_path', 'is_active'];
 

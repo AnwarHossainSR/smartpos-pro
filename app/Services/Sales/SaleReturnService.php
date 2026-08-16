@@ -118,8 +118,10 @@ class SaleReturnService
             }
 
             $total = round($subtotal + $taxTotal, 2);
+            // Tail, not head: UUIDv7's leading bytes are a timestamp, so rows
+            // created in the same millisecond would collide on a head slice.
             $return->update([
-                'reference_number' => 'RET-'.strtoupper(substr($return->id, 0, 8)),
+                'reference_number' => 'RET-'.strtoupper(substr($return->id, -8)),
                 'subtotal' => round($subtotal, 2),
                 'tax_amount' => round($taxTotal, 2),
                 'total' => $total,

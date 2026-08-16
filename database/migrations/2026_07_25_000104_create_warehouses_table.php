@@ -9,11 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('warehouses', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('business_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('branch_id', 12)->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('code')->nullable();
             $table->text('address')->nullable();

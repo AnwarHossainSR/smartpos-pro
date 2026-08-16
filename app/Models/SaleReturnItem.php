@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleReturnItem extends Model
 {
-    use BelongsToTenant, HasShortUuids;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'sale_return_id', 'sale_item_id', 'product_id', 'variant_id',

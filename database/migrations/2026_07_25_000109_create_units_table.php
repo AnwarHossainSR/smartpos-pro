@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('units', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('short_name'); // pcs, kg, box
-            $table->foreignUlid('base_unit_id', 12)->nullable()->constrained('units')->nullOnDelete();
+            $table->foreignUuid('base_unit_id')->nullable()->constrained('units')->nullOnDelete();
             $table->decimal('operator_value', 12, 4)->default(1); // conversion factor to base unit
             $table->timestamps();
 

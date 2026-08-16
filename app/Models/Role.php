@@ -4,13 +4,13 @@ namespace App\Models;
 
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
-    use Auditable, BelongsToTenant, HasShortUuids;
+    use Auditable, BelongsToTenant, HasUuids;
 
     protected $fillable = ['tenant_id', 'name', 'slug', 'description', 'is_system'];
 

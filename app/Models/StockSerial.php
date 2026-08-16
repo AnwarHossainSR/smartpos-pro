@@ -4,13 +4,13 @@ namespace App\Models;
 
 use App\Domain\Enums\SerialStatus;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockSerial extends Model
 {
-    use BelongsToTenant, HasShortUuids;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'product_id', 'variant_id', 'warehouse_id',

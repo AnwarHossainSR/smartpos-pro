@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Plan extends Model
 {
-    use HasShortUuids;
+    use HasUuids;
 
     protected $fillable = ['name', 'slug', 'price', 'interval', 'limits', 'features', 'is_active'];
 

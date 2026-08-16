@@ -9,13 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('purchases', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('business_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('warehouse_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('supplier_id', 12)->nullable()->constrained()->nullOnDelete();
-            $table->foreignUlid('user_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('warehouse_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('supplier_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->string('reference_number');
             $table->string('status')->default('received'); // draft, ordered, partial, received, cancelled
             $table->string('payment_status')->default('paid');
@@ -36,12 +36,12 @@ return new class extends Migration
         });
 
         Schema::create('purchase_items', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('purchase_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('product_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('variant_id', 12)->nullable()->constrained('product_variants')->nullOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('purchase_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('quantity', 16, 4);
             $table->decimal('unit_cost', 14, 4);
             $table->decimal('discount_amount', 14, 2)->default(0);

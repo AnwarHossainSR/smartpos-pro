@@ -6,7 +6,7 @@ use App\Domain\Enums\PriceDisplay;
 use App\Domain\Enums\RoundingMode;
 use App\Domain\Enums\TaxRoundingScope;
 use App\Domain\Enums\TaxSourcing;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TaxProfile extends Model
 {
-    use HasShortUuids;
+    use HasUuids;
 
     protected $fillable = [
         'code', 'name', 'country_code', 'sourcing', 'rounding_scope', 'rounding_mode',

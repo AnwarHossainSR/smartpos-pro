@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Unit extends Model
 {
-    use BelongsToTenant, HasShortUuids;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = ['tenant_id', 'name', 'short_name', 'base_unit_id', 'operator_value'];
 

@@ -13,18 +13,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('journal_entries', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('user_id', 12)->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reference');
             $table->date('entry_date');
             $table->string('description')->nullable();
             $table->decimal('total_debit', 16, 2)->default(0);
             $table->decimal('total_credit', 16, 2)->default(0);
-            $table->string('source_type')->nullable();
-            $table->char('source_id', 12)->nullable();
-            $table->index(['source_type', 'source_id']); // Sale, Purchase, Expense, ...
+            $table->nullableUuidMorphs('source'); // Sale, Purchase, Expense, ...
             $table->timestamp('created_at')->useCurrent();
 
             $table->index(['tenant_id', 'entry_date']);
@@ -32,11 +30,11 @@ return new class extends Migration
         });
 
         Schema::create('journal_lines', function (Blueprint $table) {
-            $table->char('id', 12)->primary();
+            $table->uuid('id')->primary();
             $table->unique('id');
-            $table->foreignUlid('tenant_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('journal_entry_id', 12)->constrained()->cascadeOnDelete();
-            $table->foreignUlid('account_id', 12)->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('journal_entry_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();
             // Support both historical debit/credit columns used by seeders
             // and `type`/`amount` style used by application code.
             $table->decimal('debit', 16, 2)->default(0);

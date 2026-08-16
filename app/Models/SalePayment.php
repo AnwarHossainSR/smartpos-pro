@@ -4,13 +4,13 @@ namespace App\Models;
 
 use App\Domain\Enums\PaymentMethod;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SalePayment extends Model
 {
-    use BelongsToTenant, HasShortUuids;
+    use BelongsToTenant, HasUuids;
 
     protected $fillable = ['tenant_id', 'sale_id', 'method', 'amount', 'reference', 'paid_at'];
 
