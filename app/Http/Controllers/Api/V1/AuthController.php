@@ -267,7 +267,7 @@ class AuthController extends Controller
         }
 
         if (! $user->verifyEmailWithOtp($request->code)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'code' => ['Invalid or expired verification code.'],
             ]);
         }
