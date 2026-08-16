@@ -21,7 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -42,7 +42,7 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-function CustomerForm({ defaultValues, customerId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; customerId?: number; isEdit: boolean; onSuccess: () => void; }) {
+function CustomerForm({ defaultValues, customerId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; customerId?: string; isEdit: boolean; onSuccess: () => void; }) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -96,7 +96,7 @@ export default function CustomersPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api(`/customers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/customers/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast("Customer deleted"); setDeleting(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });

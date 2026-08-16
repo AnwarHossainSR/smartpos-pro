@@ -21,7 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface Supplier {
-  id: number;
+  id: string;
   name: string;
   company: string | null;
   email: string | null;
@@ -45,7 +45,7 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; supplierId?: number; isEdit: boolean; onSuccess: () => void; }) {
+function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaultValues?: Partial<FormValues>; supplierId?: string; isEdit: boolean; onSuccess: () => void; }) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -93,7 +93,7 @@ export default function SuppliersPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api(`/suppliers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/suppliers/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["suppliers"] }); toast("Supplier deleted"); setDeleting(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });

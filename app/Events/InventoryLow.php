@@ -19,7 +19,7 @@ class InventoryLow implements ShouldBroadcast
     use SerializesModels;
 
     public function __construct(
-        public readonly int $tenantId,
+        public readonly string $tenantId,
         public readonly InventoryBalance $balance,
     ) {}
 

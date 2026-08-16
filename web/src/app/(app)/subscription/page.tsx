@@ -9,7 +9,7 @@ import { formatNumber, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 interface Plan {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   price_monthly: number;
@@ -18,7 +18,7 @@ interface Plan {
 }
 
 interface Subscription {
-  id: number;
+  id: string;
   plan: Plan;
   status: string;
   current_period_ends_at: string | null;

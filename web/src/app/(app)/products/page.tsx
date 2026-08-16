@@ -25,13 +25,13 @@ import { useAllTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
 
 /* ---- types ---- */
-interface Category { id: number; name: string; }
-interface Brand { id: number; name: string; }
-interface Unit { id: number; name: string; }
-interface Warehouse { id: number; name: string; is_default: boolean; }
+interface Category { id: string; name: string; }
+interface Brand { id: string; name: string; }
+interface Unit { id: string; name: string; }
+interface Warehouse { id: string; name: string; is_default: boolean; }
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   sku: string | null;
   description: string | null;
@@ -45,7 +45,7 @@ interface Product {
    *  writing, only the tax-groups endpoints under Settings → Tax do. Read defensively so the
    *  form still works today and picks up the value automatically once the API adds it. */
   tax_group?: TaxGroup | null;
-  tax_group_id?: number | null;
+  tax_group_id?: string | null;
 }
 
 /* ---- form schema ---- */
@@ -53,15 +53,15 @@ const schema = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string().optional(),
   description: z.string().optional(),
-  category_id: z.number().optional(),
-  brand_id: z.number().optional(),
-  unit_id: z.number().optional(),
-  tax_group_id: z.number().nullable().optional(),
+  category_id: z.string().optional(),
+  brand_id: z.string().optional(),
+  unit_id: z.string().optional(),
+  tax_group_id: z.string().nullable().optional(),
   purchase_price: z.number().min(0, "Must be ≥ 0"),
   selling_price: z.number().min(0.01, "Must be > 0"),
   is_active: z.boolean(),
   opening_stock_qty: z.number().min(0).optional(),
-  opening_stock_warehouse_id: z.number().optional(),
+  opening_stock_warehouse_id: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -73,7 +73,7 @@ function ProductForm({
   isEdit,
 }: {
   defaultValues?: Partial<FormValues>;
-  productId?: number;
+  productId?: string;
   onSuccess: () => void;
   isEdit: boolean;
 }) {
@@ -157,21 +157,21 @@ function ProductForm({
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label>{t("products.form.category")}</Label>
-          <Select {...register("category_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
+          <Select {...register("category_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
             {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
           <Label>{t("products.form.brand")}</Label>
-          <Select {...register("brand_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
+          <Select {...register("brand_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
             {brands?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </Select>
         </div>
         <div>
           <Label>{t("products.form.unit")}</Label>
-          <Select {...register("unit_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
+          <Select {...register("unit_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
             {units?.data?.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
@@ -180,7 +180,7 @@ function ProductForm({
 
       <div>
         <Label>{t("products.form.taxGroup")}</Label>
-        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? Number(v) : null) })}>
+        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? String(v) : null) })}>
           <option value="">{t("products.form.taxGroupNone")}</option>
           {taxGroups?.data?.map((g) => (
             <option key={g.id} value={g.id}>{g.name}{g.is_default ? ` (${t("products.form.default")})` : ""}</option>
@@ -212,7 +212,7 @@ function ProductForm({
             </div>
             <div>
               <Label>{t("products.form.warehouse")}</Label>
-              <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
+              <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
                 <option value="">{t("products.form.selectWarehouse")}</option>
                 {warehouses?.data?.map((w) => (
                   <option key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</option>
@@ -253,7 +253,7 @@ export default function ProductsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api(`/products/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/products/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast(t("products.deleteSuccess"));

@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Domain\Enums\DiscountType;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
-use Illuminate\Database\Eloquent\Model;
 use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class Coupon extends Model

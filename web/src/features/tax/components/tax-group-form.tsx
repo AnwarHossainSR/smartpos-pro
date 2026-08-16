@@ -53,7 +53,7 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
     setPickerValue("");
   }
 
-  function removeComponent(id: number) {
+  function removeComponent(id: string) {
     setComponents((prev) => prev.filter((c) => c.id !== id));
   }
 

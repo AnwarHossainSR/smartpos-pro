@@ -3,7 +3,7 @@
 export type TaxRateType = "percentage" | "fixed";
 
 export interface TaxRate {
-  id: number;
+  id: string;
   name: string;
   code: string | null;
   rate: number;
@@ -18,12 +18,12 @@ export interface TaxRate {
 /** One component in a group's ordered rate list — the shape the group builder edits and
  *  the POST/PUT `rates` payload expects. */
 export interface TaxGroupRateInput {
-  tax_rate_id: number;
+  tax_rate_id: string;
   priority: number;
 }
 
 export interface TaxGroup {
-  id: number;
+  id: string;
   name: string;
   code: string | null;
   is_default: boolean;
@@ -34,12 +34,12 @@ export interface TaxGroup {
 }
 
 export interface TaxZone {
-  id: number;
+  id: string;
   name: string;
   country_code: string | null;
   state: string | null;
   postcode_pattern: string | null;
-  tax_group_id: number | null;
+  tax_group_id: string | null;
   tax_group: TaxGroup | null;
   is_default: boolean;
   priority: number;
@@ -52,7 +52,7 @@ export type TaxRoundingScope = "line" | "component" | "invoice";
 export type PriceDisplay = "inclusive" | "exclusive";
 
 export interface TaxProfile {
-  id: number;
+  id: string;
   code: string;
   name: string;
   country_code: string | null;
@@ -95,7 +95,7 @@ export interface TaxReturnReport extends TaxSummaryReport {
 export interface TaxReportFilters {
   from: string;
   to: string;
-  branch_id?: number | null;
+  branch_id?: string | null;
 }
 
 /* ---- form payloads ---- */
@@ -122,7 +122,7 @@ export interface TaxZoneFormValues {
   country_code?: string | null;
   state?: string | null;
   postcode_pattern?: string | null;
-  tax_group_id: number | null;
+  tax_group_id: string | null;
   is_default: boolean;
   priority: number;
   is_active: boolean;

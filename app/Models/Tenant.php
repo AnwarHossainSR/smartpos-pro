@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Domain\Enums\TenantStatus;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model

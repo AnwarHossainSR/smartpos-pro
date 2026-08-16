@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface SaleItem {
-  id: number;
+  id: string;
   name: string;
   quantity: number;
   unit_price: number;
@@ -25,7 +25,7 @@ interface SaleItem {
 }
 
 interface Sale {
-  id: number;
+  id: string;
   invoice_number: string;
   status: string;
   payment_status: string;
@@ -33,8 +33,8 @@ interface Sale {
   paid_amount: number;
   due_amount: number;
   sold_at: string;
-  customer: { id: number; name: string } | null;
-  cashier: { id: number; name: string } | null;
+  customer: { id: string; name: string } | null;
+  cashier: { id: string; name: string } | null;
   items?: SaleItem[];
   payments?: { method: string; amount: number }[];
 }
@@ -113,7 +113,7 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
 
 function ReturnModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const qc = useQueryClient();
-  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({

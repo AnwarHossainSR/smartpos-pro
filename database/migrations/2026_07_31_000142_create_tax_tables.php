@@ -72,14 +72,13 @@ return new class extends Migration
         });
 
         Schema::create('tax_group_rate', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('tax_group_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('tax_rate_id')->constrained()->cascadeOnDelete();
             // Compound components must apply after the ones they compound on.
             $table->unsignedSmallInteger('priority')->default(0);
 
-            $table->unique(['tax_group_id', 'tax_rate_id']);
+            $table->primary(['tax_group_id', 'tax_rate_id']);
             $table->index(['tenant_id']);
         });
 

@@ -6,10 +6,10 @@ use App\Domain\Enums\BusinessType;
 use App\Domain\Enums\PriceDisplay;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
+use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Support\Concerns\HasShortUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Business extends Model

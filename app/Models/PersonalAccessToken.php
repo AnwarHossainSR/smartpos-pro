@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Concerns\HasShortUuids;
 use App\Support\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
@@ -15,6 +16,8 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
  */
 class PersonalAccessToken extends SanctumPersonalAccessToken
 {
+    use HasShortUuids;
+
     public function tokenable(): MorphTo
     {
         return parent::tokenable()->withoutGlobalScope(TenantScope::class);

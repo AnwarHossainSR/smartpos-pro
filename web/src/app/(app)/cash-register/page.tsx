@@ -16,14 +16,14 @@ import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 
 interface Register {
-  id: number;
+  id: string;
   name: string;
-  branch_id: number;
+  branch_id: string;
   is_active: boolean;
 }
 
 interface Session {
-  id: number;
+  id: string;
   status: "open" | "closed";
   opening_cash: number;
   cash_in: number;

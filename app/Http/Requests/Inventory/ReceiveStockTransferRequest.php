@@ -15,7 +15,7 @@ class ReceiveStockTransferRequest extends FormRequest
     {
         return [
             'items' => ['sometimes', 'array'],
-            'items.*.transfer_item_id' => ['required', 'integer'],
+            'items.*.transfer_item_id' => ['required', 'string'],
             'items.*.quantity_received' => ['required', 'numeric', 'min:0'],
         ];
     }

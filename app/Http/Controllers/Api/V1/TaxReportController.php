@@ -74,7 +74,7 @@ class TaxReportController extends ReportController
         ]);
     }
 
-    private function outputTaxByComponent(Carbon $from, Carbon $to, ?int $branchId)
+    private function outputTaxByComponent(Carbon $from, Carbon $to, ?string $branchId)
     {
         return SaleItemTax::query()
             ->join('sale_items', 'sale_items.id', '=', 'sale_item_taxes.sale_item_id')

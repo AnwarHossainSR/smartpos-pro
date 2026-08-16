@@ -21,7 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface Purchase {
-  id: number;
+  id: string;
   reference_number: string;
   status: string;
   payment_status: string;
@@ -29,24 +29,24 @@ interface Purchase {
   paid_amount: number;
   due_amount: number;
   purchased_at: string;
-  supplier: { id: number; name: string } | null;
+  supplier: { id: string; name: string } | null;
   items?: { name: string; quantity: number; unit_cost: number; line_total: number }[];
   payments?: { method: string; amount: number }[];
 }
 
-interface Supplier { id: number; name: string; }
-interface Warehouse { id: number; name: string; is_default: boolean; }
-interface Product { id: number; name: string; sku: string | null; purchase_price: number; }
+interface Supplier { id: string; name: string; }
+interface Warehouse { id: string; name: string; is_default: boolean; }
+interface Product { id: string; name: string; sku: string | null; purchase_price: number; }
 
 const purchaseSchema = z.object({
-  warehouse_id: z.number(),
-  supplier_id: z.number().optional(),
+  warehouse_id: z.string(),
+  supplier_id: z.string().optional(),
   status: z.enum(["draft", "ordered", "received"]),
   discount_amount: z.number().min(0).optional(),
   shipping_amount: z.number().min(0).optional(),
   note: z.string().optional(),
   items: z.array(z.object({
-    product_id: z.number(),
+    product_id: z.string(),
     quantity: z.number().min(0.001),
     unit_cost: z.number().min(0),
   })).min(1, "Add at least one item"),
@@ -91,14 +91,14 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Warehouse *</Label>
-          <Select {...register("warehouse_id", { setValueAs: (v) => v ? Number(v) : undefined })}>
+          <Select {...register("warehouse_id", { setValueAs: (v) => v ? String(v) : undefined })}>
             <option value="">— Select —</option>
             {warehouses?.data?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </div>
         <div>
           <Label>Supplier</Label>
-          <Select {...register("supplier_id", { setValueAs: (v) => v ? Number(v) : undefined })}>
+          <Select {...register("supplier_id", { setValueAs: (v) => v ? String(v) : undefined })}>
             <option value="">— None —</option>
             {suppliers?.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </Select>

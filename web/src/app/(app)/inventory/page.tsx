@@ -21,20 +21,20 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
 interface InventoryBalance {
-  id: number;
-  product: { id: number; name: string; sku: string | null; min_stock_level: number };
-  warehouse: { id: number; name: string };
+  id: string;
+  product: { id: string; name: string; sku: string | null; min_stock_level: number };
+  warehouse: { id: string; name: string };
   quantity: number;
   available_quantity: number;
   average_cost: number;
 }
 
-interface Warehouse { id: number; name: string; is_default: boolean; }
-interface Product { id: number; name: string; sku: string | null; }
+interface Warehouse { id: string; name: string; is_default: boolean; }
+interface Product { id: string; name: string; sku: string | null; }
 
 const adjustSchema = z.object({
-  product_id: z.number(),
-  warehouse_id: z.number(),
+  product_id: z.string(),
+  warehouse_id: z.string(),
   direction: z.enum(["in", "out"]),
   quantity: z.number().min(0.001, "Must be > 0"),
   unit_cost: z.number().min(0).optional(),
@@ -102,7 +102,7 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
 
       <div>
         <Label>Warehouse *</Label>
-        <Select {...register("warehouse_id", { setValueAs: (v) => (v ? Number(v) : undefined) })}>
+        <Select {...register("warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
           <option value="">— Select —</option>
           {warehouses?.data?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </Select>

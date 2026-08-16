@@ -81,8 +81,8 @@ class InventoryController extends Controller
             : StockMovementType::AdjustmentOut;
 
         $movement = DB::transaction(fn () => $this->ledger->record([
-            'product_id' => (int) $data['product_id'],
-            'warehouse_id' => (int) $data['warehouse_id'],
+            'product_id' => $data['product_id'],
+            'warehouse_id' => $data['warehouse_id'],
             'quantity' => (float) $data['quantity'],
             'unit_cost' => (float) ($data['unit_cost'] ?? 0),
             'type' => $type,

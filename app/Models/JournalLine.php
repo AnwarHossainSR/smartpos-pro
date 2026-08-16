@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Domain\Enums\JournalLineType;
 use App\Support\Concerns\BelongsToTenant;
-use Illuminate\Database\Eloquent\Model;
 use App\Support\Concerns\HasShortUuids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalLine extends Model
