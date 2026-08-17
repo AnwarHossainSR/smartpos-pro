@@ -1,5 +1,8 @@
 "use client";
 
+import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, Sparkles, TrendingUp, Rocket, Briefcase, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Crown, MailWarning, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface PlanFeature {
   key: string;
@@ -41,10 +42,16 @@ interface SubscriptionResponse {
   usage: Record<string, { used: number; limit: number }>;
 }
 
-const PLAN_COLORS: Record<string, string> = {
-  starter: "border-t-emerald-500",
-  professional: "border-t-amber-500",
-  business: "border-t-rose-500",
+const PLAN_ICONS: Record<string, typeof Rocket> = {
+  starter: Rocket,
+  professional: TrendingUp,
+  business: Briefcase,
+};
+
+const PLAN_COLORS: Record<string, { bg: string; text: string; button: string }> = {
+  starter: { bg: "bg-emerald-100", text: "text-emerald-600", button: "bg-emerald-500 hover:bg-emerald-600" },
+  professional: { bg: "bg-violet-100", text: "text-violet-600", button: "bg-violet-500 hover:bg-violet-600" },
+  business: { bg: "bg-orange-100", text: "text-orange-600", button: "bg-orange-500 hover:bg-orange-600" },
 };
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
@@ -53,27 +60,44 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
   business: "Everything for established businesses.",
 };
 
+const TRUST_BADGES = [
+  { icon: Calendar, text: "30-day free trial" },
+  { icon: CreditCard, text: "No credit card required" },
+  { icon: RefreshCw, text: "Upgrade or cancel anytime" },
+  { icon: ShieldCheck, text: "Secure & reliable" },
+];
+
+const BOTTOM_TRUST = [
+  { icon: HeadphonesIcon, title: "24/7 Customer Support", desc: "We're here to help anytime." },
+  { icon: Lock, title: "Secure & Reliable", desc: "Your data is always safe." },
+  { icon: RefreshCw, title: "Flexible Plans", desc: "Upgrade, downgrade or cancel anytime." },
+  { icon: ShieldCheck, title: "Trusted by Businesses", desc: "Join thousands of happy users." },
+];
+
+function Calendar({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
 export default function SubscriptionPage() {
   const router = useRouter();
+  const [isYearly, setIsYearly] = useState(false);
 
-  const {
-    data: plansData,
-    isLoading: plansLoading,
-    error: plansError,
-  } = useQuery<{ data: Plan[] }>({
+  const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery<{ data: Plan[] }>({
     queryKey: ["subscription-plans"],
     queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
   });
 
-  const {
-    data: subData,
-    isLoading: subLoading,
-    error: subError,
-  } = useQuery<{ data: SubscriptionResponse }>({
+  const { data: subData, isLoading: subLoading, error: subError } = useQuery<{ data: SubscriptionResponse }>({
     queryKey: ["subscription"],
     queryFn: () => api<{ data: SubscriptionResponse }>("/subscription"),
-    retry: (failureCount, err) =>
-      !(err instanceof ApiError && err.status === 403) && failureCount < 3,
+    retry: (failureCount, err) => !(err instanceof ApiError && err.status === 403) && failureCount < 3,
   });
 
   const sub = subData?.data.subscription;
@@ -91,11 +115,11 @@ export default function SubscriptionPage() {
 
   if (subError instanceof ApiError && subError.status === 403) {
     return (
-      <div className="max-w-5xl space-y-5">
+      <div className="mx-auto max-w-5xl space-y-5">
         <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-[var(--muted)]">
-            <MailWarning className="h-6 w-6" />
+            <Crown className="h-6 w-6" />
             <p>Verify your email address to view billing and subscription details.</p>
           </CardContent>
         </Card>
@@ -105,7 +129,7 @@ export default function SubscriptionPage() {
 
   if (plansError) {
     return (
-      <div className="max-w-5xl space-y-5">
+      <div className="mx-auto max-w-5xl space-y-5">
         <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="py-8 text-center text-[var(--muted)]">
@@ -117,124 +141,172 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {subLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
-          ))}
-        </div>
-      ) : sub ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-[var(--primary)]" />
-                Current Plan: {sub.plan.name}
-              </CardTitle>
-              <Badge tone={statusColor[sub.status] ?? "default"}>{sub.status}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--muted)]">Price</span>
-                <span className="font-medium">{formatCurrency(sub.plan.price)}/month</span>
+    <div className="mx-auto max-w-5xl space-y-8">
+      {/* Current plan banner */}
+      {sub && (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-shadow duration-300 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)]">
+                <Crown className="h-5 w-5 text-[var(--muted)]" />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--muted)]">Billing period ends</span>
-                <span>{formatDate(sub.current_period_ends_at)}</span>
+              <div>
+                <p className="font-medium">Current Plan: {sub.plan.name}</p>
+                <p className="text-sm text-[var(--muted)]">
+                  {sub.status === "trialing"
+                    ? `Trial ends ${formatDate(sub.trial_ends_at)}`
+                    : `Active until ${formatDate(sub.current_period_ends_at)}`}
+                </p>
               </div>
-              {sub.trial_ends_at && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-[var(--muted)]">Trial ends</span>
-                  <span>{formatDate(sub.trial_ends_at)}</span>
-                </div>
-              )}
             </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {isOnFreePlan && (
-        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)]">
-              <Crown className="h-5 w-5 text-[var(--muted)]" />
-            </div>
-            <div>
-              <p className="font-medium">Free Plan</p>
-              <p className="text-sm text-[var(--muted)]">
-                You&apos;re currently on the Free plan. Upgrade to unlock more features and higher limits.
-              </p>
-            </div>
+            <Badge tone={statusColor[sub.status] ?? "default"}>{sub.status}</Badge>
           </div>
         </div>
       )}
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">{sub ? "Change Plan" : "Upgrade Your Plan"}</h2>
-        <p className="text-sm text-[var(--muted)]">
-          {sub
-            ? "Upgrade your plan to unlock more features and higher limits."
-            : "Start with a 30-day free trial on any paid plan. No credit card required."}
+      {/* Free plan banner */}
+      {isOnFreePlan && (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-shadow duration-300 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)]">
+                <Crown className="h-5 w-5 text-[var(--muted)]" />
+              </div>
+              <div>
+                <p className="font-medium">You&apos;re on the Free Plan</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Start a 30-day free trial on any paid plan. No credit card required.
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="text-[var(--primary)]">
+              Compare all features <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">
+          Upgrade{" "}
+          <span className="text-[var(--primary)]">Your</span>{" "}
+          Plan
+        </h1>
+        <p className="mt-2 text-[var(--muted)]">
+          Unlock more features, higher limits, and the tools you need to grow.
         </p>
       </div>
 
+      {/* Trust badges */}
+      <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[var(--muted)]">
+        {TRUST_BADGES.map((badge) => (
+          <div key={badge.text} className="flex items-center gap-2">
+            <badge.icon className="h-4 w-4" />
+            <span>{badge.text}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Monthly / Yearly toggle */}
+      <div className="flex items-center justify-center gap-3">
+        <span className={`text-sm ${!isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}>
+          Billed monthly
+        </span>
+        <button
+          onClick={() => setIsYearly(!isYearly)}
+          className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
+            isYearly ? "bg-[var(--primary)]" : "bg-[var(--surface-2)]"
+          }`}
+        >
+          <div
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              isYearly ? "translate-x-5" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+        <span className={`text-sm ${isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}>
+          Billed yearly
+        </span>
+        {isYearly && (
+          <Badge tone="success" className="ml-1 text-xs">
+            Save 17%
+          </Badge>
+        )}
+      </div>
+
+      {/* Plan cards */}
       {plansLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
+            <Skeleton key={i} className="h-[550px] rounded-2xl" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {paidPlans.map((plan) => {
+        <div className="grid gap-6 lg:grid-cols-3">
+          {paidPlans.map((plan, idx) => {
             const isCurrent = sub?.plan.id === plan.id;
             const isDowngrade = !!sub && plan.price < sub.plan.price;
+            const isPopular = plan.slug === "professional";
+            const Icon = PLAN_ICONS[plan.slug] ?? Rocket;
+            const colors = PLAN_COLORS[plan.slug] ?? PLAN_COLORS.starter;
+            const displayPrice = isYearly ? plan.price * 10 : plan.price;
 
             return (
               <div
                 key={plan.id}
-                className={`flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] border-t-[3px] ${
-                  PLAN_COLORS[plan.slug] ?? "border-t-[var(--primary)]"
+                className={`group relative flex flex-col rounded-2xl border bg-[var(--surface)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+                  isPopular
+                    ? "border-violet-300 shadow-lg shadow-violet-100 dark:shadow-violet-900/20"
+                    : "border-[var(--border)] shadow-sm"
                 } ${isCurrent ? "ring-2 ring-[var(--primary)]" : ""}`}
               >
-                <div className="p-5">
-                  <p className="text-xs text-[var(--muted)]">Per month</p>
-                  <h3 className="mt-2 text-xl font-bold">{plan.name}</h3>
+                {isPopular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="rounded-full bg-violet-500 px-4 py-1 text-xs font-semibold text-white shadow-md">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+
+                <div className="p-6">
+                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${colors.bg} ${colors.text} transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
                   <p className="mt-1 text-sm text-[var(--muted)]">
                     {PLAN_DESCRIPTIONS[plan.slug] ?? ""}
                   </p>
 
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">{formatCurrency(plan.price)}</span>
+                  <div className="mt-5 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">
+                      {formatCurrency(displayPrice)}
+                    </span>
                     <span className="text-sm text-[var(--muted)]">/month</span>
                   </div>
 
                   <Button
-                    variant={isCurrent ? "outline" : "primary"}
-                    className="mt-5 w-full"
+                    className={`mt-5 w-full rounded-xl py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${colors.button}`}
                     disabled={isCurrent || isDowngrade}
-                    onClick={() =>
-                      router.push(`/subscription/checkout?plan=${plan.id}`)
-                    }
+                    onClick={() => router.push(`/subscription/checkout?plan=${plan.id}`)}
                   >
                     {isCurrent
                       ? "Current Plan"
                       : isDowngrade
                         ? "Downgrade"
                         : "Start 30-day Free Trial"}
+                    {!isCurrent && !isDowngrade && <ArrowRight className="ml-1.5 h-4 w-4" />}
                   </Button>
                 </div>
 
-                <div className="flex-1 space-y-2.5 border-t border-[var(--border)] p-5">
+                <div className="flex-1 space-y-3 border-t border-[var(--border)] p-6">
                   {plan.features.map((feature) => (
-                    <div key={feature.key} className="flex items-center gap-2 text-sm">
+                    <div key={feature.key} className="flex items-center gap-2.5 text-sm">
                       {feature.included ? (
                         <Check className="h-4 w-4 shrink-0 text-emerald-500" />
                       ) : (
-                        <X className="h-4 w-4 shrink-0 text-[var(--color-danger)]" />
+                        <X className="h-4 w-4 shrink-0 text-red-400" />
                       )}
                       <span className={feature.included ? "" : "text-[var(--muted)]"}>
                         {feature.label}
@@ -248,6 +320,21 @@ export default function SubscriptionPage() {
           })}
         </div>
       )}
+
+      {/* Bottom trust section */}
+      <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm lg:grid-cols-4">
+        {BOTTOM_TRUST.map((item) => (
+          <div key={item.title} className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--muted)]">
+              <item.icon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">{item.title}</p>
+              <p className="text-xs text-[var(--muted)]">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
