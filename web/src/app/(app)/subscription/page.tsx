@@ -45,7 +45,7 @@ const FEATURE_LABELS: Record<string, string> = {
 export default function SubscriptionPage() {
   const router = useRouter();
 
-  const { data: plansData, isLoading: plansLoading } = useQuery<{ data: Plan[] }>({
+  const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery<{ data: Plan[] }>({
     queryKey: ["subscription-plans"],
     queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
   });
