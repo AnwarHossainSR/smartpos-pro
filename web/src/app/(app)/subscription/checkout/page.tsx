@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, CreditCard, Loader2, Shield } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Shield, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+interface PlanFeature {
+  key: string;
+  label: string;
+  value: string;
+  included: boolean;
+}
 
 interface Plan {
   id: string;
@@ -19,17 +26,9 @@ interface Plan {
   price: number;
   interval: string;
   limits: Record<string, number | null>;
-  features: string[] | null;
+  features: PlanFeature[];
   is_active: boolean;
 }
-
-const FEATURE_LABELS: Record<string, string> = {
-  branches: "Branches",
-  warehouses: "Warehouses",
-  users: "Team Members",
-  products: "Products",
-  monthly_sales: "Monthly Sales",
-};
 
 function CheckoutContent() {
   const router = useRouter();
@@ -50,7 +49,7 @@ function CheckoutContent() {
         body: { plan_id: planId },
       }),
     onSuccess: () => {
-      toast("Subscription activated! Your plan has been upgraded successfully.");
+      toast("Free trial activated! Your 30-day trial has started.");
       router.push("/subscription");
     },
     onError: (error: Error) => {
@@ -92,15 +91,12 @@ function CheckoutContent() {
         Back to Plans
       </Button>
 
-      <h1 className="text-xl font-semibold">Checkout</h1>
+      <h1 className="text-xl font-semibold">Start Free Trial</h1>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-[var(--primary)]" />
-              Order Summary
-            </CardTitle>
+            <CardTitle>Order Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -108,13 +104,17 @@ function CheckoutContent() {
               <Badge>{plan.name}</Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--muted)]">Billing</span>
-              <span className="text-sm">Monthly</span>
+              <span className="text-[var(--muted)]">Trial</span>
+              <span className="text-sm">30 days free</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[var(--muted)]">Then</span>
+              <span className="text-sm">{formatCurrency(plan.price)}/month</span>
             </div>
             <div className="border-t border-[var(--border)] pt-4">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Total</span>
-                <span className="text-xl font-bold">{formatCurrency(plan.price)}/month</span>
+                <span className="font-medium">Due today</span>
+                <span className="text-xl font-bold text-emerald-500">Free</span>
               </div>
             </div>
           </CardContent>
@@ -126,12 +126,16 @@ function CheckoutContent() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {Object.entries(plan.limits).map(([key, limit]) => (
-                <li key={key} className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-[var(--primary)]" />
-                  <span>
-                    {FEATURE_LABELS[key] ?? key.replace(/_/g, " ")}:{" "}
-                    {limit === null || limit < 0 ? "Unlimited" : formatNumber(limit)}
+              {plan.features.slice(0, 8).map((feature) => (
+                <li key={feature.key} className="flex items-center gap-2 text-sm">
+                  {feature.included ? (
+                    <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+                  ) : (
+                    <X className="h-4 w-4 shrink-0 text-[var(--color-danger)]" />
+                  )}
+                  <span className={feature.included ? "" : "text-[var(--muted)]"}>
+                    {feature.label}
+                    {feature.value ? `: ${feature.value}` : ""}
                   </span>
                 </li>
               ))}
@@ -145,9 +149,9 @@ function CheckoutContent() {
           <div className="flex flex-col items-center gap-4 text-center">
             <Shield className="h-8 w-8 text-[var(--primary)]" />
             <div>
-              <p className="font-medium">Secure Checkout</p>
+              <p className="font-medium">30-Day Free Trial</p>
               <p className="text-sm text-[var(--muted)]">
-                Your payment information is encrypted and secure. Payment gateway will be integrated soon.
+                No credit card required. Cancel anytime during the trial. After 30 days, your plan will continue at {formatCurrency(plan.price)}/month.
               </p>
             </div>
             <Button
@@ -159,10 +163,10 @@ function CheckoutContent() {
               {checkoutMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  Activating...
                 </>
               ) : (
-                `Subscribe for ${formatCurrency(plan.price)}/month`
+                "Start 30-Day Free Trial"
               )}
             </Button>
           </div>

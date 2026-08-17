@@ -16,7 +16,7 @@ class PlanResource extends JsonResource
             'price' => (float) $this->price,
             'interval' => $this->interval,
             'limits' => $this->limits,
-            'features' => $this->features,
+            'features' => $this->features ?? [],
             'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at,
         ];

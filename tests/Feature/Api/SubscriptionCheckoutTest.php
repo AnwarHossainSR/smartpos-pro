@@ -44,12 +44,12 @@ class SubscriptionCheckoutTest extends TestCase
 
         $this->postJson('/api/v1/subscription/checkout', ['plan_id' => $plan->id])
             ->assertCreated()
-            ->assertJsonFragment(['status' => SubscriptionStatus::Active->value]);
+            ->assertJsonFragment(['status' => SubscriptionStatus::Trialing->value]);
 
         $this->assertDatabaseHas('subscriptions', [
             'tenant_id' => $owner->tenant_id,
             'plan_id' => $plan->id,
-            'status' => SubscriptionStatus::Active->value,
+            'status' => SubscriptionStatus::Trialing->value,
         ]);
     }
 

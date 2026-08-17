@@ -11,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class SubscriptionService
 {
+    private const TRIAL_DAYS = 30;
+
     public function checkout(Plan $plan, User $user): Subscription
     {
         return DB::transaction(function () use ($plan) {
@@ -34,8 +36,9 @@ class SubscriptionService
 
             return Subscription::create([
                 'plan_id' => $plan->id,
-                'status' => SubscriptionStatus::Active,
-                'current_period_ends_at' => now()->addDays(30),
+                'status' => SubscriptionStatus::Trialing,
+                'trial_ends_at' => now()->addDays(self::TRIAL_DAYS),
+                'current_period_ends_at' => now()->addDays(self::TRIAL_DAYS),
             ]);
         });
     }
@@ -44,6 +47,8 @@ class SubscriptionService
     {
         $subscription->update([
             'plan_id' => $newPlan->id,
+            'status' => SubscriptionStatus::Active,
+            'trial_ends_at' => null,
             'current_period_ends_at' => now()->addDays(30),
         ]);
 

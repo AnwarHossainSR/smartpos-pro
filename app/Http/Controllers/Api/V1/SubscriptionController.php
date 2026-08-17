@@ -32,7 +32,7 @@ class SubscriptionController extends Controller
     public function current(): JsonResponse
     {
         $subscription = Subscription::with('plan')
-            ->where('status', SubscriptionStatus::Active)
+            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::Trialing])
             ->latest('id')
             ->first();
 

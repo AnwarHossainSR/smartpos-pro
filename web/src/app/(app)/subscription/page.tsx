@@ -1,14 +1,21 @@
 "use client";
 
+import { Check, Crown, MailWarning, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Crown, MailWarning, Zap } from "lucide-react";
-import { useRouter } from "next/navigation";
+
+interface PlanFeature {
+  key: string;
+  label: string;
+  value: string;
+  included: boolean;
+}
 
 interface Plan {
   id: string;
@@ -17,7 +24,7 @@ interface Plan {
   price: number;
   interval: string;
   limits: Record<string, number | null>;
-  features: string[] | null;
+  features: PlanFeature[];
   is_active: boolean;
 }
 
@@ -34,32 +41,37 @@ interface SubscriptionResponse {
   usage: Record<string, { used: number; limit: number }>;
 }
 
-const FEATURE_LABELS: Record<string, string> = {
-  branches: "Branches",
-  warehouses: "Warehouses",
-  users: "Team Members",
-  products: "Products",
-  monthly_sales: "Monthly Sales",
+const PLAN_COLORS: Record<string, string> = {
+  starter: "border-t-emerald-500",
+  professional: "border-t-amber-500",
+  business: "border-t-rose-500",
 };
 
 export default function SubscriptionPage() {
   const router = useRouter();
 
-  const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery<{ data: Plan[] }>({
+  const {
+    data: plansData,
+    isLoading: plansLoading,
+    error: plansError,
+  } = useQuery<{ data: Plan[] }>({
     queryKey: ["subscription-plans"],
     queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
   });
 
-  const { data: subData, isLoading: subLoading, error } = useQuery<{ data: SubscriptionResponse }>({
+  const {
+    data: subData,
+    isLoading: subLoading,
+    error: subError,
+  } = useQuery<{ data: SubscriptionResponse }>({
     queryKey: ["subscription"],
     queryFn: () => api<{ data: SubscriptionResponse }>("/subscription"),
-    retry: (failureCount, err) => !(err instanceof ApiError && err.status === 403) && failureCount < 3,
+    retry: (failureCount, err) =>
+      !(err instanceof ApiError && err.status === 403) && failureCount < 3,
   });
 
   const sub = subData?.data.subscription;
-  const usage = subData?.data.usage;
   const plans = plansData?.data ?? [];
-  const paidPlans = plans.filter((p) => p.price > 0);
 
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     active: "success",
@@ -68,9 +80,9 @@ export default function SubscriptionPage() {
     canceled: "default",
   };
 
-  if (error instanceof ApiError && error.status === 403) {
+  if (subError instanceof ApiError && subError.status === 403) {
     return (
-      <div className="max-w-4xl space-y-5">
+      <div className="max-w-5xl space-y-5">
         <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-[var(--muted)]">
@@ -82,13 +94,29 @@ export default function SubscriptionPage() {
     );
   }
 
+  if (plansError) {
+    return (
+      <div className="max-w-5xl space-y-5">
+        <h1 className="text-xl font-semibold">Subscription</h1>
+        <Card>
+          <CardContent className="py-8 text-center text-[var(--muted)]">
+            Failed to load subscription plans. Please try again later.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-5xl space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Subscription</h1>
+      </div>
 
       {subLoading ? (
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 rounded-[var(--radius)]" />
+            <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
           ))}
         </div>
       ) : sub ? (
@@ -119,38 +147,6 @@ export default function SubscriptionPage() {
                 </div>
               )}
             </div>
-
-            {usage && (
-              <div className="space-y-3 pt-2">
-                <h3 className="text-sm font-medium">Plan Usage</h3>
-                {Object.entries(usage).map(([key, { used, limit }]) => {
-                  const isUnlimited = limit === null || limit < 0;
-                  const pct = isUnlimited ? 100 : Math.min(100, (used / limit) * 100);
-                  return (
-                    <div key={key}>
-                      <div className="mb-1 flex items-center justify-between text-sm">
-                        <span>{FEATURE_LABELS[key] ?? key.replace(/_/g, " ")}</span>
-                        <span className="text-[var(--muted)]">
-                          {formatNumber(used)} / {isUnlimited ? "∞" : formatNumber(limit)}
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-[var(--surface-2)]">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            pct >= 90
-                              ? "bg-[var(--color-danger)]"
-                              : pct >= 70
-                                ? "bg-amber-500"
-                                : "bg-[var(--primary)]"
-                          }`}
-                          style={{ width: `${isUnlimited ? 30 : pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </CardContent>
         </Card>
       ) : null}
@@ -160,74 +156,77 @@ export default function SubscriptionPage() {
         <p className="text-sm text-[var(--muted)]">
           {sub
             ? "Upgrade your plan to unlock more features and higher limits."
-            : "Select a plan that fits your business needs."}
+            : "Start with a 30-day free trial. No credit card required."}
         </p>
       </div>
 
       {plansLoading ? (
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-80 rounded-[var(--radius)]" />
+            <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
           ))}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-3">
-          {paidPlans.map((plan) => {
+          {plans.map((plan) => {
             const isCurrent = sub?.plan.id === plan.id;
             const isDowngrade = !!sub && plan.price < sub.plan.price;
 
             return (
-              <Card
+              <div
                 key={plan.id}
-                className={`relative flex flex-col ${
-                  isCurrent ? "border-2 border-[var(--primary)]" : ""
-                }`}
+                className={`flex flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] border-t-[3px] ${
+                  PLAN_COLORS[plan.slug] ?? "border-t-[var(--primary)]"
+                } ${isCurrent ? "ring-2 ring-[var(--primary)]" : ""}`}
               >
-                {isCurrent && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge tone="success">Current Plan</Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle>{plan.name}</CardTitle>
-                  <div className="mt-2">
+                <div className="p-5">
+                  <p className="text-xs text-[var(--muted)]">Per month</p>
+                  <h3 className="mt-2 text-xl font-bold">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
+                    {plan.slug === "starter"
+                      ? "Essential POS and inventory for new retailers starting their online journey."
+                      : plan.slug === "professional"
+                        ? "Growing sales and business management with advanced features."
+                        : "Full analytics, integration and marketing for established businesses."}
+                  </p>
+
+                  <div className="mt-4 flex items-baseline gap-1">
                     <span className="text-3xl font-bold">{formatCurrency(plan.price)}</span>
                     <span className="text-sm text-[var(--muted)]">/month</span>
                   </div>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col">
-                  <ul className="mb-6 flex-1 space-y-2">
-                    {Object.entries(plan.limits).map(([key, limit]) => (
-                      <li key={key} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-[var(--primary)]" />
-                        <span>
-                          {FEATURE_LABELS[key] ?? key.replace(/_/g, " ")}:{" "}
-                          {limit === null || limit < 0 ? "Unlimited" : formatNumber(limit)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+
                   <Button
                     variant={isCurrent ? "outline" : "primary"}
-                    className="w-full"
+                    className="mt-5 w-full"
                     disabled={isCurrent || isDowngrade}
-                    onClick={() => router.push(`/subscription/checkout?plan=${plan.id}`)}
+                    onClick={() =>
+                      router.push(`/subscription/checkout?plan=${plan.id}`)
+                    }
                   >
-                    {isCurrent ? (
-                      "Current Plan"
-                    ) : isDowngrade ? (
-                      "Downgrade"
-                    ) : sub ? (
-                      <>
-                        <Zap className="mr-2 h-4 w-4" />
-                        Upgrade
-                      </>
-                    ) : (
-                      "Get Started"
-                    )}
+                    {isCurrent
+                      ? "Current Plan"
+                      : isDowngrade
+                        ? "Downgrade"
+                        : "Start 30-day Free Trial"}
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="flex-1 space-y-2.5 border-t border-[var(--border)] p-5">
+                  {plan.features.map((feature) => (
+                    <div key={feature.key} className="flex items-center gap-2 text-sm">
+                      {feature.included ? (
+                        <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+                      ) : (
+                        <X className="h-4 w-4 shrink-0 text-[var(--color-danger)]" />
+                      )}
+                      <span className={feature.included ? "" : "text-[var(--muted)]"}>
+                        {feature.label}
+                        {feature.value ? `: ${feature.value}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             );
           })}
         </div>
