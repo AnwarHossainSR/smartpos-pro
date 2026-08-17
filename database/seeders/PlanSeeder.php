@@ -11,6 +11,33 @@ class PlanSeeder extends Seeder
     {
         $plans = [
             [
+                'name' => 'Free',
+                'slug' => 'free',
+                'price' => 0,
+                'interval' => 'month',
+                'limits' => [
+                    'branches' => 1,
+                    'warehouses' => 1,
+                    'users' => 2,
+                    'products' => 50,
+                    'monthly_sales' => 200,
+                ],
+                'features' => [
+                    ['key' => 'products', 'label' => 'Product limit', 'value' => '50', 'included' => true],
+                    ['key' => 'product_variations', 'label' => 'Product variation', 'value' => 'Simple only', 'included' => true],
+                    ['key' => 'import', 'label' => 'Import Product Service', 'value' => '', 'included' => false],
+                    ['key' => 'export', 'label' => 'Export Product Service', 'value' => '', 'included' => false],
+                    ['key' => 'staff', 'label' => 'Staff limit', 'value' => '2', 'included' => true],
+                    ['key' => 'warehouses', 'label' => 'Inventory locations', 'value' => '1', 'included' => true],
+                    ['key' => 'invoices', 'label' => 'Number of Invoices', 'value' => '200/month', 'included' => true],
+                    ['key' => 'pos', 'label' => 'POS Service', 'value' => '', 'included' => true],
+                    ['key' => 'terminals', 'label' => 'Terminal Limit', 'value' => '1', 'included' => true],
+                    ['key' => 'coupons', 'label' => 'Coupon Service', 'value' => '', 'included' => false],
+                    ['key' => 'reports', 'label' => 'Report Service', 'value' => 'Basic', 'included' => true],
+                ],
+                'is_active' => true,
+            ],
+            [
                 'name' => 'Starter',
                 'slug' => 'starter',
                 'price' => 499,

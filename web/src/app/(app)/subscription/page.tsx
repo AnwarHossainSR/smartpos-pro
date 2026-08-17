@@ -1,7 +1,5 @@
 "use client";
 
-import { Check, Crown, MailWarning, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Check, Crown, MailWarning, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface PlanFeature {
   key: string;
@@ -47,6 +47,12 @@ const PLAN_COLORS: Record<string, string> = {
   business: "border-t-rose-500",
 };
 
+const PLAN_DESCRIPTIONS: Record<string, string> = {
+  starter: "Perfect for new shops getting started.",
+  professional: "For growing businesses needing more.",
+  business: "Everything for established businesses.",
+};
+
 export default function SubscriptionPage() {
   const router = useRouter();
 
@@ -71,7 +77,10 @@ export default function SubscriptionPage() {
   });
 
   const sub = subData?.data.subscription;
-  const plans = plansData?.data ?? [];
+  const allPlans = plansData?.data ?? [];
+  const paidPlans = allPlans.filter((p) => p.price > 0);
+  const freePlan = allPlans.find((p) => p.price === 0);
+  const isOnFreePlan = !sub && freePlan;
 
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     active: "success",
@@ -108,13 +117,9 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Subscription</h1>
-      </div>
-
+    <div className="space-y-6">
       {subLoading ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
           ))}
@@ -151,24 +156,40 @@ export default function SubscriptionPage() {
         </Card>
       ) : null}
 
+      {isOnFreePlan && (
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)]">
+              <Crown className="h-5 w-5 text-[var(--muted)]" />
+            </div>
+            <div>
+              <p className="font-medium">Free Plan</p>
+              <p className="text-sm text-[var(--muted)]">
+                You&apos;re currently on the Free plan. Upgrade to unlock more features and higher limits.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">{sub ? "Change Plan" : "Choose a Plan"}</h2>
+        <h2 className="text-lg font-semibold">{sub ? "Change Plan" : "Upgrade Your Plan"}</h2>
         <p className="text-sm text-[var(--muted)]">
           {sub
             ? "Upgrade your plan to unlock more features and higher limits."
-            : "Start with a 30-day free trial. No credit card required."}
+            : "Start with a 30-day free trial on any paid plan. No credit card required."}
         </p>
       </div>
 
       {plansLoading ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-[500px] rounded-[var(--radius)]" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3">
-          {plans.map((plan) => {
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {paidPlans.map((plan) => {
             const isCurrent = sub?.plan.id === plan.id;
             const isDowngrade = !!sub && plan.price < sub.plan.price;
 
@@ -183,11 +204,7 @@ export default function SubscriptionPage() {
                   <p className="text-xs text-[var(--muted)]">Per month</p>
                   <h3 className="mt-2 text-xl font-bold">{plan.name}</h3>
                   <p className="mt-1 text-sm text-[var(--muted)]">
-                    {plan.slug === "starter"
-                      ? "Essential POS and inventory for new retailers starting their online journey."
-                      : plan.slug === "professional"
-                        ? "Growing sales and business management with advanced features."
-                        : "Full analytics, integration and marketing for established businesses."}
+                    {PLAN_DESCRIPTIONS[plan.slug] ?? ""}
                   </p>
 
                   <div className="mt-4 flex items-baseline gap-1">
