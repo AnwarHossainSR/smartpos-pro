@@ -35,15 +35,15 @@ function TaxSettingsBody() {
   }
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="space-y-5">
       <div className="flex items-center gap-2">
         <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+        <Card className="xl:col-span-3">
           <CardHeader>
             <CardTitle>Rates, groups & zones</CardTitle>
           </CardHeader>
@@ -95,10 +95,10 @@ function TaxSettingsBody() {
 
 function TaxSettingsSkeleton() {
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="space-y-5">
       <Skeleton className="h-7 w-40" />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Skeleton className="h-96 lg:col-span-2" />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+        <Skeleton className="h-96 xl:col-span-3" />
         <Skeleton className="h-96" />
       </div>
     </div>
