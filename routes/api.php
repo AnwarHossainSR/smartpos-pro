@@ -263,6 +263,7 @@ Route::prefix('v1')->group(function () {
         Route::get('subscription/current', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
         Route::get('subscription', [SubscriptionController::class, 'current'])->middleware(['permission:subscriptions.view', 'verified']);
         Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware(['permission:subscriptions.view', 'verified']);
+        Route::post('subscription/checkout', [SubscriptionController::class, 'checkout'])->middleware(['permission:subscriptions.manage', 'verified']);
 
         // T28 — Stock transfers
         Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');
