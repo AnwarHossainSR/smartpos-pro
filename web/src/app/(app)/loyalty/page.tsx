@@ -102,7 +102,6 @@ export default function LoyaltyPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Loyalty & Coupons</h1>
         {tab === "coupons" && can("coupons.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}>+ New coupon</Button>}
       </div>
 

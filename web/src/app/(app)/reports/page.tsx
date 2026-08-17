@@ -46,7 +46,6 @@ export default function ReportsPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold">Reports</h1>
           <Button asChild variant="outline" size="sm">
             <Link href="/reports/tax"><Percent className="h-3.5 w-3.5" /> Tax report</Link>
           </Button>

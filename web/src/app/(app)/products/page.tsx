@@ -325,8 +325,6 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">{t("products.title")}</h1>
-
       <ListToolbar
         search={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}

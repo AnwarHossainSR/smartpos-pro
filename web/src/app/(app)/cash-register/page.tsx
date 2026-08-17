@@ -134,7 +134,6 @@ export default function CashRegisterPage() {
     <div className="mx-auto max-w-5xl space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Cash Register</h1>
           <p className="text-sm text-[var(--muted)]">{register.name}</p>
         </div>
         <div className="flex items-center gap-2">

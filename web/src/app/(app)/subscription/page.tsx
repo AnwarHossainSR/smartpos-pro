@@ -51,7 +51,6 @@ export default function SubscriptionPage() {
   if (error instanceof ApiError && error.status === 403) {
     return (
       <div className="max-w-2xl space-y-5">
-        <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-[var(--muted)]">
             <MailWarning className="h-6 w-6" />
@@ -64,8 +63,6 @@ export default function SubscriptionPage() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <h1 className="text-xl font-semibold">Subscription</h1>
-
       {subLoading ? (
         <Skeleton className="h-40 rounded-[var(--radius)]" />
       ) : sub ? (

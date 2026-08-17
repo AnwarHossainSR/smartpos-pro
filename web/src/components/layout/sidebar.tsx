@@ -224,17 +224,17 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
 
       {!collapsed && (
         <div className="mx-3">
-          <div className="rounded-xl bg-gradient-to-r from-[var(--sidebar-active)]/20 via-[var(--sidebar-active)]/10 to-transparent p-[1px]">
+          <div className="rounded-xl bg-gradient-to-l from-[var(--sidebar-active)]/20 via-[var(--sidebar-active)]/10 to-transparent p-[1px]">
             <div className="rounded-[11px] bg-[var(--sidebar-bg)] px-3 py-3">
               <Link
                 href="/support"
                 className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--sidebar-fg)] transition-all duration-200 hover:bg-white/[0.08]"
               >
+                <Sparkles className="h-3.5 w-3.5 text-[var(--sidebar-active)]/60 transition-transform duration-300 group-hover:scale-110 group-hover:text-[var(--sidebar-active)]" />
+                <span className="flex-1 text-right">Support</span>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--sidebar-active)]/20 transition-colors group-hover:bg-[var(--sidebar-active)]/30">
                   <Headset className="h-4 w-4 text-[var(--sidebar-active)]" />
                 </span>
-                <span className="flex-1">Support</span>
-                <Sparkles className="h-3.5 w-3.5 text-[var(--sidebar-active)]/60 transition-transform duration-300 group-hover:scale-110 group-hover:text-[var(--sidebar-active)]" />
               </Link>
             </div>
           </div>

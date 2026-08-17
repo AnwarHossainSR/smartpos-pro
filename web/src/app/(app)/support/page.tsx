@@ -66,10 +66,7 @@ export default function SupportPage() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)]/10">
           <Headset className="h-5 w-5 text-[var(--primary)]" />
         </div>
-        <div>
-          <h1 className="text-lg font-semibold">Support</h1>
-          <p className="text-sm text-[var(--muted)]">Get help with your SmartPOS Pro account</p>
-        </div>
+        <p className="text-sm text-[var(--muted)]">Get help with your SmartPOS Pro account</p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
