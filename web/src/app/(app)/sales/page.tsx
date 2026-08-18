@@ -204,7 +204,6 @@ export default function SalesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Sales</h1>
       </div>
 
       <div className="relative">

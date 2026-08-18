@@ -203,10 +203,10 @@ export default function SettingsPage() {
   if (isLoading) return <div className="py-12 text-center text-[var(--muted)]">{t("common.loading")}</div>;
 
   return (
-    <div className="max-w-5xl space-y-5">
+    <div className="space-y-5">
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+        <Card className="xl:col-span-3">
           <CardHeader><CardTitle>{t("settings.businessInfo")}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -298,8 +298,14 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <TwoFactorCard />
-      <SessionsCard />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
+        <div className="space-y-5 xl:col-span-3">
+          <SessionsCard />
+        </div>
+        <div className="space-y-5">
+          <TwoFactorCard />
+        </div>
+      </div>
     </div>
   );
 }

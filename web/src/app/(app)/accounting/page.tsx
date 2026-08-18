@@ -155,7 +155,6 @@ export default function AccountingPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Accounting</h1>
         {tab === "journals" && can("accounting.create") && (
           <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4" />Post journal</Button>
         )}

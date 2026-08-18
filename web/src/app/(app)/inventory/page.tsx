@@ -159,7 +159,6 @@ export default function InventoryPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Inventory</h1>
         <div className="flex gap-2">
           <Button
             variant={lowStock ? "primary" : "outline"}

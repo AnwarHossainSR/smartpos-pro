@@ -56,7 +56,6 @@ export default function AuditLogPage() {
   if (!allowed) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Audit Log</h1>
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
           You don&apos;t have permission to view the audit log.
         </div>
@@ -95,8 +94,6 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Audit Log</h1>
-
       <ListToolbar
         search={action}
         onSearchChange={(v) => { setAction(v); setPage(1); }}

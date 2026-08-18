@@ -107,7 +107,6 @@ function TaxReportBody() {
           <Link href="/reports" className="text-[var(--muted)] hover:text-[var(--fg)]">
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="text-xl font-semibold">Tax report</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <Label className="mb-0">From</Label>
