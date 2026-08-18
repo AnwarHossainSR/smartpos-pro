@@ -58,7 +58,13 @@
     "signOut": "تسجيل الخروج",
     "light": "فاتح",
     "dark": "داكن",
-    "system": "النظام"
+    "system": "النظام",
+    "clockIn": "تسجيل الدخول",
+    "clockOut": "تسجيل الخروج",
+    "clockInSuccess": "تم تسجيل الدخول",
+    "clockOutSuccess": "تم تسجيل الخروج",
+    "clockInError": "تعذّر تسجيل الدخول",
+    "clockOutError": "تعذّر تسجيل الخروج"
   },
   "auth": {
     "loginTitle": "مرحبًا بعودتك",
@@ -194,5 +200,31 @@
     "downloading": "جارٍ التنزيل…",
     "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
     "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
+  },
+  "team": {
+    "title": "الفريق",
+    "inviteUser": "دعوة مستخدم",
+    "members": "الأعضاء",
+    "shiftsTab": "الورديات",
+    "searchPlaceholder": "بحث…",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "roles": "الأدوار",
+    "status": "الحالة",
+    "empty": "لا يوجد أعضاء في الفريق بعد.",
+    "removeUser": "إزالة المستخدم",
+    "removeConfirm": "إزالة",
+    "remove": "إزالة"
+  },
+  "shifts": {
+    "employee": "الموظف",
+    "shifts": "الورديات",
+    "hours": "الساعات",
+    "overtime": "العمل الإضافي",
+    "date": "التاريخ",
+    "dailyBreakdown": "التفصيل اليومي",
+    "totalHours": "إجمالي الساعات",
+    "totalOvertime": "إجمالي العمل الإضافي",
+    "empty": "لا توجد بيانات ورديات لهذه الفترة."
   }
 }

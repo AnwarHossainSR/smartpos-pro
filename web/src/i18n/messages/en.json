@@ -60,7 +60,13 @@
     "signOut": "Sign out",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "clockIn": "Clock in",
+    "clockOut": "Clock out",
+    "clockInSuccess": "Clocked in",
+    "clockOutSuccess": "Clocked out",
+    "clockInError": "Could not clock in",
+    "clockOutError": "Could not clock out"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -199,5 +205,31 @@
     "downloading": "Downloading…",
     "downloadInvoiceFailed": "Could not download the invoice",
     "downloadSlipFailed": "Could not download the slip"
+  },
+  "team": {
+    "title": "Team",
+    "inviteUser": "Invite user",
+    "members": "Members",
+    "shiftsTab": "Shifts",
+    "searchPlaceholder": "Search…",
+    "name": "Name",
+    "email": "Email",
+    "roles": "Roles",
+    "status": "Status",
+    "empty": "No team members yet.",
+    "removeUser": "Remove user",
+    "removeConfirm": "Remove",
+    "remove": "Remove"
+  },
+  "shifts": {
+    "employee": "Employee",
+    "shifts": "Shifts",
+    "hours": "Hours",
+    "overtime": "Overtime",
+    "date": "Date",
+    "dailyBreakdown": "Daily breakdown",
+    "totalHours": "Total hours",
+    "totalOvertime": "Total overtime",
+    "empty": "No shift data for this period."
   }
 }

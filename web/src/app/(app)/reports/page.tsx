@@ -6,16 +6,19 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { Percent } from "lucide-react";
+import { Percent, Clock } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/stores/auth";
+import { queryKeys } from "@/lib/query-keys";
 
-type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues";
+type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues" | "shifts";
 
 const REPORTS: { id: ReportType; label: string }[] = [
   { id: "sales-summary", label: "Sales summary" },
@@ -27,6 +30,7 @@ const REPORTS: { id: ReportType; label: string }[] = [
 ];
 
 export default function ReportsPage() {
+  const { can } = useAuth();
   const [report, setReport] = useState<ReportType>("sales-summary");
   const [from, setFrom] = useState(() => {
     const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10);
@@ -36,8 +40,10 @@ export default function ReportsPage() {
   const params = `?from=${from}&to=${to}`;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["report", report, from, to],
-    queryFn: () => api<{ data: unknown }>(`/reports/${report}${params}`),
+    queryKey: report === "shifts" ? queryKeys.shifts.report({ from, to }) : ["report", report, from, to],
+    queryFn: () => report === "shifts"
+      ? api<{ data: unknown }>(`/reports/shifts${params}&group_by=day`)
+      : api<{ data: unknown }>(`/reports/${report}${params}`),
   });
 
   const r = data?.data as Record<string, unknown> | null;
@@ -69,6 +75,15 @@ export default function ReportsPage() {
             {rep.label}
           </Button>
         ))}
+        {can("reports.view") && (
+          <Button
+            size="sm"
+            variant={report === "shifts" ? "primary" : "outline"}
+            onClick={() => setReport("shifts")}
+          >
+            <Clock className="h-3.5 w-3.5" /> Shift hours
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -223,6 +238,59 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
               ))}
           </TableBody>
         </Table>
+      </div>
+    );
+  }
+
+  if (report === "shifts") {
+    const s = data as { rows?: { user_name: string; period: string; shifts: number; hours: number; overtime_hours: number; is_overtime: boolean }[]; by_user?: { user_name: string; hours: number; overtime_hours: number; is_overtime: boolean }[]; totals?: { shifts: number; hours: number; overtime_hours: number } };
+    return (
+      <div className="space-y-4">
+        {s.totals && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Total shifts</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{s.totals.shifts}</p></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Total hours</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{s.totals.hours.toFixed(1)}h</p></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Overtime hours</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-amber-600">{s.totals.overtime_hours.toFixed(1)}h</p></CardContent></Card>
+          </div>
+        )}
+        {s.by_user && s.by_user.length > 0 && (
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+            <Table>
+              <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead className="text-end">Hours</TableHead><TableHead className="text-end">Overtime</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {s.by_user.map((u, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-medium">{u.user_name}</TableCell>
+                    <TableCell className="text-end">{u.hours.toFixed(1)}h</TableCell>
+                    <TableCell className="text-end">{u.overtime_hours > 0 ? <Badge tone="warning">{u.overtime_hours.toFixed(1)}h</Badge> : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {s.rows && s.rows.length > 0 && (
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <h3 className="mb-2 text-sm font-medium">Daily breakdown</h3>
+            <div className="rounded-[var(--radius)] border border-[var(--border)]">
+              <Table>
+                <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Date</TableHead><TableHead className="text-end">Shifts</TableHead><TableHead className="text-end">Hours</TableHead><TableHead className="text-end">Overtime</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {s.rows.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.user_name}</TableCell>
+                      <TableCell className="text-sm">{r.period}</TableCell>
+                      <TableCell className="text-end">{r.shifts}</TableCell>
+                      <TableCell className="text-end">{r.hours.toFixed(1)}h</TableCell>
+                      <TableCell className="text-end">{r.is_overtime ? <Badge tone="warning">{r.overtime_hours.toFixed(1)}h</Badge> : "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+        {(!s.rows || s.rows.length === 0) && <div className="py-12 text-center text-[var(--muted)]">No shift data for this period.</div>}
       </div>
     );
   }

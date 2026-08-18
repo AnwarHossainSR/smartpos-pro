@@ -58,7 +58,13 @@
     "signOut": "サインアウト",
     "light": "ライト",
     "dark": "ダーク",
-    "system": "システム"
+    "system": "システム",
+    "clockIn": "出勤",
+    "clockOut": "退勤",
+    "clockInSuccess": "出勤しました",
+    "clockOutSuccess": "退勤しました",
+    "clockInError": "出勤できませんでした",
+    "clockOutError": "退勤できませんでした"
   },
   "auth": {
     "loginTitle": "おかえりなさい",
@@ -194,5 +200,31 @@
     "downloading": "ダウンロード中…",
     "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
     "downloadSlipFailed": "精算票をダウンロードできませんでした"
+  },
+  "team": {
+    "title": "チーム",
+    "inviteUser": "ユーザーを招待",
+    "members": "メンバー",
+    "shiftsTab": "シフト",
+    "searchPlaceholder": "検索…",
+    "name": "名前",
+    "email": "メール",
+    "roles": "役割",
+    "status": "ステータス",
+    "empty": "チームメンバーはまだいません。",
+    "removeUser": "ユーザーを削除",
+    "removeConfirm": "削除",
+    "remove": "削除"
+  },
+  "shifts": {
+    "employee": "従業員",
+    "shifts": "シフト",
+    "hours": "時間",
+    "overtime": "残業",
+    "date": "日付",
+    "dailyBreakdown": "日別内訳",
+    "totalHours": "合計時間",
+    "totalOvertime": "合計残業",
+    "empty": "この期間のシフトデータはありません。"
   }
 }

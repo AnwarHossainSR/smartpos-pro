@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
@@ -226,6 +227,13 @@ Route::prefix('v1')->group(function () {
         Route::post('users', [UserController::class, 'store'])->middleware('permission:users.create');
         Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+
+        // Shifts / time clock
+        Route::post('shifts/clock-in', [ShiftController::class, 'clockIn'])->middleware('permission:shifts.view');
+        Route::post('shifts/clock-out', [ShiftController::class, 'clockOut'])->middleware('permission:shifts.view');
+        Route::get('shifts/me', [ShiftController::class, 'me'])->middleware('permission:shifts.view');
+        Route::get('shifts', [ShiftController::class, 'index'])->middleware('permission:shifts.view');
+        Route::get('reports/shifts', [ShiftController::class, 'report'])->middleware(['permission:reports.view', 'throttle:reports']);
 
         // Team — roles & permissions
         Route::get('permissions', [RoleController::class, 'permissions'])->middleware('permission:roles.view');
