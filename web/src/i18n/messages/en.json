@@ -189,5 +189,12 @@
       "create": "Create product",
       "update": "Update product"
     }
+  },
+  "actions": {
+    "downloadInvoice": "Download invoice",
+    "downloadSlip": "Download slip",
+    "downloading": "Downloading…",
+    "downloadInvoiceFailed": "Could not download the invoice",
+    "downloadSlipFailed": "Could not download the slip"
   }
 }
