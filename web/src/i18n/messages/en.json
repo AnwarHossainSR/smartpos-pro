@@ -193,6 +193,10 @@
   "theme": {
     "syncFailed": "Couldn't save your theme to your account. It's still applied on this device."
   },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "Qty"
+  },
   "actions": {
     "downloadInvoice": "Download invoice",
     "downloadSlip": "Download slip",

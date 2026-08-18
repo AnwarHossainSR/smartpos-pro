@@ -188,6 +188,10 @@
   "theme": {
     "syncFailed": "আপনার থিম অ্যাকাউন্টে সংরক্ষণ করা যায়নি। এই ডিভাইসে এটি প্রয়োগ করা আছে।"
   },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "পরিমাণ"
+  },
   "actions": {
     "downloadInvoice": "ইনভয়েস ডাউনলোড করুন",
     "downloadSlip": "ক্যাশ স্লিপ ডাউনলোড করুন",

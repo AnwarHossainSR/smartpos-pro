@@ -188,6 +188,10 @@
   "theme": {
     "syncFailed": "تعذّر حفظ المظهر في حسابك. لا يزال مطبَّقًا على هذا الجهاز."
   },
+  "pos": {
+    "numpadConfirm": "موافق",
+    "quantity": "الكمية"
+  },
   "actions": {
     "downloadInvoice": "تنزيل الفاتورة",
     "downloadSlip": "تنزيل إيصال الصندوق",

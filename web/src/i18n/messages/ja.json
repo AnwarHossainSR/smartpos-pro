@@ -188,6 +188,10 @@
   "theme": {
     "syncFailed": "テーマをアカウントに保存できませんでした。この端末には適用されています。"
   },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "数量"
+  },
   "actions": {
     "downloadInvoice": "請求書をダウンロード",
     "downloadSlip": "精算票をダウンロード",
