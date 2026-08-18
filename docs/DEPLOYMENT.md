@@ -253,20 +253,42 @@ limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;
 
 ## 5 · Observability
 
-```bash
-# Laravel Telescope (dev/staging only — disable in production)
-php artisan telescope:install
+### 5.1 Health endpoint
 
-# Log aggregation: send Laravel logs to Papertrail / Logtail
+`GET /v1/health` returns database, Redis, and queue status. Requires authentication
+with `dashboard.view` permission. Use for uptime monitoring (Betterstack, UptimeRobot,
+etc.).
+
+### 5.2 Sentry
+
+**Backend (Laravel):**
+
+1. Install: `composer require sentry/sentry-laravel`
+2. Set the DSN in `.env`:
+   ```dotenv
+   SENTRY_LARAVEL_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+   SENTRY_ENVIRONMENT=production
+   SENTRY_TRACES_SAMPLE_RATE=0.2
+   ```
+3. Config lives in `config/sentry.php`. Errors in `local`/`testing` are dropped automatically.
+
+**Frontend (Next.js):**
+
+1. Install: `bun add @sentry/nextjs`
+2. Set the DSN in `.env.local`:
+   ```dotenv
+   NEXT_PUBLIC_SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+   NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+   ```
+3. Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`.
+4. A global `error.tsx` at `src/app/error.tsx` catches unhandled errors.
+
+### 5.3 Log aggregation
+
+```bash
+# Send Laravel logs to Papertrail / Logtail
 LOG_CHANNEL=stack
 LOG_STACK=daily,papertrail
-
-# Uptime monitoring: Betterstack / UptimeRobot on /api/v1/health
-```
-
-Add a health endpoint if not present:
-```php
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'time' => now()]));
 ```
 
 ---

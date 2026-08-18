@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
@@ -70,6 +71,8 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
         Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
         Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+
+        Route::get('health', HealthController::class)->middleware('permission:dashboard.view');
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
