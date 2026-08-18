@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock,
+  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock, Download, Loader2,
 } from "lucide-react";
 import { api, apiBlob, ApiError } from "@/lib/api";
-import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { cn, downloadBlob, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/stat-card";
 import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/provider";
+import { useAuth } from "@/stores/auth";
 
 interface Register {
   id: string;
@@ -44,6 +46,8 @@ interface Movement {
 
 export default function CashRegisterPage() {
   const qc = useQueryClient();
+  const t = useTranslation();
+  const { can } = useAuth();
   const [openingAmount, setOpeningAmount] = useState("0");
   const [closeAmount, setCloseAmount] = useState("0");
   const [movementAmount, setMovementAmount] = useState("");
@@ -67,6 +71,7 @@ export default function CashRegisterPage() {
   const session = sessionData?.data;
   const [lastClosed, setLastClosed] = useState<Session | null>(null);
   const [loadingSlip, setLoadingSlip] = useState(false);
+  const [downloadingSlip, setDownloadingSlip] = useState(false);
 
   const { data: detailData } = useQuery<{ data: Session & { transactions?: Movement[] } }>({
     queryKey: ["cash-session-detail", session?.id],
@@ -119,6 +124,21 @@ export default function CashRegisterPage() {
     }
   };
 
+  /** Filename mirrors the one the backend sets on `?download=1` — Content-Disposition is lost
+   *  once the response is read as a blob, so it has to be re-applied client-side. */
+  const downloadSlip = async () => {
+    if (!slipSessionId) return;
+    setDownloadingSlip(true);
+    try {
+      const blob = await apiBlob(`/cash-register-sessions/${slipSessionId}/slip?download=1`);
+      downloadBlob(blob, `cash-slip-${slipSessionId}.pdf`);
+    } catch {
+      toast(t("actions.downloadSlipFailed"), "error");
+    } finally {
+      setDownloadingSlip(false);
+    }
+  };
+
   const closeDiff = parseFloat(closeAmount || "0") - (session?.expected_cash ?? 0);
 
   if (!register) {
@@ -137,10 +157,18 @@ export default function CashRegisterPage() {
           <p className="text-sm text-[var(--muted)]">{register.name}</p>
         </div>
         <div className="flex items-center gap-2">
-          {slipSessionId && (
-            <Button variant="outline" size="sm" onClick={viewSlip} disabled={loadingSlip}>
-              <FileText className="h-3.5 w-3.5" /> {loadingSlip ? "Loading…" : "Print slip"}
-            </Button>
+          {slipSessionId && can("accounting.view") && (
+            <>
+              <Button variant="outline" size="sm" onClick={viewSlip} disabled={loadingSlip}>
+                <FileText className="h-3.5 w-3.5" /> {loadingSlip ? "Loading…" : "Print slip"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={downloadSlip} disabled={downloadingSlip}>
+                {downloadingSlip
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Download className="h-3.5 w-3.5" />}
+                {downloadingSlip ? t("actions.downloading") : t("actions.downloadSlip")}
+              </Button>
+            </>
           )}
           {session && <Badge tone={session.status === "open" ? "success" : "default"} className="px-3 py-1 text-sm">{session.status}</Badge>}
         </div>

@@ -184,5 +184,12 @@
       "create": "إنشاء منتج",
       "update": "تحديث المنتج"
     }
+  },
+  "actions": {
+    "downloadInvoice": "تنزيل الفاتورة",
+    "downloadSlip": "تنزيل إيصال الصندوق",
+    "downloading": "جارٍ التنزيل…",
+    "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
+    "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
   }
 }

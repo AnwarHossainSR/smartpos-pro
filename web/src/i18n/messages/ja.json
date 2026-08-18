@@ -184,5 +184,12 @@
       "create": "商品を作成",
       "update": "商品を更新"
     }
+  },
+  "actions": {
+    "downloadInvoice": "請求書をダウンロード",
+    "downloadSlip": "精算票をダウンロード",
+    "downloading": "ダウンロード中…",
+    "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
+    "downloadSlipFailed": "精算票をダウンロードできませんでした"
   }
 }
