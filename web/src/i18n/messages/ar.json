@@ -205,6 +205,21 @@
       "closeOrClear": "إغلاق النافذة / تفريغ السلة",
       "confirmPayment": "تأكيد الدفع",
       "toggleHelp": "إظهار/إخفاء المساعدة"
+    },
+    "park": "إيقاف مؤقت",
+    "parkSuccess": "تم إيقاف البيع مؤقتًا",
+    "checkout": "إتمام",
+    "heldOrders": {
+      "button": "ال_orders المعلقة ({count})",
+      "title": "ال_orders المعلقة",
+      "empty": "لا توجد orders معلقة",
+      "walkIn": "زائر",
+      "items": "عناصر",
+      "resume": "استئناف",
+      "discard": "إلغاء",
+      "discardTitle": "إلغاء order معلق؟",
+      "discardConfirm": "هل تريد إلغاء \"{reference}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "discardSuccess": "تم إلغاء ال_order"
     }
   }
 }

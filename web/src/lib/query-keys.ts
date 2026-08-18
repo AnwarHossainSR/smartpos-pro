@@ -29,6 +29,7 @@ export const queryKeys = {
   units: resource("units"),
   warehouses: resource("warehouses"),
   sales: resource("sales"),
+  heldSales: resource("held-sales"),
   purchases: resource("purchases"),
   customers: resource("customers"),
   suppliers: resource("suppliers"),

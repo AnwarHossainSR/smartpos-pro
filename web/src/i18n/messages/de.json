@@ -205,6 +205,21 @@
       "closeOrClear": "Modal schließen / Warenkorb leeren",
       "confirmPayment": "Zahlung bestätigen",
       "toggleHelp": "Diese Hilfe ein-/ausblenden"
+    },
+    "park": "PARKEN",
+    "parkSuccess": "Verkauf geparkt",
+    "checkout": "Kasse",
+    "heldOrders": {
+      "button": "Gehaltene Bestellungen ({count})",
+      "title": "Gehaltene Bestellungen",
+      "empty": "Keine gehaltenen Bestellungen",
+      "walkIn": "Stammkunde",
+      "items": "Artikel",
+      "resume": "Fortsetzen",
+      "discard": "Verwerfen",
+      "discardTitle": "Gehaltene Bestellung verwerfen?",
+      "discardConfirm": "\"{reference}\" verwerfen? Dies kann nicht rückgängig gemacht werden.",
+      "discardSuccess": "Bestellung verworfen"
     }
   }
 }
