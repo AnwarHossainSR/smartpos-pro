@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgGreen.bold.black\" --names \"api  ,queue,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun --cwd=web run dev\"",
-        "seed": "php artisan migrate:fresh && php artisan db:seed --class=PlanOnlySeeder"
+        "seed": "php artisan migrate:fresh && php artisan db:seed --class=DemoSeeder"
     },
     "devDependencies": {
         "concurrently": "^9.0.1"
