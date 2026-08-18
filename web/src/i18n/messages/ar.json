@@ -225,5 +225,30 @@
       "discardConfirm": "هل تريد إلغاء \"{reference}\"؟ لا يمكن التراجع عن هذا الإجراء.",
       "discardSuccess": "تم إلغاء ال_order"
     }
+  },
+  "dashboard": {
+    "todaySales": "مبيعات اليوم",
+    "transactions": "المعاملات",
+    "customerDues": "ديون العملاء",
+    "lowStockItems": "المنتجات منخفضة المخزون",
+    "weekComparison": "مقارنة الأسابيع",
+    "salesTrend": "اتجاه المبيعات (آخر 14 يوم)",
+    "noSalesData": "لا توجد بيانات مبيعات بعد",
+    "topProducts": "المنتجات الأكثر مبيعًا",
+    "noTopProducts": "لا توجد منتجات الأكثر مبيعًا بعد",
+    "recentTransactions": "المعاملات الأخيرة",
+    "noRecentSales": "لا توجد مبيعات أخيرة",
+    "walkIn": "عميل عابر",
+    "lowStockAlert": "تنبيه منخفض المخزون",
+    "quickActions": "إجراءات سريعة",
+    "newSale": "بيع جديد",
+    "addProduct": "إضافة منتج",
+    "openRegister": "فتح الصندوق",
+    "recordExpense": "تسجيل مصروف",
+    "status": {
+      "paid": "مدفوع",
+      "unpaid": "غير مدفوع",
+      "partial": "جزئي"
+    }
   }
 }
