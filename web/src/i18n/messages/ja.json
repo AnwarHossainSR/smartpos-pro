@@ -249,6 +249,40 @@
       "paid": "支払済",
       "unpaid": "未払い",
       "partial": "一部払い"
+  "onboarding": {
+    "title": "さあ、始めましょう",
+    "subtitle": "数ステップでストアをセットアップ",
+    "stepOf": "ステップ {current} / {total}",
+    "skipSetup": "セットアップをスキップ",
+    "skipStep": "ステップをスキップ",
+    "skipConfirmTitle": "セットアップをスキップしますか？",
+    "skipConfirmBody": "後で設定からセットアップを完了できます。進捗は保存されます。",
+    "skipConfirmYes": "はい、今すぐスキップ",
+    "steps": {
+      "business_profile": {
+        "title": "事業者プロフィール",
+        "description": "事業名と詳細はすでに設定済みです。設定からいつでも変更できます。",
+        "action": "問題なし、次へ",
+        "configure": "設定を開く"
+      },
+      "first_product": {
+        "title": "最初の商品",
+        "description": "最初の商品を追加して、すぐに販売を開始しましょう。",
+        "action": "商品を追加しました",
+        "configure": "商品ページへ"
+      },
+      "tax_setup": {
+        "title": "税金設定",
+        "description": "お住まいの地域に合った税プロファイルを選択するか、税金を外部で管理する場合はスキップしてください。",
+        "action": "税金設定完了",
+        "configure": "税設定を開く"
+      },
+      "register_sale": {
+        "title": "レジを開く",
+        "description": "レジを開き、最初の販売を行ってセットアップを完了しましょう。",
+        "action": "完了、販売開始！",
+        "configure": "POSへ"
+      }
     }
   }
 }

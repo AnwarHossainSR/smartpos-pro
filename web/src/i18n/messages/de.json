@@ -249,6 +249,40 @@
       "paid": "Bezahlt",
       "unpaid": "Unbezahlt",
       "partial": "Teilweise"
+  "onboarding": {
+    "title": "Legen wir los",
+    "subtitle": "Richten Sie Ihren Laden in ein paar schnellen Schritten ein",
+    "stepOf": "Schritt {current} von {total}",
+    "skipSetup": "Einrichtung überspringen",
+    "skipStep": "Schritt überspringen",
+    "skipConfirmTitle": "Einrichtung überspringen?",
+    "skipConfirmBody": "Sie können die Einrichtung später jederzeit in den Einstellungen abschließen. Ihr Fortschritt wird gespeichert.",
+    "skipConfirmYes": "Ja, jetzt überspringen",
+    "steps": {
+      "business_profile": {
+        "title": "Geschäftsprofil",
+        "description": "Ihr Firmenname und Ihre Details sind bereits eingetragen. Sie können sie jederzeit in den Einstellungen ändern.",
+        "action": "Sieht gut aus, weiter",
+        "configure": "Einstellungen öffnen"
+      },
+      "first_product": {
+        "title": "Erstes Produkt",
+        "description": "Fügen Sie Ihr erstes Produkt hinzu, um sofort mit dem Verkauf beginnen zu können.",
+        "action": "Produkt hinzugefügt",
+        "configure": "Zu den Produkten"
+      },
+      "tax_setup": {
+        "title": "Steuerprofil",
+        "description": "Wählen Sie ein Steuerprofil für Ihre Region aus, oder überspringen Sie diesen Schritt, wenn Sie Steuern extern verwalten.",
+        "action": "Steuern sind konfiguriert",
+        "configure": "Steuer-Einstellungen öffnen"
+      },
+      "register_sale": {
+        "title": "Kasse öffnen",
+        "description": "Öffnen Sie Ihre Kasse und tätigen Sie Ihren ersten Verkauf, um die Einrichtung abzuschließen.",
+        "action": "Fertig, los geht's!",
+        "configure": "Zur POS"
+      }
     }
   }
 }
