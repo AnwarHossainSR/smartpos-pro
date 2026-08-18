@@ -199,5 +199,22 @@
     "downloading": "Downloading…",
     "downloadInvoiceFailed": "Could not download the invoice",
     "downloadSlipFailed": "Could not download the slip"
+  },
+  "pos": {
+    "park": "Park",
+    "parkSuccess": "Sale parked",
+    "checkout": "Checkout",
+    "heldOrders": {
+      "button": "Held orders ({count})",
+      "title": "Held Orders",
+      "empty": "No held orders",
+      "walkIn": "Walk-in",
+      "items": "items",
+      "resume": "Resume",
+      "discard": "Discard",
+      "discardTitle": "Discard held order?",
+      "discardConfirm": "Discard \"{reference}\"? This cannot be undone.",
+      "discardSuccess": "Order discarded"
+    }
   }
 }

@@ -194,5 +194,22 @@
     "downloading": "Wird heruntergeladen…",
     "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
     "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
+  },
+  "pos": {
+    "park": "PARKEN",
+    "parkSuccess": "Verkauf geparkt",
+    "checkout": "Kasse",
+    "heldOrders": {
+      "button": "Gehaltene Bestellungen ({count})",
+      "title": "Gehaltene Bestellungen",
+      "empty": "Keine gehaltenen Bestellungen",
+      "walkIn": "Stammkunde",
+      "items": "Artikel",
+      "resume": "Fortsetzen",
+      "discard": "Verwerfen",
+      "discardTitle": "Gehaltene Bestellung verwerfen?",
+      "discardConfirm": "\"{reference}\" verwerfen? Dies kann nicht rückgängig gemacht werden.",
+      "discardSuccess": "Bestellung verworfen"
+    }
   }
 }

@@ -194,5 +194,22 @@
     "downloading": "ডাউনলোড হচ্ছে…",
     "downloadInvoiceFailed": "ইনভয়েস ডাউনলোড করা যায়নি",
     "downloadSlipFailed": "ক্যাশ স্লিপ ডাউনলোড করা যায়নি"
+  },
+  "pos": {
+    "park": "পার্ক",
+    "parkSuccess": "বিক্রয় পার্ক হয়েছে",
+    "checkout": "চেকআউট",
+    "heldOrders": {
+      "button": "স্থগিত অর্ডার ({count})",
+      "title": "স্থগিত অর্ডার",
+      "empty": "কোনো স্থগিত অর্ডার নেই",
+      "walkIn": "ওয়াক-ইন",
+      "items": "আইটেম",
+      "resume": "পুনরায় শুরু",
+      "discard": "বাতিল",
+      "discardTitle": "স্থগিত অর্ডার বাতিল করবেন?",
+      "discardConfirm": "\"{reference}\" বাতিল করবেন? এটি ফিরিয়ে আনা যাবে না।",
+      "discardSuccess": "অর্ডার বাতিল হয়েছে"
+    }
   }
 }

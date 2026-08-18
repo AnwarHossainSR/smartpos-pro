@@ -194,5 +194,22 @@
     "downloading": "ダウンロード中…",
     "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
     "downloadSlipFailed": "精算票をダウンロードできませんでした"
+  },
+  "pos": {
+    "park": "一時保存",
+    "parkSuccess": "販売を一時保存しました",
+    "checkout": "レジに進む",
+    "heldOrders": {
+      "button": "保留中の注文 ({count})",
+      "title": "保留中の注文",
+      "empty": "保留中の注文はありません",
+      "walkIn": "ウォークイン",
+      "items": "件",
+      "resume": "再開",
+      "discard": "破棄",
+      "discardTitle": "保留中の注文を破棄しますか?",
+      "discardConfirm": "「{reference}」を破棄しますか?この操作は取り消せません。",
+      "discardSuccess": "注文を破棄しました"
+    }
   }
 }
