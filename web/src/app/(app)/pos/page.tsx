@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
