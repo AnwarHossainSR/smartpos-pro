@@ -33,7 +33,8 @@
     "subscription": "الاشتراك",
     "notifications": "الإشعارات",
     "settings": "الإعدادات",
-    "auditLog": "سجل التدقيق"
+    "auditLog": "سجل التدقيق",
+    "testData": "بيانات الاختبار"
   },
   "sidebar": {
     "collapse": "طي الشريط الجانبي",
