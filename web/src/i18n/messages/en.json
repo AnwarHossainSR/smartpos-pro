@@ -289,5 +289,47 @@
         "configure": "Go to POS"
       }
     }
+  "reports": {
+    "taxReport": "Tax report",
+    "from": "From",
+    "to": "To",
+    "branch": "Branch",
+    "allBranches": "All branches",
+    "downloadPdf": "Download PDF",
+    "noData": "No data for this period.",
+    "transactions": "Transactions",
+    "netSales": "Net sales",
+    "tax": "Tax",
+    "averageBasket": "Average basket",
+    "paymentMethods": "Payment methods",
+    "method": "Method",
+    "count": "Count",
+    "amount": "Amount",
+    "taxBreakdown": "Tax breakdown",
+    "component": "Component",
+    "rate": "Rate",
+    "base": "Base",
+    "cashReconciliation": "Cash reconciliation",
+    "noRegisterSession": "No register session for this day.",
+    "openingCash": "Opening cash",
+    "expectedCash": "Expected cash",
+    "actualCash": "Actual cash",
+    "difference": "Difference",
+    "register": "Register",
+    "cashier": "Cashier",
+    "status": "Status",
+    "discounts": "Discounts",
+    "lineDiscounts": "Line discounts",
+    "saleDiscounts": "Sale discounts",
+    "couponDiscounts": "Coupon discounts",
+    "totalDiscounts": "Total discounts",
+    "corrections": "Corrections",
+    "voidedSales": "Voided sales",
+    "returns": "Returns",
+    "firstInvoice": "First invoice",
+    "lastInvoice": "Last invoice"
+  },
+  "cashRegister": {
+    "printZReport": "Print Z-report"
   }
 }

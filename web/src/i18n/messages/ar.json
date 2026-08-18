@@ -284,5 +284,47 @@
         "configure": "الذهاب لنقطة البيع"
       }
     }
+  "reports": {
+    "taxReport": "تقرير الضريبة",
+    "from": "من",
+    "to": "إلى",
+    "branch": "الفرع",
+    "allBranches": "جميع الفروع",
+    "downloadPdf": "تنزيل PDF",
+    "noData": "لا توجد بيانات لهذه الفترة.",
+    "transactions": "المعاملات",
+    "netSales": "صافي المبيعات",
+    "tax": "الضريبة",
+    "averageBasket": "متوسط السلة",
+    "paymentMethods": "طرق الدفع",
+    "method": "الطريقة",
+    "count": "العدد",
+    "amount": "المبلغ",
+    "taxBreakdown": "تفصيل الضريبة",
+    "component": "المكوّن",
+    "rate": "النسبة",
+    "base": "الأساس",
+    "cashReconciliation": "تسوية الصندوق",
+    "noRegisterSession": "لا توجد جلسة صندوق لهذا اليوم.",
+    "openingCash": "الصندوق الافتتاحي",
+    "expectedCash": "الصندوق المتوقع",
+    "actualCash": "الصندوق الفعلي",
+    "difference": "الفرق",
+    "register": "الصندوق",
+    "cashier": "أمين الصندوق",
+    "status": "الحالة",
+    "discounts": "الخصومات",
+    "lineDiscounts": "خصومات البنود",
+    "saleDiscounts": "خصومات المبيعات",
+    "couponDiscounts": "خصومات القسائم",
+    "totalDiscounts": "إجمالي الخصومات",
+    "corrections": "التصحيحات",
+    "voidedSales": "المبيعات الملغاة",
+    "returns": "المرتجعات",
+    "firstInvoice": "أول فاتورة",
+    "lastInvoice": "آخر فاتورة"
+  },
+  "cashRegister": {
+    "printZReport": "طباعة تقرير Z"
   }
 }

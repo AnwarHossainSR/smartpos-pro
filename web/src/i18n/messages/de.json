@@ -284,5 +284,47 @@
         "configure": "Zur POS"
       }
     }
+  "reports": {
+    "taxReport": "Steuerbericht",
+    "from": "Von",
+    "to": "Bis",
+    "branch": "Filiale",
+    "allBranches": "Alle Filialen",
+    "downloadPdf": "PDF herunterladen",
+    "noData": "Keine Daten für diesen Zeitraum.",
+    "transactions": "Transaktionen",
+    "netSales": "Nettoumsatz",
+    "tax": "Steuer",
+    "averageBasket": "Durchschn. Warenkorb",
+    "paymentMethods": "Zahlungsmethoden",
+    "method": "Methode",
+    "count": "Anzahl",
+    "amount": "Betrag",
+    "taxBreakdown": "Steuerübersicht",
+    "component": "Komponente",
+    "rate": "Satz",
+    "base": "Basis",
+    "cashReconciliation": "Bargeldabstimmung",
+    "noRegisterSession": "Keine Kassensitzung an diesem Tag.",
+    "openingCash": "Anfangsbargeld",
+    "expectedCash": "Erwartetes Bargeld",
+    "actualCash": "Tatsächliches Bargeld",
+    "difference": "Differenz",
+    "register": "Kasse",
+    "cashier": "Kassierer",
+    "status": "Status",
+    "discounts": "Rabatte",
+    "lineDiscounts": "Positionsrabatte",
+    "saleDiscounts": "Verkaufsrabatte",
+    "couponDiscounts": "Gutscheinrabatte",
+    "totalDiscounts": "Gesamtrabatte",
+    "corrections": "Korrekturen",
+    "voidedSales": "Stornierte Verkäufe",
+    "returns": "Rückgaben",
+    "firstInvoice": "Erste Rechnung",
+    "lastInvoice": "Letzte Rechnung"
+  },
+  "cashRegister": {
+    "printZReport": "Z-Bericht drucken"
   }
 }

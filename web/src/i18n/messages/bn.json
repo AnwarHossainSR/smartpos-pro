@@ -284,5 +284,47 @@
         "configure": "POS এ যান"
       }
     }
+  "reports": {
+    "taxReport": "ট্যাক্স রিপোর্ট",
+    "from": "থেকে",
+    "to": "পর্যন্ত",
+    "branch": "শাখা",
+    "allBranches": "সব শাখা",
+    "downloadPdf": "PDF ডাউনলোড",
+    "noData": "এই সময়ের জন্য কোনো তথ্য নেই।",
+    "transactions": "লেনদেন",
+    "netSales": "নিট বিক্রয়",
+    "tax": "ট্যাক্স",
+    "averageBasket": "গড় বাস্কেট",
+    "paymentMethods": "পেমেন্ট পদ্ধতি",
+    "method": "পদ্ধতি",
+    "count": "গণনা",
+    "amount": "পরিমাণ",
+    "taxBreakdown": "ট্যাক্স বিশ্লেষণ",
+    "component": "উপাদান",
+    "rate": "হার",
+    "base": "ভিত্তি",
+    "cashReconciliation": "ক্যাশ সমন্বয়",
+    "noRegisterSession": "এই দিনে কোনো রেজিস্টার সেশন নেই।",
+    "openingCash": "শুরুর ক্যাশ",
+    "expectedCash": "প্রত্যাশিত ক্যাশ",
+    "actualCash": "প্রকৃত ক্যাশ",
+    "difference": "পার্থক্য",
+    "register": "রেজিস্টার",
+    "cashier": "ক্যাশিয়ার",
+    "status": "স্ট্যাটাস",
+    "discounts": "ছাড়",
+    "lineDiscounts": "লাইন ছাড়",
+    "saleDiscounts": "বিক্রয় ছাড়",
+    "couponDiscounts": "কুপন ছাড়",
+    "totalDiscounts": "মোট ছাড়",
+    "corrections": "সংশোধন",
+    "voidedSales": "বাতিলকৃত বিক্রয়",
+    "returns": "ফেরত",
+    "firstInvoice": "প্রথম ইনভয়েস",
+    "lastInvoice": "শেষ ইনভয়েস"
+  },
+  "cashRegister": {
+    "printZReport": "Z-রিপোর্ট প্রিন্ট করুন"
   }
 }

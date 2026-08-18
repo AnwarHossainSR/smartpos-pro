@@ -284,5 +284,47 @@
         "configure": "POSへ"
       }
     }
+  "reports": {
+    "taxReport": "税金レポート",
+    "from": "開始日",
+    "to": "終了日",
+    "branch": "支店",
+    "allBranches": "全支店",
+    "downloadPdf": "PDF ダウンロード",
+    "noData": "この期間のデータはありません。",
+    "transactions": "取引数",
+    "netSales": "純売上高",
+    "tax": "税金",
+    "averageBasket": "平均バスケット",
+    "paymentMethods": "支払い方法",
+    "method": "方法",
+    "count": "件数",
+    "amount": "金額",
+    "taxBreakdown": "税金内訳",
+    "component": "コンポーネント",
+    "rate": "税率",
+    "base": "課税標準",
+    "cashReconciliation": "現金照合",
+    "noRegisterSession": "この日のレジセッションはありません。",
+    "openingCash": "開店現金",
+    "expectedCash": "予想現金",
+    "actualCash": "実績現金",
+    "difference": "差額",
+    "register": "レジ",
+    "cashier": "レジ担当",
+    "status": "ステータス",
+    "discounts": "割引",
+    "lineDiscounts": "行割引",
+    "saleDiscounts": "販売割引",
+    "couponDiscounts": "クーポン割引",
+    "totalDiscounts": "合計割引",
+    "corrections": "修正",
+    "voidedSales": "取消販売",
+    "returns": "返品",
+    "firstInvoice": "最初の請求書",
+    "lastInvoice": "最後の請求書"
+  },
+  "cashRegister": {
+    "printZReport": "Zレポートを印刷"
   }
 }

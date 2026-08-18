@@ -170,6 +170,8 @@ Route::prefix('v1')->group(function () {
             Route::get('inventory-valuation', [ReportController::class, 'inventoryValuation']);
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
+            Route::get('z-report', [ReportController::class, 'zReport']);
+            Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
         });
 
         // Reports — tax (output vs input tax, VAT/GST return shape)
