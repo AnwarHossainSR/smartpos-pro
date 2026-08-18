@@ -89,6 +89,13 @@ php artisan db:seed --class=PlanSeeder   # insert subscription plans
 
 # Optional demo data (dev/staging only):
 # php artisan db:seed
+
+# One-off, after upgrading to per-tenant gapless invoice numbering: stamps a number
+# on every completed sale that predates it and parks each tenant's counter above
+# whatever its sales already carry. Existing numbers are never overwritten, and the
+# command is safe to re-run. Preview with --dry-run, or scope with --tenant=<id>.
+php artisan sales:backfill-invoice-numbers --dry-run
+php artisan sales:backfill-invoice-numbers
 ```
 
 ### 2.4 Storage & cache

@@ -12,7 +12,7 @@ class Tenant extends Model
 {
     use HasUuids, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'plan', 'status', 'trial_ends_at', 'feature_limits'];
+    protected $fillable = ['name', 'slug', 'plan', 'status', 'trial_ends_at', 'feature_limits', 'invoice_sequence'];
 
     protected function casts(): array
     {
@@ -20,6 +20,7 @@ class Tenant extends Model
             'status' => TenantStatus::class,
             'trial_ends_at' => 'datetime',
             'feature_limits' => 'array',
+            'invoice_sequence' => 'integer',
         ];
     }
 

@@ -27,7 +27,8 @@ interface SaleItem {
 
 interface Sale {
   id: string;
-  invoice_number: string;
+  // Null until the sale is completed — a held/draft cart carries no invoice number.
+  invoice_number: string | null;
   status: string;
   payment_status: string;
   total: number;
@@ -86,7 +87,7 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
   };
 
   return (
-    <Dialog open title={`Invoice #${sale.invoice_number}`} onClose={onClose}>
+    <Dialog open title={sale.invoice_number ? `Invoice #${sale.invoice_number}` : "Sale (not yet invoiced)"} onClose={onClose}>
       <div className="space-y-4 text-sm">
         <div className="grid grid-cols-2 gap-2">
           <div><span className="text-[var(--muted)]">Status</span><br /><Badge tone={statusColor[sale.status] ?? "default"}>{sale.status}</Badge></div>
@@ -179,7 +180,7 @@ function ReturnModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const hasItems = Object.values(quantities).some((q) => q > 0);
 
   return (
-    <Dialog open title={`Return – #${sale.invoice_number}`} onClose={onClose}>
+    <Dialog open title={`Return – #${sale.invoice_number ?? sale.id}`} onClose={onClose}>
       <div className="space-y-4 text-sm">
         <p className="text-[var(--muted)]">Enter quantities to return. Leave blank to skip item.</p>
         <div className="space-y-2">
@@ -288,7 +289,7 @@ export default function SalesPage() {
             ) : (
               data?.data?.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-mono text-xs font-medium">{s.invoice_number}</TableCell>
+                  <TableCell className="font-mono text-xs font-medium">{s.invoice_number ?? <span className="text-[var(--muted)]">—</span>}</TableCell>
                   <TableCell>{s.customer?.name ?? <span className="text-[var(--muted)]">Walk-in</span>}</TableCell>
                   <TableCell className="text-[var(--muted)]">{formatDate(s.sold_at)}</TableCell>
                   <TableCell className="text-end font-medium">{formatCurrency(s.total)}</TableCell>
