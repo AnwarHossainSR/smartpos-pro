@@ -241,8 +241,17 @@ available as a pre-checkout preview only.
   ]
 }
 ```
-`201` → the created sale (`invoice_number`, totals, `coupon_code`, `coupon_discount`, items,
-payments, `payment_status`).
+**Invoice numbering.** A completed sale is stamped with a per-tenant **gapless** number
+formatted `{prefix}{sequence}` (e.g. `INV-1`, `INV-2`). The counter lives on the tenant row,
+is read and incremented under a row lock **inside the checkout transaction**, and is
+therefore never advanced by a checkout that rolls back. `prefix` comes from
+`settings.invoice_prefix` on the business (default `INV-`). A sale created with
+`status` `held`, `draft` or `quotation` gets **`invoice_number: null`** — a parked cart
+never burns a number; it is stamped when the cart is resumed. Numbering is per tenant, so
+each tenant's first invoice is `1`.
+
+`201` → the created sale (`invoice_number` — `null` unless the sale was completed, totals,
+`coupon_code`, `coupon_discount`, items, payments, `payment_status`).
 `403` when `unit_price`/`discount_amount` is overridden without the required permission.
 `422` with a `discount_amount` validation error when the sale-level discount exceeds the
 subtotal, a `coupon_code` error when the coupon is invalid/expired/exhausted, or with an
@@ -277,7 +286,9 @@ Requires `pos.create`. Idempotency-Key aware. Finalises a **held or draft** cart
 stock it deliberately deferred and records any tender taken now, then completes the sale.
 Pricing and tax are **not** recomputed — both were already snapshotted when the cart was
 held, so a price or rate change while a cart sat held cannot change what the customer was
-quoted. Body: `{ "payments": [{ "method": "cash", "amount": 100 }] }` (optional — a sale can
+quoted. The sale's `invoice_number` is issued **here**, at completion, through the same
+per-tenant gapless counter a straight checkout uses. Body:
+`{ "payments": [{ "method": "cash", "amount": 100 }] }` (optional — a sale can
 be resumed with no payment, leaving it fully due). `422` if the sale isn't held/draft.
 
 ### `POST /sales/{sale}/void`
@@ -471,6 +482,10 @@ logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values
 | --- | --- |
 | `GET /settings/business` · `PUT /settings/business` | `settings.view` / `settings.update` |
 | `POST /settings/onboarding/complete` | `settings.update` |
+
+`settings.invoice_prefix` (free-form string, default `INV-`) prefixes every invoice number
+this business issues — see `POST /sales`. Changing it does not renumber past sales and does
+not reset the counter.
 
 ## Loyalty points
 

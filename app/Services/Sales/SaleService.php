@@ -46,6 +46,7 @@ class SaleService
         protected SaleLineBuilder $lineBuilder,
         protected CouponRedeemer $coupons,
         protected TaxResolver $taxes,
+        protected InvoiceNumberService $invoiceNumbers,
     ) {}
 
     public function create(CreateSaleData $data, User $cashier): Sale
@@ -70,6 +71,14 @@ class SaleService
             $change = max(0, round($paid - $total, 2));
             $due = max(0, round($total - $paid, 2));
 
+            // A number is issued only to a sale that is actually being completed, and
+            // only from inside this transaction — a held/draft cart gets none until it
+            // is resumed, and a checkout that rolls back hands its number straight back.
+            $business = $cashier->business ?? Business::find($cashier->business_id);
+            $invoiceNumber = $data->status === SaleStatus::Completed
+                ? $this->invoiceNumbers->next($cashier->tenant_id, $business)
+                : null;
+
             $sale = Sale::create([
                 'business_id' => $cashier->business_id,
                 'branch_id' => $data->branchId,
@@ -77,7 +86,7 @@ class SaleService
                 'customer_id' => $data->customerId,
                 'user_id' => $cashier->id,
                 'coupon_id' => $redemption?->coupon->id,
-                'invoice_number' => 'PENDING-'.uniqid(),
+                'invoice_number' => $invoiceNumber,
                 'status' => $data->status,
                 'payment_status' => PaymentStatus::fromAmounts($paid, $total),
                 'subtotal' => $subtotal,
@@ -92,11 +101,6 @@ class SaleService
                 'note' => $data->note,
                 'sold_at' => Carbon::now(),
             ]);
-
-            // Deterministic, human-readable invoice number derived from the row id.
-            // Uses the tail, not the head: UUIDv7's leading bytes are a timestamp,
-            // so rows created in the same millisecond would collide on a head slice.
-            $sale->update(['invoice_number' => 'INV-'.strtoupper(substr($sale->id, -8))]);
 
             $this->recordLines($sale, $basket->lines, $data, $cashier, $affectsStock);
             $this->recordPayments($sale, $data);
@@ -225,7 +229,16 @@ class SaleService
             $change = max(0, round($paid - $total, 2));
             $due = max(0, round($total - $paid, 2));
 
+            // Same numbering path as a straight checkout: the number is issued now,
+            // at completion, not when the cart was parked. An already-numbered sale
+            // (a re-run of a resume that partially applied) keeps the number it has.
+            $invoiceNumber = $sale->invoice_number ?: $this->invoiceNumbers->next(
+                $sale->tenant_id,
+                $cashier->business ?? Business::find($sale->business_id),
+            );
+
             $sale->update([
+                'invoice_number' => $invoiceNumber,
                 'status' => SaleStatus::Completed,
                 'payment_status' => PaymentStatus::fromAmounts($paid, $total),
                 'paid_amount' => min($paid, $total),
