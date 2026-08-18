@@ -872,6 +872,14 @@ anonymize action (double-confirm) on customer detail.
 **Parallelizable:** ✅ Yes
 **Effort:** L (large)
 
+**Status:** ✅ Done (`feature/G21`). `webhooks` + `webhook_deliveries` tables with
+`BelongsToTenant`; `WebhookService` dispatches HMAC-signed jobs on a `webhooks` queue;
+`WebhookServiceProvider` listens to `SaleCompleted`, `SaleReturned`, `InventoryLow` events
+and `Customer::created` model event; `WebhookController` CRUD + delivery log + retry;
+`WebhookTest` (12 tests) covers creation, dispatch, HMAC, permissions, retry. Frontend:
+Settings → Webhooks card + create drawer + delivery log viewer with payload expansion and
+retry; i18n in en/de/bn/ar/ja.
+
 ---
 
 ### G28 · Per-User Theme Sync

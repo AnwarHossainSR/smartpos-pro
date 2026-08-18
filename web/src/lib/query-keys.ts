@@ -57,4 +57,6 @@ export const queryKeys = {
     list: (params?: ListParams) => ["shifts", "list", params ?? {}] as const,
     report: (params?: ListParams) => ["shifts", "report", params ?? {}] as const,
   },
+  webhooks: resource("webhooks"),
+  webhookDeliveries: resource("webhook-deliveries"),
 } as const;

@@ -17,7 +17,7 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Laptop, Percent, Smartphone } from "lucide-react";
+import { ChevronRight, Laptop, Percent, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -266,6 +266,21 @@ export default function SettingsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">Tax</p>
                   <p className="text-xs text-[var(--muted)]">Rates, groups, jurisdictions & price display</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-0">
+              <Link
+                href="/settings/webhooks"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Webhook className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{t("webhooks.title")}</p>
+                  <p className="text-xs text-[var(--muted)]">{t("webhooks.settingsHint")}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
               </Link>

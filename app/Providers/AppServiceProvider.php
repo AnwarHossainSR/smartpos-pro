@@ -21,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // One tenant context per request lifecycle.
         $this->app->singleton(TenantContext::class);
+
+        $this->app->register(WebhookServiceProvider::class);
     }
 
     /**
