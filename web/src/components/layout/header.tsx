@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Clock, LogIn, LogOut as LogOutIcon } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
 import { useClickOutside } from "@/lib/hooks";
@@ -13,18 +13,35 @@ import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
 import { useTranslation } from "@/i18n/provider";
+import { toast } from "@/components/ui/toast";
 import type { NotificationResponse } from "@/lib/notifications";
+import { queryKeys } from "@/lib/query-keys";
 
 const themeIcons: Record<Theme, React.ElementType> = { light: Sun, dark: Moon, system: Monitor };
+
+interface CurrentShift {
+  id: string;
+  status: string;
+  clock_in: string;
+  elapsed_minutes: number;
+  branch_name?: string;
+}
 
 interface HeaderProps {
   title: string;
   onMenuClick: () => void;
 }
 
+function formatElapsed(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}h ${m.toString().padStart(2, "0")}m`;
+}
+
 export function Header({ title, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const t = useTranslation();
+  const qc = useQueryClient();
   const logout = useAuth((s) => s.logout);
   const { theme, setTheme, palette } = useThemeStore();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -32,6 +49,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const [swatchMenuOpen, setSwatchMenuOpen] = useState(false);
   const themeRef = useRef<HTMLDivElement>(null);
   const swatchRef = useRef<HTMLDivElement>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const { data: notifData } = useQuery<NotificationResponse>({
     queryKey: ["notifications"],
@@ -39,6 +57,35 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     staleTime: 60_000,
   });
   const unreadCount = notifData?.unread_count ?? 0;
+
+  const { data: shiftData } = useQuery<{ data: CurrentShift | null }>({
+    queryKey: queryKeys.shifts.me,
+    queryFn: () => api<{ data: CurrentShift | null }>("/shifts/me"),
+    staleTime: 30_000,
+  });
+  const currentShift = shiftData?.data;
+
+  useEffect(() => {
+    if (!currentShift || currentShift.status !== "open") return;
+    const base = currentShift.elapsed_minutes;
+    const start = Date.now();
+    const tick = () => setElapsed(base + Math.floor((Date.now() - start) / 60000));
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, [currentShift]);
+
+  const clockInMutation = useMutation({
+    mutationFn: () => api("/shifts/clock-in", { method: "POST", body: {} }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockInSuccess")); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : t("header.clockInError"), "error"),
+  });
+
+  const clockOutMutation = useMutation({
+    mutationFn: () => api("/shifts/clock-out", { method: "POST", body: {} }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockOutSuccess")); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : t("header.clockOutError"), "error"),
+  });
 
   // ⌘K / Ctrl+K
   useEffect(() => {
@@ -62,6 +109,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   }
 
   const ThemeIcon = themeIcons[theme];
+  const isClockedIn = currentShift?.status === "open";
 
   return (
     <>
@@ -74,6 +122,35 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Clock in/out pill */}
+          <button
+            onClick={() => isClockedIn ? clockOutMutation.mutate() : clockInMutation.mutate()}
+            disabled={clockInMutation.isPending || clockOutMutation.isPending}
+            className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              isClockedIn
+                ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
+                : "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+            }`}
+            title={isClockedIn ? t("header.clockOut") : t("header.clockIn")}
+          >
+            {isClockedIn ? (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                </span>
+                <Clock className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{formatElapsed(elapsed)}</span>
+                <LogOutIcon className="h-3.5 w-3.5 sm:hidden" />
+              </>
+            ) : (
+              <>
+                <LogIn className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("header.clockIn")}</span>
+              </>
+            )}
+          </button>
+
           {/* Search / command palette */}
           <button
             onClick={() => setPaletteOpen(true)}

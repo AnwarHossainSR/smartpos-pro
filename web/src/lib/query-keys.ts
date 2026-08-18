@@ -50,4 +50,11 @@ export const queryKeys = {
   },
 
   businessSettings: ["business-settings"] as const,
+
+  shifts: {
+    all: ["shifts"] as const,
+    me: ["shifts", "me"] as const,
+    list: (params?: ListParams) => ["shifts", "list", params ?? {}] as const,
+    report: (params?: ListParams) => ["shifts", "report", params ?? {}] as const,
+  },
 } as const;

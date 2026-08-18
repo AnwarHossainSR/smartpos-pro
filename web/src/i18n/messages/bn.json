@@ -58,7 +58,13 @@
     "signOut": "সাইন আউট",
     "light": "হালকা",
     "dark": "গাঢ়",
-    "system": "সিস্টেম"
+    "system": "সিস্টেম",
+    "clockIn": "ক্লক ইন",
+    "clockOut": "ক্লক আউট",
+    "clockInSuccess": "ক্লক ইন হয়েছে",
+    "clockOutSuccess": "ক্লক আউট হয়েছে",
+    "clockInError": "ক্লক ইন করা যায়নি",
+    "clockOutError": "ক্লক আউট করা যায়নি"
   },
   "auth": {
     "loginTitle": "আবার স্বাগতম",
@@ -326,5 +332,30 @@
   },
   "cashRegister": {
     "printZReport": "Z-রিপোর্ট প্রিন্ট করুন"
+  "team": {
+    "title": "দল",
+    "inviteUser": "ব্যবহারকারী আমন্ত্রণ জানান",
+    "members": "সদস্য",
+    "shiftsTab": "শিফট",
+    "searchPlaceholder": "অনুসন্ধান…",
+    "name": "নাম",
+    "email": "ইমেইল",
+    "roles": "ভূমিকা",
+    "status": "অবস্থা",
+    "empty": "এখনো কোনো দলের সদস্য নেই।",
+    "removeUser": "ব্যবহারকারী সরান",
+    "removeConfirm": "সরান",
+    "remove": "সরান"
+  },
+  "shifts": {
+    "employee": "কর্মচারী",
+    "shifts": "শিফট",
+    "hours": "ঘণ্টা",
+    "overtime": "অতিরিক্ত সময়",
+    "date": "তারিখ",
+    "dailyBreakdown": "দৈনিক বিবরণ",
+    "totalHours": "মোট ঘণ্টা",
+    "totalOvertime": "মোট অতিরিক্ত সময়",
+    "empty": "এই সময়ের জন্য কোনো শিফট তথ্য নেই।"
   }
 }

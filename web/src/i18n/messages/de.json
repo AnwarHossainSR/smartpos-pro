@@ -58,7 +58,13 @@
     "signOut": "Abmelden",
     "light": "Hell",
     "dark": "Dunkel",
-    "system": "System"
+    "system": "System",
+    "clockIn": "Einstempeln",
+    "clockOut": "Ausstempeln",
+    "clockInSuccess": "Eingestempelt",
+    "clockOutSuccess": "Ausgestempelt",
+    "clockInError": "Einstempeln fehlgeschlagen",
+    "clockOutError": "Ausstempeln fehlgeschlagen"
   },
   "auth": {
     "loginTitle": "Willkommen zurück",
@@ -326,5 +332,30 @@
   },
   "cashRegister": {
     "printZReport": "Z-Bericht drucken"
+  "team": {
+    "title": "Team",
+    "inviteUser": "Benutzer einladen",
+    "members": "Mitglieder",
+    "shiftsTab": "Schichten",
+    "searchPlaceholder": "Suchen…",
+    "name": "Name",
+    "email": "E-Mail",
+    "roles": "Rollen",
+    "status": "Status",
+    "empty": "Noch keine Teammitglieder.",
+    "removeUser": "Benutzer entfernen",
+    "removeConfirm": "Entfernen",
+    "remove": "Entfernen"
+  },
+  "shifts": {
+    "employee": "Mitarbeiter",
+    "shifts": "Schichten",
+    "hours": "Stunden",
+    "overtime": "Überstunden",
+    "date": "Datum",
+    "dailyBreakdown": "Tägliche Aufschlüsselung",
+    "totalHours": "Gesamtstunden",
+    "totalOvertime": "Gesamtüberstunden",
+    "empty": "Keine Schichtdaten für diesen Zeitraum."
   }
 }
