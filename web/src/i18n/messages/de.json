@@ -196,16 +196,7 @@
   },
   "pos": {
     "numpadConfirm": "OK",
-    "quantity": "Menge"
-  },
-  "actions": {
-    "downloadInvoice": "Rechnung herunterladen",
-    "downloadSlip": "Kassenbon herunterladen",
-    "downloading": "Wird heruntergeladen…",
-    "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
-    "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
-  },
-  "pos": {
+    "quantity": "Menge",
     "shortcuts": {
       "title": "Tastenkürzel",
       "focusSearch": "Suche / Scan fokussieren",
@@ -255,6 +246,8 @@
       "paid": "Bezahlt",
       "unpaid": "Unbezahlt",
       "partial": "Teilweise"
+    }
+  },
   "onboarding": {
     "title": "Legen wir los",
     "subtitle": "Richten Sie Ihren Laden in ein paar schnellen Schritten ein",
@@ -290,6 +283,7 @@
         "configure": "Zur POS"
       }
     }
+  },
   "reports": {
     "taxReport": "Steuerbericht",
     "from": "Von",
@@ -332,6 +326,7 @@
   },
   "cashRegister": {
     "printZReport": "Z-Bericht drucken"
+  },
   "team": {
     "title": "Team",
     "inviteUser": "Benutzer einladen",
@@ -357,6 +352,7 @@
     "totalHours": "Gesamtstunden",
     "totalOvertime": "Gesamtüberstunden",
     "empty": "Keine Schichtdaten für diesen Zeitraum."
+  },
   "webhooks": {
     "title": "Webhooks",
     "settingsHint": "Echtzeitereignisse an externe Dienste senden",
@@ -398,5 +394,12 @@
       "url": "Endpoint-URL",
       "events": "Ereignisse"
     }
+  },
+  "actions": {
+    "downloadInvoice": "Rechnung herunterladen",
+    "downloadSlip": "Kassenbon herunterladen",
+    "downloading": "Wird heruntergeladen…",
+    "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
+    "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
   }
 }

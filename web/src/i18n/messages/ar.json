@@ -196,16 +196,7 @@
   },
   "pos": {
     "numpadConfirm": "موافق",
-    "quantity": "الكمية"
-  },
-  "actions": {
-    "downloadInvoice": "تنزيل الفاتورة",
-    "downloadSlip": "تنزيل إيصال الصندوق",
-    "downloading": "جارٍ التنزيل…",
-    "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
-    "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
-  },
-  "pos": {
+    "quantity": "الكمية",
     "shortcuts": {
       "title": "اختصارات لوحة المفاتيح",
       "focusSearch": "التركيز على البحث / المسح",
@@ -255,6 +246,8 @@
       "paid": "مدفوع",
       "unpaid": "غير مدفوع",
       "partial": "جزئي"
+    }
+  },
   "onboarding": {
     "title": "هيا نبدأ",
     "subtitle": "قم بإعداد متجرك في بضع خطوات سريعة",
@@ -290,6 +283,7 @@
         "configure": "الذهاب لنقطة البيع"
       }
     }
+  },
   "reports": {
     "taxReport": "تقرير الضريبة",
     "from": "من",
@@ -332,6 +326,7 @@
   },
   "cashRegister": {
     "printZReport": "طباعة تقرير Z"
+  },
   "team": {
     "title": "الفريق",
     "inviteUser": "دعوة مستخدم",
@@ -357,6 +352,7 @@
     "totalHours": "إجمالي الساعات",
     "totalOvertime": "إجمالي العمل الإضافي",
     "empty": "لا توجد بيانات ورديات لهذه الفترة."
+  },
   "webhooks": {
     "title": "ويب هوك",
     "settingsHint": "إرسال أحداث الوقت الحقيقي إلى الخدمات الخارجية",
@@ -398,5 +394,12 @@
       "url": "رابط النقطة النهائية",
       "events": "الأحداث"
     }
+  },
+  "actions": {
+    "downloadInvoice": "تنزيل الفاتورة",
+    "downloadSlip": "تنزيل إيصال الصندوق",
+    "downloading": "جارٍ التنزيل…",
+    "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
+    "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
   }
 }

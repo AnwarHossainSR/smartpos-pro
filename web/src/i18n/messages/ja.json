@@ -196,16 +196,7 @@
   },
   "pos": {
     "numpadConfirm": "OK",
-    "quantity": "数量"
-  },
-  "actions": {
-    "downloadInvoice": "請求書をダウンロード",
-    "downloadSlip": "精算票をダウンロード",
-    "downloading": "ダウンロード中…",
-    "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
-    "downloadSlipFailed": "精算票をダウンロードできませんでした"
-  },
-  "pos": {
+    "quantity": "数量",
     "shortcuts": {
       "title": "キーボードショートカット",
       "focusSearch": "検索 / スキャンにフォーカス",
@@ -255,6 +246,8 @@
       "paid": "支払済",
       "unpaid": "未払い",
       "partial": "一部払い"
+    }
+  },
   "onboarding": {
     "title": "さあ、始めましょう",
     "subtitle": "数ステップでストアをセットアップ",
@@ -290,6 +283,7 @@
         "configure": "POSへ"
       }
     }
+  },
   "reports": {
     "taxReport": "税金レポート",
     "from": "開始日",
@@ -332,6 +326,7 @@
   },
   "cashRegister": {
     "printZReport": "Zレポートを印刷"
+  },
   "team": {
     "title": "チーム",
     "inviteUser": "ユーザーを招待",
@@ -357,6 +352,7 @@
     "totalHours": "合計時間",
     "totalOvertime": "合計残業",
     "empty": "この期間のシフトデータはありません。"
+  },
   "webhooks": {
     "title": "Webhook",
     "settingsHint": "外部サービスにリアルタイムイベントを送信",
@@ -398,5 +394,12 @@
       "url": "エンドポイントURL",
       "events": "イベント"
     }
+  },
+  "actions": {
+    "downloadInvoice": "請求書をダウンロード",
+    "downloadSlip": "精算票をダウンロード",
+    "downloading": "ダウンロード中…",
+    "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
+    "downloadSlipFailed": "精算票をダウンロードできませんでした"
   }
 }

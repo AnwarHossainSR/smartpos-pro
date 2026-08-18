@@ -201,16 +201,7 @@
   },
   "pos": {
     "numpadConfirm": "OK",
-    "quantity": "Qty"
-  },
-  "actions": {
-    "downloadInvoice": "Download invoice",
-    "downloadSlip": "Download slip",
-    "downloading": "Downloading…",
-    "downloadInvoiceFailed": "Could not download the invoice",
-    "downloadSlipFailed": "Could not download the slip"
-  },
-  "pos": {
+    "quantity": "Qty",
     "shortcuts": {
       "title": "Keyboard Shortcuts",
       "focusSearch": "Focus search / scan",
@@ -260,6 +251,8 @@
       "paid": "Paid",
       "unpaid": "Unpaid",
       "partial": "Partial"
+    }
+  },
   "onboarding": {
     "title": "Let's get started",
     "subtitle": "Set up your store in a few quick steps",
@@ -295,6 +288,7 @@
         "configure": "Go to POS"
       }
     }
+  },
   "reports": {
     "taxReport": "Tax report",
     "from": "From",
@@ -337,6 +331,7 @@
   },
   "cashRegister": {
     "printZReport": "Print Z-report"
+  },
   "team": {
     "title": "Team",
     "inviteUser": "Invite user",
@@ -362,6 +357,7 @@
     "totalHours": "Total hours",
     "totalOvertime": "Total overtime",
     "empty": "No shift data for this period."
+  },
   "webhooks": {
     "title": "Webhooks",
     "settingsHint": "Send real-time events to external services",
@@ -403,5 +399,12 @@
       "url": "Endpoint URL",
       "events": "Events"
     }
+  },
+  "actions": {
+    "downloadInvoice": "Download invoice",
+    "downloadSlip": "Download slip",
+    "downloading": "Downloading…",
+    "downloadInvoiceFailed": "Could not download the invoice",
+    "downloadSlipFailed": "Could not download the slip"
   }
 }

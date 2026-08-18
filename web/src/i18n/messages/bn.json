@@ -196,16 +196,7 @@
   },
   "pos": {
     "numpadConfirm": "OK",
-    "quantity": "পরিমাণ"
-  },
-  "actions": {
-    "downloadInvoice": "ইনভয়েস ডাউনলোড করুন",
-    "downloadSlip": "ক্যাশ স্লিপ ডাউনলোড করুন",
-    "downloading": "ডাউনলোড হচ্ছে…",
-    "downloadInvoiceFailed": "ইনভয়েস ডাউনলোড করা যায়নি",
-    "downloadSlipFailed": "ক্যাশ স্লিপ ডাউনলোড করা যায়নি"
-  },
-  "pos": {
+    "quantity": "পরিমাণ",
     "shortcuts": {
       "title": "কীবোর্ড শর্টকাট",
       "focusSearch": "অনুসন্ধান / স্ক্যান ফোকাস",
@@ -255,6 +246,8 @@
       "paid": "পরিশোধিত",
       "unpaid": "অপরিশোধিত",
       "partial": "আংশিক"
+    }
+  },
   "onboarding": {
     "title": "চলুন শুরু করি",
     "subtitle": "কয়েকটি সহজ ধাপে আপনার দোকান সেট আপ করুন",
@@ -290,6 +283,7 @@
         "configure": "POS এ যান"
       }
     }
+  },
   "reports": {
     "taxReport": "ট্যাক্স রিপোর্ট",
     "from": "থেকে",
@@ -332,6 +326,7 @@
   },
   "cashRegister": {
     "printZReport": "Z-রিপোর্ট প্রিন্ট করুন"
+  },
   "team": {
     "title": "দল",
     "inviteUser": "ব্যবহারকারী আমন্ত্রণ জানান",
@@ -357,6 +352,7 @@
     "totalHours": "মোট ঘণ্টা",
     "totalOvertime": "মোট অতিরিক্ত সময়",
     "empty": "এই সময়ের জন্য কোনো শিফট তথ্য নেই।"
+  },
   "webhooks": {
     "title": "ওয়েবহুক",
     "settingsHint": "বহিঃস্থ পরিষেবাগুলিতে রিয়েল-টাইম ইভেন্ট পাঠান",
@@ -398,5 +394,12 @@
       "url": "এন্ডপয়েন্ট URL",
       "events": "ইভেন্ট"
     }
+  },
+  "actions": {
+    "downloadInvoice": "ইনভয়েস ডাউনলোড করুন",
+    "downloadSlip": "ক্যাশ স্লিপ ডাউনলোড করুন",
+    "downloading": "ডাউনলোড হচ্ছে…",
+    "downloadInvoiceFailed": "ইনভয়েস ডাউনলোড করা যায়নি",
+    "downloadSlipFailed": "ক্যাশ স্লিপ ডাউনলোড করা যায়নি"
   }
 }
