@@ -105,7 +105,9 @@
     "resetPasswordMissingLink": "Dieser Link zum Zurücksetzen fehlt oder ist ungültig. Fordern Sie einen neuen an.",
     "verifyBannerText": "Bitte bestätigen Sie Ihre E-Mail-Adresse.",
     "resendVerification": "E-Mail erneut senden",
-    "verificationSent": "Bestätigungs-E-Mail gesendet."
+    "verificationSent": "Bestätigungs-E-Mail gesendet.",
+    "verifyEmail": "E-Mail verifizieren",
+    "verificationSuccess": "E-Mail erfolgreich verifiziert"
   },
   "settings": {
     "title": "Einstellungen",

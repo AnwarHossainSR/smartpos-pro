@@ -105,7 +105,9 @@
     "resetPasswordMissingLink": "رابط إعادة التعيين هذا مفقود أو غير صالح. اطلب رابطًا جديدًا.",
     "verifyBannerText": "يرجى تأكيد بريدك الإلكتروني.",
     "resendVerification": "إعادة إرسال البريد",
-    "verificationSent": "تم إرسال بريد التأكيد."
+    "verificationSent": "تم إرسال بريد التأكيد.",
+    "verifyEmail": "تحقق من البريد",
+    "verificationSuccess": "تم التحقق من البريد بنجاح"
   },
   "settings": {
     "title": "الإعدادات",

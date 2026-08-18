@@ -105,7 +105,9 @@
     "resetPasswordMissingLink": "এই রিসেট লিংকটি অনুপস্থিত বা অবৈধ। একটি নতুন লিংক অনুরোধ করুন।",
     "verifyBannerText": "অনুগ্রহ করে আপনার ইমেইল ঠিকানা যাচাই করুন।",
     "resendVerification": "ইমেইল আবার পাঠান",
-    "verificationSent": "যাচাইকরণ ইমেইল পাঠানো হয়েছে।"
+    "verificationSent": "যাচাইকরণ ইমেইল পাঠানো হয়েছে।",
+    "verifyEmail": "ইমেইল যাচাই করুন",
+    "verificationSuccess": "ইমেইল সফলভাবে যাচাই করা হয়েছে"
   },
   "settings": {
     "title": "সেটিংস",

@@ -105,7 +105,9 @@
     "resetPasswordMissingLink": "このリセットリンクが見つからないか無効です。新しいリンクをリクエストしてください。",
     "verifyBannerText": "メールアドレスを確認してください。",
     "resendVerification": "メールを再送信",
-    "verificationSent": "確認メールを送信しました。"
+    "verificationSent": "確認メールを送信しました。",
+    "verifyEmail": "メールを確認",
+    "verificationSuccess": "メールの確認に成功しました"
   },
   "settings": {
     "title": "設定",
