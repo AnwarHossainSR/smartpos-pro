@@ -871,6 +871,14 @@ response + `PATCH /v1/auth/preferences`
 **Frontend:** theme store hydrates from `me` after login; changes PATCH back (debounced);
 localStorage stays as offline fallback
 
+**Status:** ✅ Implemented — `users.theme` JSON column, `theme` on the user Resource,
+`PATCH /v1/auth/preferences` (no `permission:` guard: self-scoped to `$request->user()`),
+values validated against `App\Support\Theme\ThemeCatalog`. Frontend: `useThemeStore`
+gained `applyServerTheme`/`markPushed`, `ThemeSync` hydrates from the `me` payload and
+PATCHes back on an 800 ms debounce; localStorage remains the pre-auth/offline fallback read
+by the pre-paint script in `app/layout.tsx`. Tests: `tests/Feature/Api/ThemePreferenceTest.php`
++ `web/src/stores/__tests__/theme.test.ts`.
+
 **Dependencies:** None (independent)
 **Parallelizable:** ✅ Yes
 **Effort:** S (small)
@@ -1000,4 +1008,4 @@ localStorage stays as offline fallback
 | 7 | G33 Critical test suite | E2E + concurrency | — | ⬜ | [#75](https://github.com/AnwarHossainSR/smartpos-pro/issues/75) |
 | 7 | G34 Observability | Sentry + health | error boundary | ⬜ | [#76](https://github.com/AnwarHossainSR/smartpos-pro/issues/76) |
 | 7 | G21 Webhooks (T110) | webhook service + CRUD | settings card | ⬜ | [#77](https://github.com/AnwarHossainSR/smartpos-pro/issues/77) |
-| 7 | G28 Per-user theme sync | theme column + API | theme store | ⬜ | [#78](https://github.com/AnwarHossainSR/smartpos-pro/issues/78) |
+| 7 | G28 Per-user theme sync | theme column + API | theme store | ✅ | [#78](https://github.com/AnwarHossainSR/smartpos-pro/issues/78) |

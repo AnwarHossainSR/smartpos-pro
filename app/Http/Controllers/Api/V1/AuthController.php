@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\TwoFactorChallengeRequest;
+use App\Http\Requests\Auth\UpdatePreferencesRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Tenant;
 use App\Models\User;
@@ -293,6 +294,25 @@ class AuthController extends Controller
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user()->load('roles', 'business', 'branch'));
+    }
+
+    /**
+     * Per-user UI preferences (currently just the theme). Scoped to the caller by
+     * construction: it reads and writes `$request->user()` and takes no user id, so nobody
+     * can reach another user's row through it. Deliberately carries **no** `permission:`
+     * guard — every slug in PermissionCatalog gates a tenant-admin capability, and requiring
+     * one here would stop a cashier picking a colour scheme on their own screen.
+     *
+     * Saved quietly: a cosmetic preference written on a debounce from the client would
+     * otherwise flood the audit trail that exists for money/access-sensitive changes.
+     */
+    public function updatePreferences(UpdatePreferencesRequest $request): UserResource
+    {
+        $user = $request->user();
+
+        $user->fill(['theme' => $request->validated('theme')])->saveQuietly();
+
+        return new UserResource($user->load('roles', 'business', 'branch'));
     }
 
     public function logout(Request $request): JsonResponse

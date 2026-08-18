@@ -32,7 +32,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected $fillable = [
         'business_id', 'branch_id', 'name', 'email', 'phone',
         'password', 'avatar_path', 'status', 'last_login_at',
-        'email_verification_code', 'email_verification_expires_at',
+        'email_verification_code', 'email_verification_expires_at', 'theme',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
@@ -53,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'two_factor_confirmed_at' => 'datetime',
             'email_verification_expires_at' => 'datetime',
             'locked_until' => 'datetime',
+            'theme' => 'array',
         ];
     }
 
