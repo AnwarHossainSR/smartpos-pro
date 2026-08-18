@@ -194,5 +194,17 @@
     "downloading": "جارٍ التنزيل…",
     "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
     "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
+  },
+  "pos": {
+    "shortcuts": {
+      "title": "اختصارات لوحة المفاتيح",
+      "focusSearch": "التركيز على البحث / المسح",
+      "holdSale": "تعليق البيع",
+      "openPayment": "فتح الدفع",
+      "voidLastLine": "إلغاء السطر الأخير",
+      "closeOrClear": "إغلاق النافذة / تفريغ السلة",
+      "confirmPayment": "تأكيد الدفع",
+      "toggleHelp": "إظهار/إخفاء المساعدة"
+    }
   }
 }

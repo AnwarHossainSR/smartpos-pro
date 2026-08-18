@@ -194,5 +194,17 @@
     "downloading": "ডাউনলোড হচ্ছে…",
     "downloadInvoiceFailed": "ইনভয়েস ডাউনলোড করা যায়নি",
     "downloadSlipFailed": "ক্যাশ স্লিপ ডাউনলোড করা যায়নি"
+  },
+  "pos": {
+    "shortcuts": {
+      "title": "কীবোর্ড শর্টকাট",
+      "focusSearch": "অনুসন্ধান / স্ক্যান ফোকাস",
+      "holdSale": "বিক্রি পার্ক করুন",
+      "openPayment": "পেমেন্ট খুলুন",
+      "voidLastLine": "শেষ লাইন মুছুন",
+      "closeOrClear": "মডাল বন্ধ / কার্ট পরিষ্কার",
+      "confirmPayment": "পেমেন্ট নিশ্চিত করুন",
+      "toggleHelp": "এই সাহায্য টগল করুন"
+    }
   }
 }

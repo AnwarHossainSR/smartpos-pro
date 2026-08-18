@@ -199,5 +199,17 @@
     "downloading": "Downloading…",
     "downloadInvoiceFailed": "Could not download the invoice",
     "downloadSlipFailed": "Could not download the slip"
+  },
+  "pos": {
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "focusSearch": "Focus search / scan",
+      "holdSale": "Hold / park sale",
+      "openPayment": "Open payment",
+      "voidLastLine": "Void last line",
+      "closeOrClear": "Close modal / Clear cart",
+      "confirmPayment": "Confirm payment",
+      "toggleHelp": "Toggle this help"
+    }
   }
 }

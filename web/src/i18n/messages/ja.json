@@ -194,5 +194,17 @@
     "downloading": "ダウンロード中…",
     "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
     "downloadSlipFailed": "精算票をダウンロードできませんでした"
+  },
+  "pos": {
+    "shortcuts": {
+      "title": "キーボードショートカット",
+      "focusSearch": "検索 / スキャンにフォーカス",
+      "holdSale": "販売を保留",
+      "openPayment": "支払いを開く",
+      "voidLastLine": "最終行を削除",
+      "closeOrClear": "モーダルを閉じる / カートを空にする",
+      "confirmPayment": "支払いを確認",
+      "toggleHelp": "このヘルプを切り替え"
+    }
   }
 }

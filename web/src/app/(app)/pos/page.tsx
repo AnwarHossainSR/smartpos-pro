@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Plus, Minus, X, User, FileText } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
@@ -16,6 +16,8 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
 import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
+import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
+import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
 
 /* ---- types ---- */
 interface Product {
@@ -314,6 +316,7 @@ export default function POSPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
@@ -378,33 +381,49 @@ export default function POSPage() {
     }
   }, [addToCart]);
 
-  // Keyboard-first operation: F2 refocuses the scanner/search input from anywhere on the
-  // screen, F9 jumps straight to payment, and any bare alphanumeric keystroke while nothing
-  // else is focused is treated as scanner input and routed into the search box — a barcode
-  // scanner is just a very fast keyboard, so if focus drifted (e.g. right after adding an
-  // item) its keystrokes shouldn't be silently dropped.
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "F2") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-      if (e.key === "F9") {
-        e.preventDefault();
-        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
-        return;
-      }
+  const voidLastLine = useCallback(() => {
+    setCart((prev) => {
+      if (prev.length === 0) return prev;
+      return prev.slice(0, -1);
+    });
+  }, []);
 
-      const active = document.activeElement;
-      const isTypingElsewhere = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
-      if (!isTypingElsewhere && !showPayment && !receipt && /^[a-zA-Z0-9]$/.test(e.key)) {
-        searchInputRef.current?.focus();
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cart.length, showPayment, receipt]);
+  const holdSale = useCallback(() => {
+    toast("Hold sale coming soon (G6)");
+  }, []);
+
+  const clearCart = useCallback(() => {
+    if (cart.length === 0) return;
+    setCart([]);
+    setCustomerId(null);
+    setCustomerSearch("");
+    toast("Cart cleared");
+  }, [cart.length]);
+
+  const handlers = useMemo(() => ({
+    focusSearch: () => searchInputRef.current?.focus(),
+    holdSale,
+    openPayment: () => {
+      if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+    },
+    voidLastLine,
+    closeModal: () => {
+      if (showPayment) setShowPayment(false);
+      if (receipt) setReceipt(null);
+    },
+    clearCart,
+    confirmPayment: () => {},
+    toggleHelp: () => setShowHelp((v) => !v),
+  }), [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart]);
+
+  const shortcutState = useMemo(() => ({
+    cartEmpty: cart.length === 0,
+    showPayment,
+    showReceipt: !!receipt,
+    showHelp,
+  }), [cart.length, showPayment, receipt, showHelp]);
+
+  usePosShortcuts(handlers, shortcutState);
 
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
@@ -689,6 +708,8 @@ export default function POSPage() {
           onClose={() => setReceipt(null)}
         />
       )}
+
+      <ShortcutsOverlay open={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }

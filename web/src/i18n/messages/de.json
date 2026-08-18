@@ -194,5 +194,17 @@
     "downloading": "Wird heruntergeladen…",
     "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
     "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
+  },
+  "pos": {
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "focusSearch": "Suche / Scan fokussieren",
+      "holdSale": "Verkauf parken",
+      "openPayment": "Zahlung öffnen",
+      "voidLastLine": "Letzte Zeile löschen",
+      "closeOrClear": "Modal schließen / Warenkorb leeren",
+      "confirmPayment": "Zahlung bestätigen",
+      "toggleHelp": "Diese Hilfe ein-/ausblenden"
+    }
   }
 }
