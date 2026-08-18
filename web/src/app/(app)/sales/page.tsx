@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Eye, RotateCcw, FileText } from "lucide-react";
+import { Search, Eye, RotateCcw, FileText, Download, Loader2 } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
-import { formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { downloadBlob, formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/provider";
 import { useAuth } from "@/stores/auth";
 
 interface SaleItem {
@@ -40,9 +41,32 @@ interface Sale {
   payments?: { method: string; amount: number }[];
 }
 
+/** Fetches the invoice PDF with `?download=1` and saves it to disk. `downloadingId` tracks a
+ *  single row at a time so each button gets its own spinner without a per-row state map. */
+function useInvoiceDownload() {
+  const t = useTranslation();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const downloadInvoice = async (sale: Pick<Sale, "id" | "invoice_number">) => {
+    setDownloadingId(sale.id);
+    try {
+      const blob = await apiBlob(`/sales/${sale.id}/invoice?download=1`);
+      downloadBlob(blob, `${sale.invoice_number}.pdf`);
+    } catch {
+      toast(t("actions.downloadInvoiceFailed"), "error");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  return { downloadingId, downloadInvoice };
+}
+
 function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () => void; onReturn: () => void }) {
   const { can } = useAuth();
+  const t = useTranslation();
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const { downloadingId, downloadInvoice } = useInvoiceDownload();
 
   const viewInvoice = async () => {
     setLoadingInvoice(true);
@@ -96,13 +120,28 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1">Close</Button>
-          <Button variant="outline" onClick={viewInvoice} disabled={loadingInvoice} className="flex-1">
-            <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
-          </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={onClose} className="flex-1 basis-28">Close</Button>
+          {can("sales.view") && (
+            <>
+              <Button variant="outline" onClick={viewInvoice} disabled={loadingInvoice} className="flex-1 basis-28">
+                <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadInvoice(sale)}
+                disabled={downloadingId === sale.id}
+                className="flex-1 basis-28"
+              >
+                {downloadingId === sale.id
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Download className="h-4 w-4" />}
+                {downloadingId === sale.id ? t("actions.downloading") : t("actions.downloadInvoice")}
+              </Button>
+            </>
+          )}
           {can("sales.refund") && sale.status === "completed" && (
-            <Button variant="danger" onClick={onReturn} className="flex-1">
+            <Button variant="danger" onClick={onReturn} className="flex-1 basis-28">
               <RotateCcw className="h-4 w-4" /> Return
             </Button>
           )}
@@ -176,6 +215,8 @@ function ReturnModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
 
 export default function SalesPage() {
   const { can } = useAuth();
+  const t = useTranslation();
+  const { downloadingId, downloadInvoice } = useInvoiceDownload();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<Sale | null>(null);
@@ -227,7 +268,7 @@ export default function SalesPage() {
               <TableHead className="text-end">Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Payment</TableHead>
-              <TableHead className="w-20" />
+              <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -256,9 +297,24 @@ export default function SalesPage() {
                   <TableCell><Badge tone={payColor[s.payment_status] ?? "default"}>{s.payment_status}</Badge></TableCell>
                   <TableCell>
                     {can("sales.view") && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(s)}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(s)}>
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title={t("actions.downloadInvoice")}
+                          aria-label={t("actions.downloadInvoice")}
+                          disabled={downloadingId === s.id}
+                          onClick={() => downloadInvoice(s)}
+                        >
+                          {downloadingId === s.id
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <FileText className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

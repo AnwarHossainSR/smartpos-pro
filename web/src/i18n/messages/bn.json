@@ -184,5 +184,12 @@
       "create": "পণ্য তৈরি করুন",
       "update": "পণ্য আপডেট করুন"
     }
+  },
+  "actions": {
+    "downloadInvoice": "ইনভয়েস ডাউনলোড করুন",
+    "downloadSlip": "ক্যাশ স্লিপ ডাউনলোড করুন",
+    "downloading": "ডাউনলোড হচ্ছে…",
+    "downloadInvoiceFailed": "ইনভয়েস ডাউনলোড করা যায়নি",
+    "downloadSlipFailed": "ক্যাশ স্লিপ ডাউনলোড করা যায়নি"
   }
 }
