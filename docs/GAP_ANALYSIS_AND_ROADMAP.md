@@ -405,6 +405,15 @@ entry written when toggled.
 **Done when:** invoice numbers are gapless per tenant under concurrency; backfill verified
 on seeded data.
 
+**Status:** ✅ Done (`feature/G18`). `tenants.invoice_sequence` + nullable
+`sales.invoice_number`; `App\Services\Sales\InvoiceNumberService` takes the row lock and
+issues `{prefix}{seq}` inside the checkout transaction; checkout, held-sale resume and
+quotation→sale conversion all go through it; `php artisan sales:backfill-invoice-numbers`
+fills historical rows without touching existing numbers. Covered by
+`tests/Feature/Api/InvoiceNumberingTest.php` (10 tests). The "two *parallel* transactions"
+criterion is asserted deterministically rather than with real concurrency — the suite runs
+on in-memory SQLite, which has neither a second connection nor `SELECT … FOR UPDATE`.
+
 ---
 
 ### G22 · Financial Statements: P&L + Balance Sheet (= T109, needs G17)
