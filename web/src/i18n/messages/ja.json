@@ -185,6 +185,9 @@
       "update": "商品を更新"
     }
   },
+  "theme": {
+    "syncFailed": "テーマをアカウントに保存できませんでした。この端末には適用されています。"
+  },
   "actions": {
     "downloadInvoice": "請求書をダウンロード",
     "downloadSlip": "精算票をダウンロード",

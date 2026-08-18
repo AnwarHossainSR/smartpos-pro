@@ -185,6 +185,9 @@
       "update": "Produkt aktualisieren"
     }
   },
+  "theme": {
+    "syncFailed": "Dein Design konnte nicht in deinem Konto gespeichert werden. Auf diesem Gerät bleibt es aktiv."
+  },
   "actions": {
     "downloadInvoice": "Rechnung herunterladen",
     "downloadSlip": "Kassenbon herunterladen",

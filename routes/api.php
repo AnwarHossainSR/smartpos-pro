@@ -55,6 +55,9 @@ Route::prefix('v1')->group(function () {
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
+        // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
+        // caller's own row, so an admin permission would be wrong here (see the controller).
+        Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:login');
         Route::get('auth/sessions', [AuthController::class, 'sessions']);

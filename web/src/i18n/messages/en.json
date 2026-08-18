@@ -190,6 +190,9 @@
       "update": "Update product"
     }
   },
+  "theme": {
+    "syncFailed": "Couldn't save your theme to your account. It's still applied on this device."
+  },
   "actions": {
     "downloadInvoice": "Download invoice",
     "downloadSlip": "Download slip",

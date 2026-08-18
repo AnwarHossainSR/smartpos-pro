@@ -24,6 +24,8 @@ class UserResource extends JsonResource
             'tenant_id' => $this->tenant_id,
             'business_id' => $this->business_id,
             'branch_id' => $this->branch_id,
+            // Per-user UI preference: {"mode": "...", "palette": "..."}, or null when never set.
+            'theme' => $this->theme,
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('slug')),
             'permissions' => $this->when(
                 $this->relationLoaded('roles'),

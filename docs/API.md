@@ -87,7 +87,27 @@ current permissions** (`['*']` only for the owner/super-admin) rather than a bla
 wildcard.
 
 ### `GET /auth/me`
-Returns the current user with `roles` and resolved `permissions`.
+Returns the current user with `roles` and resolved `permissions`, plus `theme` — the
+user's saved UI preference, `{ "mode": "light|dark|system", "palette": "<id>" }`, or `null`
+if they have never set one (the client then falls back to its own local default).
+
+### `PATCH /auth/preferences`
+Saves per-user UI preferences for the **caller** — there is no user id in the path and no
+`permission:` guard, because the handler only ever writes `$request->user()`: being
+authenticated is the authorisation, and a cashier must be able to theme their own screen
+without an admin permission.
+
+```json
+{ "theme": { "mode": "dark", "palette": "emerald" } }
+```
+`200` → the same `{ "data": { ... } }` user envelope as `GET /auth/me`.
+
+`mode` and `palette` are both required and validated against
+`App\Support\Theme\ThemeCatalog` (which mirrors `web/src/stores/theme.ts` and
+`web/src/lib/palettes.ts`); an unknown value, a missing key, or an unrecognised key inside
+`theme` returns `422`. The whole `theme` object is replaced, not merged. The web client
+PATCHes this on an 800 ms debounce, so cycling through palettes sends one request; the
+change is deliberately **not** written to the audit log.
 
 ### `POST /auth/logout`
 Revokes the current access token.
