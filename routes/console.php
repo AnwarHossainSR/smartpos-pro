@@ -32,3 +32,8 @@ Schedule::call(function () {
 
 // Sanctum tokens carry their own expires_at (config/sanctum.php); sweep the expired rows daily.
 Schedule::command('sanctum:prune-expired --hours=24')->daily()->name('prune-expired-tokens');
+
+// G30 — Nightly backups with cleanup
+Schedule::command('backup:clean')->daily()->at('02:00')->name('backup-clean');
+Schedule::command('backup:run')->daily()->at('03:00')->name('backup-run');
+Schedule::command('backup:monitor')->daily()->at('04:00')->name('backup-monitor');

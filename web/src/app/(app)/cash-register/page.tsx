@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock, Download, Loader2,
+  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock, Download, Loader2, Printer,
 } from "lucide-react";
 import { api, apiBlob, ApiError } from "@/lib/api";
 import { cn, downloadBlob, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
@@ -191,6 +191,19 @@ export default function CashRegisterPage() {
                     </p>
                   </div>
                 </div>
+                {can("reports.view") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => {
+                      const d = lastClosed.closed_at ? new Date(lastClosed.closed_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+                      window.open(`/api/v1/reports/z-report/pdf?date=${d}&download=1`, "_blank");
+                    }}
+                  >
+                    <Printer className="h-3.5 w-3.5" /> {t("cashRegister.printZReport") ?? "Print Z-report"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

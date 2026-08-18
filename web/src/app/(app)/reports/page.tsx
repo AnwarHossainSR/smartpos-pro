@@ -6,38 +6,72 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { Percent } from "lucide-react";
-import { api } from "@/lib/api";
+import { Download, Percent, Clock } from "lucide-react";
+import { api, apiBlob, type Paginated } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/i18n/provider";
+import { useAuth } from "@/stores/auth";
+import { queryKeys } from "@/lib/query-keys";
 
-type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues";
+type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues" | "z-report" | "shifts";
 
-const REPORTS: { id: ReportType; label: string }[] = [
-  { id: "sales-summary", label: "Sales summary" },
-  { id: "sales-by-product", label: "Sales by product" },
-  { id: "profit", label: "Profit & loss" },
-  { id: "inventory-valuation", label: "Inventory valuation" },
-  { id: "low-stock", label: "Low stock" },
-  { id: "dues", label: "Customer dues" },
-];
+interface Branch { id: string; name: string; }
+
+interface ZReportData {
+  date: string;
+  currency: string;
+  totals: {
+    transactions: number;
+    gross_sales: number;
+    discounts: number;
+    tax: number;
+    shipping: number;
+    net_sales: number;
+    amount_paid: number;
+    amount_due: number;
+    average_basket: number;
+  };
+  payment_methods: { method: string; label: string; count: number; amount: number }[];
+  taxes: { total: number; components: { name: string; rate: number; base_amount: number; amount: number }[] };
+  discounts: { line: number; sale: number; coupon: number; total: number };
+  invoices: { count: number; first: string | null; last: string | null };
+  cash_sessions: {
+    count: number;
+    opening_cash: number;
+    expected_cash: number;
+    actual_cash: number | null;
+    difference: number | null;
+    sessions: { id: string; register: string; cashier: string | null; status: string; opening_cash: number; expected_cash: number; actual_cash: number | null; difference: number | null }[];
+  };
+  voids: { count: number; amount: number };
+  returns: { count: number; amount: number };
+}
 
 export default function ReportsPage() {
+  const t = useTranslation();
+  const { can } = useAuth();
   const [report, setReport] = useState<ReportType>("sales-summary");
   const [from, setFrom] = useState(() => {
     const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10);
   });
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [branchId, setBranchId] = useState<string>("");
 
   const params = `?from=${from}&to=${to}`;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["report", report, from, to],
-    queryFn: () => api<{ data: unknown }>(`/reports/${report}${params}`),
+    queryKey: report === "shifts" ? queryKeys.shifts.report({ from, to }) : ["report", report, from, to],
+    queryFn: () => report === "shifts"
+      ? api<{ data: unknown }>(`/reports/shifts${params}&group_by=day`)
+      : api<{ data: unknown }>(`/reports/${report}${params}`),
+    enabled: report !== "z-report",
   });
 
   const r = data?.data as Record<string, unknown> | null;
@@ -47,13 +81,13 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm">
-            <Link href="/reports/tax"><Percent className="h-3.5 w-3.5" /> Tax report</Link>
+            <Link href="/reports/tax"><Percent className="h-3.5 w-3.5" /> {t("reports.taxReport")}</Link>
           </Button>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Label className="mb-0">From</Label>
+          <Label className="mb-0">{t("reports.from")}</Label>
           <Input type="date" className="h-9 w-36" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <Label className="mb-0">To</Label>
+          <Label className="mb-0">{t("reports.to")}</Label>
           <Input type="date" className="h-9 w-36" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
       </div>
@@ -69,9 +103,20 @@ export default function ReportsPage() {
             {rep.label}
           </Button>
         ))}
+        {can("reports.view") && (
+          <Button
+            size="sm"
+            variant={report === "shifts" ? "primary" : "outline"}
+            onClick={() => setReport("shifts")}
+          >
+            <Clock className="h-3.5 w-3.5" /> Shift hours
+          </Button>
+        )}
       </div>
 
-      {isLoading ? (
+      {report === "z-report" ? (
+        <ZReportTab date={from} branchId={branchId} setBranchId={setBranchId} />
+      ) : isLoading ? (
         <div className="grid gap-4 md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-[var(--radius)]" />)}
         </div>
@@ -81,6 +126,193 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+function ZReportTab({ date, branchId, setBranchId }: { date: string; branchId: string; setBranchId: (v: string) => void }) {
+  const t = useTranslation();
+  const { data, isLoading } = useQuery({
+    queryKey: ["z-report", date, branchId],
+    queryFn: () => api<{ data: ZReportData }>(`/reports/z-report?date=${date}${branchId ? `&branch_id=${branchId}` : ""}`),
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches-all"],
+    queryFn: () => api<Paginated<Branch>>("/branches?per_page=200"),
+    retry: false,
+  });
+
+  const report = data?.data;
+
+  const handleDownloadPdf = async () => {
+    try {
+      const blob = await apiBlob(`/reports/z-report/pdf?date=${date}${branchId ? `&branch_id=${branchId}` : ""}&download=1`);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `z-report-${date}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // PDF download failed silently
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-[var(--radius)]" />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Label className="mb-0">{t("reports.branch")}</Label>
+        <Select className="h-9 w-48" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+          <option value="">{t("reports.allBranches")}</option>
+          {branches?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </Select>
+        <div className="ml-auto">
+          <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
+            <Download className="h-3.5 w-3.5" /> {t("reports.downloadPdf")}
+          </Button>
+        </div>
+      </div>
+
+      {!report ? (
+        <div className="py-12 text-center text-[var(--muted)]">{t("reports.noData")}</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.transactions")}</CardTitle></CardHeader>
+              <CardContent><p className="text-2xl font-bold">{formatNumber(report.totals.transactions)}</p></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.netSales")}</CardTitle></CardHeader>
+              <CardContent><p className="text-2xl font-bold">{formatCurrency(report.totals.net_sales)}</p></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.tax")}</CardTitle></CardHeader>
+              <CardContent><p className="text-2xl font-bold">{formatCurrency(report.totals.tax)}</p></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.averageBasket")}</CardTitle></CardHeader>
+              <CardContent><p className="text-2xl font-bold">{formatCurrency(report.totals.average_basket)}</p></CardContent>
+            </Card>
+          </div>
+
+          {report.payment_methods.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>{t("reports.paymentMethods")}</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader><TableRow><TableHead>{t("reports.method")}</TableHead><TableHead className="text-end">{t("reports.count")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {report.payment_methods.map((m) => (
+                      <TableRow key={m.method}><TableCell className="font-medium">{m.label}</TableCell><TableCell className="text-end">{m.count}</TableCell><TableCell className="text-end">{formatCurrency(m.amount)}</TableCell></TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {report.taxes.components.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>{t("reports.taxBreakdown")}</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader><TableRow><TableHead>{t("reports.component")}</TableHead><TableHead className="text-end">{t("reports.rate")}</TableHead><TableHead className="text-end">{t("reports.base")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {report.taxes.components.map((c, i) => (
+                      <TableRow key={`${c.name}-${i}`}><TableCell className="font-medium">{c.name}</TableCell><TableCell className="text-end text-[var(--muted)]">{c.rate}%</TableCell><TableCell className="text-end">{formatCurrency(c.base_amount)}</TableCell><TableCell className="text-end font-medium">{formatCurrency(c.amount)}</TableCell></TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader><CardTitle>{t("reports.cashReconciliation")}</CardTitle></CardHeader>
+            <CardContent>
+              {report.cash_sessions.count === 0 ? (
+                <p className="text-sm text-[var(--muted)]">{t("reports.noRegisterSession")}</p>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
+                      <p className="text-xs text-[var(--muted)]">{t("reports.openingCash")}</p>
+                      <p className="text-lg font-bold">{formatCurrency(report.cash_sessions.opening_cash)}</p>
+                    </div>
+                    <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
+                      <p className="text-xs text-[var(--muted)]">{t("reports.expectedCash")}</p>
+                      <p className="text-lg font-bold">{formatCurrency(report.cash_sessions.expected_cash)}</p>
+                    </div>
+                    <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
+                      <p className="text-xs text-[var(--muted)]">{t("reports.actualCash")}</p>
+                      <p className="text-lg font-bold">{report.cash_sessions.actual_cash !== null ? formatCurrency(report.cash_sessions.actual_cash) : "—"}</p>
+                    </div>
+                    <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
+                      <p className="text-xs text-[var(--muted)]">{t("reports.difference")}</p>
+                      <p className={`text-lg font-bold ${report.cash_sessions.difference !== null && report.cash_sessions.difference < 0 ? "text-[var(--color-danger)]" : ""}`}>
+                        {report.cash_sessions.difference !== null ? formatCurrency(report.cash_sessions.difference) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  {report.cash_sessions.sessions.length > 0 && (
+                    <Table>
+                      <TableHeader><TableRow><TableHead>{t("reports.register")}</TableHead><TableHead>{t("reports.cashier")}</TableHead><TableHead className="text-end">{t("reports.status")}</TableHead><TableHead className="text-end">{t("reports.difference")}</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {report.cash_sessions.sessions.map((s) => (
+                          <TableRow key={s.id}><TableCell className="font-medium">{s.register}</TableCell><TableCell>{s.cashier ?? "—"}</TableCell><TableCell className="text-end text-xs text-[var(--muted)]">{s.status}</TableCell><TableCell className="text-end">{s.difference !== null ? formatCurrency(s.difference) : "—"}</TableCell></TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle>{t("reports.discounts")}</CardTitle></CardHeader>
+              <CardContent className="space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.lineDiscounts")}</span><span>{formatCurrency(report.discounts.line)}</span></div>
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.saleDiscounts")}</span><span>{formatCurrency(report.discounts.sale)}</span></div>
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.couponDiscounts")}</span><span>{formatCurrency(report.discounts.coupon)}</span></div>
+                <div className="flex justify-between font-medium border-t border-[var(--border)] pt-1"><span>{t("reports.totalDiscounts")}</span><span>{formatCurrency(report.discounts.total)}</span></div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>{t("reports.corrections")}</CardTitle></CardHeader>
+              <CardContent className="space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.voidedSales")} ({report.voids.count})</span><span>{formatCurrency(report.voids.amount)}</span></div>
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.returns")} ({report.returns.count})</span><span>{formatCurrency(report.returns.amount)}</span></div>
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.firstInvoice")}</span><span className="font-mono text-xs">{report.invoices.first ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-[var(--muted)]">{t("reports.lastInvoice")}</span><span className="font-mono text-xs">{report.invoices.last ?? "—"}</span></div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const REPORTS: { id: ReportType; label: string }[] = [
+  { id: "sales-summary", label: "Sales summary" },
+  { id: "sales-by-product", label: "Sales by product" },
+  { id: "profit", label: "Profit & loss" },
+  { id: "inventory-valuation", label: "Inventory valuation" },
+  { id: "low-stock", label: "Low stock" },
+  { id: "dues", label: "Customer dues" },
+  { id: "z-report", label: "Z-Report" },
+];
 
 function ReportContent({ report, data }: { report: ReportType; data: Record<string, unknown> | null }) {
   if (!data) return <div className="py-12 text-center text-[var(--muted)]">No data for this period.</div>;
@@ -223,6 +455,59 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
               ))}
           </TableBody>
         </Table>
+      </div>
+    );
+  }
+
+  if (report === "shifts") {
+    const s = data as { rows?: { user_name: string; period: string; shifts: number; hours: number; overtime_hours: number; is_overtime: boolean }[]; by_user?: { user_name: string; hours: number; overtime_hours: number; is_overtime: boolean }[]; totals?: { shifts: number; hours: number; overtime_hours: number } };
+    return (
+      <div className="space-y-4">
+        {s.totals && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Total shifts</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{s.totals.shifts}</p></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Total hours</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{s.totals.hours.toFixed(1)}h</p></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">Overtime hours</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-amber-600">{s.totals.overtime_hours.toFixed(1)}h</p></CardContent></Card>
+          </div>
+        )}
+        {s.by_user && s.by_user.length > 0 && (
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+            <Table>
+              <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead className="text-end">Hours</TableHead><TableHead className="text-end">Overtime</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {s.by_user.map((u, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-medium">{u.user_name}</TableCell>
+                    <TableCell className="text-end">{u.hours.toFixed(1)}h</TableCell>
+                    <TableCell className="text-end">{u.overtime_hours > 0 ? <Badge tone="warning">{u.overtime_hours.toFixed(1)}h</Badge> : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {s.rows && s.rows.length > 0 && (
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <h3 className="mb-2 text-sm font-medium">Daily breakdown</h3>
+            <div className="rounded-[var(--radius)] border border-[var(--border)]">
+              <Table>
+                <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Date</TableHead><TableHead className="text-end">Shifts</TableHead><TableHead className="text-end">Hours</TableHead><TableHead className="text-end">Overtime</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {s.rows.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.user_name}</TableCell>
+                      <TableCell className="text-sm">{r.period}</TableCell>
+                      <TableCell className="text-end">{r.shifts}</TableCell>
+                      <TableCell className="text-end">{r.hours.toFixed(1)}h</TableCell>
+                      <TableCell className="text-end">{r.is_overtime ? <Badge tone="warning">{r.overtime_hours.toFixed(1)}h</Badge> : "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+        {(!s.rows || s.rows.length === 0) && <div className="py-12 text-center text-[var(--muted)]">No shift data for this period.</div>}
       </div>
     );
   }

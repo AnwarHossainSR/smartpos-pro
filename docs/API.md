@@ -87,7 +87,27 @@ current permissions** (`['*']` only for the owner/super-admin) rather than a bla
 wildcard.
 
 ### `GET /auth/me`
-Returns the current user with `roles` and resolved `permissions`.
+Returns the current user with `roles` and resolved `permissions`, plus `theme` — the
+user's saved UI preference, `{ "mode": "light|dark|system", "palette": "<id>" }`, or `null`
+if they have never set one (the client then falls back to its own local default).
+
+### `PATCH /auth/preferences`
+Saves per-user UI preferences for the **caller** — there is no user id in the path and no
+`permission:` guard, because the handler only ever writes `$request->user()`: being
+authenticated is the authorisation, and a cashier must be able to theme their own screen
+without an admin permission.
+
+```json
+{ "theme": { "mode": "dark", "palette": "emerald" } }
+```
+`200` → the same `{ "data": { ... } }` user envelope as `GET /auth/me`.
+
+`mode` and `palette` are both required and validated against
+`App\Support\Theme\ThemeCatalog` (which mirrors `web/src/stores/theme.ts` and
+`web/src/lib/palettes.ts`); an unknown value, a missing key, or an unrecognised key inside
+`theme` returns `422`. The whole `theme` object is replaced, not merged. The web client
+PATCHes this on an 800 ms debounce, so cycling through palettes sends one request; the
+change is deliberately **not** written to the audit log.
 
 ### `POST /auth/logout`
 Revokes the current access token.
@@ -486,6 +506,28 @@ logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values
 `settings.invoice_prefix` (free-form string, default `INV-`) prefixes every invoice number
 this business issues — see `POST /sales`. Changing it does not renumber past sales and does
 not reset the counter.
+
+## Webhooks
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /webhooks` | `settings.update` | list all webhooks for the tenant |
+| `POST /webhooks` | `settings.update` | create a webhook (`url`, `events[]`); returns the secret once |
+| `GET /webhooks/{webhook}` | `settings.update` | show a single webhook |
+| `PUT /webhooks/{webhook}` | `settings.update` | update URL, events, or is_active |
+| `DELETE /webhooks/{webhook}` | `settings.update` | delete a webhook and its deliveries |
+| `GET /webhook-deliveries` | `settings.update` | paginated delivery log (filterable by `webhook_id`, `event`) |
+| `POST /webhook-deliveries/{delivery}/retry` | `settings.update` | re-queue a failed delivery |
+
+**Supported events:** `sale.completed`, `sale.returned`, `customer.created`, `inventory.low`
+
+Each webhook delivery is signed with HMAC-SHA256 (`X-Webhook-Signature` header) using the
+webhook's secret. The payload is JSON in the request body. Additional headers:
+`X-Webhook-Event` (event name), `X-Webhook-Delivery` (delivery UUID). Failed deliveries are
+retried up to 3 times with exponential backoff (30s, 120s, 300s).
+
+`POST /webhooks` returns the secret in the response body — it is **not** stored in plaintext
+and cannot be retrieved later.
 
 ## Loyalty points
 

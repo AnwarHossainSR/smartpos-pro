@@ -13,6 +13,7 @@ use App\Domain\Sales\Pricing\PricedLine;
 use App\Domain\Sales\Pricing\SaleLineBuilder;
 use App\Domain\Tax\TaxContext;
 use App\Domain\Tax\TaxResolver;
+use App\Events\SaleCompleted;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Customer;
@@ -116,6 +117,10 @@ class SaleService
                     'discount_amount' => $discount,
                     'lines' => array_map(static fn (PricedLine $l) => $l->toItemAttributes(), $basket->lines),
                 ], $cashier);
+            }
+
+            if ($data->status === SaleStatus::Completed) {
+                SaleCompleted::dispatch($sale);
             }
 
             return $sale->load('items.taxes', 'payments', 'customer', 'coupon');

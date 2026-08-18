@@ -58,7 +58,13 @@
     "signOut": "サインアウト",
     "light": "ライト",
     "dark": "ダーク",
-    "system": "システム"
+    "system": "システム",
+    "clockIn": "出勤",
+    "clockOut": "退勤",
+    "clockInSuccess": "出勤しました",
+    "clockOutSuccess": "退勤しました",
+    "clockInError": "出勤できませんでした",
+    "clockOutError": "退勤できませんでした"
   },
   "auth": {
     "loginTitle": "おかえりなさい",
@@ -99,7 +105,9 @@
     "resetPasswordMissingLink": "このリセットリンクが見つからないか無効です。新しいリンクをリクエストしてください。",
     "verifyBannerText": "メールアドレスを確認してください。",
     "resendVerification": "メールを再送信",
-    "verificationSent": "確認メールを送信しました。"
+    "verificationSent": "確認メールを送信しました。",
+    "verifyEmail": "メールを確認",
+    "verificationSuccess": "メールの確認に成功しました"
   },
   "settings": {
     "title": "設定",
@@ -183,6 +191,210 @@
       "saving": "保存中…",
       "create": "商品を作成",
       "update": "商品を更新"
+    }
+  },
+  "theme": {
+    "syncFailed": "テーマをアカウントに保存できませんでした。この端末には適用されています。"
+  },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "数量",
+    "shortcuts": {
+      "title": "キーボードショートカット",
+      "focusSearch": "検索 / スキャンにフォーカス",
+      "holdSale": "販売を保留",
+      "openPayment": "支払いを開く",
+      "voidLastLine": "最終行を削除",
+      "closeOrClear": "モーダルを閉じる / カートを空にする",
+      "confirmPayment": "支払いを確認",
+      "toggleHelp": "このヘルプを切り替え"
+    },
+    "park": "一時保存",
+    "parkSuccess": "販売を一時保存しました",
+    "checkout": "レジに進む",
+    "heldOrders": {
+      "button": "保留中の注文 ({count})",
+      "title": "保留中の注文",
+      "empty": "保留中の注文はありません",
+      "walkIn": "ウォークイン",
+      "items": "件",
+      "resume": "再開",
+      "discard": "破棄",
+      "discardTitle": "保留中の注文を破棄しますか?",
+      "discardConfirm": "「{reference}」を破棄しますか?この操作は取り消せません。",
+      "discardSuccess": "注文を破棄しました"
+    }
+  },
+  "dashboard": {
+    "todaySales": "今日の売上",
+    "transactions": "取引数",
+    "customerDues": "顧客未払い",
+    "lowStockItems": "在庫切れ商品",
+    "weekComparison": "週間比較",
+    "salesTrend": "売上推移（過去14日）",
+    "noSalesData": "まだ売上データがありません",
+    "topProducts": "人気商品",
+    "noTopProducts": "まだ人気商品がありません",
+    "recentTransactions": "最近の取引",
+    "noRecentSales": "最近の売上がありません",
+    "walkIn": "レジ客",
+    "lowStockAlert": "在庫切れ警報",
+    "quickActions": "クイックアクション",
+    "newSale": "新規販売",
+    "addProduct": "商品追加",
+    "openRegister": "レジを開く",
+    "recordExpense": "経費記録",
+    "status": {
+      "paid": "支払済",
+      "unpaid": "未払い",
+      "partial": "一部払い"
+    }
+  },
+  "onboarding": {
+    "title": "さあ、始めましょう",
+    "subtitle": "数ステップでストアをセットアップ",
+    "stepOf": "ステップ {current} / {total}",
+    "skipSetup": "セットアップをスキップ",
+    "skipStep": "ステップをスキップ",
+    "skipConfirmTitle": "セットアップをスキップしますか？",
+    "skipConfirmBody": "後で設定からセットアップを完了できます。進捗は保存されます。",
+    "skipConfirmYes": "はい、今すぐスキップ",
+    "steps": {
+      "business_profile": {
+        "title": "事業者プロフィール",
+        "description": "事業名と詳細はすでに設定済みです。設定からいつでも変更できます。",
+        "action": "問題なし、次へ",
+        "configure": "設定を開く"
+      },
+      "first_product": {
+        "title": "最初の商品",
+        "description": "最初の商品を追加して、すぐに販売を開始しましょう。",
+        "action": "商品を追加しました",
+        "configure": "商品ページへ"
+      },
+      "tax_setup": {
+        "title": "税金設定",
+        "description": "お住まいの地域に合った税プロファイルを選択するか、税金を外部で管理する場合はスキップしてください。",
+        "action": "税金設定完了",
+        "configure": "税設定を開く"
+      },
+      "register_sale": {
+        "title": "レジを開く",
+        "description": "レジを開き、最初の販売を行ってセットアップを完了しましょう。",
+        "action": "完了、販売開始！",
+        "configure": "POSへ"
+      }
+    }
+  },
+  "reports": {
+    "taxReport": "税金レポート",
+    "from": "開始日",
+    "to": "終了日",
+    "branch": "支店",
+    "allBranches": "全支店",
+    "downloadPdf": "PDF ダウンロード",
+    "noData": "この期間のデータはありません。",
+    "transactions": "取引数",
+    "netSales": "純売上高",
+    "tax": "税金",
+    "averageBasket": "平均バスケット",
+    "paymentMethods": "支払い方法",
+    "method": "方法",
+    "count": "件数",
+    "amount": "金額",
+    "taxBreakdown": "税金内訳",
+    "component": "コンポーネント",
+    "rate": "税率",
+    "base": "課税標準",
+    "cashReconciliation": "現金照合",
+    "noRegisterSession": "この日のレジセッションはありません。",
+    "openingCash": "開店現金",
+    "expectedCash": "予想現金",
+    "actualCash": "実績現金",
+    "difference": "差額",
+    "register": "レジ",
+    "cashier": "レジ担当",
+    "status": "ステータス",
+    "discounts": "割引",
+    "lineDiscounts": "行割引",
+    "saleDiscounts": "販売割引",
+    "couponDiscounts": "クーポン割引",
+    "totalDiscounts": "合計割引",
+    "corrections": "修正",
+    "voidedSales": "取消販売",
+    "returns": "返品",
+    "firstInvoice": "最初の請求書",
+    "lastInvoice": "最後の請求書"
+  },
+  "cashRegister": {
+    "printZReport": "Zレポートを印刷"
+  },
+  "team": {
+    "title": "チーム",
+    "inviteUser": "ユーザーを招待",
+    "members": "メンバー",
+    "shiftsTab": "シフト",
+    "searchPlaceholder": "検索…",
+    "name": "名前",
+    "email": "メール",
+    "roles": "役割",
+    "status": "ステータス",
+    "empty": "チームメンバーはまだいません。",
+    "removeUser": "ユーザーを削除",
+    "removeConfirm": "削除",
+    "remove": "削除"
+  },
+  "shifts": {
+    "employee": "従業員",
+    "shifts": "シフト",
+    "hours": "時間",
+    "overtime": "残業",
+    "date": "日付",
+    "dailyBreakdown": "日別内訳",
+    "totalHours": "合計時間",
+    "totalOvertime": "合計残業",
+    "empty": "この期間のシフトデータはありません。"
+  },
+  "webhooks": {
+    "title": "Webhook",
+    "settingsHint": "外部サービスにリアルタイムイベントを送信",
+    "about": "Webhookについて",
+    "aboutHint1": "Webhookはストアでイベントが発生すると（例：販売完了）、指定したURLにHTTP POSTリクエストを送信します。",
+    "aboutHint2": "リクエストはX-Webhook-SignatureヘッダーでHMAC-SHA256署名が行われ、SmartPOSからのものであることを確認できます。",
+    "aboutHint3": "配信に失敗した場合は、指数バックオフで最大3回再試行されます。",
+    "add": "Webhookを追加",
+    "url": "URL",
+    "events": "イベント",
+    "status": "ステータス",
+    "empty": "Webhookが設定されていません。イベントを受信するには追加してください。",
+    "createTitle": "Webhookを作成",
+    "deleteTitle": "Webhookを削除",
+    "deleteConfirm": "このWebhookを削除してもよろしいですか？この操作は取り消せません。",
+    "createSuccess": "Webhookを作成しました",
+    "createFailed": "Webhookの作成に失敗しました",
+    "deleteSuccess": "Webhookを削除しました",
+    "deleteFailed": "Webhookの削除に失敗しました",
+    "secret": "シークレット",
+    "secretHint": "このシークレットは今すぐコピーしてください。再度表示されません。Webhook署名の検証に使用してください。",
+    "secretCopied": "シークレットをクリップボードにコピーしました",
+    "viewSecret": "シークレットを表示",
+    "deliveryLog": "配信ログ",
+    "deliveriesEmpty": "まだ配信がありません。",
+    "event": "イベント",
+    "attempts": "試行回数",
+    "deliveredAt": "配信日時",
+    "createdAt": "作成日時",
+    "pending": "保留中",
+    "error": "エラー",
+    "retry": "再試行",
+    "retryQueued": "再試行をキューに追加",
+    "retryFailed": "再試行に失敗",
+    "viewPayload": "ペイロードを表示",
+    "payload": "ペイロード",
+    "responseBody": "レスポンスボディ",
+    "form": {
+      "url": "エンドポイントURL",
+      "events": "イベント"
     }
   },
   "actions": {

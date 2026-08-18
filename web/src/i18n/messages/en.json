@@ -60,7 +60,13 @@
     "signOut": "Sign out",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "clockIn": "Clock in",
+    "clockOut": "Clock out",
+    "clockInSuccess": "Clocked in",
+    "clockOutSuccess": "Clocked out",
+    "clockInError": "Could not clock in",
+    "clockOutError": "Could not clock out"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -101,7 +107,9 @@
     "resetPasswordMissingLink": "This reset link is missing or invalid. Request a new one.",
     "verifyBannerText": "Please verify your email address.",
     "resendVerification": "Resend email",
-    "verificationSent": "Verification email sent."
+    "verificationSent": "Verification email sent.",
+    "verifyEmail": "Verify email",
+    "verificationSuccess": "Email verified successfully"
   },
   "settings": {
     "title": "Settings",
@@ -188,6 +196,210 @@
       "saving": "Saving…",
       "create": "Create product",
       "update": "Update product"
+    }
+  },
+  "theme": {
+    "syncFailed": "Couldn't save your theme to your account. It's still applied on this device."
+  },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "Qty",
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "focusSearch": "Focus search / scan",
+      "holdSale": "Hold / park sale",
+      "openPayment": "Open payment",
+      "voidLastLine": "Void last line",
+      "closeOrClear": "Close modal / Clear cart",
+      "confirmPayment": "Confirm payment",
+      "toggleHelp": "Toggle this help"
+    },
+    "park": "Park",
+    "parkSuccess": "Sale parked",
+    "checkout": "Checkout",
+    "heldOrders": {
+      "button": "Held orders ({count})",
+      "title": "Held Orders",
+      "empty": "No held orders",
+      "walkIn": "Walk-in",
+      "items": "items",
+      "resume": "Resume",
+      "discard": "Discard",
+      "discardTitle": "Discard held order?",
+      "discardConfirm": "Discard \"{reference}\"? This cannot be undone.",
+      "discardSuccess": "Order discarded"
+    }
+  },
+  "dashboard": {
+    "todaySales": "Today's sales",
+    "transactions": "Transactions",
+    "customerDues": "Customer dues",
+    "lowStockItems": "Low stock items",
+    "weekComparison": "Week comparison",
+    "salesTrend": "Sales trend (last 14 days)",
+    "noSalesData": "No sales data yet",
+    "topProducts": "Top products",
+    "noTopProducts": "No top products yet",
+    "recentTransactions": "Recent transactions",
+    "noRecentSales": "No recent sales",
+    "walkIn": "Walk-in",
+    "lowStockAlert": "Low stock alert",
+    "quickActions": "Quick actions",
+    "newSale": "New Sale",
+    "addProduct": "Add Product",
+    "openRegister": "Open Register",
+    "recordExpense": "Record Expense",
+    "status": {
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "partial": "Partial"
+    }
+  },
+  "onboarding": {
+    "title": "Let's get started",
+    "subtitle": "Set up your store in a few quick steps",
+    "stepOf": "Step {current} of {total}",
+    "skipSetup": "Skip setup",
+    "skipStep": "Skip step",
+    "skipConfirmTitle": "Skip setup?",
+    "skipConfirmBody": "You can finish setting up later from Settings. Your progress will be saved.",
+    "skipConfirmYes": "Yes, skip for now",
+    "steps": {
+      "business_profile": {
+        "title": "Business profile",
+        "description": "Your business name and details are already set. You can update them in Settings anytime.",
+        "action": "Looks good, next",
+        "configure": "Open settings"
+      },
+      "first_product": {
+        "title": "First product",
+        "description": "Add your first product so you can start selling right away.",
+        "action": "I've added a product",
+        "configure": "Go to products"
+      },
+      "tax_setup": {
+        "title": "Tax setup",
+        "description": "Pick a tax profile that matches your region, or skip if you handle taxes externally.",
+        "action": "Tax is configured",
+        "configure": "Open tax settings"
+      },
+      "register_sale": {
+        "title": "Open register",
+        "description": "Open your cash register and make your first sale to complete the setup.",
+        "action": "Done, let's sell!",
+        "configure": "Go to POS"
+      }
+    }
+  },
+  "reports": {
+    "taxReport": "Tax report",
+    "from": "From",
+    "to": "To",
+    "branch": "Branch",
+    "allBranches": "All branches",
+    "downloadPdf": "Download PDF",
+    "noData": "No data for this period.",
+    "transactions": "Transactions",
+    "netSales": "Net sales",
+    "tax": "Tax",
+    "averageBasket": "Average basket",
+    "paymentMethods": "Payment methods",
+    "method": "Method",
+    "count": "Count",
+    "amount": "Amount",
+    "taxBreakdown": "Tax breakdown",
+    "component": "Component",
+    "rate": "Rate",
+    "base": "Base",
+    "cashReconciliation": "Cash reconciliation",
+    "noRegisterSession": "No register session for this day.",
+    "openingCash": "Opening cash",
+    "expectedCash": "Expected cash",
+    "actualCash": "Actual cash",
+    "difference": "Difference",
+    "register": "Register",
+    "cashier": "Cashier",
+    "status": "Status",
+    "discounts": "Discounts",
+    "lineDiscounts": "Line discounts",
+    "saleDiscounts": "Sale discounts",
+    "couponDiscounts": "Coupon discounts",
+    "totalDiscounts": "Total discounts",
+    "corrections": "Corrections",
+    "voidedSales": "Voided sales",
+    "returns": "Returns",
+    "firstInvoice": "First invoice",
+    "lastInvoice": "Last invoice"
+  },
+  "cashRegister": {
+    "printZReport": "Print Z-report"
+  },
+  "team": {
+    "title": "Team",
+    "inviteUser": "Invite user",
+    "members": "Members",
+    "shiftsTab": "Shifts",
+    "searchPlaceholder": "Search…",
+    "name": "Name",
+    "email": "Email",
+    "roles": "Roles",
+    "status": "Status",
+    "empty": "No team members yet.",
+    "removeUser": "Remove user",
+    "removeConfirm": "Remove",
+    "remove": "Remove"
+  },
+  "shifts": {
+    "employee": "Employee",
+    "shifts": "Shifts",
+    "hours": "Hours",
+    "overtime": "Overtime",
+    "date": "Date",
+    "dailyBreakdown": "Daily breakdown",
+    "totalHours": "Total hours",
+    "totalOvertime": "Total overtime",
+    "empty": "No shift data for this period."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "settingsHint": "Send real-time events to external services",
+    "about": "About Webhooks",
+    "aboutHint1": "Webhooks send HTTP POST requests to your URL when events occur in your store (e.g. a sale is completed).",
+    "aboutHint2": "Each request is signed with an HMAC-SHA256 signature in the X-Webhook-Signature header so you can verify it came from SmartPOS.",
+    "aboutHint3": "Failed deliveries are retried up to 3 times with exponential backoff.",
+    "add": "Add webhook",
+    "url": "URL",
+    "events": "Events",
+    "status": "Status",
+    "empty": "No webhooks configured. Add one to start receiving events.",
+    "createTitle": "Create webhook",
+    "deleteTitle": "Delete webhook",
+    "deleteConfirm": "Are you sure you want to delete this webhook? This cannot be undone.",
+    "createSuccess": "Webhook created",
+    "createFailed": "Failed to create webhook",
+    "deleteSuccess": "Webhook deleted",
+    "deleteFailed": "Failed to delete webhook",
+    "secret": "Secret",
+    "secretHint": "Copy this secret now — it won't be shown again. Use it to verify webhook signatures.",
+    "secretCopied": "Secret copied to clipboard",
+    "viewSecret": "View secret",
+    "deliveryLog": "Delivery Log",
+    "deliveriesEmpty": "No deliveries yet.",
+    "event": "Event",
+    "attempts": "Attempts",
+    "deliveredAt": "Delivered at",
+    "createdAt": "Created",
+    "pending": "Pending",
+    "error": "Error",
+    "retry": "Retry",
+    "retryQueued": "Retry queued",
+    "retryFailed": "Retry failed",
+    "viewPayload": "View payload",
+    "payload": "Payload",
+    "responseBody": "Response body",
+    "form": {
+      "url": "Endpoint URL",
+      "events": "Events"
     }
   },
   "actions": {

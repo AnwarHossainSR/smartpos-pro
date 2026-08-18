@@ -4,6 +4,7 @@ namespace App\Services\Sales;
 
 use App\Domain\Enums\StockMovementType;
 use App\Domain\Sales\Data\CreateSaleReturnData;
+use App\Events\SaleReturned;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -134,6 +135,8 @@ class SaleReturnService
                     $customer->decrement('balance', min($total, (float) $customer->balance));
                 }
             }
+
+            SaleReturned::dispatch($return);
 
             return $return->load('items.taxes');
         });

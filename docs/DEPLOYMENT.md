@@ -253,20 +253,42 @@ limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;
 
 ## 5 · Observability
 
-```bash
-# Laravel Telescope (dev/staging only — disable in production)
-php artisan telescope:install
+### 5.1 Health endpoint
 
-# Log aggregation: send Laravel logs to Papertrail / Logtail
+`GET /v1/health` returns database, Redis, and queue status. Requires authentication
+with `dashboard.view` permission. Use for uptime monitoring (Betterstack, UptimeRobot,
+etc.).
+
+### 5.2 Sentry
+
+**Backend (Laravel):**
+
+1. Install: `composer require sentry/sentry-laravel`
+2. Set the DSN in `.env`:
+   ```dotenv
+   SENTRY_LARAVEL_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+   SENTRY_ENVIRONMENT=production
+   SENTRY_TRACES_SAMPLE_RATE=0.2
+   ```
+3. Config lives in `config/sentry.php`. Errors in `local`/`testing` are dropped automatically.
+
+**Frontend (Next.js):**
+
+1. Install: `bun add @sentry/nextjs`
+2. Set the DSN in `.env.local`:
+   ```dotenv
+   NEXT_PUBLIC_SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+   NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+   ```
+3. Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`.
+4. A global `error.tsx` at `src/app/error.tsx` catches unhandled errors.
+
+### 5.3 Log aggregation
+
+```bash
+# Send Laravel logs to Papertrail / Logtail
 LOG_CHANNEL=stack
 LOG_STACK=daily,papertrail
-
-# Uptime monitoring: Betterstack / UptimeRobot on /api/v1/health
-```
-
-Add a health endpoint if not present:
-```php
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'time' => now()]));
 ```
 
 ---
@@ -303,6 +325,94 @@ The service worker is at `/sw.js` and is registered automatically by `PwaRegiste
 - Each tenant is isolated by `tenant_id` on every model via `BelongsToTenant` scope.
 - Never run `php artisan migrate --seed` against a shared production database without first verifying the seed guard.
 - Super-admin (tenant 0) can impersonate any tenant via `X-Tenant-ID` header when authenticated as a super-admin.
+
+---
+
+## 9 · Backup & Restore
+
+SmartPOS Pro uses [spatie/laravel-backup](https://github.com/spatie/laravel-backup) for automated database and file backups.
+
+### 9.1 Configuration
+
+| Setting | Value |
+|---------|-------|
+| Schedule | Nightly at 03:00 UTC (`backup:run`) |
+| Disk | S3 in production (`BACKUP_DISK=s3`), local in dev |
+| Cleanup | 7 daily → 4 weekly → 6 monthly |
+| Notifications | Emailed to `BACKUP_NOTIFY_EMAIL` |
+
+Relevant env variables:
+```dotenv
+BACKUP_DISK=s3                  # "local" or "s3"
+BACKUP_NOTIFY_EMAIL=ops@yourdomain.com
+BACKUP_ARCHIVE_PASSWORD=        # optional encryption password
+```
+
+### 9.2 Manual commands
+
+```bash
+# Run a backup immediately
+php artisan backup:run
+
+# Run only database backup (no files)
+php artisan backup:run --only-db
+
+# Clean old backups per retention policy
+php artisan backup:clean
+
+# Check backup health
+php artisan backup:monitor
+
+# List available backups
+php artisan backup:list
+```
+
+### 9.3 Restore procedure
+
+1. **Download the latest backup** from S3 (or locate the local zip in `storage/app/backups`):
+   ```bash
+   aws s3 ls s3://your-bucket/backups/ --recursive | sort | tail -5
+   aws s3 cp s3://your-bucket/backups/<backup-file>.zip /tmp/restore/
+   ```
+
+2. **Extract the archive**:
+   ```bash
+   cd /tmp/restore
+   unzip <backup-file>.zip
+   ```
+
+3. **Restore the database** from the `.sql` dump:
+   ```bash
+   # PostgreSQL
+   psql -h 127.0.0.1 -U smartpos -d smartpos < /tmp/restore/db-dumps/pgsql-smartpos.sql
+
+   # MySQL (if applicable)
+   mysql -u smartpos -p smartpos < /tmp/restore/db-dumps/mysql-smartpos.sql
+   ```
+
+4. **Restore application files** (if needed):
+   ```bash
+   rsync -avz /tmp/restore/laravel-app/ /var/www/smartpos/
+   cd /var/www/smartpos
+   composer install --no-dev --optimize-autoloader
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+5. **Run migrations** (if schema changed since backup):
+   ```bash
+   php artisan migrate --force
+   ```
+
+6. **Verify**:
+   ```bash
+   php artisan backup:list   # confirm backups are visible
+   php artisan tinker        # spot-check critical data
+   ```
+
+> **Important:** Always test restores on a staging environment before performing in production.
+> Keep `BACKUP_ARCHIVE_PASSWORD` secret — without it, encrypted backups cannot be restored.
 
 ---
 

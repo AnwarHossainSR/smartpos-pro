@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Clock } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { useTranslation } from "@/i18n/provider";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Role { id: string; slug: string; name: string; }
 interface TeamUser {
@@ -26,6 +28,27 @@ interface TeamUser {
   phone: string | null;
   status: string;
   roles: string[];
+}
+
+interface ShiftRow {
+  user_id: string;
+  user_name: string;
+  period: string;
+  shifts: number;
+  minutes: number;
+  hours: number;
+  overtime_minutes: number;
+  overtime_hours: number;
+  is_overtime: boolean;
+}
+
+interface ShiftReport {
+  from: string;
+  to: string;
+  group_by: string;
+  rows: ShiftRow[];
+    by_user: { user_id: string; user_name: string; shifts: number; hours: number; overtime_hours: number; is_overtime: boolean }[];
+  totals: { shifts: number; minutes: number; hours: number; overtime_minutes: number; overtime_hours: number };
 }
 
 const schema = z.object({
@@ -79,9 +102,119 @@ function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { default
   );
 }
 
+function ShiftsTab() {
+  const t = useTranslation();
+  const { can } = useAuth();
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1 + weekOffset * 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+
+  const from = weekStart.toISOString().slice(0, 10);
+  const to = weekEnd.toISOString().slice(0, 10);
+
+  const { data, isLoading } = useQuery<{ data: ShiftReport }>({
+    queryKey: queryKeys.shifts.report({ from, to }),
+    queryFn: () => api<{ data: ShiftReport }>(`/reports/shifts?from=${from}&to=${to}&group_by=week`),
+  });
+
+  const report = data?.data;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w - 1)}>←</Button>
+          <span className="text-sm font-medium">{from} — {to}</span>
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w + 1)}>→</Button>
+          {weekOffset !== 0 && <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Today</Button>}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[var(--radius)]" />)}</div>
+      ) : report && report.by_user.length > 0 ? (
+        <>
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("shifts.employee")}</TableHead>
+                  <TableHead className="text-end">{t("shifts.shifts")}</TableHead>
+                  <TableHead className="text-end">{t("shifts.hours")}</TableHead>
+                  <TableHead className="text-end">{t("shifts.overtime")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {report.by_user.map((u) => (
+                  <TableRow key={u.user_id}>
+                    <TableCell className="font-medium">{u.user_name}</TableCell>
+                    <TableCell className="text-end">{u.shifts}</TableCell>
+                    <TableCell className="text-end">{u.hours.toFixed(1)}h</TableCell>
+                    <TableCell className="text-end">
+                      {u.overtime_hours > 0 ? (
+                        <Badge tone="warning">{u.overtime_hours.toFixed(1)}h</Badge>
+                      ) : (
+                        <span className="text-[var(--muted)]">—</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {can("reports.view") && report.rows.length > 0 && (
+            <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <h3 className="mb-2 text-sm font-medium">{t("shifts.dailyBreakdown")}</h3>
+              <div className="rounded-[var(--radius)] border border-[var(--border)]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("shifts.employee")}</TableHead>
+                      <TableHead>{t("shifts.date")}</TableHead>
+                      <TableHead className="text-end">{t("shifts.shifts")}</TableHead>
+                      <TableHead className="text-end">{t("shifts.hours")}</TableHead>
+                      <TableHead className="text-end">{t("shifts.overtime")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {report.rows.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{r.user_name}</TableCell>
+                        <TableCell className="text-sm">{r.period}</TableCell>
+                        <TableCell className="text-end">{r.shifts}</TableCell>
+                        <TableCell className="text-end">{r.hours.toFixed(1)}h</TableCell>
+                        <TableCell className="text-end">
+                          {r.is_overtime ? <Badge tone="warning">{r.overtime_hours.toFixed(1)}h</Badge> : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-4 text-sm text-[var(--muted)]">
+            <span>{t("shifts.totalHours")}: <strong className="text-[var(--foreground)]">{report.totals.hours.toFixed(1)}h</strong></span>
+            <span>{t("shifts.totalOvertime")}: <strong className="text-amber-600">{report.totals.overtime_hours.toFixed(1)}h</strong></span>
+          </div>
+        </>
+      ) : (
+        <div className="py-12 text-center text-[var(--muted)]">{t("shifts.empty")}</div>
+      )}
+    </div>
+  );
+}
+
 export default function TeamPage() {
   const { can } = useAuth();
+  const t = useTranslation();
   const qc = useQueryClient();
+  const [tab, setTab] = useState<"members" | "shifts">("members");
   const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
   const [deleting, setDeleting] = useState<TeamUser | null>(null);
@@ -108,45 +241,57 @@ export default function TeamPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Team</h1>
-        {can("team.create") && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />Invite user</Button>}
+        <h1 className="text-xl font-semibold">{t("team.title")}</h1>
+        {can("users.create") && tab === "members" && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />{t("team.inviteUser")}</Button>}
       </div>
-      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
-      <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead>Status</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-              : data?.data?.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">No team members yet.</TableCell></TableRow>
-              : data?.data?.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.name}{u.phone && <span className="block text-xs text-[var(--muted)]">{u.phone}</span>}</TableCell>
-                  <TableCell className="text-sm">{u.email}</TableCell>
-                  <TableCell><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} tone="info">{r}</Badge>)}</div></TableCell>
-                  <TableCell><Badge tone={statusColor[u.status] ?? "default"}>{u.status}</Badge></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {can("team.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(u); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
-                      {can("team.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(u)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {data?.meta && (
-          <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
-          />
-        )}
+
+      <div className="flex gap-2 border-b border-[var(--border)] pb-2">
+        <Button size="sm" variant={tab === "members" ? "primary" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>
+        {can("shifts.view") && <Button size="sm" variant={tab === "shifts" ? "primary" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
       </div>
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : "Invite user"}>
-        <UserForm key={editing?.id ?? "new"} isEdit={!!editing} userId={editing?.id} roles={roles} defaultValues={editing ? { name: editing.name, email: editing.email, phone: editing.phone ?? undefined, roles: editing.roles } : undefined} onSuccess={() => setDrawerOpen(false)} />
-      </Drawer>
-      <Dialog open={!!deleting} onClose={() => setDeleting(null)} title="Remove user" description={`Remove "${deleting?.name}" from the team?`} confirmLabel="Remove" confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
+
+      {tab === "members" ? (
+        <>
+          <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder={t("team.searchPlaceholder")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+          <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+            <Table>
+              <TableHeader><TableRow><TableHead>{t("team.name")}</TableHead><TableHead>{t("team.email")}</TableHead><TableHead>{t("team.roles")}</TableHead><TableHead>{t("team.status")}</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
+              <TableBody>
+                {isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
+                  : data?.data?.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">{t("team.empty")}</TableCell></TableRow>
+                  : data?.data?.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.name}{u.phone && <span className="block text-xs text-[var(--muted)]">{u.phone}</span>}</TableCell>
+                      <TableCell className="text-sm">{u.email}</TableCell>
+                      <TableCell><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} tone="info">{r}</Badge>)}</div></TableCell>
+                      <TableCell><Badge tone={statusColor[u.status] ?? "default"}>{u.status}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {can("users.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(u); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
+                          {can("users.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(u)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+            {data?.meta && (
+              <Pagination
+                page={page}
+                lastPage={data.meta.last_page}
+                onPageChange={setPage}
+                label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+              />
+            )}
+          </div>
+          <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : t("team.inviteUser")}>
+            <UserForm key={editing?.id ?? "new"} isEdit={!!editing} userId={editing?.id} roles={roles} defaultValues={editing ? { name: editing.name, email: editing.email, phone: editing.phone ?? undefined, roles: editing.roles } : undefined} onSuccess={() => setDrawerOpen(false)} />
+          </Drawer>
+          <Dialog open={!!deleting} onClose={() => setDeleting(null)} title={t("team.removeUser")} description={`${t("team.removeConfirm")} "${deleting?.name}"?`} confirmLabel={t("team.remove")} confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
+        </>
+      ) : (
+        <ShiftsTab />
+      )}
     </div>
   );
 }

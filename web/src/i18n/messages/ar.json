@@ -58,7 +58,13 @@
     "signOut": "تسجيل الخروج",
     "light": "فاتح",
     "dark": "داكن",
-    "system": "النظام"
+    "system": "النظام",
+    "clockIn": "تسجيل الدخول",
+    "clockOut": "تسجيل الخروج",
+    "clockInSuccess": "تم تسجيل الدخول",
+    "clockOutSuccess": "تم تسجيل الخروج",
+    "clockInError": "تعذّر تسجيل الدخول",
+    "clockOutError": "تعذّر تسجيل الخروج"
   },
   "auth": {
     "loginTitle": "مرحبًا بعودتك",
@@ -99,7 +105,9 @@
     "resetPasswordMissingLink": "رابط إعادة التعيين هذا مفقود أو غير صالح. اطلب رابطًا جديدًا.",
     "verifyBannerText": "يرجى تأكيد بريدك الإلكتروني.",
     "resendVerification": "إعادة إرسال البريد",
-    "verificationSent": "تم إرسال بريد التأكيد."
+    "verificationSent": "تم إرسال بريد التأكيد.",
+    "verifyEmail": "تحقق من البريد",
+    "verificationSuccess": "تم التحقق من البريد بنجاح"
   },
   "settings": {
     "title": "الإعدادات",
@@ -183,6 +191,210 @@
       "saving": "جارٍ الحفظ…",
       "create": "إنشاء منتج",
       "update": "تحديث المنتج"
+    }
+  },
+  "theme": {
+    "syncFailed": "تعذّر حفظ المظهر في حسابك. لا يزال مطبَّقًا على هذا الجهاز."
+  },
+  "pos": {
+    "numpadConfirm": "موافق",
+    "quantity": "الكمية",
+    "shortcuts": {
+      "title": "اختصارات لوحة المفاتيح",
+      "focusSearch": "التركيز على البحث / المسح",
+      "holdSale": "تعليق البيع",
+      "openPayment": "فتح الدفع",
+      "voidLastLine": "إلغاء السطر الأخير",
+      "closeOrClear": "إغلاق النافذة / تفريغ السلة",
+      "confirmPayment": "تأكيد الدفع",
+      "toggleHelp": "إظهار/إخفاء المساعدة"
+    },
+    "park": "إيقاف مؤقت",
+    "parkSuccess": "تم إيقاف البيع مؤقتًا",
+    "checkout": "إتمام",
+    "heldOrders": {
+      "button": "ال_orders المعلقة ({count})",
+      "title": "ال_orders المعلقة",
+      "empty": "لا توجد orders معلقة",
+      "walkIn": "زائر",
+      "items": "عناصر",
+      "resume": "استئناف",
+      "discard": "إلغاء",
+      "discardTitle": "إلغاء order معلق؟",
+      "discardConfirm": "هل تريد إلغاء \"{reference}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "discardSuccess": "تم إلغاء ال_order"
+    }
+  },
+  "dashboard": {
+    "todaySales": "مبيعات اليوم",
+    "transactions": "المعاملات",
+    "customerDues": "ديون العملاء",
+    "lowStockItems": "المنتجات منخفضة المخزون",
+    "weekComparison": "مقارنة الأسابيع",
+    "salesTrend": "اتجاه المبيعات (آخر 14 يوم)",
+    "noSalesData": "لا توجد بيانات مبيعات بعد",
+    "topProducts": "المنتجات الأكثر مبيعًا",
+    "noTopProducts": "لا توجد منتجات الأكثر مبيعًا بعد",
+    "recentTransactions": "المعاملات الأخيرة",
+    "noRecentSales": "لا توجد مبيعات أخيرة",
+    "walkIn": "عميل عابر",
+    "lowStockAlert": "تنبيه منخفض المخزون",
+    "quickActions": "إجراءات سريعة",
+    "newSale": "بيع جديد",
+    "addProduct": "إضافة منتج",
+    "openRegister": "فتح الصندوق",
+    "recordExpense": "تسجيل مصروف",
+    "status": {
+      "paid": "مدفوع",
+      "unpaid": "غير مدفوع",
+      "partial": "جزئي"
+    }
+  },
+  "onboarding": {
+    "title": "هيا نبدأ",
+    "subtitle": "قم بإعداد متجرك في بضع خطوات سريعة",
+    "stepOf": "الخطوة {current} من {total}",
+    "skipSetup": "تخطي الإعداد",
+    "skipStep": "تخطي الخطوة",
+    "skipConfirmTitle": "تخطي الإعداد؟",
+    "skipConfirmBody": "يمكنك إنهاء الإعداد لاحقًا من الإعدادات. سيتم حفظ تقدمك.",
+    "skipConfirmYes": "نعم، تخطي الآن",
+    "steps": {
+      "business_profile": {
+        "title": "الملف التجاري",
+        "description": "اسم نشاطك التجاري وبياناتك موجودة بالفعل. يمكنك تعديلها في الإعدادات في أي وقت.",
+        "action": "يبدو جيدًا، التالي",
+        "configure": "فتح الإعدادات"
+      },
+      "first_product": {
+        "title": "المنتج الأول",
+        "description": "أضف منتجك الأول حتى تتمكن من البدء في البيع فورًا.",
+        "action": "أضفت منتجًا",
+        "configure": "الذهاب للمنتجات"
+      },
+      "tax_setup": {
+        "title": "إعداد الضرائب",
+        "description": "اختر ملفًا ضريبيًا يناسب منطقتك، أو تخطَّ إذا كنت تدير الضرائب خارجيًا.",
+        "action": "تم تكوين الضرائب",
+        "configure": "فتح إعدادات الضرائب"
+      },
+      "register_sale": {
+        "title": "فتح الصندوق",
+        "description": "افتح صندوقك وقم بأول عملية بيع لإتمام الإعداد.",
+        "action": "تم، هيا نبيع!",
+        "configure": "الذهاب لنقطة البيع"
+      }
+    }
+  },
+  "reports": {
+    "taxReport": "تقرير الضريبة",
+    "from": "من",
+    "to": "إلى",
+    "branch": "الفرع",
+    "allBranches": "جميع الفروع",
+    "downloadPdf": "تنزيل PDF",
+    "noData": "لا توجد بيانات لهذه الفترة.",
+    "transactions": "المعاملات",
+    "netSales": "صافي المبيعات",
+    "tax": "الضريبة",
+    "averageBasket": "متوسط السلة",
+    "paymentMethods": "طرق الدفع",
+    "method": "الطريقة",
+    "count": "العدد",
+    "amount": "المبلغ",
+    "taxBreakdown": "تفصيل الضريبة",
+    "component": "المكوّن",
+    "rate": "النسبة",
+    "base": "الأساس",
+    "cashReconciliation": "تسوية الصندوق",
+    "noRegisterSession": "لا توجد جلسة صندوق لهذا اليوم.",
+    "openingCash": "الصندوق الافتتاحي",
+    "expectedCash": "الصندوق المتوقع",
+    "actualCash": "الصندوق الفعلي",
+    "difference": "الفرق",
+    "register": "الصندوق",
+    "cashier": "أمين الصندوق",
+    "status": "الحالة",
+    "discounts": "الخصومات",
+    "lineDiscounts": "خصومات البنود",
+    "saleDiscounts": "خصومات المبيعات",
+    "couponDiscounts": "خصومات القسائم",
+    "totalDiscounts": "إجمالي الخصومات",
+    "corrections": "التصحيحات",
+    "voidedSales": "المبيعات الملغاة",
+    "returns": "المرتجعات",
+    "firstInvoice": "أول فاتورة",
+    "lastInvoice": "آخر فاتورة"
+  },
+  "cashRegister": {
+    "printZReport": "طباعة تقرير Z"
+  },
+  "team": {
+    "title": "الفريق",
+    "inviteUser": "دعوة مستخدم",
+    "members": "الأعضاء",
+    "shiftsTab": "الورديات",
+    "searchPlaceholder": "بحث…",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "roles": "الأدوار",
+    "status": "الحالة",
+    "empty": "لا يوجد أعضاء في الفريق بعد.",
+    "removeUser": "إزالة المستخدم",
+    "removeConfirm": "إزالة",
+    "remove": "إزالة"
+  },
+  "shifts": {
+    "employee": "الموظف",
+    "shifts": "الورديات",
+    "hours": "الساعات",
+    "overtime": "العمل الإضافي",
+    "date": "التاريخ",
+    "dailyBreakdown": "التفصيل اليومي",
+    "totalHours": "إجمالي الساعات",
+    "totalOvertime": "إجمالي العمل الإضافي",
+    "empty": "لا توجد بيانات ورديات لهذه الفترة."
+  },
+  "webhooks": {
+    "title": "ويب هوك",
+    "settingsHint": "إرسال أحداث الوقت الحقيقي إلى الخدمات الخارجية",
+    "about": "حول الويب هوك",
+    "aboutHint1": "ترسل الويب هوك طلبات HTTP POST إلى رابطك عندما تحدث أحداث في متجرك (مثل اكتمال البيع).",
+    "aboutHint2": "كل طلب موقّع بتوقيع HMAC-SHA256 في رأس X-Webhook-Signature حتى تتمكن من التحقق من أنها جاءت من SmartPOS.",
+    "aboutHint3": "يتم إعادة محاولة التسليمات الفاشلة حتى 3 مرات مع تراجع أُسّي.",
+    "add": "إضافة ويب هوك",
+    "url": "الرابط",
+    "events": "الأحداث",
+    "status": "الحالة",
+    "empty": "لم يتم تكوين ويب هوك. أضف واحدًا لبدء استقبال الأحداث.",
+    "createTitle": "إنشاء ويب هوك",
+    "deleteTitle": "حذف ويب هوك",
+    "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذا الويب هوك؟ لا يمكن التراجع عن هذا الإجراء.",
+    "createSuccess": "تم إنشاء الويب هوك",
+    "createFailed": "فشل إنشاء الويب هوك",
+    "deleteSuccess": "تم حذف الويب هوك",
+    "deleteFailed": "فشل حذف الويب هوك",
+    "secret": "السر",
+    "secretHint": "انسخ هذا السر الآن — لن يظهر مرة أخرى. استخدمه للتحقق من توقيعات الويب هوك.",
+    "secretCopied": "تم نسخ السر إلى الحافظة",
+    "viewSecret": "عرض السر",
+    "deliveryLog": "سجل التسليم",
+    "deliveriesEmpty": "لا توجد تسليمات بعد.",
+    "event": "الحدث",
+    "attempts": "المحاولات",
+    "deliveredAt": "تم التسليم في",
+    "createdAt": "أنشئ في",
+    "pending": "قيد الانتظار",
+    "error": "خطأ",
+    "retry": "إعادة المحاولة",
+    "retryQueued": "تمت جدولة إعادة المحاولة",
+    "retryFailed": "فشلت إعادة المحاولة",
+    "viewPayload": "عرض الحمولة",
+    "payload": "الحمولة",
+    "responseBody": "جسم الاستجابة",
+    "form": {
+      "url": "رابط النقطة النهائية",
+      "events": "الأحداث"
     }
   },
   "actions": {

@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ServerTheme } from "@/stores/theme";
 
 export interface AuthUser {
   id: string;
@@ -13,6 +14,8 @@ export interface AuthUser {
   permissions?: string[];
   business_id?: string | null;
   branch_id?: string | null;
+  /** Per-user UI preference synced with the account; `null` until the user picks one. */
+  theme?: ServerTheme | null;
 }
 
 interface AuthState {

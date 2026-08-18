@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
@@ -39,6 +41,7 @@ use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -55,6 +58,9 @@ Route::prefix('v1')->group(function () {
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
+        // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
+        // caller's own row, so an admin permission would be wrong here (see the controller).
+        Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:login');
         Route::get('auth/sessions', [AuthController::class, 'sessions']);
@@ -65,6 +71,8 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
         Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
         Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+
+        Route::get('health', HealthController::class)->middleware('permission:dashboard.view');
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
@@ -167,6 +175,8 @@ Route::prefix('v1')->group(function () {
             Route::get('inventory-valuation', [ReportController::class, 'inventoryValuation']);
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
+            Route::get('z-report', [ReportController::class, 'zReport']);
+            Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
         });
 
         // Reports — tax (output vs input tax, VAT/GST return shape)
@@ -224,6 +234,13 @@ Route::prefix('v1')->group(function () {
         Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
 
+        // Shifts / time clock
+        Route::post('shifts/clock-in', [ShiftController::class, 'clockIn'])->middleware('permission:shifts.view');
+        Route::post('shifts/clock-out', [ShiftController::class, 'clockOut'])->middleware('permission:shifts.view');
+        Route::get('shifts/me', [ShiftController::class, 'me'])->middleware('permission:shifts.view');
+        Route::get('shifts', [ShiftController::class, 'index'])->middleware('permission:shifts.view');
+        Route::get('reports/shifts', [ShiftController::class, 'report'])->middleware(['permission:reports.view', 'throttle:reports']);
+
         // Team — roles & permissions
         Route::get('permissions', [RoleController::class, 'permissions'])->middleware('permission:roles.view');
         Route::get('roles', [RoleController::class, 'index'])->middleware('permission:roles.view');
@@ -244,6 +261,16 @@ Route::prefix('v1')->group(function () {
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
+        Route::post('settings/onboarding/step', [SettingsController::class, 'recordOnboardingStep'])->middleware('permission:settings.update');
+
+        // Webhooks
+        Route::get('webhooks', [WebhookController::class, 'index'])->middleware('permission:settings.update');
+        Route::post('webhooks', [WebhookController::class, 'store'])->middleware('permission:settings.update');
+        Route::get('webhooks/{webhook}', [WebhookController::class, 'show'])->middleware('permission:settings.update');
+        Route::put('webhooks/{webhook}', [WebhookController::class, 'update'])->middleware('permission:settings.update');
+        Route::delete('webhooks/{webhook}', [WebhookController::class, 'destroy'])->middleware('permission:settings.update');
+        Route::get('webhook-deliveries', [WebhookController::class, 'deliveries'])->middleware('permission:settings.update');
+        Route::post('webhook-deliveries/{delivery}/retry', [WebhookController::class, 'retryDelivery'])->middleware('permission:settings.update');
 
         // Coupons & promotions
         Route::get('coupons', [CouponController::class, 'index'])->middleware('permission:coupons.view');

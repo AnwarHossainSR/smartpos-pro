@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
@@ -14,11 +14,17 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { useTranslation } from "@/i18n/provider";
+import { QuantityPopover } from "@/features/pos/components/quantity-popover";
+import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
 import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
 import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
+import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
+import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
+import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
 
 /* ---- types ---- */
-interface Product {
+export interface Product {
   id: string;
   name: string;
   sku: string | null;
@@ -258,26 +264,32 @@ function PaymentModal({
 
         <div className="space-y-2">
           {rows.map((row, i) => (
-            <div key={row.id} className="flex items-center gap-2">
-              <Select
-                className="w-40 shrink-0"
-                value={row.method}
-                onChange={(e) => updateRow(row.id, { method: e.target.value })}
-              >
-                {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </Select>
-              <Input
-                type="number"
-                step="0.01"
+            <div key={row.id} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Select
+                  className="w-40 shrink-0"
+                  value={row.method}
+                  onChange={(e) => updateRow(row.id, { method: e.target.value })}
+                >
+                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={row.amount}
+                  onChange={(e) => updateRow(row.id, { amount: e.target.value })}
+                  autoFocus={i === 0}
+                />
+                {rows.length > 1 && (
+                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <PaymentNumpad
                 value={row.amount}
-                onChange={(e) => updateRow(row.id, { amount: e.target.value })}
-                autoFocus={i === 0}
+                onChange={(v) => updateRow(row.id, { amount: v })}
               />
-              {rows.length > 1 && (
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addRow}>
@@ -307,6 +319,7 @@ export default function POSPage() {
   const { user, can } = useAuth();
   const canOverridePrice = can("pos.price_override");
   const canDiscount = can("pos.discount");
+  const t = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -314,6 +327,8 @@ export default function POSPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showHeld, setShowHeld] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
@@ -340,6 +355,12 @@ export default function POSPage() {
     queryFn: () => api<{ data: { price_display: PriceDisplay } }>("/settings/business"),
   });
   const priceDisplay: PriceDisplay = businessSettings?.data?.price_display ?? "exclusive";
+
+  const { data: heldData } = useQuery<Paginated<{ id: string }>>({
+    queryKey: queryKeys.heldSales.list(),
+    queryFn: () => api<Paginated<{ id: string }>>("/sales?status=held&per_page=20&sort=sold_at&direction=desc"),
+  });
+  const heldCount = heldData?.data?.length ?? 0;
 
   const defaultWarehouse = useMemo(
     () => warehousesData?.data?.find((w) => w.is_default) ?? warehousesData?.data?.[0],
@@ -378,34 +399,49 @@ export default function POSPage() {
     }
   }, [addToCart]);
 
-  // Keyboard-first operation: F2 refocuses the scanner/search input from anywhere on the
-  // screen, F9 jumps straight to payment, and any bare alphanumeric keystroke while nothing
-  // else is focused is treated as scanner input and routed into the search box — a barcode
-  // scanner is just a very fast keyboard, so if focus drifted (e.g. right after adding an
-  // item) its keystrokes shouldn't be silently dropped.
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "F2") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-      if (e.key === "F9") {
-        e.preventDefault();
-        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
-        return;
-      }
+  const voidLastLine = useCallback(() => {
+    setCart((prev) => {
+      if (prev.length === 0) return prev;
+      return prev.slice(0, -1);
+    });
+  }, []);
 
-      const active = document.activeElement;
-      const isTypingElsewhere = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
-      if (!isTypingElsewhere && !showPayment && !receipt && /^[a-zA-Z0-9]$/.test(e.key)) {
-        searchInputRef.current?.focus();
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cart.length, showPayment, receipt]);
+  const holdSale = useCallback(() => {
+    toast("Hold sale coming soon (G6)");
+  }, []);
 
+  const clearCart = useCallback(() => {
+    if (cart.length === 0) return;
+    setCart([]);
+    setCustomerId(null);
+    setCustomerSearch("");
+    toast("Cart cleared");
+  }, [cart.length]);
+
+  const handlers = useMemo(() => ({
+    focusSearch: () => searchInputRef.current?.focus(),
+    holdSale,
+    openPayment: () => {
+      if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+    },
+    voidLastLine,
+    closeModal: () => {
+      if (showPayment) setShowPayment(false);
+      if (receipt) setReceipt(null);
+    },
+    clearCart,
+    confirmPayment: () => {},
+    toggleHelp: () => setShowHelp((v) => !v),
+  }), [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart]);
+
+  const shortcutState = useMemo(() => ({
+    cartEmpty: cart.length === 0,
+    showPayment,
+    showReceipt: !!receipt,
+    showHelp,
+  }), [cart.length, showPayment, receipt, showHelp]);
+
+  usePosShortcuts(handlers, shortcutState);
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
       setCart((prev) => prev.filter((i) => i.product.id !== id));
@@ -472,6 +508,81 @@ export default function POSPage() {
     },
   });
 
+  const parkMutation = useMutation({
+    mutationFn: () => {
+      const idempotencyKey = crypto.randomUUID();
+      return api("/sales", {
+        method: "POST",
+        idempotencyKey,
+        body: {
+          branch_id: user?.branch_id,
+          warehouse_id: defaultWarehouse?.id,
+          customer_id: customerId,
+          status: "held",
+          items: cart.map((i) => ({
+            product_id: i.product.id,
+            quantity: i.qty,
+            unit_price: i.unit_price,
+            discount_amount: i.discount * i.qty,
+          })),
+          payments: [],
+        },
+      });
+    },
+    onSuccess: () => {
+      setCart([]);
+      setCustomerId(null);
+      setCustomerSearch("");
+      qc.invalidateQueries({ queryKey: queryKeys.heldSales.all });
+      qc.invalidateQueries({ queryKey: queryKeys.sales.all });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["pos-products"] });
+      toast(t("pos.parkSuccess"), "success");
+    },
+    onError: (e: unknown) => {
+      const detail = e instanceof ApiError ? e.message : "Could not park sale";
+      toast(detail, "error");
+    },
+  });
+
+  const handleResume = useCallback(
+    (items: HeldCartItem[], cid: string | null) => {
+      setCart(items.map((i) => ({ product: i.product, qty: i.qty, unit_price: i.unit_price, discount: i.discount })));
+      setCustomerId(cid);
+      setCustomerSearch("");
+      setShowHeld(false);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "F2") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (e.key === "F4") {
+        e.preventDefault();
+        if (cart.length > 0 && !showPayment && !receipt && !showHeld) parkMutation.mutate();
+        return;
+      }
+      if (e.key === "F9") {
+        e.preventDefault();
+        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+        return;
+      }
+
+      const active = document.activeElement;
+      const isTypingElsewhere = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+      if (!isTypingElsewhere && !showPayment && !receipt && !showHeld && /^[a-zA-Z0-9]$/.test(e.key)) {
+        searchInputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cart.length, showPayment, receipt, showHeld, parkMutation]);
+
   return (
     <div className="flex h-full gap-4 overflow-hidden">
       {/* Left: product search + grid */}
@@ -531,6 +642,15 @@ export default function POSPage() {
 
       {/* Right: cart */}
       <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+          <button
+            onClick={() => setShowHeld(true)}
+            className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
+          >
+            <Pause className="h-3.5 w-3.5" />
+            {t("pos.heldOrders.button", { count: heldCount })}
+          </button>
+        </div>
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div className="flex items-center gap-2 font-semibold">
             <ShoppingCart className="h-4 w-4" />
@@ -600,7 +720,10 @@ export default function POSPage() {
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty - 1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-8 text-center text-sm">{item.qty}</span>
+                    <QuantityPopover
+                      value={item.qty}
+                      onChange={(qty) => updateQty(item.product.id, qty)}
+                    />
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty + 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -661,13 +784,24 @@ export default function POSPage() {
             <span>Total</span>
             <span>{formatCurrency(cartTotal)}</span>
           </div>
-          <Button
-            className="w-full"
-            disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id}
-            onClick={() => setShowPayment(true)}
-          >
-            Checkout · {formatCurrency(cartTotal)}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id || parkMutation.isPending}
+              onClick={() => parkMutation.mutate()}
+            >
+              <Pause className="h-4 w-4" />
+              {t("pos.park")}
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id}
+              onClick={() => setShowPayment(true)}
+            >
+              {t("pos.checkout")} · {formatCurrency(cartTotal)}
+            </Button>
+          </div>
           {!defaultWarehouse && (
             <p className="text-xs text-center text-[var(--color-danger)]">No warehouse configured</p>
           )}
@@ -689,6 +823,13 @@ export default function POSPage() {
           onClose={() => setReceipt(null)}
         />
       )}
+
+      <ShortcutsOverlay open={showHelp} onClose={() => setShowHelp(false)} />
+      <HeldOrdersPanel
+        open={showHeld}
+        onClose={() => setShowHeld(false)}
+        onResume={handleResume}
+      />
     </div>
   );
 }

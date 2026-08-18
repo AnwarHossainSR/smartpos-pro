@@ -16,6 +16,7 @@ import { ThemeSync } from "@/components/theme-sync";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
+import { OnboardingWizard } from "@/features/onboarding";
 import { useTranslation } from "@/i18n/provider";
 
 function isTenantSuspendedError(error: unknown): boolean {
@@ -101,6 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ThemeSync />
+      <OnboardingWizard />
       {/* Fixed-height shell: the viewport itself never scrolls, so the sidebar and header stay put
           and <main> is the only scroll container. Pages can then size against `h-full` instead of
           re-deriving the header offset with calc(100vh - …). */}

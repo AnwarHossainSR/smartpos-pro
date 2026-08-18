@@ -58,7 +58,13 @@
     "signOut": "Abmelden",
     "light": "Hell",
     "dark": "Dunkel",
-    "system": "System"
+    "system": "System",
+    "clockIn": "Einstempeln",
+    "clockOut": "Ausstempeln",
+    "clockInSuccess": "Eingestempelt",
+    "clockOutSuccess": "Ausgestempelt",
+    "clockInError": "Einstempeln fehlgeschlagen",
+    "clockOutError": "Ausstempeln fehlgeschlagen"
   },
   "auth": {
     "loginTitle": "Willkommen zurück",
@@ -99,7 +105,9 @@
     "resetPasswordMissingLink": "Dieser Link zum Zurücksetzen fehlt oder ist ungültig. Fordern Sie einen neuen an.",
     "verifyBannerText": "Bitte bestätigen Sie Ihre E-Mail-Adresse.",
     "resendVerification": "E-Mail erneut senden",
-    "verificationSent": "Bestätigungs-E-Mail gesendet."
+    "verificationSent": "Bestätigungs-E-Mail gesendet.",
+    "verifyEmail": "E-Mail verifizieren",
+    "verificationSuccess": "E-Mail erfolgreich verifiziert"
   },
   "settings": {
     "title": "Einstellungen",
@@ -183,6 +191,210 @@
       "saving": "Speichert…",
       "create": "Produkt erstellen",
       "update": "Produkt aktualisieren"
+    }
+  },
+  "theme": {
+    "syncFailed": "Dein Design konnte nicht in deinem Konto gespeichert werden. Auf diesem Gerät bleibt es aktiv."
+  },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "Menge",
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "focusSearch": "Suche / Scan fokussieren",
+      "holdSale": "Verkauf parken",
+      "openPayment": "Zahlung öffnen",
+      "voidLastLine": "Letzte Zeile löschen",
+      "closeOrClear": "Modal schließen / Warenkorb leeren",
+      "confirmPayment": "Zahlung bestätigen",
+      "toggleHelp": "Diese Hilfe ein-/ausblenden"
+    },
+    "park": "PARKEN",
+    "parkSuccess": "Verkauf geparkt",
+    "checkout": "Kasse",
+    "heldOrders": {
+      "button": "Gehaltene Bestellungen ({count})",
+      "title": "Gehaltene Bestellungen",
+      "empty": "Keine gehaltenen Bestellungen",
+      "walkIn": "Stammkunde",
+      "items": "Artikel",
+      "resume": "Fortsetzen",
+      "discard": "Verwerfen",
+      "discardTitle": "Gehaltene Bestellung verwerfen?",
+      "discardConfirm": "\"{reference}\" verwerfen? Dies kann nicht rückgängig gemacht werden.",
+      "discardSuccess": "Bestellung verworfen"
+    }
+  },
+  "dashboard": {
+    "todaySales": "Heute-Umsatz",
+    "transactions": "Transaktionen",
+    "customerDues": "Kundenschulden",
+    "lowStockItems": "Geringe Bestände",
+    "weekComparison": "Wochenvergleich",
+    "salesTrend": "Umsatzentwicklung (letzte 14 Tage)",
+    "noSalesData": "Noch keine Verkaufsdaten",
+    "topProducts": "Top-Produkte",
+    "noTopProducts": "Noch keine Top-Produkte",
+    "recentTransactions": "Letzte Transaktionen",
+    "noRecentSales": "Keine aktuellen Verkäufe",
+    "walkIn": "Stammkunde",
+    "lowStockAlert": "Geringer Bestand Alarm",
+    "quickActions": "Schnellaktionen",
+    "newSale": "Neuer Verkauf",
+    "addProduct": "Produkt hinzufügen",
+    "openRegister": "Kasse öffnen",
+    "recordExpense": "Ausgabe erfassen",
+    "status": {
+      "paid": "Bezahlt",
+      "unpaid": "Unbezahlt",
+      "partial": "Teilweise"
+    }
+  },
+  "onboarding": {
+    "title": "Legen wir los",
+    "subtitle": "Richten Sie Ihren Laden in ein paar schnellen Schritten ein",
+    "stepOf": "Schritt {current} von {total}",
+    "skipSetup": "Einrichtung überspringen",
+    "skipStep": "Schritt überspringen",
+    "skipConfirmTitle": "Einrichtung überspringen?",
+    "skipConfirmBody": "Sie können die Einrichtung später jederzeit in den Einstellungen abschließen. Ihr Fortschritt wird gespeichert.",
+    "skipConfirmYes": "Ja, jetzt überspringen",
+    "steps": {
+      "business_profile": {
+        "title": "Geschäftsprofil",
+        "description": "Ihr Firmenname und Ihre Details sind bereits eingetragen. Sie können sie jederzeit in den Einstellungen ändern.",
+        "action": "Sieht gut aus, weiter",
+        "configure": "Einstellungen öffnen"
+      },
+      "first_product": {
+        "title": "Erstes Produkt",
+        "description": "Fügen Sie Ihr erstes Produkt hinzu, um sofort mit dem Verkauf beginnen zu können.",
+        "action": "Produkt hinzugefügt",
+        "configure": "Zu den Produkten"
+      },
+      "tax_setup": {
+        "title": "Steuerprofil",
+        "description": "Wählen Sie ein Steuerprofil für Ihre Region aus, oder überspringen Sie diesen Schritt, wenn Sie Steuern extern verwalten.",
+        "action": "Steuern sind konfiguriert",
+        "configure": "Steuer-Einstellungen öffnen"
+      },
+      "register_sale": {
+        "title": "Kasse öffnen",
+        "description": "Öffnen Sie Ihre Kasse und tätigen Sie Ihren ersten Verkauf, um die Einrichtung abzuschließen.",
+        "action": "Fertig, los geht's!",
+        "configure": "Zur POS"
+      }
+    }
+  },
+  "reports": {
+    "taxReport": "Steuerbericht",
+    "from": "Von",
+    "to": "Bis",
+    "branch": "Filiale",
+    "allBranches": "Alle Filialen",
+    "downloadPdf": "PDF herunterladen",
+    "noData": "Keine Daten für diesen Zeitraum.",
+    "transactions": "Transaktionen",
+    "netSales": "Nettoumsatz",
+    "tax": "Steuer",
+    "averageBasket": "Durchschn. Warenkorb",
+    "paymentMethods": "Zahlungsmethoden",
+    "method": "Methode",
+    "count": "Anzahl",
+    "amount": "Betrag",
+    "taxBreakdown": "Steuerübersicht",
+    "component": "Komponente",
+    "rate": "Satz",
+    "base": "Basis",
+    "cashReconciliation": "Bargeldabstimmung",
+    "noRegisterSession": "Keine Kassensitzung an diesem Tag.",
+    "openingCash": "Anfangsbargeld",
+    "expectedCash": "Erwartetes Bargeld",
+    "actualCash": "Tatsächliches Bargeld",
+    "difference": "Differenz",
+    "register": "Kasse",
+    "cashier": "Kassierer",
+    "status": "Status",
+    "discounts": "Rabatte",
+    "lineDiscounts": "Positionsrabatte",
+    "saleDiscounts": "Verkaufsrabatte",
+    "couponDiscounts": "Gutscheinrabatte",
+    "totalDiscounts": "Gesamtrabatte",
+    "corrections": "Korrekturen",
+    "voidedSales": "Stornierte Verkäufe",
+    "returns": "Rückgaben",
+    "firstInvoice": "Erste Rechnung",
+    "lastInvoice": "Letzte Rechnung"
+  },
+  "cashRegister": {
+    "printZReport": "Z-Bericht drucken"
+  },
+  "team": {
+    "title": "Team",
+    "inviteUser": "Benutzer einladen",
+    "members": "Mitglieder",
+    "shiftsTab": "Schichten",
+    "searchPlaceholder": "Suchen…",
+    "name": "Name",
+    "email": "E-Mail",
+    "roles": "Rollen",
+    "status": "Status",
+    "empty": "Noch keine Teammitglieder.",
+    "removeUser": "Benutzer entfernen",
+    "removeConfirm": "Entfernen",
+    "remove": "Entfernen"
+  },
+  "shifts": {
+    "employee": "Mitarbeiter",
+    "shifts": "Schichten",
+    "hours": "Stunden",
+    "overtime": "Überstunden",
+    "date": "Datum",
+    "dailyBreakdown": "Tägliche Aufschlüsselung",
+    "totalHours": "Gesamtstunden",
+    "totalOvertime": "Gesamtüberstunden",
+    "empty": "Keine Schichtdaten für diesen Zeitraum."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "settingsHint": "Echtzeitereignisse an externe Dienste senden",
+    "about": "Über Webhooks",
+    "aboutHint1": "Webhooks senden HTTP-POST-Anfragen an deine URL, wenn Ereignisse in deinem Laden stattfinden (z.B. ein Verkauf abgeschlossen wird).",
+    "aboutHint2": "Jede Anfrage wird mit einer HMAC-SHA256-Signatur im X-Webhook-Signature-Header signiert, damit du überprüfen kannst, ob sie von SmartPOS stammt.",
+    "aboutHint3": "Fehlgeschlagene Zustellungen werden bis zu 3 Mal mit exponentiellem Backoff wiederholt.",
+    "add": "Webhook hinzufügen",
+    "url": "URL",
+    "events": "Ereignisse",
+    "status": "Status",
+    "empty": "Keine Webhooks konfiguriert. Füge einen hinzu, um Ereignisse zu empfangen.",
+    "createTitle": "Webhook erstellen",
+    "deleteTitle": "Webhook löschen",
+    "deleteConfirm": "Bist du sicher, dass du diesen Webhook löschen möchtest? Dies kann nicht rückgängig gemacht werden.",
+    "createSuccess": "Webhook erstellt",
+    "createFailed": "Webhook konnte nicht erstellt werden",
+    "deleteSuccess": "Webhook gelöscht",
+    "deleteFailed": "Webhook konnte nicht gelöscht werden",
+    "secret": "Geheimnis",
+    "secretHint": "Kopiere dieses Geheimnis jetzt — es wird nicht noch einmal angezeigt. Verwende es, um Webhook-Signaturen zu überprüfen.",
+    "secretCopied": "Geheimnis in die Zwischenablage kopiert",
+    "viewSecret": "Geheimnis anzeigen",
+    "deliveryLog": "Zustellungsprotokoll",
+    "deliveriesEmpty": "Noch keine Zustellungen.",
+    "event": "Ereignis",
+    "attempts": "Versuche",
+    "deliveredAt": "Zugestellt am",
+    "createdAt": "Erstellt",
+    "pending": "Ausstehend",
+    "error": "Fehler",
+    "retry": "Wiederholen",
+    "retryQueued": "Wiederholung in Warteschlange",
+    "retryFailed": "Wiederholung fehlgeschlagen",
+    "viewPayload": "Nutzlast anzeigen",
+    "payload": "Nutzlast",
+    "responseBody": "Antwortkörper",
+    "form": {
+      "url": "Endpoint-URL",
+      "events": "Ereignisse"
     }
   },
   "actions": {

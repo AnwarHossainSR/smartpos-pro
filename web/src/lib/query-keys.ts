@@ -29,6 +29,7 @@ export const queryKeys = {
   units: resource("units"),
   warehouses: resource("warehouses"),
   sales: resource("sales"),
+  heldSales: resource("held-sales"),
   purchases: resource("purchases"),
   customers: resource("customers"),
   suppliers: resource("suppliers"),
@@ -49,4 +50,13 @@ export const queryKeys = {
   },
 
   businessSettings: ["business-settings"] as const,
+
+  shifts: {
+    all: ["shifts"] as const,
+    me: ["shifts", "me"] as const,
+    list: (params?: ListParams) => ["shifts", "list", params ?? {}] as const,
+    report: (params?: ListParams) => ["shifts", "report", params ?? {}] as const,
+  },
+  webhooks: resource("webhooks"),
+  webhookDeliveries: resource("webhook-deliveries"),
 } as const;

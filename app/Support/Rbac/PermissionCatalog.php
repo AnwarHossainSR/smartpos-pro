@@ -27,6 +27,7 @@ class PermissionCatalog
         'coupons' => ['view', 'create', 'update', 'delete'],
         'loyalty' => ['view', 'manage'],
         'subscriptions' => ['view', 'manage'],
+        'shifts' => ['view', 'manage'],
         'users' => ['view', 'create', 'update', 'delete'],
         'roles' => ['view', 'create', 'update', 'delete'],
         'settings' => ['view', 'update'],
@@ -69,11 +70,11 @@ class PermissionCatalog
                 'products.view', 'inventory.view', 'inventory.adjust', 'inventory.approve',
                 'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
-                'reports.view', 'reports.export',
+                'reports.view', 'reports.export', 'shifts.view', 'shifts.manage',
             ]],
             'cashier' => ['name' => 'Cashier', 'permissions' => [
                 'dashboard.view', 'products.view', 'pos.view', 'pos.create',
-                'sales.view', 'customers.view', 'customers.create',
+                'sales.view', 'customers.view', 'customers.create', 'shifts.view',
             ]],
             'accountant' => ['name' => 'Accountant', 'permissions' => [
                 'dashboard.view', 'accounting.view', 'accounting.create', 'accounting.approve',

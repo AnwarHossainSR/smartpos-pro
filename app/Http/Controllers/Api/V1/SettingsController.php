@@ -43,9 +43,38 @@ class SettingsController extends Controller
     public function completeOnboarding(Request $request): JsonResponse
     {
         $business = Business::findOrFail($request->user()->business_id);
-        $business->update(['onboarding_completed' => true]);
+        $business->update([
+            'onboarding_completed' => true,
+            'onboarding_state' => array_merge($business->onboarding_state ?? [], ['dismissed' => true]),
+        ]);
 
         return response()->json(['data' => ['onboarding_completed' => true]]);
+    }
+
+    public function recordOnboardingStep(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'step' => ['required', 'string', 'in:business_profile,first_product,tax_setup,register_sale'],
+            'completed' => ['required', 'boolean'],
+        ]);
+
+        $business = Business::findOrFail($request->user()->business_id);
+
+        $state = $business->onboarding_state ?? [];
+        $state[$data['step']] = $data['completed'];
+
+        $stepOrder = ['business_profile', 'first_product', 'tax_setup', 'register_sale'];
+        $completedIndex = -1;
+        foreach ($stepOrder as $i => $s) {
+            if (! empty($state[$s])) {
+                $completedIndex = $i;
+            }
+        }
+        $state['current_step'] = $completedIndex + 1;
+
+        $business->update(['onboarding_state' => $state]);
+
+        return response()->json(['data' => ['onboarding_state' => $state]]);
     }
 
     protected function present(Business $business): array
@@ -66,6 +95,7 @@ class SettingsController extends Controller
             'logo_path' => $business->logo_path,
             'settings' => $business->settings ?? [],
             'onboarding_completed' => (bool) $business->onboarding_completed,
+            'onboarding_state' => $business->onboarding_state ?? null,
         ];
     }
 }
