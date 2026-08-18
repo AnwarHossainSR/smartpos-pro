@@ -194,5 +194,30 @@
     "downloading": "Wird heruntergeladen…",
     "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
     "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
+  },
+  "dashboard": {
+    "todaySales": "Heute-Umsatz",
+    "transactions": "Transaktionen",
+    "customerDues": "Kundenschulden",
+    "lowStockItems": "Geringe Bestände",
+    "weekComparison": "Wochenvergleich",
+    "salesTrend": "Umsatzentwicklung (letzte 14 Tage)",
+    "noSalesData": "Noch keine Verkaufsdaten",
+    "topProducts": "Top-Produkte",
+    "noTopProducts": "Noch keine Top-Produkte",
+    "recentTransactions": "Letzte Transaktionen",
+    "noRecentSales": "Keine aktuellen Verkäufe",
+    "walkIn": "Stammkunde",
+    "lowStockAlert": "Geringer Bestand Alarm",
+    "quickActions": "Schnellaktionen",
+    "newSale": "Neuer Verkauf",
+    "addProduct": "Produkt hinzufügen",
+    "openRegister": "Kasse öffnen",
+    "recordExpense": "Ausgabe erfassen",
+    "status": {
+      "paid": "Bezahlt",
+      "unpaid": "Unbezahlt",
+      "partial": "Teilweise"
+    }
   }
 }

@@ -199,5 +199,30 @@
     "downloading": "Downloading…",
     "downloadInvoiceFailed": "Could not download the invoice",
     "downloadSlipFailed": "Could not download the slip"
+  },
+  "dashboard": {
+    "todaySales": "Today's sales",
+    "transactions": "Transactions",
+    "customerDues": "Customer dues",
+    "lowStockItems": "Low stock items",
+    "weekComparison": "Week comparison",
+    "salesTrend": "Sales trend (last 14 days)",
+    "noSalesData": "No sales data yet",
+    "topProducts": "Top products",
+    "noTopProducts": "No top products yet",
+    "recentTransactions": "Recent transactions",
+    "noRecentSales": "No recent sales",
+    "walkIn": "Walk-in",
+    "lowStockAlert": "Low stock alert",
+    "quickActions": "Quick actions",
+    "newSale": "New Sale",
+    "addProduct": "Add Product",
+    "openRegister": "Open Register",
+    "recordExpense": "Record Expense",
+    "status": {
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "partial": "Partial"
+    }
   }
 }

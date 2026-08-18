@@ -194,5 +194,30 @@
     "downloading": "ダウンロード中…",
     "downloadInvoiceFailed": "請求書をダウンロードできませんでした",
     "downloadSlipFailed": "精算票をダウンロードできませんでした"
+  },
+  "dashboard": {
+    "todaySales": "今日の売上",
+    "transactions": "取引数",
+    "customerDues": "顧客未払い",
+    "lowStockItems": "在庫切れ商品",
+    "weekComparison": "週間比較",
+    "salesTrend": "売上推移（過去14日）",
+    "noSalesData": "まだ売上データがありません",
+    "topProducts": "人気商品",
+    "noTopProducts": "まだ人気商品がありません",
+    "recentTransactions": "最近の取引",
+    "noRecentSales": "最近の売上がありません",
+    "walkIn": "レジ客",
+    "lowStockAlert": "在庫切れ警報",
+    "quickActions": "クイックアクション",
+    "newSale": "新規販売",
+    "addProduct": "商品追加",
+    "openRegister": "レジを開く",
+    "recordExpense": "経費記録",
+    "status": {
+      "paid": "支払済",
+      "unpaid": "未払い",
+      "partial": "一部払い"
+    }
   }
 }
