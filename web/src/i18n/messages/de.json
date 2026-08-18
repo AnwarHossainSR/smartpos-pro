@@ -188,6 +188,10 @@
   "theme": {
     "syncFailed": "Dein Design konnte nicht in deinem Konto gespeichert werden. Auf diesem Gerät bleibt es aktiv."
   },
+  "pos": {
+    "numpadConfirm": "OK",
+    "quantity": "Menge"
+  },
   "actions": {
     "downloadInvoice": "Rechnung herunterladen",
     "downloadSlip": "Kassenbon herunterladen",

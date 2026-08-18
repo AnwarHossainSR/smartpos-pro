@@ -14,6 +14,8 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { QuantityPopover } from "@/features/pos/components/quantity-popover";
+import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
 import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
 import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
 
@@ -258,26 +260,32 @@ function PaymentModal({
 
         <div className="space-y-2">
           {rows.map((row, i) => (
-            <div key={row.id} className="flex items-center gap-2">
-              <Select
-                className="w-40 shrink-0"
-                value={row.method}
-                onChange={(e) => updateRow(row.id, { method: e.target.value })}
-              >
-                {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </Select>
-              <Input
-                type="number"
-                step="0.01"
+            <div key={row.id} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Select
+                  className="w-40 shrink-0"
+                  value={row.method}
+                  onChange={(e) => updateRow(row.id, { method: e.target.value })}
+                >
+                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </Select>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={row.amount}
+                  onChange={(e) => updateRow(row.id, { amount: e.target.value })}
+                  autoFocus={i === 0}
+                />
+                {rows.length > 1 && (
+                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <PaymentNumpad
                 value={row.amount}
-                onChange={(e) => updateRow(row.id, { amount: e.target.value })}
-                autoFocus={i === 0}
+                onChange={(v) => updateRow(row.id, { amount: v })}
               />
-              {rows.length > 1 && (
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addRow}>
@@ -600,7 +608,10 @@ export default function POSPage() {
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty - 1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-8 text-center text-sm">{item.qty}</span>
+                    <QuantityPopover
+                      value={item.qty}
+                      onChange={(qty) => updateQty(item.product.id, qty)}
+                    />
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty + 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>
