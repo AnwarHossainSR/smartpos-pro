@@ -19,7 +19,7 @@ class Business extends Model
     protected $fillable = [
         'tenant_id', 'name', 'type', 'legal_name', 'email', 'phone', 'tax_number',
         'tax_profile_id', 'price_display', 'currency', 'timezone', 'logo_path',
-        'settings', 'onboarding_completed',
+        'settings', 'onboarding_completed', 'onboarding_state',
     ];
 
     protected function casts(): array
@@ -29,6 +29,7 @@ class Business extends Model
             'price_display' => PriceDisplay::class,
             'settings' => 'array',
             'onboarding_completed' => 'boolean',
+            'onboarding_state' => 'array',
         ];
     }
 

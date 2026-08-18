@@ -247,6 +247,7 @@ Route::prefix('v1')->group(function () {
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
+        Route::post('settings/onboarding/step', [SettingsController::class, 'recordOnboardingStep'])->middleware('permission:settings.update');
 
         // Coupons & promotions
         Route::get('coupons', [CouponController::class, 'index'])->middleware('permission:coupons.view');

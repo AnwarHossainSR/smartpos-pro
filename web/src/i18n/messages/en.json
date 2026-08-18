@@ -199,5 +199,41 @@
     "downloading": "Downloading…",
     "downloadInvoiceFailed": "Could not download the invoice",
     "downloadSlipFailed": "Could not download the slip"
+  },
+  "onboarding": {
+    "title": "Let's get started",
+    "subtitle": "Set up your store in a few quick steps",
+    "stepOf": "Step {current} of {total}",
+    "skipSetup": "Skip setup",
+    "skipStep": "Skip step",
+    "skipConfirmTitle": "Skip setup?",
+    "skipConfirmBody": "You can finish setting up later from Settings. Your progress will be saved.",
+    "skipConfirmYes": "Yes, skip for now",
+    "steps": {
+      "business_profile": {
+        "title": "Business profile",
+        "description": "Your business name and details are already set. You can update them in Settings anytime.",
+        "action": "Looks good, next",
+        "configure": "Open settings"
+      },
+      "first_product": {
+        "title": "First product",
+        "description": "Add your first product so you can start selling right away.",
+        "action": "I've added a product",
+        "configure": "Go to products"
+      },
+      "tax_setup": {
+        "title": "Tax setup",
+        "description": "Pick a tax profile that matches your region, or skip if you handle taxes externally.",
+        "action": "Tax is configured",
+        "configure": "Open tax settings"
+      },
+      "register_sale": {
+        "title": "Open register",
+        "description": "Open your cash register and make your first sale to complete the setup.",
+        "action": "Done, let's sell!",
+        "configure": "Go to POS"
+      }
+    }
   }
 }
