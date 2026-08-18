@@ -52,6 +52,18 @@ export function openPdfBlob(blob: Blob) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Saves a fetched blob straight to disk — the download counterpart to `openPdfBlob`. Used for
+ *  the `?download=1` PDF endpoints: their Content-Disposition filename doesn't survive the
+ *  fetch-to-blob round trip, so the name has to be re-applied here. */
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
+
 /** Client-side CSV export — no backend endpoint required for a plain list dump. */
 export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   if (rows.length === 0) return;

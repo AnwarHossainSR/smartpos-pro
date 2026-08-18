@@ -187,5 +187,12 @@
   },
   "theme": {
     "syncFailed": "تعذّر حفظ المظهر في حسابك. لا يزال مطبَّقًا على هذا الجهاز."
+  },
+  "actions": {
+    "downloadInvoice": "تنزيل الفاتورة",
+    "downloadSlip": "تنزيل إيصال الصندوق",
+    "downloading": "جارٍ التنزيل…",
+    "downloadInvoiceFailed": "تعذّر تنزيل الفاتورة",
+    "downloadSlipFailed": "تعذّر تنزيل إيصال الصندوق"
   }
 }

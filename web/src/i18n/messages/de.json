@@ -187,5 +187,12 @@
   },
   "theme": {
     "syncFailed": "Dein Design konnte nicht in deinem Konto gespeichert werden. Auf diesem Gerät bleibt es aktiv."
+  },
+  "actions": {
+    "downloadInvoice": "Rechnung herunterladen",
+    "downloadSlip": "Kassenbon herunterladen",
+    "downloading": "Wird heruntergeladen…",
+    "downloadInvoiceFailed": "Rechnung konnte nicht heruntergeladen werden",
+    "downloadSlipFailed": "Kassenbon konnte nicht heruntergeladen werden"
   }
 }

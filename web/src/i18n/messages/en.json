@@ -192,5 +192,12 @@
   },
   "theme": {
     "syncFailed": "Couldn't save your theme to your account. It's still applied on this device."
+  },
+  "actions": {
+    "downloadInvoice": "Download invoice",
+    "downloadSlip": "Download slip",
+    "downloading": "Downloading…",
+    "downloadInvoiceFailed": "Could not download the invoice",
+    "downloadSlipFailed": "Could not download the slip"
   }
 }
