@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -247,6 +248,15 @@ Route::prefix('v1')->group(function () {
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
+
+        // Webhooks
+        Route::get('webhooks', [WebhookController::class, 'index'])->middleware('permission:settings.update');
+        Route::post('webhooks', [WebhookController::class, 'store'])->middleware('permission:settings.update');
+        Route::get('webhooks/{webhook}', [WebhookController::class, 'show'])->middleware('permission:settings.update');
+        Route::put('webhooks/{webhook}', [WebhookController::class, 'update'])->middleware('permission:settings.update');
+        Route::delete('webhooks/{webhook}', [WebhookController::class, 'destroy'])->middleware('permission:settings.update');
+        Route::get('webhook-deliveries', [WebhookController::class, 'deliveries'])->middleware('permission:settings.update');
+        Route::post('webhook-deliveries/{delivery}/retry', [WebhookController::class, 'retryDelivery'])->middleware('permission:settings.update');
 
         // Coupons & promotions
         Route::get('coupons', [CouponController::class, 'index'])->middleware('permission:coupons.view');

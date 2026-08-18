@@ -49,4 +49,7 @@ export const queryKeys = {
   },
 
   businessSettings: ["business-settings"] as const,
+
+  webhooks: resource("webhooks"),
+  webhookDeliveries: resource("webhook-deliveries"),
 } as const;

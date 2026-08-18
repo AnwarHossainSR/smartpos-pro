@@ -507,6 +507,28 @@ logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values
 this business issues — see `POST /sales`. Changing it does not renumber past sales and does
 not reset the counter.
 
+## Webhooks
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `GET /webhooks` | `settings.update` | list all webhooks for the tenant |
+| `POST /webhooks` | `settings.update` | create a webhook (`url`, `events[]`); returns the secret once |
+| `GET /webhooks/{webhook}` | `settings.update` | show a single webhook |
+| `PUT /webhooks/{webhook}` | `settings.update` | update URL, events, or is_active |
+| `DELETE /webhooks/{webhook}` | `settings.update` | delete a webhook and its deliveries |
+| `GET /webhook-deliveries` | `settings.update` | paginated delivery log (filterable by `webhook_id`, `event`) |
+| `POST /webhook-deliveries/{delivery}/retry` | `settings.update` | re-queue a failed delivery |
+
+**Supported events:** `sale.completed`, `sale.returned`, `customer.created`, `inventory.low`
+
+Each webhook delivery is signed with HMAC-SHA256 (`X-Webhook-Signature` header) using the
+webhook's secret. The payload is JSON in the request body. Additional headers:
+`X-Webhook-Event` (event name), `X-Webhook-Delivery` (delivery UUID). Failed deliveries are
+retried up to 3 times with exponential backoff (30s, 120s, 300s).
+
+`POST /webhooks` returns the secret in the response body — it is **not** stored in plaintext
+and cannot be retrieved later.
+
 ## Loyalty points
 
 | Method & path | Permission | Notes |
