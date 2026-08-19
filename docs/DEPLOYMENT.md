@@ -259,29 +259,24 @@ limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;
 with `dashboard.view` permission. Use for uptime monitoring (Betterstack, UptimeRobot,
 etc.).
 
-### 5.2 Sentry
+### 5.2 PostHog telemetry
 
-**Backend (Laravel):**
+Error and product telemetry runs through PostHog on the backend only — the Next.js app
+ships no telemetry SDK.
 
-1. Install: `composer require sentry/sentry-laravel`
-2. Set the DSN in `.env`:
+1. Install (already in `composer.json`): `composer require posthog/posthog-php`
+2. Set the project key in `.env`:
    ```dotenv
-   SENTRY_LARAVEL_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
-   SENTRY_ENVIRONMENT=production
-   SENTRY_TRACES_SAMPLE_RATE=0.2
+   POSTHOG_KEY=phc_yourProjectKey
+   POSTHOG_HOST=https://us.i.posthog.com
    ```
-3. Config lives in `config/sentry.php`. Errors in `local`/`testing` are dropped automatically.
-
-**Frontend (Next.js):**
-
-1. Install: `bun add @sentry/nextjs`
-2. Set the DSN in `.env.local`:
-   ```dotenv
-   NEXT_PUBLIC_SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
-   NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
-   ```
-3. Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`.
-4. A global `error.tsx` at `src/app/error.tsx` catches unhandled errors.
+3. `config/posthog.php` gates everything: with no key, or outside `production` unless
+   `POSTHOG_ENABLED=true`, every call is a no-op — local runs and tests never phone home.
+4. `App\Support\Telemetry\Telemetry` is the only entry point (`capture()`,
+   `captureException()`). Failed queue jobs report through it, and the `error-tracking`
+   middleware reports 5xx API responses.
+5. Frontend: a global `error.tsx` at `web/src/app/error.tsx` renders the fallback UI for
+   unhandled errors; it reports nothing to a third party.
 
 ### 5.3 Log aggregation
 

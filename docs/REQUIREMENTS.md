@@ -125,7 +125,7 @@ small — one task = one coherent, reviewable slice.
 ### T61 · E2E tests (Playwright): POS checkout happy path
 ### T62 · Frontend component/unit tests
 ### T63 · Richer demo seed data (multi-branch, returns, journals)
-### T64 · Deployment guides & infra hardening (AWS, Cloudflare, Sentry, PostHog)
+### T64 · Deployment guides & infra hardening (AWS, Cloudflare, PostHog)
 
 ## Phase 5 — Design system refresh + i18n & currency  (`web`)
 

@@ -851,7 +851,7 @@ anonymize action (double-confirm) on customer detail.
 ---
 
 ### G34 · Observability
-- Sentry (Laravel + Next.js both; `sentry-laravel`, `@sentry/nextjs`), PostHog frontend
+- PostHog on the backend only (`posthog/posthog-php`); no telemetry SDK in the Next.js app
   capture, `GET /v1/health` (db/redis/queue checks), error-boundary component in web root layout
 
 **Dependencies:** None (independent)
@@ -1023,6 +1023,6 @@ by the pre-paint script in `app/layout.tsx`. Tests: `tests/Feature/Api/ThemePref
 | 7 | G30 Backups | backup schedule + S3 | — | ⬜ | [#72](https://github.com/AnwarHossainSR/smartpos-pro/issues/72) |
 | 7 | G31 Retention & GDPR | prune + anonymize | settings card | ⬜ | [#74](https://github.com/AnwarHossainSR/smartpos-pro/issues/74) |
 | 7 | G33 Critical test suite | E2E + concurrency | — | ⬜ | [#75](https://github.com/AnwarHossainSR/smartpos-pro/issues/75) |
-| 7 | G34 Observability | Sentry + health | error boundary | ⬜ | [#76](https://github.com/AnwarHossainSR/smartpos-pro/issues/76) |
+| 7 | G34 Observability | PostHog + health | error boundary | ⬜ | [#76](https://github.com/AnwarHossainSR/smartpos-pro/issues/76) |
 | 7 | G21 Webhooks (T110) | webhook service + CRUD | settings card | ⬜ | [#77](https://github.com/AnwarHossainSR/smartpos-pro/issues/77) |
 | 7 | G28 Per-user theme sync | theme column + API | theme store | ✅ | [#78](https://github.com/AnwarHossainSR/smartpos-pro/issues/78) |
