@@ -19,6 +19,7 @@
         "dashboard": "ড্যাশবোর্ড",
         "pos": "পিওএস টার্মিনাল",
         "products": "পণ্য",
+        "labels": "বারকোড লেবেল",
         "inventory": "ইনভেন্টরি",
         "sales": "বিক্রয়",
         "purchases": "ক্রয়",
@@ -34,7 +35,9 @@
         "notifications": "বিজ্ঞপ্তি",
         "settings": "সেটিংস",
         "auditLog": "অডিট লগ",
-        "testData": "পরীক্ষার তথ্য"
+        "testData": "পরীক্ষার তথ্য",
+        "catalogSetup": "ক্যাটাগরি ও ব্র্যান্ড",
+        "locations": "শাখা ও গুদাম"
     },
     "sidebar": {
         "collapse": "সাইডবার সংকুচিত করুন",

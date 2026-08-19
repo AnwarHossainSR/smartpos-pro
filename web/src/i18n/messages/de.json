@@ -19,6 +19,7 @@
         "dashboard": "Übersicht",
         "pos": "Kassenterminal",
         "products": "Produkte",
+        "labels": "Barcode-Etiketten",
         "inventory": "Lagerbestand",
         "sales": "Verkäufe",
         "purchases": "Einkäufe",
@@ -34,7 +35,9 @@
         "notifications": "Benachrichtigungen",
         "settings": "Einstellungen",
         "auditLog": "Audit-Protokoll",
-        "testData": "Testdaten"
+        "testData": "Testdaten",
+        "catalogSetup": "Kategorien & Marken",
+        "locations": "Filialen & Lager"
     },
     "sidebar": {
         "collapse": "Seitenleiste einklappen",
