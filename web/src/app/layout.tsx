@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
-import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali, Noto_Sans_JP, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -9,48 +7,6 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const notoBengali = Noto_Sans_Bengali({ variable: "--font-noto-bengali", subsets: ["bengali"] });
 const notoJP = Noto_Sans_JP({ variable: "--font-noto-jp", subsets: ["latin"] });
 const notoArabic = Noto_Sans_Arabic({ variable: "--font-noto-arabic", subsets: ["arabic"] });
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-
-  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
-
-  tracesSampleRate: 0.2,
-
-  profilesSampleRate: 0.2,
-
-  beforeSend(event) {
-    if (event.exception) {
-      const exceptions = event.exception.values;
-      const filtered = exceptions?.filter((ex: any) => {
-        const type = ex.type || '';
-        const message = ex.value || '';
-
-        const noisyPatterns = [
-          'React',
-          'Component',
-          'fiber',
-          'scheduleWork',
-          'render',
-          'useEffect',
-        ];
-
-        return !noisyPatterns.some((p: string) => type.includes(p) || message.includes(p));
-      });
-
-      if (filtered.length < exceptions.length) {
-        event.exception.values = filtered;
-      }
-    }
-
-    return event;
-  },
-
-  release: process.env.SENTRY_RELEASE || process.env.npm_package_version || 'smartpos-pro',
-
-  enabled:
-    process.env.NODE_ENV === "production" && !!process.env.NEXT_PUBLIC_SENTRY_DSN,
-});
 
 const NO_FLASH_SCRIPT = `(function(){try{
 var d=document.documentElement;

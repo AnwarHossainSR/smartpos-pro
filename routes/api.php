@@ -58,7 +58,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('signed')->name('verification.verify');
 
     // ---- Authenticated + tenant-scoped ----
-    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'sentry-error-tracking'])->group(function () {
+    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
         // caller's own row, so an admin permission would be wrong here (see the controller).

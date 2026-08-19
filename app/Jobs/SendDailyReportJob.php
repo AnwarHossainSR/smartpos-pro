@@ -15,7 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Sentry\SentrySdk;
+use App\Support\Telemetry\Telemetry;
 
 /**
  * Sends a daily sales summary email to the business owner.
@@ -65,6 +65,6 @@ class SendDailyReportJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        SentrySdk::captureException($exception);
+        app(Telemetry::class)->captureException($exception);
     }
 }

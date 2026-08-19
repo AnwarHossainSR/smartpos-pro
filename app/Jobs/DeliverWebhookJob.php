@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Sentry\SentrySdk;
+use App\Support\Telemetry\Telemetry;
 
 class DeliverWebhookJob implements ShouldQueue
 {
@@ -76,6 +76,6 @@ class DeliverWebhookJob implements ShouldQueue
             throw $e;
         }
 
-        SentrySdk::captureException($e);
+        app(Telemetry::class)->captureException($e);
     }
 }

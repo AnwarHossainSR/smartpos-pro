@@ -5,7 +5,7 @@ use App\Http\Middleware\EnsureTenant;
 use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SecurityHeaders;
-use App\Http\Middleware\SentryErrorTracking;
+use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => CheckPermission::class,
             'idempotency' => Idempotency::class,
             'super_admin' => SuperAdmin::class,
-            'sentry-error-tracking' => SentryErrorTracking::class,
+            'error-tracking' => ErrorTracking::class,
         ]);
 
         $middleware->throttleApi();

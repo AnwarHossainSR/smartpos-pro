@@ -14,7 +14,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Str;
-use Sentry\SentrySdk;
+use App\Support\Telemetry\Telemetry;
 
 class PruneAuditLogsJob implements ShouldQueue
 {
@@ -72,6 +72,6 @@ class PruneAuditLogsJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        SentrySdk::captureException($exception);
+        app(Telemetry::class)->captureException($exception);
     }
 }
