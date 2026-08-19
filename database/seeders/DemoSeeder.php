@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\TaxGroup;
@@ -36,10 +37,12 @@ class DemoSeeder extends Seeder
         $tenantId = $owner->tenant_id;
         app(TenantContext::class)->set($tenantId);
 
-        $this->command?->info("Tenant: Demo Store BD | Login: admin@demostore.com / password123");
+        $this->command?->info('Tenant: Demo Store BD | Login: admin@demostore.com / password123');
 
         $this->seedTax($tenantId);
         $this->seedCatalog($tenantId);
+
+        app(AccountSeeder::class)->run();
 
         $this->command?->info('Done. Plans + tax + catalog seeded.');
     }
@@ -73,7 +76,7 @@ class DemoSeeder extends Seeder
         ];
 
         foreach ($plans as $plan) {
-            \App\Models\Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
+            Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
         }
     }
 
@@ -129,7 +132,7 @@ class DemoSeeder extends Seeder
         foreach ($zones as $i => $zone) {
             TaxZone::updateOrCreate(['tenant_id' => $tenantId, 'name' => "$zone Division"],
                 ['country_code' => 'BD', 'state' => $zone, 'tax_group_id' => $std->id,
-                 'is_default' => $zone === 'Dhaka', 'priority' => 10 - $i, 'is_active' => true]);
+                    'is_default' => $zone === 'Dhaka', 'priority' => 10 - $i, 'is_active' => true]);
         }
     }
 

@@ -146,7 +146,10 @@
     "sessionRevokeAllConfirmBody": "You'll stay signed in on this device.",
     "sessionRevoked": "Session revoked.",
     "sessionsRevokedAll": "All other sessions revoked.",
-    "sessionsEmpty": "No other active sessions."
+    "sessionsEmpty": "No other active sessions.",
+    "autoBookkeeping": "Automatic bookkeeping",
+    "autoBookkeepingHint": "Automatically post journal entries for sales, purchases, and expenses.",
+    "autoBookkeepingSaved": "Bookkeeping preference saved"
   },
   "products": {
     "title": "Products",
@@ -339,7 +342,25 @@
     "voidedSales": "Voided sales",
     "returns": "Returns",
     "firstInvoice": "First invoice",
-    "lastInvoice": "Last invoice"
+    "lastInvoice": "Last invoice",
+    "profitLoss": "Profit & Loss",
+    "balanceSheet": "Balance Sheet",
+    "asOf": "As of",
+    "revenue": "Revenue",
+    "costOfGoodsSold": "Cost of goods sold",
+    "grossProfit": "Gross profit",
+    "expenses": "Expenses",
+    "netProfit": "Net profit",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "equity": "Equity",
+    "retainedEarnings": "Retained earnings",
+    "totalAssets": "Total assets",
+    "totalLiabilities": "Total liabilities",
+    "totalEquity": "Total equity",
+    "balanceCheck": "Balance check",
+    "balanced": "Balanced",
+    "unbalanced": "Unbalanced"
   },
   "cashRegister": {
     "printZReport": "Print Z-report"

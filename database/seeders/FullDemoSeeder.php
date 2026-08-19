@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -31,9 +32,13 @@ use Illuminate\Support\Str;
 class FullDemoSeeder extends Seeder
 {
     private string $tenantId;
+
     private string $businessId;
+
     private string $branchId;
+
     private string $warehouseId;
+
     private string $ownerId;
 
     public function run(): void
@@ -58,7 +63,7 @@ class FullDemoSeeder extends Seeder
 
         app(TenantContext::class)->set($this->tenantId);
 
-        $this->command?->info("Tenant: Demo Store BD | Login: admin@demostore.com / password123");
+        $this->command?->info('Tenant: Demo Store BD | Login: admin@demostore.com / password123');
 
         $categories = $this->seedCatalog();
         $customers = $this->seedCustomers();
@@ -72,6 +77,8 @@ class FullDemoSeeder extends Seeder
         $this->seedPurchases($suppliers, $products);
         $this->seedExpenses();
         $this->seedShifts();
+
+        app(AccountSeeder::class)->run();
 
         $this->command?->info('Full demo seeded: catalog, customers, suppliers, products, tax, sales, purchases, expenses, coupons, shifts.');
     }
@@ -90,7 +97,7 @@ class FullDemoSeeder extends Seeder
                 'features' => [['key' => 'pos', 'label' => 'POS', 'value' => '', 'included' => true]], 'is_active' => true],
         ];
         foreach ($plans as $plan) {
-            \App\Models\Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
+            Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
         }
     }
 
@@ -150,9 +157,10 @@ class FullDemoSeeder extends Seeder
             $customers[$phone] = Customer::updateOrCreate(
                 ['tenant_id' => $this->tenantId, 'phone' => $phone],
                 ['name' => $c['name'], 'email' => $c['email'] ?? null, 'billing_address' => $c['billing_address'] ?? null,
-                 'credit_limit' => $c['credit_limit'] ?? 0, 'is_active' => true]
+                    'credit_limit' => $c['credit_limit'] ?? 0, 'is_active' => true]
             );
         }
+
         return $customers;
     }
 
@@ -173,15 +181,16 @@ class FullDemoSeeder extends Seeder
             $suppliers[$phone] = Supplier::updateOrCreate(
                 ['tenant_id' => $this->tenantId, 'phone' => $phone],
                 ['name' => $s['name'], 'email' => $s['email'], 'address' => $s['address'],
-                 'opening_balance' => $s['balance'], 'is_active' => true]
+                    'opening_balance' => $s['balance'], 'is_active' => true]
             );
         }
+
         return $suppliers;
     }
 
     private function seedProducts(array $categories): array
     {
-        $catIds = array_map(fn($c) => $c->id, $categories);
+        $catIds = array_map(fn ($c) => $c->id, $categories);
         $brandNames = Brand::where('tenant_id', $this->tenantId)->pluck('id', 'name')->toArray();
         $unitNames = Unit::where('tenant_id', $this->tenantId)->pluck('id', 'name')->toArray();
 
@@ -223,6 +232,7 @@ class FullDemoSeeder extends Seeder
                 ]
             );
         }
+
         return $created;
     }
 
@@ -289,7 +299,7 @@ class FullDemoSeeder extends Seeder
         CashRegisterSession::updateOrCreate(
             ['tenant_id' => $this->tenantId, 'cash_register_id' => $register->id, 'status' => 'open'],
             ['user_id' => $this->ownerId, 'opening_cash' => 5000, 'cash_in' => 0, 'cash_out' => 0,
-             'expected_cash' => 5000, 'status' => 'open', 'opened_at' => now()]
+                'expected_cash' => 5000, 'status' => 'open', 'opened_at' => now()]
         );
     }
 
@@ -314,12 +324,12 @@ class FullDemoSeeder extends Seeder
                     $lineTotal = $product->selling_price * $qty;
                     $subtotal += $lineTotal;
                     $items[] = ['product_id' => $product->id, 'name' => $product->name, 'quantity' => $qty,
-                                'unit_price' => $product->selling_price, 'unit_cost' => $product->purchase_price,
-                                'discount_amount' => 0, 'tax_rate' => 0, 'tax_amount' => 0, 'line_total' => $lineTotal];
+                        'unit_price' => $product->selling_price, 'unit_cost' => $product->purchase_price,
+                        'discount_amount' => 0, 'tax_rate' => 0, 'tax_amount' => 0, 'line_total' => $lineTotal];
                 }
 
                 $total = $subtotal;
-                $paidAmount = $s === 0 && $day === 0 ? (int)($total * 0.6) : $total;
+                $paidAmount = $s === 0 && $day === 0 ? (int) ($total * 0.6) : $total;
                 $paymentStatus = $paidAmount >= $total ? 'paid' : 'partial';
                 $dueAmount = max(0, $total - $paidAmount);
 
@@ -327,7 +337,7 @@ class FullDemoSeeder extends Seeder
                     'tenant_id' => $this->tenantId, 'business_id' => $this->businessId,
                     'branch_id' => $this->branchId, 'warehouse_id' => $this->warehouseId,
                     'customer_id' => $customer->id, 'user_id' => $this->ownerId,
-                    'invoice_number' => 'INV-' . str_pad(Sale::where('tenant_id', $this->tenantId)->count() + 1, 5, '0', STR_PAD_LEFT),
+                    'invoice_number' => 'INV-'.str_pad(Sale::where('tenant_id', $this->tenantId)->count() + 1, 5, '0', STR_PAD_LEFT),
                     'status' => 'completed', 'payment_status' => $paymentStatus,
                     'subtotal' => $subtotal, 'discount_amount' => 0, 'coupon_discount' => 0,
                     'tax_amount' => 0, 'shipping_amount' => 0, 'total' => $total,
@@ -366,18 +376,18 @@ class FullDemoSeeder extends Seeder
                 $lineTotal = $product->purchase_price * $qty;
                 $subtotal += $lineTotal;
                 $items[] = ['product_id' => $product->id, 'quantity' => $qty,
-                            'unit_cost' => $product->purchase_price, 'discount_amount' => 0,
-                            'tax_amount' => 0, 'line_total' => $lineTotal];
+                    'unit_cost' => $product->purchase_price, 'discount_amount' => 0,
+                    'tax_amount' => 0, 'line_total' => $lineTotal];
             }
 
             $total = $subtotal;
-            $paidAmount = $i < 3 ? $total : (int)($total * 0.5);
+            $paidAmount = $i < 3 ? $total : (int) ($total * 0.5);
 
             $purchase = Purchase::create([
                 'tenant_id' => $this->tenantId, 'business_id' => $this->businessId,
                 'warehouse_id' => $this->warehouseId, 'supplier_id' => $supplier->id,
                 'user_id' => $this->ownerId,
-                'reference_number' => 'PO-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT),
+                'reference_number' => 'PO-'.str_pad($i + 1, 4, '0', STR_PAD_LEFT),
                 'status' => 'received', 'payment_status' => $paidAmount >= $total ? 'paid' : 'partial',
                 'subtotal' => $subtotal, 'discount_amount' => 0, 'tax_amount' => 0,
                 'shipping_amount' => 0, 'total' => $total, 'paid_amount' => $paidAmount,
@@ -411,7 +421,7 @@ class FullDemoSeeder extends Seeder
                 Expense::create([
                     'tenant_id' => $this->tenantId, 'branch_id' => $this->branchId,
                     'expense_category_id' => $cat->id, 'user_id' => $this->ownerId,
-                    'reference' => 'EXP-' . strtoupper(Str::random(6)),
+                    'reference' => 'EXP-'.strtoupper(Str::random(6)),
                     'amount' => $e['amount'], 'payment_method' => $e['method'],
                     'status' => 'approved', 'note' => $e['desc'],
                     'spent_at' => now()->subDays($e['days_ago'])->toDateString(),

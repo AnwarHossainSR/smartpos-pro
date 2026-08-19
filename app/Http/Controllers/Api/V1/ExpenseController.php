@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
+use App\Services\Accounting\TradingJournalService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use Illuminate\Http\Request;
@@ -35,7 +36,10 @@ class ExpenseController extends Controller
         $data['user_id'] = $request->user()->id;
         $data['status'] = 'approved';
 
-        return new ExpenseResource(Expense::create($data)->load('category'));
+        $expense = Expense::create($data)->load('category');
+        app(TradingJournalService::class)->postExpense($expense);
+
+        return new ExpenseResource($expense);
     }
 
     public function update(StoreExpenseRequest $request, Expense $expense): ExpenseResource

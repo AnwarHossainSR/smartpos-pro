@@ -19,6 +19,7 @@ use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\Accounting\TradingJournalService;
 use App\Services\Audit\AuditLogService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Loyalty\LoyaltyService;
@@ -48,6 +49,7 @@ class SaleService
         protected CouponRedeemer $coupons,
         protected TaxResolver $taxes,
         protected InvoiceNumberService $invoiceNumbers,
+        protected TradingJournalService $journals,
     ) {}
 
     public function create(CreateSaleData $data, User $cashier): Sale
@@ -121,6 +123,7 @@ class SaleService
 
             if ($data->status === SaleStatus::Completed) {
                 SaleCompleted::dispatch($sale);
+                $this->journals->postSale($sale);
             }
 
             return $sale->load('items.taxes', 'payments', 'customer', 'coupon');
@@ -257,6 +260,8 @@ class SaleService
             }
 
             $this->awardLoyalty($sale, $cashier, true);
+
+            $this->journals->postSale($sale);
 
             return $sale->fresh(['items.taxes', 'payments', 'customer', 'coupon']);
         });

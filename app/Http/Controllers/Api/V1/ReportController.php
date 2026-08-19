@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Supplier;
+use App\Services\Accounting\FinancialStatementService;
 use App\Services\Reporting\ZReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -220,6 +221,30 @@ class ReportController extends Controller
         return $download
             ? $pdf->download($filename)
             : $pdf->stream($filename);
+    }
+
+    public function profitLoss(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->range($request);
+
+        $service = app(FinancialStatementService::class);
+        $data = $service->profitLoss($from->toDateString(), $to->toDateString());
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function balanceSheet(Request $request): JsonResponse
+    {
+        $request->validate([
+            'as_of' => 'required|date',
+        ]);
+
+        $asOf = $request->date('as_of')?->toDateString();
+
+        $service = app(FinancialStatementService::class);
+        $data = $service->balanceSheet($asOf);
+
+        return response()->json(['data' => $data]);
     }
 
     /**

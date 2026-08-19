@@ -179,6 +179,8 @@ Route::prefix('v1')->group(function () {
             Route::get('dues', [ReportController::class, 'dues']);
             Route::get('z-report', [ReportController::class, 'zReport']);
             Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
+            Route::get('profit-loss', [ReportController::class, 'profitLoss']);
+            Route::get('balance-sheet', [ReportController::class, 'balanceSheet']);
         });
 
         // Reports — tax (output vs input tax, VAT/GST return shape)

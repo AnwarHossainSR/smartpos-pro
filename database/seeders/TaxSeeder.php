@@ -16,8 +16,9 @@ class TaxSeeder extends Seeder
     {
         $tenantId = $this->tenantId ?? app(TenantContext::class)->id();
 
-        if (!$tenantId) {
+        if (! $tenantId) {
             $this->command?->warn('TaxSeeder: No tenant bound. Pass tenant_id or bind TenantContext.');
+
             return;
         }
 

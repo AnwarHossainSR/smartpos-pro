@@ -144,7 +144,10 @@
     "sessionRevokeAllConfirmBody": "Sie bleiben auf diesem Gerät angemeldet.",
     "sessionRevoked": "Sitzung widerrufen.",
     "sessionsRevokedAll": "Alle anderen Sitzungen widerrufen.",
-    "sessionsEmpty": "Keine weiteren aktiven Sitzungen."
+    "sessionsEmpty": "Keine weiteren aktiven Sitzungen.",
+    "autoBookkeeping": "Automatische Buchhaltung",
+    "autoBookkeepingHint": "Buchungsjournale automatisch für Verkäufe, Einkäufe und Ausgaben buchen.",
+    "autoBookkeepingSaved": "Buchhaltungseinstellung gespeichert"
   },
   "products": {
     "title": "Produkte",
@@ -334,7 +337,25 @@
     "voidedSales": "Stornierte Verkäufe",
     "returns": "Rückgaben",
     "firstInvoice": "Erste Rechnung",
-    "lastInvoice": "Letzte Rechnung"
+    "lastInvoice": "Letzte Rechnung",
+    "profitLoss": "Gewinn und Verlust",
+    "balanceSheet": "Bilanz",
+    "asOf": "Stichtag",
+    "revenue": "Umsatzerlöse",
+    "costOfGoodsSold": "Wareneinsatz",
+    "grossProfit": "Bruttogewinn",
+    "expenses": "Ausgaben",
+    "netProfit": "Nettogewinn",
+    "assets": "Aktiva",
+    "liabilities": "Passiva",
+    "equity": "Eigenkapital",
+    "retainedEarnings": "Gewinnrücklagen",
+    "totalAssets": "Gesamtaktiva",
+    "totalLiabilities": "Gesamtpassiva",
+    "totalEquity": "Gesamteigenkapital",
+    "balanceCheck": "Bilanzprüfung",
+    "balanced": "Im Gleichgewicht",
+    "unbalanced": "Nicht im Gleichgewicht"
   },
   "cashRegister": {
     "printZReport": "Z-Bericht drucken"

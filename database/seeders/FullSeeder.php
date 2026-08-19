@@ -27,7 +27,7 @@ class FullSeeder extends Seeder
         ]);
 
         $this->command?->info("Tenant created: {$owner->business->name}");
-        $this->command?->info("Login: admin@demostore.com / password123");
+        $this->command?->info('Login: admin@demostore.com / password123');
 
         // ── 3. Seed tax rates, groups, zones (tenant-scoped) ──
         (new TaxSeeder($owner->tenant_id))->run();

@@ -144,7 +144,10 @@
     "sessionRevokeAllConfirmBody": "ستبقى مسجلاً الدخول على هذا الجهاز.",
     "sessionRevoked": "تم إلغاء الجلسة.",
     "sessionsRevokedAll": "تم إلغاء كل الجلسات الأخرى.",
-    "sessionsEmpty": "لا توجد جلسات أخرى نشطة."
+    "sessionsEmpty": "لا توجد جلسات أخرى نشطة.",
+    "autoBookkeeping": "المحاسبة التلقائية",
+    "autoBookkeepingHint": "نشر القيود اليومية تلقائيًا للمبيعات والمشتريات والمصروفات.",
+    "autoBookkeepingSaved": "تم حفظ تفضيل المحاسبة"
   },
   "products": {
     "title": "المنتجات",
@@ -334,7 +337,25 @@
     "voidedSales": "المبيعات الملغاة",
     "returns": "المرتجعات",
     "firstInvoice": "أول فاتورة",
-    "lastInvoice": "آخر فاتورة"
+    "lastInvoice": "آخر فاتورة",
+    "profitLoss": "الأرباح والخسائر",
+    "balanceSheet": "الميزانية العمومية",
+    "asOf": "حتى تاريخ",
+    "revenue": "الإيرادات",
+    "costOfGoodsSold": "تكلفة البضاعة المباعة",
+    "grossProfit": "إجمالي الربح",
+    "expenses": "المصروفات",
+    "netProfit": "صافي الربح",
+    "assets": "الأصول",
+    "liabilities": "الخصوم",
+    "equity": "حقوق الملكية",
+    "retainedEarnings": "الأرباح المحتجزة",
+    "totalAssets": "إجمالي الأصول",
+    "totalLiabilities": "إجمالي الخصوم",
+    "totalEquity": "إجمالي حقوق الملكية",
+    "balanceCheck": "فحص التوازن",
+    "balanced": "متوازن",
+    "unbalanced": "غير متوازن"
   },
   "cashRegister": {
     "printZReport": "طباعة تقرير Z"

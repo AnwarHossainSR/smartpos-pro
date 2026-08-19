@@ -19,7 +19,7 @@ class Business extends Model
     protected $fillable = [
         'tenant_id', 'name', 'type', 'legal_name', 'email', 'phone', 'tax_number',
         'tax_profile_id', 'price_display', 'currency', 'timezone', 'logo_path',
-        'settings', 'onboarding_completed', 'onboarding_state',
+        'settings', 'onboarding_completed', 'onboarding_state', 'auto_post_journals',
     ];
 
     protected function casts(): array
