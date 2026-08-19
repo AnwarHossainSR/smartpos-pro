@@ -15,13 +15,11 @@ use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
@@ -156,11 +154,13 @@ class ProductController extends Controller
 
     private function dryRunImport($file): JsonResponse
     {
-        $import = new ProductImport;
+        $import = new ProductImport(dryRun: true);
+        $rowsValid = 0;
         $errors = [];
 
         try {
             Excel::import($import, $file);
+            $rowsValid = $import->rowsValid;
             $errors = $import->errors;
         } catch (\Throwable $e) {
             $errors[] = [
@@ -169,13 +169,10 @@ class ProductController extends Controller
             ];
         }
 
-        $rowsInvalid = count($errors);
-        $rowsValid = max(0, $this->getRowCount($file) - $rowsInvalid - 1);
-
         return response()->json([
             'data' => [
                 'rows_valid' => $rowsValid,
-                'rows_invalid' => $rowsInvalid,
+                'rows_invalid' => count($errors),
                 'errors' => $errors,
             ],
         ]);
@@ -211,28 +208,6 @@ class ProductController extends Controller
         return response()->json([
             'message' => 'Products imported successfully',
         ]);
-    }
-
-    private function getRowCount($file): int
-    {
-        $path = $file->getRealPath();
-        if (! $path) {
-            $path = $file->storeAs('temp', uniqid().'.'.$file->getClientOriginalExtension());
-            $path = storage_path('app/'.$path);
-        }
-
-        try {
-            $collection = Excel::toCollection(new class implements ToCollection
-            {
-                public function collection(Collection $rows): void {}
-            }, $path)->first();
-
-            return is_countable($collection) ? count($collection) : 0;
-        } finally {
-            if (str_starts_with($path, storage_path('app/temp'))) {
-                Storage::delete(str_replace(storage_path('app/'), '', $path));
-            }
-        }
     }
 
     public function template()

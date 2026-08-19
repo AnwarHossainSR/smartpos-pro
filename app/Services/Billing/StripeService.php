@@ -2,13 +2,13 @@
 
 namespace App\Services\Billing;
 
-use Stripe\Stripe;
+use App\Models\Sale;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
+use Stripe\Event;
+use Stripe\Invoice;
+use Stripe\Stripe;
 use Stripe\Subscription;
-use Stripe\PaymentIntent;
-use App\Models\Sale;
-use App\Models\Tenant;
 
 class StripeService
 {
@@ -21,7 +21,7 @@ class StripeService
     {
         $customer = $sale->customer;
 
-        if (!$customer) {
+        if (! $customer) {
             $customer = Customer::create([
                 'email' => $sale->customer->email,
                 'name' => $sale->customer->name,
@@ -34,7 +34,7 @@ class StripeService
             $customer = Customer::retrieve($customer->stripe_id ?? $customer->stripe_customer_id ?? '');
         }
 
-        if (!$customer->stripe_id) {
+        if (! $customer->stripe_id) {
             $customer = Customer::create([
                 'email' => $sale->customer->email,
                 'name' => $sale->customer->name,
@@ -47,7 +47,7 @@ class StripeService
                 'price_data' => [
                     'currency' => 'usd',
                     'product_data' => [
-                        'name' => 'Invoice Payment - ' . $sale->invoice_number,
+                        'name' => 'Invoice Payment - '.$sale->invoice_number,
                         'description' => 'Outstanding balance',
                     ],
                     'unit_amount' => $sale->due_amount * 100,
@@ -55,8 +55,8 @@ class StripeService
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
-            'success_url' => config('app.url') . "/pay/{$sale->payment_url_token}?success=1",
-            'cancel_url' => config('app.url') . "/pay/{$sale->payment_url_token}?canceled=1",
+            'success_url' => config('app.url')."/pay/{$sale->payment_url_token}?success=1",
+            'cancel_url' => config('app.url')."/pay/{$sale->payment_url_token}?canceled=1",
             'metadata' => [
                 'sale_id' => $sale->id,
                 'tenant_id' => $sale->tenant_id,
@@ -75,20 +75,21 @@ class StripeService
                 'price' => $stripePriceId,
             ]],
             'success_url' => $returnUrl,
-            'cancel_url' => config('app.url') . '/billing?canceled=1',
+            'cancel_url' => config('app.url').'/billing?canceled=1',
         ]);
 
         return $session->id;
     }
 
-    public function constructFromWebhookEvent(\Stripe\Event $event): array
+    public function constructFromWebhookEvent(Event $event): array
     {
         $type = $event->type;
         $data = $event->data->object;
 
         switch ($type) {
             case 'checkout.session.completed':
-                $session = \Stripe\Checkout\Session::retrieve($data->id);
+                $session = Session::retrieve($data->id);
+
                 return [
                     'type' => 'checkout.session.completed',
                     'sale_id' => $session->metadata['sale_id'] ?? null,
@@ -98,7 +99,8 @@ class StripeService
                 ];
 
             case 'invoice.payment_succeeded':
-                $invoice = \Stripe\Invoice::retrieve($data->id);
+                $invoice = Invoice::retrieve($data->id);
+
                 return [
                     'type' => 'invoice.payment_succeeded',
                     'sale_id' => $invoice->metadata['sale_id'] ?? null,
@@ -108,16 +110,18 @@ class StripeService
                 ];
 
             case 'invoice.payment_failed':
-                $invoice = \Stripe\Invoice::retrieve($data->id);
+                $invoice = Invoice::retrieve($data->id);
+
                 return [
                     'type' => 'invoice.payment_failed',
                     'sale_id' => $invoice->metadata['sale_id'] ?? null,
                     'customer_id' => $invoice->customer,
-                    'last_payment_error' => $invoice->last_payment_error?.message ?? null,
+                    'last_payment_error' => $invoice->last_payment_error?->message ?? null,
                 ];
 
             case 'customer.subscription.created':
-                $subscription = \Stripe\Subscription::retrieve($data->id);
+                $subscription = Subscription::retrieve($data->id);
+
                 return [
                     'type' => 'customer.subscription.created',
                     'subscription_id' => $subscription->id,
@@ -127,7 +131,8 @@ class StripeService
                 ];
 
             case 'customer.subscription.updated':
-                $subscription = \Stripe\Subscription::retrieve($data->id);
+                $subscription = Subscription::retrieve($data->id);
+
                 return [
                     'type' => 'customer.subscription.updated',
                     'subscription_id' => $subscription->id,
@@ -136,7 +141,8 @@ class StripeService
                 ];
 
             case 'customer.subscription.deleted':
-                $subscription = \Stripe\Subscription::retrieve($data->id);
+                $subscription = Subscription::retrieve($data->id);
+
                 return [
                     'type' => 'customer.subscription.deleted',
                     'subscription_id' => $subscription->id,

@@ -7,7 +7,14 @@ export function PwaRegister() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(console.error);
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
+      } else {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => regs.forEach((reg) => reg.unregister()))
+          .catch(console.error);
+      }
     }
 
     const handleOffline = () => setOffline(true);

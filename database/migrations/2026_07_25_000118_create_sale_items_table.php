@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('tax_rate', 5, 2)->default(0);
             $table->decimal('tax_amount', 14, 2)->default(0);
             $table->decimal('line_total', 14, 2);
+            $table->json('modifiers_snapshot')->nullable(); // [{label, price_delta}] chosen at time of sale
             $table->timestamps();
 
             $table->index(['tenant_id', 'sale_id']);

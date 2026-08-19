@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('status')->default('active'); // active, suspended, trialing, cancelled
             $table->timestamp('trial_ends_at')->nullable();
             $table->json('feature_limits')->nullable();
+            $table->string('stripe_customer_id')->nullable();
+            $table->string('stripe_price_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

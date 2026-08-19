@@ -11,6 +11,7 @@ use App\Observers\BusinessObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductVariantObserver;
 use App\Observers\TaxProfileObserver;
+use App\Support\Telemetry\Telemetry;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -29,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // One tenant context per request lifecycle.
         $this->app->singleton(TenantContext::class);
+
+        $this->app->singleton(Telemetry::class, fn () => new Telemetry(
+            config('posthog.key'),
+            config('posthog.host'),
+            (bool) config('posthog.enabled'),
+        ));
 
         $this->app->register(WebhookServiceProvider::class);
     }

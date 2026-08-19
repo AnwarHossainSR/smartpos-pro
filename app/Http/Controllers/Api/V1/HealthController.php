@@ -21,14 +21,13 @@ class HealthController extends Controller
 
         $healthy = ! in_array(false, $checks, true);
 
-        $release = env('SENTRY_RELEASE') ?? env('APP_VERSION') ?? 'unknown';
+        $release = env('APP_VERSION') ?? 'unknown';
 
         return response()->json([
             'status' => $healthy ? 'ok' : 'degraded',
             'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
-            'version' => release(),
-            'release' => $release,
+            'version' => $release,
         ], $healthy ? 200 : 503);
     }
 

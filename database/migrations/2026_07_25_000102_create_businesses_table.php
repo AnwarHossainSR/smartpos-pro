@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('logo_path')->nullable();
             $table->json('settings')->nullable();
             $table->boolean('onboarding_completed')->default(false);
+            $table->string('kitchen_token')->nullable();
+            $table->integer('audit_retention_days')->default(180);
             $table->timestamps();
             $table->softDeletes();
 

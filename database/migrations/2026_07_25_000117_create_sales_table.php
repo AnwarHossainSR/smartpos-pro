@@ -29,6 +29,9 @@ return new class extends Migration
             $table->decimal('change_amount', 14, 2)->default(0);
             $table->decimal('due_amount', 14, 2)->default(0);
             $table->string('note')->nullable();
+            $table->string('payment_url_token')->nullable();
+            $table->string('kitchen_status')->default('pending'); // pending, preparing, ready, served
+            $table->string('kitchen_note')->nullable();
             $table->timestamp('sold_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

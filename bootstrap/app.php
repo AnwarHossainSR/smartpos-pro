@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EnsureTenant;
+use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SecurityHeaders;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => CheckPermission::class,
             'idempotency' => Idempotency::class,
             'super_admin' => SuperAdmin::class,
+            'error-tracking' => ErrorTracking::class,
         ]);
 
         $middleware->throttleApi();

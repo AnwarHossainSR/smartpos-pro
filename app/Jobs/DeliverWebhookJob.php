@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
 use App\Services\Webhooks\WebhookService;
+use App\Support\Telemetry\Telemetry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Sentry\SentrySdk;
 
 class DeliverWebhookJob implements ShouldQueue
 {
@@ -76,6 +76,6 @@ class DeliverWebhookJob implements ShouldQueue
             throw $e;
         }
 
-        SentrySdk::captureException($e);
+        app(Telemetry::class)->captureException($e);
     }
 }

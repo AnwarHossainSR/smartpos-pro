@@ -55,7 +55,7 @@ The application should feel modern, simple, fast, and professional. It must not 
 6. GitHub Actions
 7. AWS deployment support
 8. Cloudflare support
-9. Sentry error monitoring
+9. PostHog error monitoring (backend only)
 10. PostHog product analytics
 
 ## Architecture requirements

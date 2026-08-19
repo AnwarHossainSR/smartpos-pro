@@ -1,22 +1,24 @@
-import * as Sentry from "@sentry/nextjs";
-import * as React from "react";
+"use client";
 
-export class ErrorBoundary extends React.Component<
-  React.ComponentProps<"div">,
-  { hasError: boolean; error?: Error; errorInfo?: React.ErrorInfo }
-> {
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true };
-  }
+import { Button } from "@/components/ui/button";
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    Sentry.captureException(error);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <div className="p-6 bg-red-100 text-red-800 rounded-md">Error boundary caught an error. See logs.</div>;
-    }
-    return this.props.children;
-  }
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <h1 className="text-xl font-semibold">Something went wrong</h1>
+      <p className="text-sm text-[var(--muted)]">
+        An unexpected error occurred. Try again, or reload the page if it keeps happening.
+      </p>
+      {error.digest ? (
+        <p className="text-xs text-[var(--muted)]">Reference: {error.digest}</p>
+      ) : null}
+      <Button onClick={reset}>Try again</Button>
+    </div>
+  );
 }
