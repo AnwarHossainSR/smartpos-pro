@@ -16,6 +16,7 @@ use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Accounting\TradingJournalService;
 use App\Services\Inventory\StockLedgerService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,7 @@ class PurchaseService
         protected StockLedgerService $ledger,
         protected TaxEngine $tax,
         protected TaxResolver $taxes,
+        protected TradingJournalService $journals,
     ) {}
 
     public function create(CreatePurchaseData $data, User $user): Purchase
@@ -123,6 +125,8 @@ class PurchaseService
             if ($due > 0 && $purchase->supplier_id) {
                 Supplier::whereKey($purchase->supplier_id)->increment('balance', $due);
             }
+
+            $this->journals->postPurchase($purchase);
 
             return $purchase->load('items', 'supplier');
         });

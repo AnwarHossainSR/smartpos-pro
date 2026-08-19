@@ -116,6 +116,8 @@ Route::prefix('v1')->group(function () {
         Route::post('products', [ProductController::class, 'store'])->middleware('permission:products.create');
         Route::put('products/{product}', [ProductController::class, 'update'])->middleware('permission:products.update');
         Route::delete('products/{product}', [ProductController::class, 'destroy'])->middleware('permission:products.delete');
+        Route::post('products/{product}/image', [ProductController::class, 'uploadImage'])->middleware('permission:products.update');
+        Route::delete('products/{product}/image', [ProductController::class, 'deleteImage'])->middleware('permission:products.update');
 
         // Inventory
         Route::get('inventory/balances', [InventoryController::class, 'index'])->middleware('permission:inventory.view');
@@ -177,6 +179,8 @@ Route::prefix('v1')->group(function () {
             Route::get('dues', [ReportController::class, 'dues']);
             Route::get('z-report', [ReportController::class, 'zReport']);
             Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
+            Route::get('profit-loss', [ReportController::class, 'profitLoss']);
+            Route::get('balance-sheet', [ReportController::class, 'balanceSheet']);
         });
 
         // Reports — tax (output vs input tax, VAT/GST return shape)

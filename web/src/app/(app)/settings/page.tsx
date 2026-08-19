@@ -17,11 +17,51 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Laptop, Percent, Smartphone, Webhook } from "lucide-react";
+import { BookOpen, ChevronRight, Laptop, Percent, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+function AutoBookkeepingCard({ autoPostJournals }: { autoPostJournals: boolean }) {
+  const t = useTranslation();
+  const qc = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (value: boolean) => api("/settings/business", { method: "PUT", body: { auto_post_journals: value } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["business-settings"] }); toast(t("settings.autoBookkeepingSaved")); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={() => mutation.mutate(!autoPostJournals)}
+          className="flex w-full items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+        >
+          <BookOpen className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+          <div className="min-w-0 flex-1 text-left">
+            <p className="font-medium">{t("settings.autoBookkeeping")}</p>
+            <p className="text-xs text-[var(--muted)]">{t("settings.autoBookkeepingHint")}</p>
+          </div>
+          <div
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              autoPostJournals ? "bg-[var(--primary)]" : "bg-[var(--border)]"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+                autoPostJournals ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </div>
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
 
 interface Session {
   id: string;
@@ -154,6 +194,7 @@ interface BusinessSettings {
   date_format: string;
   tax_number: string | null;
   logo_path: string | null;
+  auto_post_journals: boolean;
 }
 
 const schema = z.object({
@@ -286,6 +327,8 @@ export default function SettingsPage() {
               </Link>
             </CardContent>
           </Card>
+          <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
+
           <Card>
             <CardHeader><CardTitle>{t("settings.appearance")}</CardTitle></CardHeader>
             <CardContent>

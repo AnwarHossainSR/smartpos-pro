@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
@@ -22,6 +22,8 @@ import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
 import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
 import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
 import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
+import { CategoryTabs } from "@/features/pos/components/category-tabs";
+import { ViewToggle } from "@/features/pos/components/view-toggle";
 
 /* ---- types ---- */
 export interface Product {
@@ -39,6 +41,7 @@ export interface Product {
   tax_group?: TaxGroup | null;
   stock: number;
   min_stock_level?: number;
+  image_url?: string | null;
   is_active: boolean;
   category: { id: string; name: string } | null;
 }
@@ -48,6 +51,11 @@ interface Customer {
   name: string;
   phone: string | null;
   balance_due: number;
+  loyalty_points: number;
+}
+
+interface LoyaltyData {
+  data: { points: number };
 }
 
 interface Warehouse {
@@ -333,15 +341,60 @@ export default function POSPage() {
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const lastKeystrokeRef = useRef<number>(0);
   const keystrokeBufferRef = useRef<string>("");
 
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("pos-view-mode") as "grid" | "list") ?? "grid";
+    }
+    return "grid";
+  });
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    if (typeof window !== "undefined") {
+      try { return new Set(JSON.parse(localStorage.getItem("pos-favorites") ?? "[]")); } catch { return new Set(); }
+    }
+    return new Set();
+  });
+
+  useEffect(() => { localStorage.setItem("pos-view-mode", viewMode); }, [viewMode]);
+  useEffect(() => { localStorage.setItem("pos-favorites", JSON.stringify([...favorites])); }, [favorites]);
+
+  const toggleFavorite = useCallback((productId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }, []);
+
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
-    queryKey: ["pos-products", search],
-    queryFn: () => api<Paginated<Product>>(`/products?search=${encodeURIComponent(search)}&per_page=30&is_active=true`),
+    queryKey: ["pos-products", search, activeCategoryId],
+    queryFn: () => {
+      const params = new URLSearchParams({ per_page: "50", is_active: "true" });
+      if (search) params.set("search", search);
+      if (activeCategoryId && activeCategoryId !== "__favorites__") params.set("category_id", activeCategoryId);
+      return api<Paginated<Product>>(`/products?${params.toString()}`);
+    },
     staleTime: 15_000,
   });
+
+  const { data: categoriesData } = useQuery<{ data: { id: string; name: string }[] }>({
+    queryKey: ["categories-all"],
+    queryFn: () => api<{ data: { id: string; name: string }[] }>("/categories?per_page=50"),
+  });
+
+  const displayedProducts = useMemo(() => {
+    const list = productsData?.data ?? [];
+    if (activeCategoryId === "__favorites__") return list.filter((p) => favorites.has(p.id));
+    return list;
+  }, [productsData, activeCategoryId, favorites]);
 
   const { data: customersData } = useQuery<Paginated<Customer>>({
     queryKey: ["pos-customers", customerSearch],
@@ -377,6 +430,38 @@ export default function POSPage() {
     () => (customerId ? customersData?.data?.find((c) => c.id === customerId) : null),
     [customerId, customersData],
   );
+
+  const { data: loyaltyData } = useQuery<LoyaltyData>({
+    queryKey: ["pos-customer-loyalty", customerId],
+    queryFn: () => api<LoyaltyData>(`/customers/${customerId}/loyalty`),
+    enabled: !!customerId,
+  });
+
+  const loyaltyPoints = loyaltyData?.data?.points ?? selectedCustomer?.loyalty_points ?? 0;
+
+  const createCustomerMutation = useMutation({
+    mutationFn: () =>
+      api<{ data: Customer }>("/customers", {
+        method: "POST",
+        body: {
+          name: newCustomerName,
+          phone: newCustomerPhone || undefined,
+        },
+      }),
+    onSuccess: (res) => {
+      setCustomerId(res.data.id);
+      setCustomerSearch("");
+      setShowCreateCustomer(false);
+      setNewCustomerName("");
+      setNewCustomerPhone("");
+      qc.invalidateQueries({ queryKey: ["pos-customers"] });
+      toast(t("pos.customerSearch.created"), "success");
+    },
+    onError: (e: unknown) => {
+      const detail = e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Could not create customer";
+      toast(detail, "error");
+    },
+  });
 
   const addToCart = useCallback((product: Product) => {
     setCart((prev) => {
@@ -659,43 +744,96 @@ export default function POSPage() {
           />
         </div>
 
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <CategoryTabs
+              categories={categoriesData?.data ?? []}
+              activeCategoryId={activeCategoryId}
+              onSelect={setActiveCategoryId}
+              favoritesCount={favorites.size}
+            />
+          </div>
+          <ViewToggle value={viewMode} onChange={setViewMode} />
+        </div>
+
         <div className="flex-1 overflow-y-auto">
           {productsLoading ? (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            <div className={cn(viewMode === "grid" ? "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" : "space-y-1")}>
               {Array.from({ length: 12 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-[var(--radius)]" />
+                <Skeleton key={i} className={cn(viewMode === "grid" ? "h-24 rounded-[var(--radius)]" : "h-12 rounded-[var(--radius)]")} />
               ))}
             </div>
-          ) : (
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {productsData?.data?.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => addToCart(p)}
-                  disabled={(p.stock ?? 0) <= 0}
-                  className={cn(
-                    "group flex cursor-pointer flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start",
-                    "transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
-                    "enabled:hover:-translate-y-0.5 enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
-                    "enabled:active:translate-y-0 enabled:active:scale-[0.98]",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
-                  )}
-                >
-                  <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
-                  {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
-                  <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
-                  <div className="flex items-center gap-1.5">
-                    <p className={cn("text-xs", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : (p.min_stock_level && (p.stock ?? 0) <= p.min_stock_level) ? "text-amber-600" : "text-[var(--muted)]")}>
-                      Stock: {p.stock ?? 0}
-                    </p>
-                    {(p.min_stock_level ?? 0) > 0 && (p.stock ?? 0) <= (p.min_stock_level ?? 0) && (p.stock ?? 0) > 0 && (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
+              {displayedProducts.map((p) => (
+                <div key={p.id} className="relative group">
+                  <button
+                    onClick={() => addToCart(p)}
+                    disabled={(p.stock ?? 0) <= 0}
+                    className={cn(
+                      "flex w-full cursor-pointer flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start",
+                      "transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+                      "enabled:hover:-translate-y-0.5 enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
+                      "enabled:active:translate-y-0 enabled:active:scale-[0.98]",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
                     )}
-                  </div>
-                </button>
+                  >
+                    {p.image_url && (
+                      <img src={p.image_url} alt="" className="mb-2 h-16 w-full rounded object-cover" />
+                    )}
+                    <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
+                    {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
+                    <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className={cn("text-xs", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : (p.min_stock_level && (p.stock ?? 0) <= p.min_stock_level) ? "text-amber-600" : "text-[var(--muted)]")}>
+                        Stock: {p.stock ?? 0}
+                      </p>
+                      {(p.min_stock_level ?? 0) > 0 && (p.stock ?? 0) <= (p.min_stock_level ?? 0) && (p.stock ?? 0) > 0 && (
+                        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
+                      )}
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(p.id); }}
+                    className="absolute top-1.5 right-1.5 h-6 w-6 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer bg-[var(--surface)]/80"
+                  >
+                    <Star className={cn("h-3.5 w-3.5", favorites.has(p.id) ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]")} />
+                  </button>
+                </div>
               ))}
-              {productsData?.data?.length === 0 && (
+              {displayedProducts.length === 0 && (
                 <div className="col-span-4 py-12 text-center text-sm text-[var(--muted)]">
+                  No products found
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {displayedProducts.map((p) => (
+                <div key={p.id} className="relative group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 cursor-pointer transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]" onClick={() => addToCart(p)}>
+                  {p.image_url ? (
+                    <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
+                  ) : (
+                    <div className="h-10 w-10 rounded bg-[var(--surface-2)] shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{p.name}</p>
+                    {p.category && <p className="text-xs text-[var(--muted)]">{p.category.name}</p>}
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--primary)] shrink-0">{formatCurrency(p.selling_price)}</p>
+                  <p className={cn("text-xs shrink-0", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--muted)]")}>
+                    Stock: {p.stock ?? 0}
+                  </p>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(p.id); }}
+                    className="h-6 w-6 flex items-center justify-center shrink-0 cursor-pointer"
+                  >
+                    <Star className={cn("h-3.5 w-3.5", favorites.has(p.id) ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]")} />
+                  </button>
+                </div>
+              ))}
+              {displayedProducts.length === 0 && (
+                <div className="py-12 text-center text-sm text-[var(--muted)]">
                   No products found
                 </div>
               )}
@@ -735,9 +873,9 @@ export default function POSPage() {
             <User className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <Input
               className="ps-8 h-8 text-xs"
-              placeholder={selectedCustomer ? selectedCustomer.name : "Search customer (optional)…"}
+              placeholder={selectedCustomer ? selectedCustomer.name : t("pos.customerSearch.placeholder")}
               value={selectedCustomer ? selectedCustomer.name : customerSearch}
-              onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); }}
+              onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); setShowCreateCustomer(false); }}
             />
             {customerId && (
               <button className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
@@ -745,17 +883,78 @@ export default function POSPage() {
               </button>
             )}
           </div>
+          {selectedCustomer && (
+            <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+              {loyaltyPoints > 0 && (
+                <Badge tone="info" className="text-[10px]">{loyaltyPoints} {t("pos.customerSearch.points")}</Badge>
+              )}
+              {selectedCustomer.balance_due > 0 && (
+                <Badge tone="warning" className="text-[10px]">{t("pos.customerSearch.owing")}</Badge>
+              )}
+            </div>
+          )}
           {customerSearch && !customerId && customersData?.data && customersData.data.length > 0 && (
             <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
               {customersData.data.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCustomerId(c.id); setCustomerSearch(""); }}
+                  onClick={() => { setCustomerId(c.id); setCustomerSearch(""); setShowCreateCustomer(false); }}
                   className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
                 >
                   {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
                 </button>
               ))}
+            </div>
+          )}
+          {customerSearch && !customerId && customersData?.data && customersData.data.length === 0 && !showCreateCustomer && (
+            <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+              <p className="px-3 py-2 text-xs text-[var(--muted)]">{t("pos.customerSearch.noMatch")}</p>
+              <button
+                onClick={() => {
+                  setShowCreateCustomer(true);
+                  setNewCustomerName(customerSearch);
+                  setNewCustomerPhone("");
+                }}
+                className="w-full cursor-pointer border-t border-[var(--border)] px-3 py-2 text-start text-sm font-medium text-[var(--primary)] transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <UserPlus className="inline h-3.5 w-3.5 me-1" />
+                {t("pos.customerSearch.create")} &ldquo;{customerSearch}&rdquo;
+              </button>
+            </div>
+          )}
+          {showCreateCustomer && (
+            <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg space-y-2">
+              <Input
+                className="h-8 text-xs"
+                placeholder="Name"
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                autoFocus
+              />
+              <Input
+                className="h-8 text-xs"
+                placeholder="Phone (optional)"
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 h-7 text-xs"
+                  disabled={!newCustomerName.trim() || createCustomerMutation.isPending}
+                  onClick={() => createCustomerMutation.mutate()}
+                >
+                  {createCustomerMutation.isPending ? t("common.saving") : t("pos.customerSearch.create")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => { setShowCreateCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
+                >
+                  {t("common.cancel")}
+                </Button>
+              </div>
             </div>
           )}
         </div>

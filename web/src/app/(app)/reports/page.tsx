@@ -20,7 +20,7 @@ import { useTranslation } from "@/i18n/provider";
 import { useAuth } from "@/stores/auth";
 import { queryKeys } from "@/lib/query-keys";
 
-type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues" | "z-report" | "shifts";
+type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues" | "z-report" | "shifts" | "profit-loss" | "balance-sheet";
 
 interface Branch { id: string; name: string; }
 
@@ -64,12 +64,14 @@ export default function ReportsPage() {
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [branchId, setBranchId] = useState<string>("");
 
-  const params = `?from=${from}&to=${to}`;
+  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+
+  const params = report === "balance-sheet" ? `?as_of=${asOf}` : `?from=${from}&to=${to}`;
 
   const { data, isLoading } = useQuery({
-    queryKey: report === "shifts" ? queryKeys.shifts.report({ from, to }) : ["report", report, from, to],
+    queryKey: report === "shifts" ? queryKeys.shifts.report({ from, to }) : ["report", report, from, to, asOf],
     queryFn: () => report === "shifts"
-      ? api<{ data: unknown }>(`/reports/shifts${params}&group_by=day`)
+      ? api<{ data: unknown }>(`/reports/shifts?from=${from}&to=${to}&group_by=day`)
       : api<{ data: unknown }>(`/reports/${report}${params}`),
     enabled: report !== "z-report",
   });
@@ -85,10 +87,19 @@ export default function ReportsPage() {
           </Button>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Label className="mb-0">{t("reports.from")}</Label>
-          <Input type="date" className="h-9 w-36" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <Label className="mb-0">{t("reports.to")}</Label>
-          <Input type="date" className="h-9 w-36" value={to} onChange={(e) => setTo(e.target.value)} />
+          {report === "balance-sheet" ? (
+            <>
+              <Label className="mb-0">{t("reports.asOf")}</Label>
+              <Input type="date" className="h-9 w-36" value={asOf} onChange={(e) => setAsOf(e.target.value)} />
+            </>
+          ) : (
+            <>
+              <Label className="mb-0">{t("reports.from")}</Label>
+              <Input type="date" className="h-9 w-36" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Label className="mb-0">{t("reports.to")}</Label>
+              <Input type="date" className="h-9 w-36" value={to} onChange={(e) => setTo(e.target.value)} />
+            </>
+          )}
         </div>
       </div>
 
@@ -312,6 +323,8 @@ const REPORTS: { id: ReportType; label: string }[] = [
   { id: "low-stock", label: "Low stock" },
   { id: "dues", label: "Customer dues" },
   { id: "z-report", label: "Z-Report" },
+  { id: "profit-loss", label: "P&L Statement" },
+  { id: "balance-sheet", label: "Balance Sheet" },
 ];
 
 function ReportContent({ report, data }: { report: ReportType; data: Record<string, unknown> | null }) {
@@ -508,6 +521,106 @@ function ReportContent({ report, data }: { report: ReportType; data: Record<stri
           </div>
         )}
         {(!s.rows || s.rows.length === 0) && <div className="py-12 text-center text-[var(--muted)]">No shift data for this period.</div>}
+      </div>
+    );
+  }
+
+  if (report === "profit-loss") {
+    const pl = data as { sections?: { name: string; accounts: { name: string; amount: number }[]; total: number }[]; revenue_total: number; cogs_total: number; gross_profit: number; expenses_total: number; net_profit: number };
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.revenue")}</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">{formatCurrency(pl.revenue_total ?? 0)}</p></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.grossProfit")}</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(pl.gross_profit ?? 0)}</p></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.netProfit")}</CardTitle></CardHeader><CardContent><p className={`text-2xl font-bold ${(pl.net_profit ?? 0) >= 0 ? "text-green-600" : "text-[var(--color-danger)]"}`}>{formatCurrency(pl.net_profit ?? 0)}</p></CardContent></Card>
+        </div>
+        {pl.sections?.map((section) => (
+          <Card key={section.name}>
+            <CardHeader><CardTitle>{section.name}</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader><TableRow><TableHead>{t("reports.method")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {section.accounts.map((a) => (
+                    <TableRow key={a.name}><TableCell className="font-medium">{a.name}</TableCell><TableCell className="text-end">{formatCurrency(a.amount)}</TableCell></TableRow>
+                  ))}
+                  <TableRow><TableCell className="font-medium border-t border-[var(--border)]">{section.name} {t("reports.amount")}</TableCell><TableCell className="text-end font-bold border-t border-[var(--border)]">{formatCurrency(section.total)}</TableCell></TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (report === "balance-sheet") {
+    const bs = data as { assets?: { name: string; amount: number }[]; liabilities?: { name: string; amount: number }[]; equity?: { name: string; amount: number }[]; assets_total: number; liabilities_total: number; equity_total: number; retained_earnings: number; is_balanced: boolean };
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.totalAssets")}</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(bs.assets_total ?? 0)}</p></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.totalLiabilities")}</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(bs.liabilities_total ?? 0)}</p></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm text-[var(--muted)]">{t("reports.totalEquity")}</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{formatCurrency(bs.equity_total ?? 0)}</p></CardContent></Card>
+        </div>
+        <Card>
+          <CardContent className="flex items-center gap-2">
+            <Badge tone={bs.is_balanced ? "success" : "danger"}>{t("reports.balanceCheck")}: {bs.is_balanced ? t("reports.balanced") : t("reports.unbalanced")}</Badge>
+          </CardContent>
+        </Card>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {bs.assets && bs.assets.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>{t("reports.assets")}</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader><TableRow><TableHead>{t("reports.method")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {bs.assets.map((a) => (
+                      <TableRow key={a.name}><TableCell className="font-medium">{a.name}</TableCell><TableCell className="text-end">{formatCurrency(a.amount)}</TableCell></TableRow>
+                    ))}
+                    <TableRow><TableCell className="font-medium border-t border-[var(--border)]">{t("reports.totalAssets")}</TableCell><TableCell className="text-end font-bold border-t border-[var(--border)]">{formatCurrency(bs.assets_total)}</TableCell></TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+          <div className="space-y-4">
+            {bs.liabilities && bs.liabilities.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle>{t("reports.liabilities")}</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader><TableRow><TableHead>{t("reports.method")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {bs.liabilities.map((l) => (
+                        <TableRow key={l.name}><TableCell className="font-medium">{l.name}</TableCell><TableCell className="text-end">{formatCurrency(l.amount)}</TableCell></TableRow>
+                      ))}
+                      <TableRow><TableCell className="font-medium border-t border-[var(--border)]">{t("reports.totalLiabilities")}</TableCell><TableCell className="text-end font-bold border-t border-[var(--border)]">{formatCurrency(bs.liabilities_total)}</TableCell></TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+            {bs.equity && bs.equity.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle>{t("reports.equity")}</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader><TableRow><TableHead>{t("reports.method")}</TableHead><TableHead className="text-end">{t("reports.amount")}</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {bs.equity.map((e) => (
+                        <TableRow key={e.name}><TableCell className="font-medium">{e.name}</TableCell><TableCell className="text-end">{formatCurrency(e.amount)}</TableCell></TableRow>
+                      ))}
+                      <TableRow><TableCell className="font-medium">{t("reports.retainedEarnings")}</TableCell><TableCell className="text-end">{formatCurrency(bs.retained_earnings ?? 0)}</TableCell></TableRow>
+                      <TableRow><TableCell className="font-medium border-t border-[var(--border)]">{t("reports.totalEquity")}</TableCell><TableCell className="text-end font-bold border-t border-[var(--border)]">{formatCurrency(bs.equity_total)}</TableCell></TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

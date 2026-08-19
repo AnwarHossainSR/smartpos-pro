@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Models\User;
+use App\Services\Accounting\TradingJournalService;
 use App\Services\Inventory\StockLedgerService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,10 @@ use Illuminate\Validation\ValidationException;
  */
 class SaleReturnService
 {
-    public function __construct(protected StockLedgerService $ledger) {}
+    public function __construct(
+        protected StockLedgerService $ledger,
+        protected TradingJournalService $journals,
+    ) {}
 
     public function create(Sale $sale, CreateSaleReturnData $data, User $user): SaleReturn
     {
@@ -137,6 +141,8 @@ class SaleReturnService
             }
 
             SaleReturned::dispatch($return);
+
+            $this->journals->postSaleReturn($return);
 
             return $return->load('items.taxes');
         });

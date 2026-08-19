@@ -12,7 +12,9 @@ use App\Services\Inventory\StockLedgerService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -93,5 +95,38 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->noContent();
+    }
+
+    public function uploadImage(Request $request, Product $product): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        $file = $validated['image'];
+        $tenantId = $product->tenant_id;
+
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+
+        $path = $file->store("products/{$tenantId}", 'public');
+        $product->update(['image_path' => $path]);
+
+        return response()->json([
+            'data' => [
+                'url' => Storage::disk('public')->url($path),
+            ],
+        ]);
+    }
+
+    public function deleteImage(Product $product): JsonResponse
+    {
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+            $product->update(['image_path' => null]);
+        }
+
+        return response()->json(['data' => ['url' => null]]);
     }
 }

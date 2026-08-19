@@ -144,7 +144,10 @@
     "sessionRevokeAllConfirmBody": "আপনি এই ডিভাইসে সাইন-ইন থাকবেন।",
     "sessionRevoked": "সেশন বাতিল হয়েছে।",
     "sessionsRevokedAll": "অন্য সব সেশন বাতিল হয়েছে।",
-    "sessionsEmpty": "অন্য কোনো সক্রিয় সেশন নেই।"
+    "sessionsEmpty": "অন্য কোনো সক্রিয় সেশন নেই।",
+    "autoBookkeeping": "স্বয়ংক্রিয় হিসাবরক্ষণ",
+    "autoBookkeepingHint": "বিক্রয়, ক্রয় এবং খরচের জন্য স্বয়ংক্রিয়ভাবে জার্নাল এন্ট্রি পোস্ট করুন।",
+    "autoBookkeepingSaved": "হিসাবরক্ষণ পছন্দ সংরক্ষিত হয়েছে"
   },
   "products": {
     "title": "পণ্য",
@@ -173,6 +176,7 @@
       "namePlaceholder": "পণ্যের নাম",
       "sku": "এসকেইউ / কোড",
       "skuPlaceholder": "স্বয়ংক্রিয়ভাবে তৈরি",
+      "image": "ছবি",
       "status": "অবস্থা",
       "active": "সক্রিয়",
       "inactive": "নিষ্ক্রিয়",
@@ -224,6 +228,14 @@
       "discardTitle": "স্থগিত অর্ডার বাতিল করবেন?",
       "discardConfirm": "\"{reference}\" বাতিল করবেন? এটি ফিরিয়ে আনা যাবে না।",
       "discardSuccess": "অর্ডার বাতিল হয়েছে"
+    },
+    "customerSearch": {
+      "placeholder": "গ্রাহক অনুসন্ধান করুন (ঐচ্ছিক)…",
+      "create": "তৈরি করুন",
+      "noMatch": "কোনো গ্রাহক পাওয়া যায়নি",
+      "points": "পয়েন্ট",
+      "owing": "বকেয়",
+      "created": "গ্রাহক তৈরি হয়েছে"
     }
   },
   "dashboard": {
@@ -325,7 +337,25 @@
     "voidedSales": "বাতিলকৃত বিক্রয়",
     "returns": "ফেরত",
     "firstInvoice": "প্রথম ইনভয়েস",
-    "lastInvoice": "শেষ ইনভয়েস"
+    "lastInvoice": "শেষ ইনভয়েস",
+    "profitLoss": "লাভ ও ক্ষতি",
+    "balanceSheet": "ব্যালেন্স শিট",
+    "asOf": "তারিখ অনুযায়ী",
+    "revenue": "আয়",
+    "costOfGoodsSold": "বিক্রিত পণ্যের খরচ",
+    "grossProfit": "মোট লাভ",
+    "expenses": "খরচ",
+    "netProfit": "নিট লাভ",
+    "assets": "সম্পদ",
+    "liabilities": "দায়",
+    "equity": "ইকুইটি",
+    "retainedEarnings": "সঞ্চিত লাভ",
+    "totalAssets": "মোট সম্পদ",
+    "totalLiabilities": "মোট দায়",
+    "totalEquity": "মোট ইকুইটি",
+    "balanceCheck": "ব্যালেন্স পরীক্ষা",
+    "balanced": "সুষম",
+    "unbalanced": "অসুষম"
   },
   "cashRegister": {
     "printZReport": "Z-রিপোর্ট প্রিন্ট করুন"

@@ -144,7 +144,10 @@
     "sessionRevokeAllConfirmBody": "このデバイスではサインインしたままになります。",
     "sessionRevoked": "セッションを取り消しました。",
     "sessionsRevokedAll": "他のすべてのセッションを取り消しました。",
-    "sessionsEmpty": "他にアクティブなセッションはありません。"
+    "sessionsEmpty": "他にアクティブなセッションはありません。",
+    "autoBookkeeping": "自動簿記",
+    "autoBookkeepingHint": "販売、仕入れ、経費の仕訳を自動的に投稿します。",
+    "autoBookkeepingSaved": "簿記設定を保存しました"
   },
   "products": {
     "title": "商品",
@@ -173,6 +176,7 @@
       "namePlaceholder": "商品名",
       "sku": "SKU / コード",
       "skuPlaceholder": "自動生成",
+      "image": "画像",
       "status": "ステータス",
       "active": "有効",
       "inactive": "無効",
@@ -224,6 +228,14 @@
       "discardTitle": "保留中の注文を破棄しますか?",
       "discardConfirm": "「{reference}」を破棄しますか?この操作は取り消せません。",
       "discardSuccess": "注文を破棄しました"
+    },
+    "customerSearch": {
+      "placeholder": "顧客を検索（任意）…",
+      "create": "作成",
+      "noMatch": "顧客が見つかりません",
+      "points": "pt",
+      "owing": "未払い",
+      "created": "顧客を作成しました"
     }
   },
   "dashboard": {
@@ -325,7 +337,25 @@
     "voidedSales": "取消販売",
     "returns": "返品",
     "firstInvoice": "最初の請求書",
-    "lastInvoice": "最後の請求書"
+    "lastInvoice": "最後の請求書",
+    "profitLoss": "損益計算書",
+    "balanceSheet": "貸借対照表",
+    "asOf": "基準日",
+    "revenue": "収益",
+    "costOfGoodsSold": "売上原価",
+    "grossProfit": "粗利益",
+    "expenses": "経費",
+    "netProfit": "純利益",
+    "assets": "資産",
+    "liabilities": "負債",
+    "equity": "資本",
+    "retainedEarnings": "繰越利益剰余金",
+    "totalAssets": "総資産",
+    "totalLiabilities": "総負債",
+    "totalEquity": "総資本",
+    "balanceCheck": "勘定照合",
+    "balanced": "均衡",
+    "unbalanced": "不均衡"
   },
   "cashRegister": {
     "printZReport": "Zレポートを印刷"
