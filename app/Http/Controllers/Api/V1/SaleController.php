@@ -89,7 +89,14 @@ class SaleController extends Controller
     /** Cancels a completed sale and reverses the stock it moved. */
     public function void(VoidSaleRequest $request, Sale $sale): SaleResource
     {
-        return new SaleResource($this->sales->void($sale, $request->user(), $request->validated()['reason'] ?? null));
+        $validated = $request->validated();
+
+        return new SaleResource($this->sales->void(
+            $sale,
+            $request->user(),
+            $validated['reason'] ?? null,
+            $validated['approval_token'] ?? null,
+        ));
     }
 
     /** Streams the invoice inline by default; `?download=1` forces a Content-Disposition download. */

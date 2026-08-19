@@ -77,6 +77,13 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Supervisor PIN entry and PIN management. Keyed per caller so one terminal
+        // hammering the keypad cannot lock out the shop, and set well below what a
+        // brute force needs — the service adds its own 5-miss lockout on top.
+        RateLimiter::for('approval-pin', function (Request $request) {
+            return Limit::perMinute(10)->by('approval-pin:'.($request->user()?->id ?: $request->ip()));
+        });
+
         // The reset-password flow is entirely frontend-driven (the SPA collects the new
         // password and posts it back), so the emailed link points at the frontend rather
         // than a Laravel view.

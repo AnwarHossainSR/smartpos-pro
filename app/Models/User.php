@@ -35,7 +35,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email_verification_code', 'email_verification_expires_at', 'theme',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'approval_pin'];
 
     /**
      * @return array<string, string>
@@ -53,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'two_factor_confirmed_at' => 'datetime',
             'email_verification_expires_at' => 'datetime',
             'locked_until' => 'datetime',
+            'approval_pin_set_at' => 'datetime',
             'theme' => 'array',
         ];
     }
@@ -60,6 +61,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function hasEnabledTwoFactor(): bool
     {
         return ! is_null($this->two_factor_confirmed_at);
+    }
+
+    /** Whether this user has a supervisor PIN they can authorise till actions with. */
+    public function hasApprovalPin(): bool
+    {
+        return $this->approval_pin !== null;
+    }
+
+    /** A PIN only authorises anything if its holder actually carries the approval permission. */
+    public function canApproveAtPos(): bool
+    {
+        return $this->hasApprovalPin() && $this->hasPermission('pos.approve');
     }
 
     public function isLocked(): bool

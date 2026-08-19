@@ -250,7 +250,9 @@ body {
 }
 
 @media print {
-  body * {
+  /* Scoped to pages that actually render a receipt: this used to hide `body *` on every
+     printed page, which also blanked the barcode label sheet. */
+  body:has([data-receipt]) * {
     visibility: hidden;
   }
   [data-receipt],
@@ -266,4 +268,85 @@ body {
     color: black;
     padding: 1rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Barcode label sheets (products → Print labels).
+
+   Physical accuracy is the whole point here, so every label dimension is set in
+   millimetres by the page itself and this stylesheet only gets the sheet out of the app
+   shell: the shell is a fixed-height flex column whose <main> is the scroll container, and
+   printing inside an `overflow` container clips the output to a single page. The `@page`
+   rule (paper size and the margins of the chosen label stock) is injected by the page,
+   because it changes with the selected stock.
+   --------------------------------------------------------------------------- */
+
+@media screen {
+  /* Preview zoom is screen-only — it must never scale what goes to the printer. */
+  [data-label-preview-scale] {
+    transform: scale(var(--label-scale, 1));
+    transform-origin: top left;
+  }
+}
+
+@media print {
+  body:has([data-label-sheet]) {
+    background: #fff !important;
+  }
+
+  /* Chrome, page toolbars and the builder UI itself. */
+  body:has([data-label-sheet]) aside,
+  body:has([data-label-sheet]) header,
+  body:has([data-label-sheet]) [data-print-hide] {
+    display: none !important;
+  }
+
+  /* Anything mounted outside the sheet's own subtree is chrome too — toasts and dialogs
+     render at the end of <body>, the verify-email banner sits beside <main>. */
+  body:has([data-label-sheet]) > *:not(:has([data-label-sheet])),
+  body:has([data-label-sheet]) > div > div > *:not(main) {
+    display: none !important;
+  }
+
+  /* Unwind the shell (and the preview's own scroll box) so the sheets can flow across pages. */
+  body:has([data-label-sheet]),
+  body:has([data-label-sheet]) > div,
+  body:has([data-label-sheet]) > div > div,
+  body:has([data-label-sheet]) main,
+  body:has([data-label-sheet]) main > div,
+  body:has([data-label-sheet]) [data-label-preview],
+  body:has([data-label-sheet]) [data-label-preview] > div,
+  body:has([data-label-sheet]) [data-label-preview-scale],
+  body:has([data-label-sheet]) [data-label-page] {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    transform: none !important;
+    gap: 0 !important;
+  }
+
+  /* Bars must stay solid black whatever the theme or the browser's ink saving. */
+  [data-label-sheet] {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* A label may never be split across two pages. */
+  [data-label] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Sheets carry `break-after: page` inline (all but the last, so no trailing blank page). */
 }

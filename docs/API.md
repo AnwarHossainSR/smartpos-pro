@@ -37,7 +37,9 @@ endpoints (`/reports/*`, `/sales/{sale}/invoice`, `/cash-register-sessions/{sess
 carry a tighter `throttle:reports` ceiling (20 req/min). `POST /auth/login` and
 `POST /auth/register` are throttled per-account **and** per-IP (`throttle:login`: 5/min by
 email, 20/min by IP), so credential stuffing against one account is throttled even when
-spread across many source IPs. Exceeding a limit returns `429` with a `Retry-After` header.
+spread across many source IPs. `POST /pos/approvals` and the approval-PIN management routes
+carry `throttle:approval-pin` (10/min per caller) on top of the service's own five-miss,
+15-minute lockout. Exceeding a limit returns `429` with a `Retry-After` header.
 
 ## Authentication
 
@@ -287,6 +289,11 @@ never trusted from the client, and `used_count` is incremented under a row lock 
 can never be over-redeemed by concurrent checkouts. `POST coupons/validate` remains
 available as a pre-checkout preview only.
 
+Beyond the permission check, the tenant's **approval limits** are re-derived here: an
+over-limit discount or a supervised price override returns `403` with
+`code: approval_required` unless the caller holds `pos.approve` or the body carries a
+valid `approval_token`. See *Manager approvals* below.
+
 ```json
 {
   "branch_id": 1,
@@ -361,8 +368,10 @@ be resumed with no payment, leaving it fully due). `422` if the sale isn't held/
 ### `POST /sales/{sale}/void`
 Requires `sales.delete`. Cancels a **completed** sale and reverses the stock it moved. Does
 **not** auto-refund cash already collected — voiding corrects a mistaken sale; refunding is
-`POST /sales/{sale}/returns` below. Body: `{ "reason": "optional string" }`. `422` if the
-sale isn't completed.
+`POST /sales/{sale}/returns` below. Body:
+`{ "reason": "optional string", "approval_token": "optional string" }`. `422` if the sale
+isn't completed; `403` with `code: approval_required` when the tenant requires a supervisor
+for voids and the caller neither holds `pos.approve` nor supplied a valid approval.
 
 ### `GET /pos/bootstrap`
 Requires `pos.view`. One call for everything the terminal needs to open a register:
@@ -371,9 +380,96 @@ Requires `pos.view`. One call for everything the terminal needs to open a regist
   "cash_register": { "id": 1, "name": "Front till" }, "session": { "...": "or null" },
   "tax_profile": { "code": "BD_VAT", "...": "..." },
   "price_display": "inclusive", "currency": "BDT",
+  "approval_policy": { "max_discount_percent": 10, "max_discount_amount": null,
+    "require_approval_for_price_override": false, "require_approval_for_void": true,
+    "approval_ttl_minutes": 5 },
+  "can_approve": false,
   "payment_methods": [{ "value": "cash", "label": "Cash" }, "..."] }
 ```
 `?branch_id=` overrides the caller's own branch (e.g. a multi-branch manager).
+`approval_policy` lets the terminal raise the PIN prompt before the round trip — it is
+**not** the enforcement point; see *Manager approvals* below.
+
+## Manager approvals (supervisor PIN)
+
+A cashier who exceeds the tenant's till limits is refused server-side and must have a
+supervisor authorise the action with a PIN. The gate lives on `POST /sales` and
+`POST /sales/{sale}/void`, so calling the API directly bypasses nothing.
+
+**The refusal.** An over-limit request returns `403` with a machine-readable body:
+
+```json
+{ "message": "Discount over limit requires manager approval.",
+  "code": "approval_required",
+  "error": { "action": "discount", "requested_value": 30, "limit_value": 10 } }
+```
+
+`action` is `discount`, `price_override` or `void`. No sale is created.
+
+### `POST /pos/approvals`
+Requires `pos.create`, `throttle:approval-pin`. Verifies a supervisor's PIN and mints a
+**single-use, short-lived** approval. Body:
+
+```json
+{ "action": "discount", "pin": "4821", "requested_value": 30,
+  "limit_value": 10, "sale_id": null, "reason": "price match" }
+```
+
+Echo `action`, `requested_value` and `limit_value` **verbatim from the `403`** — the sale
+endpoint re-derives the same numbers and refuses an approval granted for less.
+
+```json
+{ "data": { "id": "...", "token": "48 chars", "action": "discount",
+  "approved_by": { "id": "...", "name": "Dana" },
+  "requested_value": 30, "limit_value": 10, "expires_at": "..." } }
+```
+
+The `token` is returned exactly once (only its SHA-256 is stored). Retry the original
+request with `"approval_token": "<token>"` in the body.
+
+A PIN is only accepted when its holder is an **active user in the same tenant who holds
+`pos.approve`** — a PIN alone authorises nothing. A wrong PIN is `422` (`errors.pin`); five
+misses lock that cashier's terminal out of the prompt for 15 minutes, correct PIN included.
+
+**Consumption.** The approval is stamped `consumed_at` under a row lock inside the sale's
+transaction, so it cannot be replayed onto a second document, used for a different action,
+used by a different cashier, or stretched past the value it was granted for.
+
+**Audit.** Every attempt is written through `AuditLogService`: `pos.approval_granted`
+(actor = the **approver**; `new_values` carries the action, both user ids and names, the
+requested value, the limit and the sale id), `pos.approval_denied` (actor = the cashier,
+`reason: invalid_pin`) and `pos.approval_locked`.
+
+### Limits: `GET /settings/approvals` and `PUT /settings/approvals`
+`settings.view` / `settings.update`. Stored on the business under `settings.approvals`.
+
+| Field | Meaning |
+| --- | --- |
+| `max_discount_percent` | 0-100, default **100** (off). Measured against the basket's *catalogue* value, so raising a unit price cannot buy a bigger allowance. |
+| `max_discount_amount` | optional absolute ceiling, `null` for none. Whichever of the two bites first applies. |
+| `require_approval_for_price_override` | default `false`. Any line sold below catalogue raises the challenge. |
+| `require_approval_for_void` | default `false`. `POST /sales/{sale}/void` raises the challenge. |
+| `approval_ttl_minutes` | 1-60, default 5. |
+
+The discount total counts line discounts, the sale-level `discount_amount` and the value of
+any downward price override. A server-computed `coupon_code` discount is excluded — the
+cashier did not choose it. Holders of `pos.approve` are never challenged for their own work.
+
+The limit layers **on top of** the permission, it does not replace it: `pos.discount` /
+`pos.price_override` decide whether a role may do the thing at all (a role without them
+still gets a plain `403`, and the terminal hides the inputs); the limit decides how far
+it may go before a supervisor has to sign off.
+
+### Approval PINs
+
+| Method & path | Permission | Notes |
+| --- | --- | --- |
+| `PUT /auth/approval-pin` | none (own row) | body `{ current_password, pin, pin_confirmation }`; `pin` is 4-8 digits. Stored bcrypt-hashed, `$hidden`, never returned. Audited (`user.approval_pin_set`). |
+| `DELETE /auth/approval-pin` | none (own row) | body `{ current_password }`. Audited (`user.approval_pin_cleared`). |
+| `DELETE /users/{user}/approval-pin` | `users.update` | revoke a team member's PIN. An admin can only ever *revoke* — never read or set someone else's, so a PIN stays known to exactly one person. |
+
+`GET /users` and `GET /auth/me` expose `has_approval_pin` (boolean) and, when roles are
+loaded, `can_approve`. The hash itself is never serialised.
 
 ## Errors
 
@@ -523,6 +619,10 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 | `GET /roles` · `POST /roles` · `PUT /roles/{role}` · `DELETE /roles/{role}` | `roles.*` | roles carry a `permissions` slug list; system roles are protected. `PUT` on the `owner` role `403`s unless the caller holds `owner` (or is super-admin). |
 | `GET /permissions` | `roles.view` | full permission catalog grouped by module |
 
+`pos.approve` is the supervisor bit — it lets a user's PIN authorise an over-limit
+discount, a price override or a void. Granted to `owner`, `admin` and `branch_manager`
+by default.
+
 ## Audit log
 
 | Method & path | Permission | Notes |
@@ -531,7 +631,8 @@ Journal posting adjusts balances by each account's normal side (debit-normal: as
 
 Every `Sale`, `SaleReturn`, `Purchase`, `Expense`, `JournalEntry`, `User`, `Role`, `Business`
 and `Coupon` create/update/delete is written automatically (via the `Auditable` trait);
-non-CRUD security events (`sale.price_override`, `auth.login`, `auth.login_failed`, …) are
+non-CRUD security events (`sale.price_override`, `pos.approval_granted`,
+`pos.approval_denied`, `pos.approval_locked`, `auth.login`, `auth.login_failed`, …) are
 logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values`,
 `ip_address`, `user_agent` and the acting user.
 
@@ -548,6 +649,7 @@ logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values
 | Method & path | Permission |
 | --- | --- |
 | `GET /settings/business` · `PUT /settings/business` | `settings.view` / `settings.update` |
+| `GET /settings/approvals` · `PUT /settings/approvals` | `settings.view` / `settings.update` |
 | `POST /settings/onboarding/complete` | `settings.update` |
 
 `settings.invoice_prefix` (free-form string, default `INV-`) prefixes every invoice number

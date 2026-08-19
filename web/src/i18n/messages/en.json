@@ -19,6 +19,7 @@
         "dashboard": "Dashboard",
         "pos": "POS Terminal",
         "products": "Products",
+        "labels": "Barcode labels",
         "inventory": "Inventory",
         "sales": "Sales",
         "purchases": "Purchases",

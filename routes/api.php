@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\ApprovalPinController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderStatusController;
+use App\Http\Controllers\Api\V1\PosApprovalController;
 use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
@@ -80,6 +82,11 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
         Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
         Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+
+        // Supervisor approval PIN. No `permission:` guard — these only ever touch the
+        // caller's own row; revoking someone else's is the `users.update` route below.
+        Route::put('auth/approval-pin', [ApprovalPinController::class, 'update'])->middleware('throttle:approval-pin');
+        Route::delete('auth/approval-pin', [ApprovalPinController::class, 'destroy'])->middleware('throttle:approval-pin');
 
         Route::get('health', HealthController::class)->middleware('permission:dashboard.view');
 
@@ -185,6 +192,12 @@ Route::prefix('v1')->group(function () {
         // POS — one request for everything the terminal needs to open a register.
         Route::get('pos/bootstrap', [PosController::class, 'bootstrap'])->middleware('permission:pos.view');
 
+        // Supervisor challenge: verify a manager's PIN and mint a single-use approval
+        // for an over-limit discount, a price override or a void. Throttled hard — a
+        // 4-digit PIN is guessable if you are allowed to guess quickly.
+        Route::post('pos/approvals', [PosApprovalController::class, 'store'])
+            ->middleware(['permission:pos.create', 'throttle:approval-pin']);
+
         // Sale returns / refunds
         Route::get('sale-returns', [SaleReturnController::class, 'index'])->middleware('permission:sales.view');
         Route::get('sale-returns/{saleReturn}', [SaleReturnController::class, 'show'])->middleware('permission:sales.view');
@@ -259,6 +272,7 @@ Route::prefix('v1')->group(function () {
         Route::post('users', [UserController::class, 'store'])->middleware('permission:users.create');
         Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+        Route::delete('users/{user}/approval-pin', [ApprovalPinController::class, 'clearForUser'])->middleware('permission:users.update');
 
         // Shifts / time clock
         Route::post('shifts/clock-in', [ShiftController::class, 'clockIn'])->middleware('permission:shifts.view');
@@ -295,6 +309,8 @@ Route::prefix('v1')->group(function () {
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::get('settings/retention', [SettingsController::class, 'retention'])->middleware('permission:settings.view');
+        Route::get('settings/approvals', [SettingsController::class, 'approvals'])->middleware('permission:settings.view');
+        Route::put('settings/approvals', [SettingsController::class, 'updateApprovals'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/step', [SettingsController::class, 'recordOnboardingStep'])->middleware('permission:settings.update');
 

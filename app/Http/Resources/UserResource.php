@@ -17,6 +17,12 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'email_verified_at' => $this->email_verified_at,
             'two_factor_enabled' => $this->hasEnabledTwoFactor(),
+            // Whether a PIN exists — never the PIN or its hash.
+            'has_approval_pin' => $this->hasApprovalPin(),
+            'can_approve' => $this->when(
+                $this->relationLoaded('roles'),
+                fn () => $this->hasPermission('pos.approve'),
+            ),
             'requires_two_factor_setup' => $this->whenLoaded('business', fn () => (
                 (bool) data_get($this->business?->settings, 'require_2fa') && ! $this->hasEnabledTwoFactor()
             )),

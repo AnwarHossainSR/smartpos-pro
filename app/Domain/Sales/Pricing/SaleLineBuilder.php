@@ -39,6 +39,10 @@ class SaleLineBuilder
         $resolved = [];
         $taxable = [];
         $hasOverride = false;
+        $hasPriceOverride = false;
+        $lineDiscountTotal = 0.0;
+        $catalogGross = 0.0;
+        $priceOverrideDiscount = 0.0;
 
         foreach ($items as $index => $item) {
             /** @var Product|null $product */
@@ -53,6 +57,7 @@ class SaleLineBuilder
             if ($item->requestsPriceOverride($catalogPrice)) {
                 $this->authorize($cashier, 'pos.price_override');
                 $hasOverride = true;
+                $hasPriceOverride = true;
             }
 
             if ($item->discountAmount > 0) {
@@ -62,6 +67,12 @@ class SaleLineBuilder
 
             $unitPrice = $item->unitPrice !== null ? round($item->unitPrice, 2) : $catalogPrice;
             $quantity = round($item->quantity, 4);
+
+            $catalogGross += $catalogPrice * $quantity;
+            $lineDiscountTotal += $item->discountAmount;
+            // Only a price cut counts as giving money away; selling above list does not
+            // consume the cashier's discount allowance.
+            $priceOverrideDiscount += max(0.0, $catalogPrice - $unitPrice) * $quantity;
 
             // The taxable base is the discounted line, never the gross one.
             $amount = max(0, ($unitPrice * $quantity) - $item->discountAmount);
@@ -94,7 +105,15 @@ class SaleLineBuilder
             );
         }
 
-        return new PricedBasket($lines, $hasOverride, $breakdown);
+        return new PricedBasket(
+            $lines,
+            $hasOverride,
+            $breakdown,
+            hasPriceOverride: $hasPriceOverride,
+            lineDiscountTotal: round($lineDiscountTotal, 2),
+            catalogGross: round($catalogGross, 2),
+            priceOverrideDiscount: round($priceOverrideDiscount, 2),
+        );
     }
 
     private function authorize(User $cashier, string $permission): void

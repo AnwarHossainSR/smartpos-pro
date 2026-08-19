@@ -2,6 +2,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText, Percent,
   LayoutGrid, Tag, TruckIcon, UsersRound, Landmark, PieChart, CircleUserRound, FlaskConical, Layers, Building2,
+  Barcode,
 } from "lucide-react";
 
 export interface NavItem {
@@ -40,6 +41,8 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "catalog",
     groupIcon: Package,
     items: [
+      // Listed before /products so navKeyForPathname() titles the labels page correctly.
+      { href: "/products/labels", key: "labels", icon: Barcode },
       { href: "/products", key: "products", icon: Package },
       { href: "/inventory", key: "inventory", icon: Boxes },
       { href: "/catalog", key: "catalogSetup", icon: Layers },

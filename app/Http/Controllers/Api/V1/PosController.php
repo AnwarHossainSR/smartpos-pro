@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Enums\PaymentMethod;
+use App\Domain\Pos\ApprovalPolicy;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CashRegisterSessionResource;
 use App\Http\Resources\TaxProfileResource;
@@ -23,6 +24,7 @@ class PosController extends Controller
     public function bootstrap(Request $request): JsonResponse
     {
         $user = $request->user();
+        $user->loadMissing('roles.permissions');
         $branch = Branch::with('business')->findOrFail($request->integer('branch_id') ?: $user->branch_id);
         $business = $branch->business;
 
@@ -41,6 +43,11 @@ class PosController extends Controller
                 'session' => $session ? new CashRegisterSessionResource($session) : null,
                 'tax_profile' => new TaxProfileResource($business->effectiveTaxProfile()),
                 'price_display' => $business->price_display,
+                // The terminal uses these to pre-empt the round trip and open the PIN
+                // dialog itself — but the same limits are re-checked on POST /sales,
+                // so a client that ignores them gains nothing.
+                'approval_policy' => ApprovalPolicy::fromBusiness($business)->toArray(),
+                'can_approve' => $user->hasPermission('pos.approve'),
                 'currency' => $business->currency ?? config('pos.currency'),
                 'payment_methods' => array_map(
                     static fn (PaymentMethod $m) => ['value' => $m->value, 'label' => $m->label()],

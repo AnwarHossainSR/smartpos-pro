@@ -12,7 +12,30 @@ final readonly class PricedBasket
         public array $lines,
         public bool $hasOverride,
         public ?TaxBreakdown $tax = null,
+        /** True when at least one line was sold at a price other than the catalogue one. */
+        public bool $hasPriceOverride = false,
+        /** Sum of the explicit per-line discounts the client asked for. */
+        public float $lineDiscountTotal = 0.0,
+        /**
+         * What the basket is worth at catalogue prices, before any discount or
+         * override. This — not the discounted subtotal — is the denominator a
+         * percentage discount limit is measured against, so pushing the unit
+         * price up first cannot buy a bigger discount allowance.
+         */
+        public float $catalogGross = 0.0,
+        /** How far below catalogue the honoured price overrides went, in currency. */
+        public float $priceOverrideDiscount = 0.0,
     ) {}
+
+    /**
+     * Everything the cashier gave away on this basket that is not a server-computed
+     * promotion: explicit line discounts plus the value of any downward price
+     * override. A sale-level discount is added on top by the caller.
+     */
+    public function clientDiscountTotal(): float
+    {
+        return round($this->lineDiscountTotal + $this->priceOverrideDiscount, 2);
+    }
 
     /** Sum of line totals excluding tax. */
     public function subtotal(): float

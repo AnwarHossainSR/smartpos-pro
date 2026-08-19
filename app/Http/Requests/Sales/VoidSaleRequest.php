@@ -15,6 +15,7 @@ class VoidSaleRequest extends FormRequest
     {
         return [
             'reason' => ['nullable', 'string', 'max:500'],
+            'approval_token' => ['nullable', 'string', 'max:64'],
         ];
     }
 }

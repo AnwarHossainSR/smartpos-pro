@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
-  Layers, Building2, Mail, Percent, Webhook, ScrollText, Clock, LifeBuoy,
+  Layers, Building2, Mail, Percent, Webhook, ScrollText, Clock, LifeBuoy, Barcode, ShieldCheck,
 } from "lucide-react";
 
 interface NavItem {
@@ -19,6 +19,7 @@ const items: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "POS Terminal", href: "/pos", icon: ShoppingCart, keywords: "point of sale checkout" },
   { label: "Products", href: "/products", icon: Package, keywords: "catalog items sku" },
+  { label: "Print barcode labels", href: "/products/labels", icon: Barcode, keywords: "label sheet price tag shelf edge barcode print ean13 code128 avery" },
   { label: "Inventory", href: "/inventory", icon: Boxes, keywords: "stock balance" },
   { label: "Sales", href: "/sales", icon: Receipt, keywords: "orders transactions" },
   { label: "Purchases", href: "/purchases", icon: Truck, keywords: "purchase orders suppliers" },
@@ -36,6 +37,7 @@ const items: NavItem[] = [
   { label: "Categories & brands", href: "/catalog", icon: Layers, keywords: "category brand unit catalog setup" },
   { label: "Branches & warehouses", href: "/settings/locations", icon: Building2, keywords: "branch warehouse location store" },
   { label: "Email templates", href: "/settings/email-templates", icon: Mail, keywords: "email template message" },
+  { label: "Approval limits", href: "/settings/approvals", icon: ShieldCheck, keywords: "manager pin supervisor discount limit override void approval" },
   { label: "Tax settings", href: "/settings/tax", icon: Percent, keywords: "vat gst tax rate group" },
   { label: "Webhooks", href: "/settings/webhooks", icon: Webhook, keywords: "integration events" },
   { label: "Data retention", href: "/settings/retention", icon: Clock, keywords: "anonymize gdpr privacy" },

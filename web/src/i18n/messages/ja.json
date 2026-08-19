@@ -19,6 +19,7 @@
         "dashboard": "ダッシュボード",
         "pos": "POSレジ",
         "products": "商品",
+        "labels": "バーコードラベル",
         "inventory": "在庫",
         "sales": "売上",
         "purchases": "仕入",
@@ -34,7 +35,9 @@
         "notifications": "通知",
         "settings": "設定",
         "auditLog": "監査ログ",
-        "testData": "テストデータ"
+        "testData": "テストデータ",
+        "catalogSetup": "カテゴリーとブランド",
+        "locations": "店舗と倉庫"
     },
     "sidebar": {
         "collapse": "サイドバーを折りたたむ",
