@@ -32,6 +32,8 @@ trait HasRoles
     /** All permission slugs granted through any of the user's roles. */
     public function permissionSlugs(): array
     {
+        $this->loadMissing('roles.permissions');
+
         return $this->roles
             ->flatMap(fn (Role $role) => $role->permissions)
             ->pluck('slug')
