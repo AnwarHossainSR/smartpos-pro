@@ -16,7 +16,7 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Clock, Laptop, Percent, Smartphone, Webhook } from "lucide-react";
+import { BookOpen, ChevronRight, Clock, Laptop, Mail, Percent, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -321,6 +321,21 @@ export default function SettingsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{t("webhooks.title")}</p>
                   <p className="text-xs text-[var(--muted)]">{t("webhooks.settingsHint")}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-0">
+              <Link
+                href="/settings/email-templates"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Mail className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{t("emailTemplates.title")}</p>
+                  <p className="text-xs text-[var(--muted)]">{t("emailTemplates.settingsHint")}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
               </Link>

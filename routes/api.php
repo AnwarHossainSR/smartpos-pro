@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\EmailTemplateController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -283,6 +284,14 @@ Route::prefix('v1')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
         // Settings — business profile
+        // ---- Email templates ----
+        Route::get('email-templates', [EmailTemplateController::class, 'index'])->middleware('permission:settings.view');
+        Route::get('email-templates/{key}', [EmailTemplateController::class, 'show'])->middleware('permission:settings.view');
+        Route::put('email-templates/{key}', [EmailTemplateController::class, 'update'])->middleware('permission:settings.update');
+        Route::delete('email-templates/{key}', [EmailTemplateController::class, 'destroy'])->middleware('permission:settings.update');
+        Route::post('email-templates/{key}/preview', [EmailTemplateController::class, 'preview'])->middleware('permission:settings.view');
+        Route::post('email-templates/{key}/test', [EmailTemplateController::class, 'sendTest'])->middleware(['permission:settings.update', 'throttle:reports']);
+
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::get('settings/retention', [SettingsController::class, 'retention'])->middleware('permission:settings.view');

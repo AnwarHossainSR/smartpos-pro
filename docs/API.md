@@ -187,6 +187,28 @@ else (unknown token, a held or draft cart) is a 404.
 } }
 ```
 
+## Email templates
+
+Tenants may rewrite the emails their customers receive. A template is markdown with
+`{variable}` placeholders — never Blade — and only the keys in `EmailTemplateCatalog` can be
+overridden. Angle brackets are neutralised on render, so stored markup is inert.
+
+### `GET /email-templates`
+Requires `settings.view`. Returns every catalogued email with the tenant's override applied,
+plus `default_subject`, `default_body`, the available `variables` and `is_customised`.
+
+### `GET /email-templates/{key}` · `PUT /email-templates/{key}` · `DELETE /email-templates/{key}`
+`view` to read, `settings.update` to write. `PUT` takes `{ "subject": "...", "body": "..." }`
+and creates or replaces the override; `DELETE` drops it so the packaged default applies again.
+An unknown key is a 404.
+
+### `POST /email-templates/{key}/preview`
+Requires `settings.view`. Renders an unsaved `{subject, body}` draft against sample values and
+returns `{ subject, markdown, html }`. Saves nothing.
+
+### `POST /email-templates/{key}/test`
+Requires `settings.update`. Queues the rendered template to one `email` address.
+
 ## Dashboard
 
 ### `GET /dashboard/summary?from=&to=`

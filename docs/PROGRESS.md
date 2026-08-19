@@ -19,7 +19,7 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 ### Sprint 8 — Customer touchpoints & shop-floor polish (P2)
 
 - [x] T111 · G27 Customer order-status page
-- [ ] T112 · G32 Email template editor
+- [x] T112 · G32 Email template editor
 - [ ] T113 · G38 Barcode label printing
 - [ ] T114 · G89 Manager approval PIN at POS
 
