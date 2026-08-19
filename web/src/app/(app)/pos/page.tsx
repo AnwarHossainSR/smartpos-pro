@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
@@ -337,6 +338,8 @@ export default function POSPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const debouncedCustomerSearch = useDebouncedValue(customerSearch);
   const [showPayment, setShowPayment] = useState(false);
   const [receipt, setReceipt] = useState<SaleResult["data"] | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -375,10 +378,10 @@ export default function POSPage() {
   }, []);
 
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
-    queryKey: ["pos-products", search, activeCategoryId],
+    queryKey: ["pos-products", debouncedSearch, activeCategoryId],
     queryFn: () => {
       const params = new URLSearchParams({ per_page: "50", is_active: "true" });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (activeCategoryId && activeCategoryId !== "__favorites__") params.set("category_id", activeCategoryId);
       return api<Paginated<Product>>(`/products?${params.toString()}`);
     },
@@ -397,9 +400,9 @@ export default function POSPage() {
   }, [productsData, activeCategoryId, favorites]);
 
   const { data: customersData } = useQuery<Paginated<Customer>>({
-    queryKey: ["pos-customers", customerSearch],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(customerSearch)}&per_page=10`),
-    enabled: customerSearch.length > 0,
+    queryKey: ["pos-customers", debouncedCustomerSearch],
+    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedCustomerSearch)}&per_page=10`),
+    enabled: debouncedCustomerSearch.length > 0,
   });
 
   const { data: warehousesData } = useQuery({

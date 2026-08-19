@@ -8,6 +8,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { Combobox } from "@/components/ui/combobox";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -59,15 +61,10 @@ type PurchaseValues = z.infer<typeof purchaseSchema>;
 
 function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
-  const [productSearch, setProductSearch] = useState("");
+  const [itemNames, setItemNames] = useState<Record<string, string>>({});
 
   const { data: warehouses } = useQuery({ queryKey: ["warehouses-all"], queryFn: () => api<{ data: Warehouse[] }>("/warehouses") });
   const { data: suppliers } = useQuery<Paginated<Supplier>>({ queryKey: ["suppliers-all"], queryFn: () => api<Paginated<Supplier>>("/suppliers?per_page=200") });
-  const { data: products } = useQuery<Paginated<Product>>({
-    queryKey: ["products-search", productSearch],
-    queryFn: () => api<Paginated<Product>>(`/products?search=${encodeURIComponent(productSearch)}&per_page=10`),
-    enabled: productSearch.length > 0,
-  });
 
   const { register, handleSubmit, control, formState: { errors }, watch } = useForm<PurchaseValues>({
     resolver: zodResolver(purchaseSchema),
@@ -119,23 +116,27 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="mb-2 flex items-center justify-between">
           <Label>Items *</Label>
         </div>
-        <div className="relative mb-2">
-          <Input placeholder="Search product to add…" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} />
-          {productSearch && products?.data && products.data.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
-              {products.data.map((p) => (
-                <button key={p.id} type="button" className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
-                  onClick={() => { appendItem({ product_id: p.id, quantity: 1, unit_cost: p.purchase_price }); setProductSearch(""); }}>
-                  {p.name} {p.sku && <span className="text-[var(--muted)]">· {p.sku}</span>} — {formatCurrency(p.purchase_price)}
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="mb-2">
+          <Combobox<Product>
+            endpoint="/products"
+            queryKey="products"
+            value={undefined}
+            clearOnSelect
+            onChange={(_id, product) => {
+              if (!product) return;
+              appendItem({ product_id: product.id, quantity: 1, unit_cost: product.purchase_price });
+              setItemNames((names) => ({ ...names, [product.id]: product.name }));
+            }}
+            label={(p) => p.name}
+            hint={(p) => `${p.sku ? p.sku + " · " : ""}${formatCurrency(p.purchase_price)}`}
+            placeholder="Search product to add…"
+            emptyLabel="No products match"
+          />
         </div>
         <div className="space-y-2">
           {itemFields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
-              <Input className="flex-1" disabled value={`Item #${items[idx]?.product_id}`} />
+              <Input className="flex-1" disabled value={itemNames[items[idx]?.product_id] ?? items[idx]?.product_id ?? ""} />
               <Input type="number" className="w-24" step="0.001" min="0.001" {...register(`items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" />
               <Input type="number" className="w-28" step="0.01" min="0" {...register(`items.${idx}.unit_cost`, { valueAsNumber: true })} placeholder="Cost" />
               <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[var(--color-danger)]" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -196,13 +197,14 @@ function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClos
 
 export default function PurchasesPage() {
   const { can } = useAuth();
-  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detail, setDetail] = useState<Purchase | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Purchase>>({
-    queryKey: ["purchases", search, page],
-    queryFn: () => api<Paginated<Purchase>>(`/purchases?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
+    queryKey: ["purchases", debouncedSearch, page],
+    queryFn: () => api<Paginated<Purchase>>(`/purchases?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
   });
 
   const { data: purchaseDetail } = useQuery<{ data: Purchase }>({

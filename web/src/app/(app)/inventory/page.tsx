@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { Combobox } from "@/components/ui/combobox";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -33,8 +35,8 @@ interface Warehouse { id: string; name: string; is_default: boolean; }
 interface Product { id: string; name: string; sku: string | null; }
 
 const adjustSchema = z.object({
-  product_id: z.string(),
-  warehouse_id: z.string(),
+  product_id: z.string().min(1),
+  warehouse_id: z.string().min(1),
   direction: z.enum(["in", "out"]),
   quantity: z.number().min(0.001, "Must be > 0"),
   unit_cost: z.number().min(0).optional(),
@@ -48,13 +50,6 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
     queryKey: ["warehouses-all"],
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
   });
-  const [productSearch, setProductSearch] = useState("");
-  const { data: products } = useQuery<Paginated<Product>>({
-    queryKey: ["products-search", productSearch],
-    queryFn: () => api<Paginated<Product>>(`/products?search=${encodeURIComponent(productSearch)}&per_page=10`),
-    enabled: productSearch.length > 0,
-  });
-
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<AdjustValues>({
     resolver: zodResolver(adjustSchema),
     defaultValues: { direction: "in", quantity: 0 },
@@ -78,25 +73,16 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
         <Label>Product *</Label>
-        <Input
+        <Combobox<Product>
+          endpoint="/products"
+          queryKey="products"
+          value={selectedProductId}
+          onChange={(id) => setValue("product_id", id ?? "", { shouldValidate: true })}
+          label={(p) => p.name}
+          hint={(p) => p.sku}
           placeholder="Search product…"
-          value={productSearch}
-          onChange={(e) => setProductSearch(e.target.value)}
+          emptyLabel="No products match"
         />
-        {productSearch && products?.data && products.data.length > 0 && (
-          <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow">
-            {products.data.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className="w-full px-3 py-2 text-start text-sm hover:bg-[var(--surface-2)]"
-                onClick={() => { setValue("product_id", p.id); setProductSearch(p.name); }}
-              >
-                {p.name} {p.sku && <span className="text-[var(--muted)]">· {p.sku}</span>}
-              </button>
-            ))}
-          </div>
-        )}
         {errors.product_id && <p className="mt-1 text-xs text-[var(--color-danger)]">Select a product</p>}
       </div>
 
@@ -144,15 +130,16 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
 export default function InventoryPage() {
   const { can } = useAuth();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [lowStock, setLowStock] = useState(false);
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data, isLoading } = useQuery<Paginated<InventoryBalance>>({
-    queryKey: ["inventory", search, lowStock, page],
+    queryKey: ["inventory", debouncedSearch, lowStock, page],
     queryFn: () =>
       api<Paginated<InventoryBalance>>(
-        `/inventory/balances?search=${encodeURIComponent(search)}&page=${page}&per_page=25${lowStock ? "&low_stock=1" : ""}`,
+        `/inventory/balances?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=25${lowStock ? "&low_stock=1" : ""}`,
       ),
   });
 

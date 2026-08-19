@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Eye, RotateCcw, FileText, Download, Loader2, Mail } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { downloadBlob, formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -236,15 +237,16 @@ export default function SalesPage() {
   const t = useTranslation();
   const { downloadingId, downloadInvoice } = useInvoiceDownload();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<Sale | null>(null);
   const [returning, setReturning] = useState<Sale | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Sale>>({
-    queryKey: ["sales", search, page],
+    queryKey: ["sales", debouncedSearch, page],
     queryFn: () =>
       api<Paginated<Sale>>(
-        `/sales?search=${encodeURIComponent(search)}&page=${page}&per_page=20`,
+        `/sales?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
       ),
   });
 

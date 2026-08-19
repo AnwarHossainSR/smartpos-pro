@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -88,14 +89,15 @@ export default function CustomersPage() {
   const { can } = useAuth();
   const t = useTranslation();
   const qc = useQueryClient();
-  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState<Customer | null>(null);
   const [anonymizing, setAnonymizing] = useState<Customer | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Customer>>({
-    queryKey: ["customers", search, page],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
+    queryKey: ["customers", debouncedSearch, page],
+    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
   });
 
   const deleteMutation = useMutation({

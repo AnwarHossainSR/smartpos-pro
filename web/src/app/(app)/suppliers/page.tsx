@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -83,13 +84,14 @@ function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaul
 export default function SuppliersPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Supplier | null>(null);
   const [deleting, setDeleting] = useState<Supplier | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Supplier>>({
-    queryKey: ["suppliers", search, page],
-    queryFn: () => api<Paginated<Supplier>>(`/suppliers?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
+    queryKey: ["suppliers", debouncedSearch, page],
+    queryFn: () => api<Paginated<Supplier>>(`/suppliers?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
   });
 
   const deleteMutation = useMutation({
