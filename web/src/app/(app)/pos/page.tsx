@@ -24,6 +24,7 @@ import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
 import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
 import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
 import { CategoryTabs } from "@/features/pos/components/category-tabs";
+import { ApprovalPinDialog, approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-pin-dialog";
 import { ViewToggle } from "@/features/pos/components/view-toggle";
 
 /* ---- types ---- */
@@ -345,6 +346,10 @@ export default function POSPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  /** Set when the API refuses an action pending a supervisor PIN; drives the challenge dialog. */
+  const [challenge, setChallenge] = useState<ApprovalChallenge | null>(null);
+  /** The tender the cashier had already confirmed, replayed once a manager approves. */
+  const [pendingPayments, setPendingPayments] = useState<{ method: string; amount: number }[]>([]);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -586,7 +591,7 @@ export default function POSPage() {
   }, [cart, priceDisplay]);
 
   const checkoutMutation = useMutation({
-    mutationFn: (payments: { method: string; amount: number }[]) => {
+    mutationFn: ({ payments, approvalToken }: { payments: { method: string; amount: number }[]; approvalToken?: string }) => {
       const idempotencyKey = crypto.randomUUID();
       return api<SaleResult>("/sales", {
         method: "POST",
@@ -602,6 +607,7 @@ export default function POSPage() {
             discount_amount: i.discount * i.qty,
           })),
           payments,
+          approval_token: approvalToken ?? null,
         },
       });
     },
@@ -611,11 +617,20 @@ export default function POSPage() {
       setCustomerId(null);
       setCustomerSearch("");
       setShowPayment(false);
+      setChallenge(null);
+      setPendingPayments([]);
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["pos-products"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
     onError: (e: unknown) => {
+      // Over a till limit: the server hands back exactly what needs approving, so the
+      // PIN dialog challenges on the server's numbers rather than the cart's.
+      const needsApproval = approvalChallengeFrom(e);
+      if (needsApproval) {
+        setChallenge(needsApproval);
+        return;
+      }
       if (e instanceof ApiError && e.status === 409) {
         toast("This sale was already processed (duplicate)", "success");
         setCart([]);
@@ -632,7 +647,7 @@ export default function POSPage() {
   });
 
   const parkMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: (approvalToken?: string) => {
       const idempotencyKey = crypto.randomUUID();
       return api("/sales", {
         method: "POST",
@@ -649,6 +664,7 @@ export default function POSPage() {
             discount_amount: i.discount * i.qty,
           })),
           payments: [],
+          approval_token: approvalToken ?? null,
         },
       });
     },
@@ -656,6 +672,7 @@ export default function POSPage() {
       setCart([]);
       setCustomerId(null);
       setCustomerSearch("");
+      setChallenge(null);
       qc.invalidateQueries({ queryKey: queryKeys.heldSales.all });
       qc.invalidateQueries({ queryKey: queryKeys.sales.all });
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -663,6 +680,11 @@ export default function POSPage() {
       toast(t("pos.parkSuccess"), "success");
     },
     onError: (e: unknown) => {
+      const needsApproval = approvalChallengeFrom(e);
+      if (needsApproval) {
+        setChallenge(needsApproval);
+        return;
+      }
       const detail = e instanceof ApiError ? e.message : "Could not park sale";
       toast(detail, "error");
     },
@@ -687,7 +709,7 @@ export default function POSPage() {
       }
       if (e.key === "F4") {
         e.preventDefault();
-        if (cart.length > 0 && !showPayment && !receipt && !showHeld) parkMutation.mutate();
+        if (cart.length > 0 && !showPayment && !receipt && !showHeld) parkMutation.mutate(undefined);
         return;
       }
       if (e.key === "F9") {
@@ -1059,7 +1081,7 @@ export default function POSPage() {
               variant="outline"
               className="flex-1"
               disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id || parkMutation.isPending}
-              onClick={() => parkMutation.mutate()}
+              onClick={() => parkMutation.mutate(undefined)}
             >
               <Pause className="h-4 w-4" />
               {t("pos.park")}
@@ -1081,7 +1103,10 @@ export default function POSPage() {
       {showPayment && (
         <PaymentModal
           total={cartTotal}
-          onConfirm={(payments) => checkoutMutation.mutate(payments)}
+          onConfirm={(payments) => {
+            setPendingPayments(payments);
+            checkoutMutation.mutate({ payments });
+          }}
           onClose={() => setShowPayment(false)}
           loading={checkoutMutation.isPending}
         />
@@ -1093,6 +1118,21 @@ export default function POSPage() {
           onClose={() => setReceipt(null)}
         />
       )}
+
+      <ApprovalPinDialog
+        challenge={challenge}
+        onCancel={() => setChallenge(null)}
+        onApproved={(token) => {
+          setChallenge(null);
+          // A parked cart has no tender; a checkout replays the tender the cashier
+          // already confirmed, so the manager never has to re-enter the payment.
+          if (showPayment) {
+            checkoutMutation.mutate({ payments: pendingPayments, approvalToken: token });
+          } else {
+            parkMutation.mutate(token);
+          }
+        }}
+      />
 
       <ShortcutsOverlay open={showHelp} onClose={() => setShowHelp(false)} />
       <HeldOrdersPanel

@@ -20,6 +20,11 @@ return new class extends Migration
             $table->timestamp('email_verification_expires_at')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Supervisor approval PIN (hashed, never returned). Used at the POS to
+            // authorise an over-limit discount, a price override or a void — see
+            // App\Services\Pos\ApprovalService.
+            $table->string('approval_pin')->nullable();
+            $table->timestamp('approval_pin_set_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

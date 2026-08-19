@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Pos\ApprovalPolicy;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\UpdateApprovalSettingsRequest;
 use App\Http\Resources\TaxProfileResource;
 use App\Models\Business;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +51,30 @@ class SettingsController extends Controller
         $business->update($data);
 
         return response()->json(['data' => $this->present($business->fresh())]);
+    }
+
+    /**
+     * The till's approval thresholds. Kept behind their own endpoint rather than
+     * inside the free-form `settings` blob so a partial save from any other
+     * settings screen cannot silently wipe the limits.
+     */
+    public function approvals(Request $request): JsonResponse
+    {
+        $business = Business::findOrFail($request->user()->business_id);
+
+        return response()->json(['data' => ApprovalPolicy::fromBusiness($business)->toArray()]);
+    }
+
+    public function updateApprovals(UpdateApprovalSettingsRequest $request): JsonResponse
+    {
+        $business = Business::findOrFail($request->user()->business_id);
+        $policy = ApprovalPolicy::fromArray($request->validated());
+
+        $business->update([
+            'settings' => array_merge($business->settings ?? [], [ApprovalPolicy::KEY => $policy->toArray()]),
+        ]);
+
+        return response()->json(['data' => $policy->toArray()]);
     }
 
     public function completeOnboarding(Request $request): JsonResponse

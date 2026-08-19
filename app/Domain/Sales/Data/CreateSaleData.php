@@ -29,6 +29,8 @@ final readonly class CreateSaleData
         public float $discountAmount = 0.0,
         public float $shippingAmount = 0.0,
         public ?string $couponCode = null,
+        /** Single-use supervisor approval minted by `POST /pos/approvals`, when one is needed. */
+        public ?string $approvalToken = null,
     ) {}
 
     /** @param  array<string, mixed>  $data */
@@ -45,6 +47,7 @@ final readonly class CreateSaleData
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),
             shippingAmount: round((float) ($data['shipping_amount'] ?? 0), 2),
             couponCode: ($data['coupon_code'] ?? null) ?: null,
+            approvalToken: ($data['approval_token'] ?? null) ?: null,
         );
     }
 

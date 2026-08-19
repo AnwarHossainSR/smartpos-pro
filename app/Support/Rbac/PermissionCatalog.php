@@ -15,7 +15,9 @@ class PermissionCatalog
         'warehouses' => ['view', 'create', 'update', 'delete'],
         'products' => ['view', 'create', 'update', 'delete', 'export'],
         'inventory' => ['view', 'create', 'update', 'adjust', 'export', 'approve'],
-        'pos' => ['view', 'create', 'refund', 'discount', 'price_override'],
+        // `approve` is the supervisor bit: it lets a user's PIN authorise an over-limit
+        // discount, a price override or a void at the till (see ApprovalService).
+        'pos' => ['view', 'create', 'refund', 'discount', 'price_override', 'approve'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
         'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export'],
         'customers' => ['view', 'create', 'update', 'delete', 'export'],
@@ -68,7 +70,7 @@ class PermissionCatalog
             'branch_manager' => ['name' => 'Branch Manager', 'permissions' => [
                 'dashboard.view', 'branches.view', 'warehouses.view',
                 'products.view', 'inventory.view', 'inventory.adjust', 'inventory.approve',
-                'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
+                'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override', 'pos.approve',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
                 'reports.view', 'reports.export', 'shifts.view', 'shifts.manage',
             ]],

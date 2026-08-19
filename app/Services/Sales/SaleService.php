@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales;
 
+use App\Domain\Enums\ApprovalAction;
 use App\Domain\Enums\PaymentStatus;
 use App\Domain\Enums\SaleStatus;
 use App\Domain\Enums\StockMovementType;
@@ -9,6 +10,7 @@ use App\Domain\Sales\Data\CollectPaymentData;
 use App\Domain\Sales\Data\CreateSaleData;
 use App\Domain\Sales\Data\PaymentData;
 use App\Domain\Sales\Pricing\CouponRedeemer;
+use App\Domain\Sales\Pricing\PricedBasket;
 use App\Domain\Sales\Pricing\PricedLine;
 use App\Domain\Sales\Pricing\SaleLineBuilder;
 use App\Domain\Tax\TaxContext;
@@ -23,6 +25,7 @@ use App\Services\Accounting\TradingJournalService;
 use App\Services\Audit\AuditLogService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Loyalty\LoyaltyService;
+use App\Services\Pos\ApprovalService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as PdfDocument;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -50,6 +53,7 @@ class SaleService
         protected TaxResolver $taxes,
         protected InvoiceNumberService $invoiceNumbers,
         protected TradingJournalService $journals,
+        protected ApprovalService $approvals,
     ) {}
 
     public function create(CreateSaleData $data, User $cashier): Sale
@@ -61,6 +65,12 @@ class SaleService
             $subtotal = $basket->subtotal();
 
             $discount = $this->resolveSaleDiscount($data, $subtotal, $cashier);
+
+            // Permission alone is not enough: the tenant's till limits are re-derived
+            // here, server-side, and an over-limit basket is refused unless a valid,
+            // unconsumed supervisor approval came with the request.
+            $this->enforceApprovals($data, $basket, $discount, $cashier);
+
             $redemption = $data->couponCode !== null
                 ? $this->coupons->redeem($data->couponCode, $subtotal)
                 : null;
@@ -273,9 +283,9 @@ class SaleService
      * collected is not auto-refunded — voiding corrects a mistaken sale, it
      * is not a refund workflow (that is {@see SaleReturnService}).
      */
-    public function void(Sale $sale, User $user, ?string $reason = null): Sale
+    public function void(Sale $sale, User $user, ?string $reason = null, ?string $approvalToken = null): Sale
     {
-        return DB::transaction(function () use ($sale, $user, $reason) {
+        return DB::transaction(function () use ($sale, $user, $reason, $approvalToken) {
             /** @var Sale $sale */
             $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
@@ -283,6 +293,17 @@ class SaleService
                 throw ValidationException::withMessages([
                     'status' => ['Only a completed sale can be voided.'],
                 ]);
+            }
+
+            if ($this->approvals->policyFor($user->business ?? Business::find($user->business_id))->requireApprovalForVoid) {
+                $this->approvals->enforce(
+                    $user,
+                    ApprovalAction::Void,
+                    $approvalToken,
+                    round((float) $sale->total, 2),
+                    null,
+                    $sale->id,
+                );
             }
 
             $sale->load('items.product');
@@ -330,6 +351,48 @@ class SaleService
             // profile this business actually trades under, not a hardcoded one.
             'profile' => $business->effectiveTaxProfile(),
         ]);
+    }
+
+    /**
+     * Re-derives what this basket gives away and refuses it when it exceeds what
+     * the cashier may authorise alone.
+     *
+     * The denominator is the basket's *catalogue* value, so raising a unit price
+     * first cannot buy a larger discount allowance, and the numerator counts every
+     * client-supplied giveaway — line discounts, the sale-level discount, and the
+     * value of any downward price override. A coupon is excluded: it is a
+     * server-computed promotion the cashier did not choose.
+     */
+    private function enforceApprovals(CreateSaleData $data, PricedBasket $basket, float $saleDiscount, User $cashier): void
+    {
+        $policy = $this->approvals->policyFor($cashier->business ?? Business::find($cashier->business_id));
+
+        $discountTotal = round($basket->clientDiscountTotal() + $saleDiscount, 2);
+        $basketValue = $basket->catalogGross;
+
+        // A supervised price override is challenged on the whole giveaway, so the one
+        // approval the supervisor grants covers the basket rather than a single line.
+        if ($basket->hasPriceOverride && $policy->requireApprovalForPriceOverride) {
+            $this->approvals->enforce(
+                $cashier,
+                ApprovalAction::PriceOverride,
+                $data->approvalToken,
+                $discountTotal,
+                $policy->discountLimitFor($basketValue),
+            );
+
+            return;
+        }
+
+        if ($policy->discountNeedsApproval($discountTotal, $basketValue)) {
+            $this->approvals->enforce(
+                $cashier,
+                ApprovalAction::Discount,
+                $data->approvalToken,
+                $discountTotal,
+                $policy->discountLimitFor($basketValue),
+            );
+        }
     }
 
     /**

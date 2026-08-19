@@ -10,6 +10,8 @@ export interface AuthUser {
   email: string;
   email_verified_at?: string | null;
   two_factor_enabled?: boolean;
+  /** Whether a supervisor approval PIN is set. The PIN itself is never returned. */
+  has_approval_pin?: boolean;
   roles?: string[];
   permissions?: string[];
   business_id?: string | null;

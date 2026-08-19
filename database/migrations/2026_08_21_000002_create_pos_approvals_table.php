@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('pos_approvals', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('business_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('action'); // discount | price_override | void
+            // Who typed the PIN (the supervisor) and who was blocked (the cashier).
+            $table->foreignUuid('approver_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignUuid('requested_by_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignUuid('sale_id')->nullable()->constrained()->nullOnDelete();
+            $table->decimal('requested_value', 15, 2)->nullable();
+            $table->decimal('limit_value', 15, 2)->nullable();
+            $table->string('reason')->nullable();
+            // Only the SHA-256 of the token is stored: the plaintext is handed to the
+            // terminal once and never persisted, so a database read cannot replay it.
+            $table->string('token_hash', 64)->unique();
+            $table->timestamp('expires_at');
+            $table->timestamp('consumed_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['tenant_id', 'created_at']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('pos_approvals');
+    }
+};

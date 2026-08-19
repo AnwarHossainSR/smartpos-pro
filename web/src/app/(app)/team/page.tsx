@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Clock } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Clock, KeyRound } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,7 @@ interface TeamUser {
   phone: string | null;
   status: string;
   roles: string[];
+  has_approval_pin?: boolean;
 }
 
 interface ShiftRow {
@@ -220,6 +221,7 @@ export default function TeamPage() {
   const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
   const [deleting, setDeleting] = useState<TeamUser | null>(null);
+  const [revokingPin, setRevokingPin] = useState<TeamUser | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<TeamUser>>({
     queryKey: ["team", debouncedSearch, page],
@@ -234,6 +236,12 @@ export default function TeamPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/users/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast("User removed"); setDeleting(null); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const revokePinMutation = useMutation({
+    mutationFn: (id: string) => api(`/users/${id}/approval-pin`, { method: "DELETE" }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast("Approval PIN revoked"); setRevokingPin(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
@@ -265,11 +273,12 @@ export default function TeamPage() {
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.name}{u.phone && <span className="block text-xs text-[var(--muted)]">{u.phone}</span>}</TableCell>
                       <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} tone="info">{r}</Badge>)}</div></TableCell>
+                      <TableCell><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} tone="info">{r}</Badge>)}{u.has_approval_pin && <Badge tone="success">PIN</Badge>}</div></TableCell>
                       <TableCell><Badge tone={statusColor[u.status] ?? "default"}>{u.status}</Badge></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           {can("users.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(u); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
+                          {can("users.update") && u.has_approval_pin && <Button variant="ghost" size="icon" className="h-8 w-8" title="Revoke approval PIN" onClick={() => setRevokingPin(u)}><KeyRound className="h-3.5 w-3.5" /></Button>}
                           {can("users.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(u)}><Trash2 className="h-3.5 w-3.5" /></Button>}
                         </div>
                       </TableCell>
@@ -290,6 +299,16 @@ export default function TeamPage() {
             <UserForm key={editing?.id ?? "new"} isEdit={!!editing} userId={editing?.id} roles={roles} defaultValues={editing ? { name: editing.name, email: editing.email, phone: editing.phone ?? undefined, roles: editing.roles } : undefined} onSuccess={() => setDrawerOpen(false)} />
           </Drawer>
           <Dialog open={!!deleting} onClose={() => setDeleting(null)} title={t("team.removeUser")} description={`${t("team.removeConfirm")} "${deleting?.name}"?`} confirmLabel={t("team.remove")} confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
+          <Dialog
+            open={!!revokingPin}
+            onClose={() => setRevokingPin(null)}
+            title="Revoke approval PIN"
+            description={`${revokingPin?.name} will no longer be able to authorise discounts, price overrides or voids until they set a new PIN. You cannot set one for them.`}
+            confirmLabel="Revoke PIN"
+            confirmVariant="danger"
+            onConfirm={() => revokingPin && revokePinMutation.mutate(revokingPin.id)}
+            loading={revokePinMutation.isPending}
+          />
         </>
       ) : (
         <ShiftsTab />
