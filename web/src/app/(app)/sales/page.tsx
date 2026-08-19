@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Eye, RotateCcw, FileText, Download, Loader2 } from "lucide-react";
+import { Search, Eye, RotateCcw, FileText, Download, Loader2, Mail } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { downloadBlob, formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -66,7 +67,20 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
   const { can } = useAuth();
   const t = useTranslation();
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [emailingLink, setEmailingLink] = useState(false);
   const { downloadingId, downloadInvoice } = useInvoiceDownload();
+
+  const emailStatusLink = async () => {
+    setEmailingLink(true);
+    try {
+      const res = await api<{ data: { sent_to: string } }>(`/sales/${sale.id}/email-status-link`, { method: "POST" });
+      toast(t("orderStatus.linkSent", { email: res.data.sent_to }));
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : t("orderStatus.linkFailed"), "error");
+    } finally {
+      setEmailingLink(false);
+    }
+  };
 
   const viewInvoice = async () => {
     setLoadingInvoice(true);
@@ -138,6 +152,11 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
                   : <Download className="h-4 w-4" />}
                 {downloadingId === sale.id ? t("actions.downloading") : t("actions.downloadInvoice")}
               </Button>
+              {sale.status === "completed" && (
+                <Button variant="outline" onClick={emailStatusLink} disabled={emailingLink} className="flex-1 basis-28">
+                  <Mail className="h-4 w-4" /> {emailingLink ? t("orderStatus.linkSending") : t("orderStatus.linkAction")}
+                </Button>
+              )}
             </>
           )}
           {can("sales.refund") && sale.status === "completed" && (
@@ -218,15 +237,16 @@ export default function SalesPage() {
   const t = useTranslation();
   const { downloadingId, downloadInvoice } = useInvoiceDownload();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<Sale | null>(null);
   const [returning, setReturning] = useState<Sale | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Sale>>({
-    queryKey: ["sales", search, page],
+    queryKey: ["sales", debouncedSearch, page],
     queryFn: () =>
       api<Paginated<Sale>>(
-        `/sales?search=${encodeURIComponent(search)}&page=${page}&per_page=20`,
+        `/sales?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
       ),
   });
 

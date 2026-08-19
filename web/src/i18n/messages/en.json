@@ -36,7 +36,9 @@
         "auditLog": "Audit Log",
         "taxSettings": "Tax Settings",
         "taxReport": "Tax Report",
-        "testData": "Test Data"
+        "testData": "Test Data",
+        "catalogSetup": "Categories & brands",
+        "locations": "Branches & warehouses"
     },
     "sidebar": {
         "collapse": "Collapse sidebar",
@@ -444,5 +446,54 @@
         "downloading": "Downloading…",
         "downloadInvoiceFailed": "Could not download the invoice",
         "downloadSlipFailed": "Could not download the slip"
+    },
+    "orderStatus": {
+        "title": "Order {invoice}",
+        "status": "Order status",
+        "notFoundTitle": "Order not found",
+        "notFoundBody": "This link is no longer valid. Ask the shop for a new one.",
+        "loadFailed": "We could not load this order. Please try again.",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "tax": "Tax",
+        "shipping": "Shipping",
+        "total": "Total",
+        "paid": "Paid",
+        "due": "Outstanding",
+        "contact": "Questions about this order?",
+        "state": {
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        },
+        "payment": {
+            "paid": "Paid",
+            "partial": "Partly paid",
+            "due": "Unpaid"
+        },
+        "linkAction": "Email order link",
+        "linkSending": "Sending…",
+        "linkSent": "Order link sent to {email}",
+        "linkFailed": "Could not send the order link"
+    },
+    "emailTemplates": {
+        "title": "Email templates",
+        "settingsHint": "Rewrite the emails your customers receive",
+        "emails": "Emails",
+        "custom": "Edited",
+        "subject": "Subject",
+        "body": "Body (markdown)",
+        "variablesHint": "Click a variable to insert it. Anything else stays as written.",
+        "preview": "Preview",
+        "previewEmpty": "Fill in a subject and body to see the preview.",
+        "saved": "Template saved",
+        "saving": "Saving…",
+        "saveFailed": "Could not save the template",
+        "reset": "Template reset to the default",
+        "resetAction": "Reset to default",
+        "testTo": "Send a test to",
+        "sendTest": "Send test",
+        "testSent": "Test email queued to {email}",
+        "testFailed": "Could not send the test email",
+        "noPermission": "You do not have permission to edit email templates."
     }
 }

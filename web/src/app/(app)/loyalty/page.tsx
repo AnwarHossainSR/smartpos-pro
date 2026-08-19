@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -85,17 +86,18 @@ export default function LoyaltyPage() {
   const { can } = useAuth();
   const [tab, setTab] = useState<Tab>("coupons");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: coupons, isLoading: couponsLoading } = useQuery<Paginated<Coupon>>({
-    queryKey: ["coupons", search],
+    queryKey: ["coupons", debouncedSearch],
     queryFn: () => api<Paginated<Coupon>>(`/coupons?per_page=20`),
     enabled: tab === "coupons",
   });
 
   const { data: customers, isLoading: customersLoading } = useQuery<Paginated<Customer>>({
-    queryKey: ["customers-loyalty", search],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(search)}&per_page=20`),
+    queryKey: ["customers-loyalty", debouncedSearch],
+    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedSearch)}&per_page=20`),
     enabled: tab === "points",
   });
 

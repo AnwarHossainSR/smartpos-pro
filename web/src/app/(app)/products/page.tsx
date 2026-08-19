@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, apiUpload, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatCurrency, exportToCsv } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -262,6 +263,7 @@ export default function ProductsPage() {
   const qc = useQueryClient();
   const t = useTranslation();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -269,10 +271,10 @@ export default function ProductsPage() {
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
   const { data, isLoading } = useQuery<Paginated<Product>>({
-    queryKey: ["products", search, page],
+    queryKey: ["products", debouncedSearch, page],
     queryFn: () =>
       api<Paginated<Product>>(
-        `/products?search=${encodeURIComponent(search)}&page=${page}&per_page=20`,
+        `/products?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
       ),
   });
 

@@ -5,7 +5,7 @@ namespace App\Services\Purchasing;
 use App\Models\Account;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
-use App\Services\Accounting\TradingJournalService;
+use App\Services\Accounting\JournalService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 class SupplierPaymentService
 {
-    public function __construct(protected TradingJournalService $journals) {}
+    public function __construct(protected JournalService $journal) {}
 
     public function recordPayment(Supplier $supplier, float $amount, string $method, ?string $reference = null, ?string $paidAt = null): SupplierPayment
     {
@@ -63,7 +63,7 @@ class SupplierPaymentService
                 }
 
                 if (! empty($lines)) {
-                    $this->journals->journal->post([
+                    $this->journal->post([
                         'user_id' => null,
                         'reference' => 'AP-'.strtoupper(uniqid()),
                         'description' => "Supplier payment to {$supplier->name}",

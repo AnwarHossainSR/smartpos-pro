@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\Inventory\StockLedgerService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
@@ -50,7 +51,9 @@ class CheckoutE2ETest extends TestCase
         app(TenantContext::class)->set($owner->tenant_id);
         $this->assertEqualsWithDelta(7, $product->fresh()->totalStock(), 0.001);
 
-        $this->assertDatabaseHas('journal_entries', ['reference' => 'SALE']);
+        $this->assertDatabaseHas('journal_entries', [
+            'reference' => 'SALE-'.$response->json('data.invoice_number'),
+        ]);
     }
 
     public function test_checkout_updates_loyalty_on_sale(): void
@@ -91,14 +94,16 @@ class CheckoutE2ETest extends TestCase
 
         $product = $this->seedProduct($owner->id, $warehouse->id, stock: 20, price: 100);
 
-        // First checkout with coupon - should succeed
-        $first = $this->postJson('/api/v1/sales', [
-            'branch_id' => $owner->branch_id,
-            'warehouse_id' => $warehouse->id,
-            'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'payments' => [['method' => 'cash', 'amount' => 100]],
-            'coupon_code' => 'SAVE10',
-        ]);
+        // First checkout with coupon - should succeed. It carries the idempotency key
+        // the replay below repeats: a replay is only a replay of the *same* key.
+        $first = $this->withHeader('Idempotency-Key', 'coupon-test-1')
+            ->postJson('/api/v1/sales', [
+                'branch_id' => $owner->branch_id,
+                'warehouse_id' => $warehouse->id,
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+                'payments' => [['method' => 'cash', 'amount' => 100]],
+                'coupon_code' => 'SAVE10',
+            ]);
 
         $first->assertCreated()->assertJsonPath('data.coupon_discount', 10);
 

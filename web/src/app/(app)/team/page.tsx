@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -215,13 +216,14 @@ export default function TeamPage() {
   const t = useTranslation();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"members" | "shifts">("members");
-  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
   const [deleting, setDeleting] = useState<TeamUser | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<TeamUser>>({
-    queryKey: ["team", search, page],
-    queryFn: () => api<Paginated<TeamUser>>(`/users?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
+    queryKey: ["team", debouncedSearch, page],
+    queryFn: () => api<Paginated<TeamUser>>(`/users?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
   });
 
   const { data: rolesData } = useQuery<{ data: Role[] }>({

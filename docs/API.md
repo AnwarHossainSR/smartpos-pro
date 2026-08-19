@@ -167,6 +167,48 @@ owner gets `403`. The public plan catalogue (`GET subscription/plans`) does not 
 random password — they receive a "set your password" email (same mechanism as password
 reset, just different copy) and their account stays `status: invited` until they use it.
 
+## Customer order status (public)
+
+### `GET /orders/{token}`
+**Unauthenticated.** The 48-character `public_token` minted for every sale is the only
+credential; rate limited to 30 requests/minute. Returns a trimmed, customer-safe view of one
+completed or cancelled sale — invoice number, status, line items, totals and the seller's
+contact details. No ids, costs, customer record or anything else tenant-internal. Anything
+else (unknown token, a held or draft cart) is a 404.
+
+```json
+{ "data": {
+  "invoice_number": "INV-000123", "status": "completed", "payment_status": "paid",
+  "sold_at": "2026-08-19T11:12:17+00:00", "currency": "BDT",
+  "subtotal": 200, "discount_amount": 0, "tax_amount": 0, "shipping_amount": 0,
+  "total": 200, "paid_amount": 200, "due_amount": 0,
+  "items": [{ "name": "Widget", "quantity": 2, "unit_price": 100, "line_total": 200 }],
+  "seller": { "name": "Demo Store", "phone": null, "email": null, "branch": "Main" }
+} }
+```
+
+## Email templates
+
+Tenants may rewrite the emails their customers receive. A template is markdown with
+`{variable}` placeholders — never Blade — and only the keys in `EmailTemplateCatalog` can be
+overridden. Angle brackets are neutralised on render, so stored markup is inert.
+
+### `GET /email-templates`
+Requires `settings.view`. Returns every catalogued email with the tenant's override applied,
+plus `default_subject`, `default_body`, the available `variables` and `is_customised`.
+
+### `GET /email-templates/{key}` · `PUT /email-templates/{key}` · `DELETE /email-templates/{key}`
+`view` to read, `settings.update` to write. `PUT` takes `{ "subject": "...", "body": "..." }`
+and creates or replaces the override; `DELETE` drops it so the packaged default applies again.
+An unknown key is a 404.
+
+### `POST /email-templates/{key}/preview`
+Requires `settings.view`. Renders an unsaved `{subject, body}` draft against sample values and
+returns `{ subject, markdown, html }`. Saves nothing.
+
+### `POST /email-templates/{key}/test`
+Requires `settings.update`. Queues the rendered template to one `email` address.
+
 ## Dashboard
 
 ### `GET /dashboard/summary?from=&to=`
@@ -300,6 +342,11 @@ Every sale item in every response above also carries its per-component tax break
   { "name": "CGST", "rate": 9, "amount": 9 }, { "name": "SGST", "rate": 9, "amount": 9 }
 ] }
 ```
+
+### `POST /sales/{sale}/email-status-link`
+Requires `sales.view`. Queues an email to the customer with the link to their public order
+status page. Uses the customer's address by default; pass `{"email": "..."}` for a walk-in
+sale. 422 if no address is available.
 
 ### `POST /sales/{sale}/resume`
 Requires `pos.create`. Idempotency-Key aware. Finalises a **held or draft** cart: moves the

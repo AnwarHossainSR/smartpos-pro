@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\EmailTemplateController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OrderStatusController;
 use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
@@ -56,6 +58,11 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/email/verify', [AuthController::class, 'verifyEmailOtp'])->middleware('throttle:login');
     Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->middleware('signed')->name('verification.verify');
+
+    // Customer order status. The 48-char token in the URL is the only credential;
+    // throttled because it is the one endpoint an anonymous caller can hammer.
+    Route::get('orders/{token}', [OrderStatusController::class, 'show'])
+        ->middleware('throttle:30,1')->name('orders.status');
 
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
@@ -171,6 +178,7 @@ Route::prefix('v1')->group(function () {
         Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
         Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
+        Route::post('sales/{sale}/email-status-link', [SaleController::class, 'emailStatusLink'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
         Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
 
@@ -276,6 +284,14 @@ Route::prefix('v1')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
         // Settings — business profile
+        // ---- Email templates ----
+        Route::get('email-templates', [EmailTemplateController::class, 'index'])->middleware('permission:settings.view');
+        Route::get('email-templates/{key}', [EmailTemplateController::class, 'show'])->middleware('permission:settings.view');
+        Route::put('email-templates/{key}', [EmailTemplateController::class, 'update'])->middleware('permission:settings.update');
+        Route::delete('email-templates/{key}', [EmailTemplateController::class, 'destroy'])->middleware('permission:settings.update');
+        Route::post('email-templates/{key}/preview', [EmailTemplateController::class, 'preview'])->middleware('permission:settings.view');
+        Route::post('email-templates/{key}/test', [EmailTemplateController::class, 'sendTest'])->middleware(['permission:settings.update', 'throttle:reports']);
+
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
         Route::get('settings/retention', [SettingsController::class, 'retention'])->middleware('permission:settings.view');

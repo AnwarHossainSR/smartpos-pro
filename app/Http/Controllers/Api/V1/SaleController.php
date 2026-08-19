@@ -14,12 +14,15 @@ use App\Http\Requests\Sales\StoreSalePaymentRequest;
 use App\Http\Requests\Sales\StoreSaleRequest;
 use App\Http\Requests\Sales\VoidSaleRequest;
 use App\Http\Resources\SaleResource;
+use App\Mail\OrderStatusLinkMail;
 use App\Models\Sale;
 use App\Services\Sales\SaleService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
@@ -96,5 +99,31 @@ class SaleController extends Controller
         $filename = "{$sale->invoice_number}.pdf";
 
         return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
+    }
+
+    /**
+     * Emails the customer the link to their public order-status page. The address
+     * defaults to the one on the customer record; a walk-in sale can pass one.
+     */
+    public function emailStatusLink(Request $request, Sale $sale): JsonResponse
+    {
+        $validated = $request->validate(['email' => 'nullable|email']);
+        $email = $validated['email'] ?? $sale->customer?->email;
+
+        if (! $email) {
+            throw ValidationException::withMessages([
+                'email' => ['This sale has no customer email — pass one to send the link.'],
+            ]);
+        }
+
+        $sale->loadMissing('business');
+
+        Mail::to($email)->queue(new OrderStatusLinkMail(
+            $sale,
+            $sale->business?->name ?? config('app.name'),
+            rtrim(config('app.frontend_url'), '/')."/order/{$sale->public_token}",
+        ));
+
+        return response()->json(['data' => ['sent_to' => $email]]);
     }
 }

@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -93,12 +94,13 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
 
 export default function ExpensesPage() {
   const { can } = useAuth();
-  const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data, isLoading } = useQuery<Paginated<Expense>>({
-    queryKey: ["expenses", search, page],
-    queryFn: () => api<Paginated<Expense>>(`/expenses?search=${encodeURIComponent(search)}&page=${page}&per_page=20`),
+    queryKey: ["expenses", debouncedSearch, page],
+    queryFn: () => api<Paginated<Expense>>(`/expenses?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
   });
 
   const payColor: Record<string, "success" | "warning" | "default"> = { approved: "success", pending: "warning", rejected: "danger" as "default" };

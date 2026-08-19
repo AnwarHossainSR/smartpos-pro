@@ -3,6 +3,9 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Product;
+use App\Models\Sale;
+use App\Services\Inventory\StockLedgerService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;

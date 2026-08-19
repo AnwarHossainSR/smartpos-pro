@@ -477,3 +477,111 @@ the same way as Phase 8.
   Phase 8.
 - **Done when:** a tenant can mint/revoke an API key scoped to a permission subset, and
   register a webhook URL that receives signed event payloads with retries.
+
+## Phase 11 — Backlog sprints 8–11  (`api` + `web`)
+
+Everything left in [`GAP_ANALYSIS_AND_ROADMAP.md`](GAP_ANALYSIS_AND_ROADMAP.md) after
+sprints 1–7 shipped, grouped into four sprints. Two Phase 10 tasks (T105, T108) never got
+routes and are carried into sprint 11 rather than renumbered. Live status:
+[`PROGRESS.md`](PROGRESS.md).
+
+### Sprint 8 — Customer touchpoints & shop-floor polish  (P2)
+
+#### T111 · G27 Customer order-status page
+- **Scope:** public, unauthenticated `/order/{token}` page — order state, items, totals,
+  paid/due, branch contact. Token minted per sale (reuse the existing `sales` token column),
+  never guessable, no auth. Backend endpoint returns a trimmed payload only. Email hook so
+  the link can be sent on sale completion.
+- **Done when:** a customer with only the link sees their order status; the endpoint leaks
+  no tenant data beyond that one sale (test); a wrong token 404s.
+
+#### T126 · Catalog & structure admin UI
+- **Scope:** the API has had categories, brands, units, branches and warehouses since
+  Phase 1 with no screen behind any of them — a tenant could pick a category on a product
+  but never create one. Add a `/catalog` page (categories, brands, units) and
+  `/settings/locations` (branches, warehouses), reachable from the sidebar, settings and
+  the command palette.
+- **Done when:** a new tenant can set up their whole catalogue and locations without
+  touching the API directly.
+
+#### T112 · G32 Email template editor
+- **Scope:** `email_templates` table (tenant-scoped, per event key), variable palette,
+  live preview, reset-to-default. Mailables render the tenant's override when present.
+- **Done when:** a tenant edits the sale-receipt email, sends a test, and the queued mail
+  uses the override.
+
+#### T113 · G38 Barcode label printing
+- **Scope:** label sheet builder in the products module — pick products + quantity, choose a
+  label template (price tag / shelf label), render barcodes client-side, print stylesheet.
+- **Done when:** a sheet of scannable labels prints from the browser at the right size.
+
+#### T114 · G89 Manager approval PIN at POS
+- **Scope:** supervisor PIN challenge for over-limit discounts, price overrides and voids;
+  PIN stored hashed per user; approvals audited with who approved what.
+- **Done when:** a cashier exceeding the discount limit is blocked until a manager PIN is
+  entered, and the approval shows up in the audit log.
+
+### Sprint 9 — Scale & operations  (P3)
+
+#### T115 · G36 Multi-currency
+- **Scope:** currency table + rate service, per-sale currency with locked rate, dual display
+  (tender vs base), FX gain/loss posting through `JournalService`.
+- **Done when:** a sale can be taken in a second currency and the books balance in base.
+
+#### T116 · G37 Scale / weight products
+- **Scope:** `is_weighed` products priced per unit weight, embedded-weight barcode parsing,
+  optional WebSerial scale read at POS.
+- **Done when:** scanning a weight-embedded barcode adds the right quantity and line total.
+
+#### T117 · G92 Stocktake / cycle count
+- **Scope:** count sheets per warehouse (full or partial), enter counted quantities, variance
+  report, post adjustments through `StockLedgerService` + variance journal.
+- **Done when:** a count posts adjustments and the variance is visible on the journal.
+
+#### T118 · G93 Reorder suggestions → draft PO
+- **Scope:** sales velocity + lead time + min stock → suggested order quantities per supplier;
+  one click creates a draft purchase order (T61/G14 workflow).
+- **Done when:** suggestions produce a draft PO that can be approved through the normal flow.
+
+### Sprint 10 — Customer & hardware  (P2/P3)
+
+#### T119 · G40 Mobile POS layout
+- **Scope:** POS at phone widths — bottom-sheet cart, 48px touch targets, swipe to remove,
+  sticky totals bar.
+- **Done when:** a full checkout is possible on a 390px viewport without zooming.
+
+#### T120 · G42 Customer portal
+- **Scope:** customer-facing login (magic link), purchase history, invoices, outstanding dues
+  paid via the existing Stripe checkout (G20).
+- **Done when:** a customer logs in, sees their invoices and settles a due online.
+
+#### T121 · G95 ESC/POS hardware
+- **Scope:** WebUSB/WebSerial receipt printing (ESC/POS command builder), cash-drawer kick,
+  printer profile in settings, graceful fallback to the current PDF receipt.
+- **Done when:** a receipt prints on an ESC/POS printer and the drawer opens on cash tender.
+
+#### T122 · G90 Security settings page
+- **Scope:** one surface for 2FA enrolment, active sessions/tokens with revoke, lockout
+  status and password change — the pieces exist, the page doesn't.
+- **Done when:** a user manages 2FA, sessions and password from a single page.
+
+### Sprint 11 — Long tail & unfinished lanes  (P2/P3)
+
+#### T123 · G26 Delivery management
+- **Scope:** delivery zones + fees, driver assignment, delivery states, driver view, public
+  tracking page reusing the T111 token.
+- **Done when:** a sale can be dispatched, tracked and completed as a delivery.
+
+#### T124 · G39 AI features — demand forecasting
+- **Scope:** one lane only: per-product demand forecast from sales history feeding the T118
+  reorder suggestions, with a plain-language summary.
+- **Done when:** forecasts render for the top movers and drive suggested order quantities.
+
+#### T125 · G24 Tables & floor plan (completion)
+- **Scope:** `dining_tables` and `modifiers` migrations landed with no models, services,
+  routes or UI. Build the missing layers: table CRUD, floor plan with statuses, open a sale
+  against a table, modifiers on POS lines.
+- **Done when:** a restaurant tenant seats a table, adds a modifier and closes the check.
+
+#### T105 · G19 Purchase edit / cancel / return  *(carried from Phase 10)*
+#### T108 · G11 Server-side export endpoints  *(carried from Phase 10)*

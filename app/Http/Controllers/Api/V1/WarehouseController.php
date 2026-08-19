@@ -8,20 +8,27 @@ use App\Http\Resources\WarehouseResource;
 use App\Models\InventoryBalance;
 use App\Models\Sale;
 use App\Models\Warehouse;
-use Illuminate\Http\JsonResponse;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class WarehouseController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        $warehouses = Warehouse::query()
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
-            ->orderBy('name')
-            ->get(['id', 'name', 'code', 'branch_id', 'is_default']);
+        // Page size is generous because this list doubles as the warehouse picker on
+        // POS, purchases and transfers, where a second page would be a surprise.
+        $warehouses = QueryPipeline::for(Warehouse::query()->with('branch')->orderByDesc('is_default'), $request)
+            ->search(['name', 'code'])
+            ->allow(
+                AllowedFilter::boolean('is_active'),
+                AllowedFilter::exact('branch_id'),
+            )
+            ->sortable(['name', 'code', 'created_at'], default: 'name')
+            ->paginate(100);
 
-        return response()->json(['data' => $warehouses]);
+        return WarehouseResource::collection($warehouses);
     }
 
     public function show(Warehouse $warehouse): WarehouseResource
