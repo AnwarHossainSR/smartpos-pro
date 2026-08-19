@@ -115,7 +115,7 @@ export default function CustomersPage() {
               : data?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">No customers yet.</TableCell></TableRow>
               : data?.data?.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.name}{c.email && <span className="block text-xs text-[var(--muted)]">{c.email}</span>}</TableCell>
+                  <TableCell className="font-medium">{c.name}{c.phone && <span className="block text-xs text-[var(--muted)]">{c.phone}</span>}</TableCell>
                   <TableCell>{c.phone ?? "—"}</TableCell>
                   <TableCell>{c.customer_group ? <Badge>{c.customer_group}</Badge> : "—"}</TableCell>
                   <TableCell className="text-end">{formatCurrency(c.balance)}</TableCell>

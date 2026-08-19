@@ -38,6 +38,7 @@ export interface Product {
    *  the multi-component breakdown activates automatically once the API adds this relation. */
   tax_group?: TaxGroup | null;
   stock: number;
+  min_stock_level?: number;
   is_active: boolean;
   category: { id: string; name: string } | null;
 }
@@ -143,7 +144,7 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
 
   return (
     <Dialog open title="Receipt" onClose={onClose}>
-      <div className="space-y-3 text-sm">
+      <div data-receipt className="space-y-3 text-sm">
         <div className="text-center">
           <p className="font-semibold text-base">Invoice #{sale.invoice_number}</p>
           <p className="text-[var(--muted)]">{formatDateTime(sale.sold_at)}</p>
@@ -187,7 +188,7 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
             </div>
           ))}
           {sale.change_amount > 0 && (
-            <div className="flex justify-between text-green-600">
+            <div className="flex justify-between text-green-600 text-2xl font-bold">
               <span>Change</span><span>{formatCurrency(sale.change_amount)}</span>
             </div>
           )}
@@ -200,6 +201,9 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
         <div className="flex gap-2 mt-4">
           <Button variant="outline" className="flex-1" onClick={viewInvoice} disabled={loadingInvoice}>
             <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={() => window.print()}>
+            Print receipt
           </Button>
           <Button className="flex-1" onClick={onClose}>New sale</Button>
         </div>
@@ -330,6 +334,8 @@ export default function POSPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const lastKeystrokeRef = useRef<number>(0);
+  const keystrokeBufferRef = useRef<string>("");
 
   const { data: productsData, isLoading: productsLoading } = useQuery<Paginated<Product>>({
     queryKey: ["pos-products", search],
@@ -393,9 +399,22 @@ export default function POSPage() {
       if (found?.data) {
         addToCart(found.data);
         setSearch("");
+        try { navigator.vibrate?.(50); } catch {}
+        try {
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 1200;
+          gain.gain.value = 0.1;
+          osc.start();
+          osc.stop(ctx.currentTime + 0.08);
+        } catch {}
       }
     } catch {
-      // Not a barcode (or not found) — leave it as a normal search term.
+      toast(`Barcode "${code}" not found`, "error");
+      try { navigator.vibrate?.([50, 30, 50]); } catch {}
     }
   }, [addToCart]);
 
@@ -412,6 +431,7 @@ export default function POSPage() {
 
   const clearCart = useCallback(() => {
     if (cart.length === 0) return;
+    if (!window.confirm("Clear all items from the cart?")) return;
     setCart([]);
     setCustomerId(null);
     setCustomerSearch("");
@@ -442,6 +462,11 @@ export default function POSPage() {
   }), [cart.length, showPayment, receipt, showHelp]);
 
   usePosShortcuts(handlers, shortcutState);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
       setCart((prev) => prev.filter((i) => i.product.id !== id));
@@ -503,6 +528,16 @@ export default function POSPage() {
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
     onError: (e: unknown) => {
+      if (e instanceof ApiError && e.status === 409) {
+        toast("This sale was already processed (duplicate)", "success");
+        setCart([]);
+        setCustomerId(null);
+        setCustomerSearch("");
+        setShowPayment(false);
+        qc.invalidateQueries({ queryKey: ["products"] });
+        qc.invalidateQueries({ queryKey: ["pos-products"] });
+        return;
+      }
       const detail = e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Checkout failed";
       toast(detail, "error");
     },
@@ -596,7 +631,29 @@ export default function POSPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") tryBarcodeLookup(search);
+              if (e.key === "Enter") {
+                const now = Date.now();
+                const gap = now - lastKeystrokeRef.current;
+                lastKeystrokeRef.current = now;
+                if (gap < 30 && keystrokeBufferRef.current.length >= 3) {
+                  tryBarcodeLookup(keystrokeBufferRef.current);
+                  keystrokeBufferRef.current = "";
+                  return;
+                }
+                tryBarcodeLookup(search);
+                keystrokeBufferRef.current = "";
+                return;
+              }
+              if (e.key.length === 1) {
+                const now = Date.now();
+                const gap = now - lastKeystrokeRef.current;
+                lastKeystrokeRef.current = now;
+                if (gap < 30) {
+                  keystrokeBufferRef.current += e.key;
+                } else {
+                  keystrokeBufferRef.current = e.key;
+                }
+              }
             }}
             autoFocus
           />
@@ -627,7 +684,14 @@ export default function POSPage() {
                   <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
                   {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
                   <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
-                  <p className="text-xs text-[var(--muted)]">Stock: {p.stock ?? 0}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={cn("text-xs", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : (p.min_stock_level && (p.stock ?? 0) <= p.min_stock_level) ? "text-amber-600" : "text-[var(--muted)]")}>
+                      Stock: {p.stock ?? 0}
+                    </p>
+                    {(p.min_stock_level ?? 0) > 0 && (p.stock ?? 0) <= (p.min_stock_level ?? 0) && (p.stock ?? 0) > 0 && (
+                      <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
+                    )}
+                  </div>
                 </button>
               ))}
               {productsData?.data?.length === 0 && (
@@ -641,8 +705,7 @@ export default function POSPage() {
       </div>
 
       {/* Right: cart */}
-      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <button
             onClick={() => setShowHeld(true)}
             className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
@@ -730,6 +793,11 @@ export default function POSPage() {
                   </div>
                   <span className="text-sm font-semibold">{formatCurrency(item.unit_price * item.qty)}</span>
                 </div>
+                {priceDisplay === "inclusive" && item.product.tax_rate > 0 && (
+                  <div className="mt-0.5 text-xs text-[var(--muted)] text-end">
+                    net {formatCurrency(lineTotals(item, priceDisplay).net)}
+                  </div>
+                )}
                 {(canOverridePrice || canDiscount) && (
                   <div className="mt-2 flex items-center gap-2 text-xs">
                     {canOverridePrice && (
@@ -766,7 +834,7 @@ export default function POSPage() {
         </div>
 
         {/* Cart footer */}
-        <div className="border-t border-[var(--border)] p-4 space-y-3">
+        <div className="sticky bottom-0 border-t border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-[var(--muted)]">Subtotal</span>
             <span>{formatCurrency(cartSubtotal)}</span>
@@ -796,7 +864,7 @@ export default function POSPage() {
             </Button>
             <Button
               className="flex-1"
-              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id}
+              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id || checkoutMutation.isPending}
               onClick={() => setShowPayment(true)}
             >
               {t("pos.checkout")} · {formatCurrency(cartTotal)}

@@ -23,7 +23,7 @@ class UpdateProductRequest extends FormRequest
             'brand_id' => ['nullable', Rule::exists('brands', 'id')->where('tenant_id', $tenantId)],
             'unit_id' => ['nullable', Rule::exists('units', 'id')->where('tenant_id', $tenantId)],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->where('tenant_id', $tenantId)->ignore($productId)],
-            'barcode' => ['nullable', 'string', 'max:100'],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where('tenant_id', $tenantId)->ignore($productId)],
             'description' => ['nullable', 'string'],
             'purchase_price' => ['sometimes', 'numeric', 'min:0'],
             'selling_price' => ['sometimes', 'numeric', 'min:0'],
