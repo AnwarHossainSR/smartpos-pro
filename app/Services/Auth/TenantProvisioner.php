@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Domain\Enums\UserStatus;
+use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Permission;
@@ -10,6 +11,7 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\Accounting\ChartOfAccounts;
 use App\Support\Rbac\PermissionCatalog;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +67,7 @@ class TenantProvisioner
             ]);
 
             $this->provisionRoles($tenant);
+            $this->provisionChartOfAccounts();
 
             // No `tenant_id` here on purpose: it is not fillable on User (a deliberate
             // hardening choice — see the $fillable docblock) so passing it would be
@@ -84,6 +87,21 @@ class TenantProvisioner
 
             return $owner->load('roles', 'business', 'branch');
         });
+    }
+
+    /**
+     * The default chart of accounts. Automatic bookkeeping is on by default and
+     * posts against accounts looked up by name, so a tenant without these would
+     * record nothing at all and never be told.
+     */
+    public function provisionChartOfAccounts(): void
+    {
+        foreach (ChartOfAccounts::defaults() as $account) {
+            Account::updateOrCreate(
+                ['account_number' => $account['account_number']],
+                ['name' => $account['name'], 'type' => $account['type'], 'balance' => 0, 'is_active' => true],
+            );
+        }
     }
 
     /** Ensure the global permission rows exist, then create this tenant's roles. */

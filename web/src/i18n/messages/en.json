@@ -36,7 +36,9 @@
         "auditLog": "Audit Log",
         "taxSettings": "Tax Settings",
         "taxReport": "Tax Report",
-        "testData": "Test Data"
+        "testData": "Test Data",
+        "catalogSetup": "Categories & brands",
+        "locations": "Branches & warehouses"
     },
     "sidebar": {
         "collapse": "Collapse sidebar",

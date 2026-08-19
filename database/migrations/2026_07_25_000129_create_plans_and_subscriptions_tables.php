@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->decimal('price', 10, 2)->default(0);
             $table->string('interval')->default('month'); // month, year
-            $table->json('limits'); // {branches, warehouses, users, products, monthly_sales}
+            // Null means "no plan-specific caps" — PlanLimitService falls back to FREE_LIMITS.
+            $table->json('limits')->nullable(); // {branches, warehouses, users, products, monthly_sales}
             $table->json('features')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

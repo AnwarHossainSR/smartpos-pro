@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
+  Layers, Building2, Mail, Percent, Webhook, ScrollText, Clock, LifeBuoy,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,6 +33,15 @@ const items: NavItem[] = [
   { label: "Subscription", href: "/subscription", icon: Crown, keywords: "plan billing" },
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Categories & brands", href: "/catalog", icon: Layers, keywords: "category brand unit catalog setup" },
+  { label: "Branches & warehouses", href: "/settings/locations", icon: Building2, keywords: "branch warehouse location store" },
+  { label: "Email templates", href: "/settings/email-templates", icon: Mail, keywords: "email template message" },
+  { label: "Tax settings", href: "/settings/tax", icon: Percent, keywords: "vat gst tax rate group" },
+  { label: "Webhooks", href: "/settings/webhooks", icon: Webhook, keywords: "integration events" },
+  { label: "Data retention", href: "/settings/retention", icon: Clock, keywords: "anonymize gdpr privacy" },
+  { label: "Audit log", href: "/audit-log", icon: ScrollText, keywords: "history changes" },
+  { label: "Support", href: "/support", icon: LifeBuoy, keywords: "help ticket" },
+  { label: "Tax report", href: "/reports/tax", icon: Percent, keywords: "vat return filing" },
 ];
 
 interface CommandPaletteProps {

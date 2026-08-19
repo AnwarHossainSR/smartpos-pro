@@ -2,9 +2,11 @@
 
 namespace App\Services\Accounting;
 
+use App\Domain\Enums\PurchaseStatus;
 use App\Models\Account;
 use App\Models\Business;
 use App\Models\Expense;
+use App\Models\JournalEntry;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleReturn;
@@ -25,14 +27,28 @@ class TradingJournalService
         $sale->loadMissing('payments', 'items.taxes');
 
         $lines = [];
-        $totalPaid = 0;
+
+        // What the till actually keeps: change handed back is not revenue, and a
+        // sale tendered 100 for a 90 total would otherwise debit cash by 100 and
+        // never balance.
+        $change = (float) $sale->change_amount;
 
         foreach ($sale->payments as $payment) {
-            $amount = (float) $payment->amount;
+            $amount = round((float) $payment->amount, 2);
             if ($amount <= 0) {
                 continue;
             }
-            $totalPaid += $amount;
+
+            // Change always comes out of the cash drawer, so it nets off the cash leg.
+            if ($change > 0) {
+                $applied = min($change, $amount);
+                $amount = round($amount - $applied, 2);
+                $change = round($change - $applied, 2);
+            }
+
+            if ($amount <= 0) {
+                continue;
+            }
 
             $accountId = $this->resolvePaymentAccount($payment->method, $sale->tenant_id);
             if (! $accountId) {
@@ -45,7 +61,7 @@ class TradingJournalService
             ];
         }
 
-        $due = (float) $sale->due_amount;
+        $due = round((float) $sale->due_amount, 2);
         if ($due > 0) {
             $arId = $this->resolveAccount('Accounts Receivable', $sale->tenant_id);
             if (! $arId) {
@@ -58,6 +74,22 @@ class TradingJournalService
             ];
         }
 
+        // Discounts are contra-revenue: revenue is credited gross and the giveaway
+        // is debited, so the books show both what was sold and what was given away
+        // rather than a single netted figure nobody can audit.
+        $discounts = round((float) $sale->discount_amount + (float) $sale->coupon_discount, 2);
+        if ($discounts > 0) {
+            $salesReturnsId = $this->resolveAccount('Sales Returns', $sale->tenant_id);
+            if (! $salesReturnsId) {
+                return;
+            }
+            $lines[] = [
+                'account_id' => $salesReturnsId,
+                'type' => 'debit',
+                'amount' => $discounts,
+            ];
+        }
+
         $salesRevenueId = $this->resolveAccount('Sales Revenue', $sale->tenant_id);
         if (! $salesRevenueId) {
             return;
@@ -65,7 +97,7 @@ class TradingJournalService
         $lines[] = [
             'account_id' => $salesRevenueId,
             'type' => 'credit',
-            'amount' => round((float) $sale->subtotal - (float) $sale->discount_amount - (float) $sale->coupon_discount, 2),
+            'amount' => round((float) $sale->subtotal + (float) $sale->shipping_amount, 2),
         ];
 
         if ((float) $sale->tax_amount > 0) {
@@ -77,18 +109,6 @@ class TradingJournalService
                 'account_id' => $taxPayableId,
                 'type' => 'credit',
                 'amount' => round((float) $sale->tax_amount, 2),
-            ];
-        }
-
-        if ((float) $sale->discount_amount > 0) {
-            $salesReturnsId = $this->resolveAccount('Sales Returns', $sale->tenant_id);
-            if (! $salesReturnsId) {
-                return;
-            }
-            $lines[] = [
-                'account_id' => $salesReturnsId,
-                'type' => 'credit',
-                'amount' => round((float) $sale->discount_amount, 2),
             ];
         }
 
@@ -106,6 +126,21 @@ class TradingJournalService
     {
         $business = Business::find($purchase->business_id);
         if (! $business || ! $business->auto_post_journals) {
+            return;
+        }
+
+        // Goods can arrive in several deliveries, and `receive()` runs once per
+        // delivery. The stock value only settles when the last one lands, so the
+        // purchase is booked then — once, whatever the delivery count.
+        if ($purchase->status !== PurchaseStatus::Received) {
+            return;
+        }
+
+        $alreadyPosted = JournalEntry::where('source_type', Purchase::class)
+            ->where('source_id', $purchase->id)
+            ->exists();
+
+        if ($alreadyPosted) {
             return;
         }
 
@@ -159,7 +194,7 @@ class TradingJournalService
 
         $this->journal->post([
             'user_id' => $purchase->user_id,
-            'reference' => $purchase->reference_number,
+            'reference' => 'PUR-'.$purchase->reference_number,
             'description' => "Purchase #{$purchase->reference_number}",
             'source_type' => Purchase::class,
             'source_id' => $purchase->id,

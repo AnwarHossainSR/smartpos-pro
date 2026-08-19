@@ -20,6 +20,7 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 
 - [x] T111 · G27 Customer order-status page
 - [x] T112 · G32 Email template editor
+- [x] T126 · Catalog & structure admin UI (categories, brands, units, branches, warehouses)
 - [ ] T113 · G38 Barcode label printing
 - [ ] T114 · G89 Manager approval PIN at POS
 

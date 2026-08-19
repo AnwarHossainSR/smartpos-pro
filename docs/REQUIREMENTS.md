@@ -495,6 +495,15 @@ routes and are carried into sprint 11 rather than renumbered. Live status:
 - **Done when:** a customer with only the link sees their order status; the endpoint leaks
   no tenant data beyond that one sale (test); a wrong token 404s.
 
+#### T126 · Catalog & structure admin UI
+- **Scope:** the API has had categories, brands, units, branches and warehouses since
+  Phase 1 with no screen behind any of them — a tenant could pick a category on a product
+  but never create one. Add a `/catalog` page (categories, brands, units) and
+  `/settings/locations` (branches, warehouses), reachable from the sidebar, settings and
+  the command palette.
+- **Done when:** a new tenant can set up their whole catalogue and locations without
+  touching the API directly.
+
 #### T112 · G32 Email template editor
 - **Scope:** `email_templates` table (tenant-scoped, per event key), variable palette,
   live preview, reset-to-default. Mailables render the tenant's override when present.

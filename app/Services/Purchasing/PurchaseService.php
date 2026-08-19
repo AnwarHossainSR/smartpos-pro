@@ -173,7 +173,8 @@ class PurchaseService
                 'received_at' => $allFullyReceived ? Carbon::now() : null,
             ]);
 
-            if ((float) $purchase->due_amount > 0 && $purchase->supplier_id) {
+            // What is owed is owed once, not once per delivery.
+            if ($allFullyReceived && (float) $purchase->due_amount > 0 && $purchase->supplier_id) {
                 Supplier::whereKey($purchase->supplier_id)->increment('balance', (float) $purchase->due_amount);
             }
 

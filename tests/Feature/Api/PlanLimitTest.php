@@ -4,7 +4,9 @@ namespace Tests\Feature\Api;
 
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
 use Tests\TestCase;
 
