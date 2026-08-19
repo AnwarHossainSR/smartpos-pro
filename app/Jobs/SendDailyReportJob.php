@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Sentry\SentrySdk;
 
 /**
  * Sends a daily sales summary email to the business owner.
@@ -60,5 +61,10 @@ class SendDailyReportJob implements ShouldQueue
             ->first();
 
         Mail::to($owner->email)->queue(new DailyReportMail($owner, $summary, $yesterday));
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        SentrySdk::captureException($exception);
     }
 }

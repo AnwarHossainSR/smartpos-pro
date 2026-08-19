@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupplierPayment extends Model
 {
-    use BelongsToTenant, HasUuids, Auditable;
+    use Auditable, BelongsToTenant, HasUuids;
 
     protected $fillable = [
         'tenant_id', 'supplier_id', 'amount', 'method', 'reference', 'paid_at', 'notes', 'id',

@@ -25,6 +25,27 @@ return [
             return null;
         }
 
+        $exception = $event->exception;
+        if ($exception) {
+            $className = get_class($exception);
+
+            // Filter noisy exceptions that shouldn't be tracked
+            $noisyPatterns = [
+                'ErrorException',
+                'MaxExecutionTime',
+                'MaximumExecutionTime',
+                'Connection refused',
+                'Connection timed out',
+                'SQLSTATE[HY000]',
+            ];
+
+            foreach ($noisyPatterns as $pattern) {
+                if (str_contains($className, $pattern) || str_contains($exception->getMessage(), $pattern)) {
+                    return null;
+                }
+            }
+        }
+
         return $event;
     },
 

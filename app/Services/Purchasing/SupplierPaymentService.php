@@ -2,22 +2,22 @@
 
 namespace App\Services\Purchasing;
 
+use App\Models\Account;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
-use App\Models\Account;
+use App\Services\Accounting\TradingJournalService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Services\Accounting\TradingJournalService;
-use App\Models\Business;
 
 class SupplierPaymentService
 {
     public function __construct(protected TradingJournalService $journals) {}
 
-    public function recordPayment(Supplier $supplier, float $amount, string $method, string $reference = null, string $paidAt = null): SupplierPayment
+    public function recordPayment(Supplier $supplier, float $amount, string $method, ?string $reference = null, ?string $paidAt = null): SupplierPayment
     {
-        return DB::transaction(function () use ($supplier, $amount, $method, $reference, $paidAt) {
+        return DB::transaction(function () use ($supplier, $amount, $method, $reference) {
             $supplier->load('tenant');
 
             $supplier->balance = (float) $supplier->balance - $amount;
@@ -78,7 +78,7 @@ class SupplierPaymentService
         });
     }
 
-    public function listPayments(Supplier $supplier, array $filters = []): \Illuminate\Support\Collection
+    public function listPayments(Supplier $supplier, array $filters = []): Collection
     {
         $query = $supplier->payments()->latest('paid_at');
 
@@ -105,7 +105,7 @@ class SupplierPaymentService
         });
     }
 
-    public function statement(Supplier $supplier): \Illuminate\Support\Collection
+    public function statement(Supplier $supplier): Collection
     {
         $business = $supplier->tenant;
         $tenantId = $business?->tenant_id ?? $supplier->tenant_id;
@@ -175,7 +175,7 @@ class SupplierPaymentService
         return $this->applyBuckets($entries);
     }
 
-    protected function applyBuckets(array $entries): \Illuminate\Support\Collection
+    protected function applyBuckets(array $entries): Collection
     {
         $result = collect();
 

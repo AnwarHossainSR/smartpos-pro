@@ -9,7 +9,9 @@ use App\Models\Customer;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
@@ -51,5 +53,36 @@ class CustomerController extends Controller
         $customer->delete();
 
         return response()->noContent();
+    }
+
+    public function anonymize(Customer $customer): JsonResponse
+    {
+        $hashedFields = [];
+
+        if (isset($customer->name)) {
+            $customer->name = Str::password(12);
+            $hashedFields[] = 'name';
+        }
+        if (isset($customer->email)) {
+            $customer->email = Str::password(12);
+            $hashedFields[] = 'email';
+        }
+        if (isset($customer->phone)) {
+            $customer->phone = Str::password(12);
+            $hashedFields[] = 'phone';
+        }
+        if (isset($customer->address)) {
+            $customer->address = Str::password(12);
+            $hashedFields[] = 'address';
+        }
+
+        $customer->save();
+
+        return response()->json([
+            'data' => [
+                'anonymized_at' => now(),
+                'hashed_fields' => $hashedFields,
+            ],
+        ]);
     }
 }

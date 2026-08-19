@@ -1,35 +1,58 @@
+import * as Sentry from "@sentry/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali, Noto_Sans_JP, Noto_Sans_Arabic } from "next/font/google";
+import ErrorBoundary from "./error";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-// Per-script fonts for locales Geist doesn't cover glyphs for. Only downloaded by the
-// browser when `[data-lang]` on <html> actually applies that font-family (see globals.css).
 const notoBengali = Noto_Sans_Bengali({ variable: "--font-noto-bengali", subsets: ["bengali"] });
 const notoJP = Noto_Sans_JP({ variable: "--font-noto-jp", subsets: ["latin"] });
 const notoArabic = Noto_Sans_Arabic({ variable: "--font-noto-arabic", subsets: ["arabic"] });
 
-export const metadata: Metadata = {
-  title: "SmartPOS Pro",
-  description: "Modern multi-tenant POS & retail management platform",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "SmartPOS",
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
+
+  tracesSampleRate: 0.2,
+
+  profilesSampleRate: 0.2,
+
+  beforeSend(event) {
+    if (event.exception) {
+      const exceptions = event.exception.values;
+      const filtered = exceptions?.filter((ex: any) => {
+        const type = ex.type || '';
+        const message = ex.value || '';
+
+        const noisyPatterns = [
+          'React',
+          'Component',
+          'fiber',
+          'scheduleWork',
+          'render',
+          'useEffect',
+        ];
+
+        return !noisyPatterns.some((p: string) => type.includes(p) || message.includes(p));
+      });
+
+      if (filtered.length < exceptions.length) {
+        event.exception.values = filtered;
+      }
+    }
+
+    return event;
   },
-};
 
-export const viewport: Viewport = {
-  themeColor: "#4f46e5",
-};
+  release: process.env.SENTRY_RELEASE || process.env.npm_package_version || 'smartpos-pro',
 
-// Runs synchronously while the browser parses <head>, before first paint, so the persisted
-// theme/palette/locale apply with no flash. Mirrors ThemeSync/LocaleSync, which take over
-// once React hydrates (see docs/REDESIGN_I18N_PLAN.md and the Next.js "preventing flash
-// before hydration" guide).
+  enabled:
+    process.env.NODE_ENV === "production" && !!process.env.NEXT_PUBLIC_SENTRY_DSN,
+});
+
 const NO_FLASH_SCRIPT = `(function(){try{
 var d=document.documentElement;
 var t="system",p="indigo";
@@ -43,7 +66,7 @@ if(rl){var sl=JSON.parse(rl).state||{};locale=sl.locale||locale;}
 if(locale==="ar")dir="rtl";
 d.setAttribute("lang",locale);
 d.setAttribute("dir",dir);
-}catch(e){}})()`;
+}catch(e){})}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -54,7 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geist.variable} ${geistMono.variable} ${notoBengali.variable} ${notoJP.variable} ${notoArabic.variable}`}
       >
-        <Providers>{children}</Providers>
+        <ErrorBoundary>{children}</ErrorBoundary>
       </body>
     </html>
   );
