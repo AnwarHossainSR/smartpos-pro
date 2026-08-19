@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, UserRemove } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, UserMinus } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import { useTranslation } from "@/i18n/provider";
 
 interface Customer {
   id: string;
@@ -85,6 +86,7 @@ function CustomerForm({ defaultValues, customerId, isEdit, onSuccess }: { defaul
 
 export default function CustomersPage() {
   const { can } = useAuth();
+  const t = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Customer | null>(null);
@@ -132,7 +134,7 @@ export default function CustomersPage() {
                     <div className="flex gap-1">
                       {can("customers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(c); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
                       {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(c)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                      {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-primary)]" onClick={() => setAnonymizing(c)}><UserRemove className="h-3.5 w-3.5" /></Button>}
+                      {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-primary)]" onClick={() => setAnonymizing(c)}><UserMinus className="h-3.5 w-3.5" /></Button>}
                     </div>
                   </TableCell>
                 </TableRow>

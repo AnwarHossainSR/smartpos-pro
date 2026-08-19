@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
 use App\Services\Webhooks\WebhookService;
+use App\Support\Telemetry\Telemetry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Support\Telemetry\Telemetry;
 
 class DeliverWebhookJob implements ShouldQueue
 {

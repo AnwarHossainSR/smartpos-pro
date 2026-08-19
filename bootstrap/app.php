@@ -2,10 +2,10 @@
 
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EnsureTenant;
+use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\Idempotency;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SecurityHeaders;
-use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

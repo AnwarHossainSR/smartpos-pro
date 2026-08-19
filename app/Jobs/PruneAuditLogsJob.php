@@ -9,12 +9,12 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Support\Telemetry\Telemetry;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Str;
-use App\Support\Telemetry\Telemetry;
 
 class PruneAuditLogsJob implements ShouldQueue
 {

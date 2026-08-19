@@ -7,6 +7,7 @@ use App\Mail\DailyReportMail;
 use App\Models\Business;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Telemetry\Telemetry;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +16,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Support\Telemetry\Telemetry;
 
 /**
  * Sends a daily sales summary email to the business owner.

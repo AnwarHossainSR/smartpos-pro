@@ -328,6 +328,7 @@ const REPORTS: { id: ReportType; label: string }[] = [
 ];
 
 function ReportContent({ report, data }: { report: ReportType; data: Record<string, unknown> | null }) {
+  const t = useTranslation();
   if (!data) return <div className="py-12 text-center text-[var(--muted)]">No data for this period.</div>;
 
   if (report === "sales-summary") {
