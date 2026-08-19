@@ -6,7 +6,6 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
 use Tests\TestCase;
@@ -20,7 +19,7 @@ class ProductImportTest extends TestCase
         $owner = $this->createTenant();
         Sanctum::actingAs($owner);
 
-        $csv = <<<CSV
+        $csv = <<<'CSV'
 name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active
 ,SKU-001,1234567890123,Beverages,BrandA,piece,5.00,8.00,10,5,1
 Valid Product,SKU-002,1234567890124,Snacks,BrandB,pack,-1.00,10.00,5,10,1
@@ -58,7 +57,7 @@ CSV;
         $owner = $this->createTenant();
         Sanctum::actingAs($owner);
 
-        $csv = <<<CSV
+        $csv = <<<'CSV'
 name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active
 Cola 500ml,SKU-COLA-001,8901030123456,Beverages,BrandX,piece,5.00,8.00,10,5,1
 Chips Pack,SKU-CHIPS-001,8901030123457,Snacks,BrandY,pack,3.00,5.00,10,10,1
@@ -139,7 +138,7 @@ CSV;
         $owner->save();
         Sanctum::actingAs($owner->fresh());
 
-        $csv = <<<CSV
+        $csv = <<<'CSV'
 name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active
 Cola 500ml,SKU-COLA-001,8901030123456,Beverages,BrandX,piece,5.00,8.00,10,5,1
 CSV;
@@ -159,7 +158,7 @@ CSV;
         $owner = $this->createTenant();
         Sanctum::actingAs($owner);
 
-        $csv = <<<CSV
+        $csv = <<<'CSV'
 name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active
 Dry Run Product,SKU-DRY-001,1234567890125,Test Category,Test Brand,piece,10.00,15.00,5,5,1
 CSV;

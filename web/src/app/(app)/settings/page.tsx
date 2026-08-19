@@ -330,10 +330,18 @@ export default function SettingsPage() {
           <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
 
           <Card>
-            <CardHeader><CardTitle>{t("settings.appearance")}</CardTitle></CardHeader>
-            <CardContent>
-              <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.appearanceHint")}</p>
-              <PalettePicker compact />
+            <CardContent className="p-0">
+              <Link
+                href="/settings/retention"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Clock className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{t("retention.days")}</p>
+                  <p className="text-xs text-[var(--muted)]">{t("retention.anonymize")}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
             </CardContent>
           </Card>
 

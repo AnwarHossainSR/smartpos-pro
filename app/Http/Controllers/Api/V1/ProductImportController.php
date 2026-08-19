@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -27,7 +26,7 @@ class ProductImportController extends Controller
         $dryRun = $request->boolean('dry_run');
 
         if ($dryRun) {
-            $import = new ProductImport();
+            $import = new ProductImport;
             $result = $import->collection($request->file->get());
 
             if (isset($result['errors'])) {
@@ -47,7 +46,7 @@ class ProductImportController extends Controller
             ]);
         }
 
-        $import = new ProductImport();
+        $import = new ProductImport;
         $result = $import->collection($request->file->get());
 
         if (isset($result['errors'])) {

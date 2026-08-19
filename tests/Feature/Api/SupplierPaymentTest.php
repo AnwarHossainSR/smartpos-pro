@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
 use Tests\TestCase;
 
@@ -29,9 +31,9 @@ class SupplierPaymentTest extends TestCase
         ]);
     }
 
-    private function createWarehouse(User $owner): \App\Models\Warehouse
+    private function createWarehouse(User $owner): Warehouse
     {
-        return \App\Models\Warehouse::create([
+        return Warehouse::create([
             'business_id' => $owner->business_id,
             'name' => 'Main Warehouse',
             'code' => 'WH-001',
@@ -60,7 +62,7 @@ class SupplierPaymentTest extends TestCase
         $supplier = $this->createSupplier($owner);
         $warehouse = $this->createWarehouse($owner);
 
-        $purchase = \App\Models\Purchase::create([
+        $purchase = Purchase::create([
             'business_id' => $owner->business_id,
             'warehouse_id' => $warehouse->id,
             'supplier_id' => $supplier->id,

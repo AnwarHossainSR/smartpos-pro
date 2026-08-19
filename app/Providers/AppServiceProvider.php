@@ -2,7 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Business;
 use App\Models\PersonalAccessToken;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\TaxProfile;
+use App\Observers\BusinessObserver;
+use App\Observers\ProductObserver;
+use App\Observers\ProductVariantObserver;
+use App\Observers\TaxProfileObserver;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -31,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        Product::observe(ProductObserver::class);
+        ProductVariant::observe(ProductVariantObserver::class);
+        TaxProfile::observe(TaxProfileObserver::class);
+        Business::observe(BusinessObserver::class);
 
         // Turn the silent failure modes into loud ones outside production: lazy loading
         // (the N+1 that only shows up under real data volume), assigning an attribute

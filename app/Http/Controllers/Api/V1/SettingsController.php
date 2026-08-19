@@ -17,6 +17,17 @@ class SettingsController extends Controller
         return response()->json(['data' => $this->present($business)]);
     }
 
+    public function retention(Request $request): JsonResponse
+    {
+        $business = Business::findOrFail($request->user()->business_id);
+
+        return response()->json([
+            'data' => [
+                'retention_days' => $business->audit_retention_days ?? 180,
+            ],
+        ]);
+    }
+
     public function updateBusiness(Request $request): JsonResponse
     {
         $business = Business::findOrFail($request->user()->business_id);

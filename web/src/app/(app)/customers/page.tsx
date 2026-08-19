@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, UserRemove } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -89,6 +89,7 @@ export default function CustomersPage() {
   const [search, setSearch] = useState(""); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState<Customer | null>(null);
+  const [anonymizing, setAnonymizing] = useState<Customer | null>(null);
 
   const { data, isLoading } = useQuery<Paginated<Customer>>({
     queryKey: ["customers", search, page],
@@ -98,6 +99,12 @@ export default function CustomersPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/customers/${id}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast("Customer deleted"); setDeleting(null); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const anonymizeMutation = useMutation({
+    mutationFn: (id: string) => api(`/customers/${id}/anonymize`, { method: "POST" }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast("Customer anonymized"); setAnonymizing(null); },
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
@@ -125,6 +132,7 @@ export default function CustomersPage() {
                     <div className="flex gap-1">
                       {can("customers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(c); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
                       {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(c)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                      {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-primary)]" onClick={() => setAnonymizing(c)}><UserRemove className="h-3.5 w-3.5" /></Button>}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -144,6 +152,17 @@ export default function CustomersPage() {
         <CustomerForm key={editing?.id ?? "new"} isEdit={!!editing} customerId={editing?.id} defaultValues={editing ? { name: editing.name, is_active: editing.is_active, customer_group: editing.customer_group ?? undefined } : undefined} onSuccess={() => setDrawerOpen(false)} />
       </Drawer>
       <Dialog open={!!deleting} onClose={() => setDeleting(null)} title="Delete customer" description={`Delete "${deleting?.name}"? This cannot be undone.`} confirmLabel="Delete" confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
+
+      <Dialog
+        open={!!anonymizing}
+        onClose={() => setAnonymizing(null)}
+        title={t("retention.anonymize")}
+        description={t("retention.confirm")}
+        confirmLabel={t("retention.anonymize")}
+        confirmVariant="primary"
+        loading={anonymizeMutation.isPending}
+        onConfirm={() => anonymizing && anonymizeMutation.mutate(anonymizing.id)}
+      />
     </div>
   );
 }

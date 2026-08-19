@@ -188,8 +188,8 @@ class ReportController extends Controller
     {
         [$from, $to] = $this->range($request);
 
-        $suppliers = Supplier::where("tenant_id", $request->user()->business_id)
-            ->where("is_active", true)
+        $suppliers = Supplier::where('tenant_id', $request->user()->business_id)
+            ->where('is_active', true)
             ->get();
 
         $aging = [];
@@ -198,9 +198,9 @@ class ReportController extends Controller
             $balance = 0;
 
             $purchases = $supplier->purchases()
-                ->whereNotNull("due_amount")
-                ->where("due_amount", ">", 0)
-                ->whereBetween("purchased_at", [$from, $to])
+                ->whereNotNull('due_amount')
+                ->where('due_amount', '>', 0)
+                ->whereBetween('purchased_at', [$from, $to])
                 ->get();
 
             foreach ($purchases as $purchase) {
@@ -208,38 +208,38 @@ class ReportController extends Controller
             }
 
             $payments = $supplier->payments()
-                ->whereNotNull("paid_at")
-                ->whereBetween("paid_at", [$from, $to])
+                ->whereNotNull('paid_at')
+                ->whereBetween('paid_at', [$from, $to])
                 ->get();
 
             foreach ($payments as $payment) {
                 $balance -= (float) $payment->amount;
             }
 
-            $bucket = "90+";
+            $bucket = '90+';
             if ($balance >= 0 && $balance <= 30) {
-                $bucket = "0-30";
+                $bucket = '0-30';
             } elseif ($balance > 30 && $balance <= 60) {
-                $bucket = "31-60";
+                $bucket = '31-60';
             } elseif ($balance > 60 && $balance <= 90) {
-                $bucket = "61-90";
+                $bucket = '61-90';
             }
 
             $aging[] = [
-                "supplier_id" => $supplier->id,
-                "supplier_name" => $supplier->name,
-                "outstanding" => round($balance, 2),
-                "bucket" => $bucket,
+                'supplier_id' => $supplier->id,
+                'supplier_name' => $supplier->name,
+                'outstanding' => round($balance, 2),
+                'bucket' => $bucket,
             ];
         }
 
-        usort($aging, fn ($a, $b) => ($a["outstanding"] ?? 0) <=> ($b["outstanding"] ?? 0));
+        usort($aging, fn ($a, $b) => ($a['outstanding'] ?? 0) <=> ($b['outstanding'] ?? 0));
 
         return response()->json([
-            "data" => [
-                "from" => $from->toDateString(),
-                "to" => $to->toDateString(),
-                "aging" => $aging,
+            'data' => [
+                'from' => $from->toDateString(),
+                'to' => $to->toDateString(),
+                'aging' => $aging,
             ],
         ]);
     }

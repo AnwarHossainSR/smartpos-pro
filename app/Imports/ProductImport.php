@@ -2,17 +2,14 @@
 
 namespace Database\Imports;
 
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Unit;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\Importable;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use App\Models\Product;
-use App\Models\Category;
-use App\Models\Brand;
-use App\Models\Unit;
 
 class ProductImport implements ToCollection, WithHeadingRow, WithValidation
 {
@@ -36,21 +33,22 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
                     ->first();
 
                 if ($existing) {
-                    $errors[] = ["row" => $validRows + 1, "column" => "sku", "message" => "SKU already exists for this tenant"];
+                    $errors[] = ['row' => $validRows + 1, 'column' => 'sku', 'message' => 'SKU already exists for this tenant'];
+
                     continue;
                 }
 
                 $product = Product::create($data);
                 $validRows++;
             } catch (\Exception $e) {
-                $errors[] = ["row" => $validRows + 1, "column" => null, "message" => $e->getMessage()];
+                $errors[] = ['row' => $validRows + 1, 'column' => null, 'message' => $e->getMessage()];
             }
         }
 
         return [
-            "rows_valid" => $validRows,
-            "rows_invalid" => count($rows) - $validRows - count($errors),
-            "errors" => $errors,
+            'rows_valid' => $validRows,
+            'rows_invalid' => count($rows) - $validRows - count($errors),
+            'errors' => $errors,
         ];
     }
 
@@ -80,7 +78,10 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
 
     protected function resolveCategory(?string $name)
     {
-        if (!$name) return null;
+        if (! $name) {
+            return null;
+        }
+
         return Category::where('tenant_id', auth()->user()?->tenant_id ?? 1)
             ->where('name', $name)
             ->firstOrCreate(['name' => $name])->id;
@@ -88,7 +89,10 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
 
     protected function resolveBrand(?string $name)
     {
-        if (!$name) return null;
+        if (! $name) {
+            return null;
+        }
+
         return Brand::where('tenant_id', auth()->user()?->tenant_id ?? 1)
             ->where('name', $name)
             ->firstOrCreate(['name' => $name])->id;
@@ -96,7 +100,10 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
 
     protected function resolveUnit(?string $name)
     {
-        if (!$name) return null;
+        if (! $name) {
+            return null;
+        }
+
         return Unit::where('tenant_id', auth()->user()?->tenant_id ?? 1)
             ->where('name', $name)
             ->firstOrCreate(['name' => $name])->id;

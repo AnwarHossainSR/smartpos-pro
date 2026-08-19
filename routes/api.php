@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
+use App\Http\Controllers\Api\V1\CacheController;
 use App\Http\Controllers\Api\V1\CashRegisterController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CouponController;
@@ -29,6 +30,8 @@ use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
+use App\Http\Controllers\Api\V1\StripeController;
+use App\Http\Controllers\Api\V1\StripeWebhookController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
@@ -42,7 +45,6 @@ use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
 use App\Http\Controllers\Api\V1\WebhookController;
-use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // ---- Public ----
@@ -56,7 +58,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('signed')->name('verification.verify');
 
     // ---- Authenticated + tenant-scoped ----
-    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
+    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'sentry-error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
         // caller's own row, so an admin permission would be wrong here (see the controller).
@@ -133,6 +135,8 @@ Route::prefix('v1')->group(function () {
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+        Route::post('customers/{customer}/anonymize', [CustomerController::class, 'anonymize'])->middleware('permission:customers.delete');
+
         // Suppliers
         Route::get('suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
         Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
@@ -186,7 +190,7 @@ Route::prefix('v1')->group(function () {
             Route::get('inventory-valuation', [ReportController::class, 'inventoryValuation']);
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
-        Route::get('payables-aging', [ReportController::class, 'payablesAging']);
+            Route::get('payables-aging', [ReportController::class, 'payablesAging']);
             Route::get('z-report', [ReportController::class, 'zReport']);
             Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
             Route::get('profit-loss', [ReportController::class, 'profitLoss']);
@@ -274,6 +278,7 @@ Route::prefix('v1')->group(function () {
         // Settings — business profile
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
+        Route::get('settings/retention', [SettingsController::class, 'retention'])->middleware('permission:settings.view');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/step', [SettingsController::class, 'recordOnboardingStep'])->middleware('permission:settings.update');
 
@@ -285,6 +290,12 @@ Route::prefix('v1')->group(function () {
         Route::delete('webhooks/{webhook}', [WebhookController::class, 'destroy'])->middleware('permission:settings.update');
         Route::get('webhook-deliveries', [WebhookController::class, 'deliveries'])->middleware('permission:settings.update');
         Route::post('webhook-deliveries/{delivery}/retry', [WebhookController::class, 'retryDelivery'])->middleware('permission:settings.update');
+
+        // Stripe Payments
+        Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])->withoutMiddleware('auth:sanctum');
+        Route::get('stripe/create-checkout-session', [StripeController::class, 'createCheckoutSession'])->middleware('permission:pos.create');
+        Route::get('stripe/create-subscription-session', [StripeController::class, 'createSubscriptionSession'])->middleware('permission:pos.create');
+        Route::get('pay/{token}', [StripeController::class, 'paymentStatus'])->name('stripe.payment.status');
 
         // Coupons & promotions
         Route::get('coupons', [CouponController::class, 'index'])->middleware('permission:coupons.view');
@@ -331,9 +342,12 @@ Route::prefix('v1')->group(function () {
     });
 
     // Called from *inside* an impersonated session (the tenant owner's own token, not a
-    // super-admin token) — deliberately outside the super_admin-gated group below.
+    // super-admin token) — deliberately outside the super-admin-gated group below.
     Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
         ->middleware(['auth:sanctum']);
+
+    // Admin — cache management
+    Route::get('cache/flush', [CacheController::class, 'flush'])->middleware('permission:super_admin.view');
 
     // T31-T33 — Super-admin (separate guard, no tenant scope)
     Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
