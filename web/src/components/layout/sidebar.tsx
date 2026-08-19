@@ -1,15 +1,15 @@
 "use client";
 
+import { Logo } from "@/components/ui/logo";
+import { useTranslation } from "@/i18n/provider";
+import { NAV_GROUPS } from "@/lib/nav";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
+import { useSidebarStore } from "@/stores/sidebar";
+import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { X, PanelLeftClose, PanelLeftOpen, ChevronRight, Headset, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { NAV_GROUPS } from "@/lib/nav";
-import { useTranslation } from "@/i18n/provider";
-import { useSidebarStore } from "@/stores/sidebar";
-import { useAuth } from "@/stores/auth";
-import { Logo } from "@/components/ui/logo";
 
 interface SidebarProps {
   open?: boolean;
@@ -50,9 +50,11 @@ function SidebarGroup({
     return (
       <div className="space-y-1">
         <div className="mx-3 mb-2 border-b border-white/[0.07]" />
+
         {group.items.map(({ href, key, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const label = t(`nav.${key}`);
+
           return (
             <Link
               key={href}
@@ -71,11 +73,53 @@ function SidebarGroup({
               {active && (
                 <span className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-[var(--sidebar-active)]" />
               )}
-              <Icon className={cn("h-5 w-5 shrink-0", !active && "opacity-80 group-hover:opacity-100")} />
+
+              <Icon
+                className={cn(
+                  "h-5 w-5 shrink-0",
+                  !active && "opacity-80 group-hover:opacity-100",
+                )}
+              />
             </Link>
           );
         })}
       </div>
+    );
+  }
+
+  // Single item groups such as Overview → Dashboard
+  // are rendered directly without a dropdown.
+  if (group.items.length === 1) {
+    const { href, key, icon: Icon } = group.items[0];
+    const active = pathname === href || pathname.startsWith(href + "/");
+    const label = t(`nav.${key}`);
+
+    return (
+      <Link
+        href={href}
+        onClick={onClose}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+          active
+            ? "font-semibold text-[var(--sidebar-fg)]"
+            : "font-medium text-[var(--sidebar-muted)] hover:bg-white/[0.06] hover:text-[var(--sidebar-fg)]",
+        )}
+        style={active ? { backgroundColor: ACTIVE_TINT } : undefined}
+      >
+        {active && (
+          <span className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-[var(--sidebar-active)]" />
+        )}
+
+        <Icon
+          className={cn(
+            "h-[18px] w-[18px] shrink-0 transition-opacity duration-200",
+            !active && "opacity-80 group-hover:opacity-100",
+          )}
+        />
+
+        <span className="truncate">{label}</span>
+      </Link>
     );
   }
 
@@ -95,12 +139,16 @@ function SidebarGroup({
         <GroupIcon
           className={cn(
             "h-4 w-4 shrink-0 transition-colors",
-            hasActiveChild ? "text-[var(--sidebar-active)]" : "text-[var(--sidebar-muted)]/60",
+            hasActiveChild
+              ? "text-[var(--sidebar-active)]"
+              : "text-[var(--sidebar-muted)]/60",
           )}
         />
+
         <span className="flex-1 text-left text-sm tracking-wide">
           {t(`navGroups.${group.key}`)}
         </span>
+
         <ChevronRight
           className={cn(
             "h-4 w-4 shrink-0 text-[var(--sidebar-muted)]/40 transition-transform duration-300 ease-out",
@@ -112,14 +160,18 @@ function SidebarGroup({
       <div
         className={cn(
           "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="overflow-hidden">
           <div className="space-y-0.5 border-s border-white/[0.06] ms-[22px] ps-3 pb-1">
             {group.items.map(({ href, key, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
+              const active =
+                pathname === href || pathname.startsWith(href + "/");
               const label = t(`nav.${key}`);
+
               return (
                 <Link
                   key={href}
@@ -137,12 +189,14 @@ function SidebarGroup({
                   {active && (
                     <span className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-[var(--sidebar-active)]" />
                   )}
+
                   <Icon
                     className={cn(
                       "h-[18px] w-[18px] shrink-0 transition-opacity duration-200",
                       !active && "opacity-80 group-hover:opacity-100",
                     )}
                   />
+
                   <span className="truncate">{label}</span>
                 </Link>
               );
