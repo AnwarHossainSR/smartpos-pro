@@ -10,13 +10,18 @@ enum PurchaseStatus: string
 
     case Draft = 'draft';
     case Ordered = 'ordered';
+    case Approved = 'approved';
     case Partial = 'partial';
     case Received = 'received';
     case Cancelled = 'cancelled';
 
-    /** Goods only hit the ledger once they are actually on the shelf. */
     public function affectsStock(): bool
     {
         return in_array($this, [self::Partial, self::Received], true);
+    }
+
+    public function isActive(): bool
+    {
+        return in_array($this, [self::Draft, self::Ordered, self::Approved], true);
     }
 }

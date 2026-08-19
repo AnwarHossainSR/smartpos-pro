@@ -111,6 +111,8 @@ Route::prefix('v1')->group(function () {
 
         // Catalog — products
         Route::get('products', [ProductController::class, 'index'])->middleware('permission:products.view');
+        Route::get('products/import-template', [ProductController::class, 'template'])->middleware('permission:products.view');
+        Route::post('products/import', [ProductController::class, 'import'])->middleware('permission:products.create');
         Route::get('products/barcode/{barcode}', [ProductController::class, 'findByBarcode'])->middleware('permission:products.view');
         Route::get('products/{product}', [ProductController::class, 'show'])->middleware('permission:products.view');
         Route::post('products', [ProductController::class, 'store'])->middleware('permission:products.create');
@@ -138,10 +140,17 @@ Route::prefix('v1')->group(function () {
         Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
         Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
 
+        Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'storePayment'])->middleware('permission:suppliers.view');
+        Route::get('suppliers/{supplier}/payments', [SupplierController::class, 'indexPayments'])->middleware('permission:suppliers.view');
+        Route::get('suppliers/{supplier}/statement', [SupplierController::class, 'statement'])->middleware('permission:suppliers.view');
+
         // Purchases
         Route::get('purchases', [PurchaseController::class, 'index'])->middleware('permission:purchases.view');
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchases.view');
         Route::post('purchases', [PurchaseController::class, 'store'])->middleware(['permission:purchases.create', 'idempotency']);
+        Route::post('purchases/{purchase}/approve', [PurchaseController::class, 'approve'])->middleware('permission:purchases.approve');
+        Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->middleware('permission:purchases.update');
+        Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->middleware('permission:purchases.update');
 
         // Expenses
         Route::get('expense-categories', [ExpenseCategoryController::class, 'index'])->middleware('permission:expenses.view');
@@ -177,6 +186,7 @@ Route::prefix('v1')->group(function () {
             Route::get('inventory-valuation', [ReportController::class, 'inventoryValuation']);
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
+        Route::get('payables-aging', [ReportController::class, 'payablesAging']);
             Route::get('z-report', [ReportController::class, 'zReport']);
             Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
             Route::get('profit-loss', [ReportController::class, 'profitLoss']);
