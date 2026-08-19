@@ -3,6 +3,7 @@
 namespace App\Services\Purchasing;
 
 use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\PurchaseStatus;
 use App\Domain\Enums\StockMovementType;
 use App\Domain\Purchasing\Data\CreatePurchaseData;
 use App\Domain\Purchasing\Data\PurchaseLineData;
@@ -13,6 +14,7 @@ use App\Domain\Tax\TaxResolver;
 use App\Models\Business;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\PurchaseItem;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -21,15 +23,6 @@ use App\Services\Inventory\StockLedgerService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Handles purchase creation and goods receipt. When a purchase is received, each
- * line increments stock through the immutable ledger (mirroring how a sale
- * decrements it), the supplier's payable balance is updated, and product cost is
- * refreshed — all inside a single transaction.
- *
- * Input tax is resolved through the same {@see TaxEngine} a sale uses, always
- * against the net cost — a purchase price is never tax-inclusive shelf pricing.
- */
 class PurchaseService
 {
     public function __construct(
@@ -42,8 +35,6 @@ class PurchaseService
     public function create(CreatePurchaseData $data, User $user): Purchase
     {
         return DB::transaction(function () use ($data, $user) {
-            $receivesStock = $data->status->affectsStock();
-
             $this->assertProductsExist($data->items);
 
             $context = $this->taxContextFor($data, $user);
@@ -71,7 +62,7 @@ class PurchaseService
                 'supplier_id' => $data->supplierId,
                 'user_id' => $user->id,
                 'reference_number' => 'PENDING-'.uniqid(),
-                'status' => $data->status,
+                'status' => PurchaseStatus::Draft,
                 'payment_status' => PaymentStatus::fromAmounts($paid, $total),
                 'subtotal' => $subtotal,
                 'discount_amount' => $data->discountAmount,
@@ -84,66 +75,138 @@ class PurchaseService
                 'purchased_at' => Carbon::now(),
             ]);
 
-            // Tail, not head: UUIDv7's leading bytes are a timestamp, so rows
-            // created in the same millisecond would collide on a head slice.
             $purchase->update(['reference_number' => 'PUR-'.strtoupper(substr($purchase->id, -8))]);
 
             foreach ($data->items as $index => $line) {
                 $lineTax = $breakdown->lineFor($index);
 
-                $item = $purchase->items()->create([
+                $purchase->items()->create([
                     'product_id' => $line->productId,
                     'variant_id' => $line->variantId,
                     'quantity' => $line->quantity,
+                    'accepted_qty' => 0,
                     'unit_cost' => $line->unitCost,
                     'discount_amount' => $line->discountAmount,
                     'tax_amount' => $lineTax->tax->toFloat(),
                     'line_total' => $lineTax->gross()->toFloat(),
                 ]);
-
-                foreach ($lineTax->components as $component) {
-                    $item->taxes()->create($component->toAttributes());
-                }
-
-                if ($receivesStock) {
-                    $this->ledger->record([
-                        'product_id' => $line->productId,
-                        'variant_id' => $line->variantId,
-                        'warehouse_id' => $data->warehouseId,
-                        'quantity' => $line->quantity,
-                        'unit_cost' => $line->unitCost,
-                        'type' => StockMovementType::Purchase,
-                        'reference' => $purchase,
-                        'user_id' => $user->id,
-                    ]);
-
-                    // Keep the product's default cost in step with the latest purchase.
-                    Product::whereKey($line->productId)->update(['purchase_price' => $line->unitCost]);
-                }
             }
-
-            if ($due > 0 && $purchase->supplier_id) {
-                Supplier::whereKey($purchase->supplier_id)->increment('balance', $due);
-            }
-
-            $this->journals->postPurchase($purchase);
 
             return $purchase->load('items', 'supplier');
         });
     }
 
-    /** Line cost net of its discount and excluding tax. */
+    public function approve(Purchase $purchase, User $user): Purchase
+    {
+        if ($purchase->status !== PurchaseStatus::Draft) {
+            throw new \DomainException('Only draft purchases can be approved.');
+        }
+
+        $purchase->update([
+            'status' => PurchaseStatus::Approved,
+            'approved_at' => Carbon::now(),
+        ]);
+
+        return $purchase->fresh('items', 'supplier');
+    }
+
+    public function receive(Purchase $purchase, array $items, User $user): Purchase
+    {
+        if (! in_array($purchase->status, [PurchaseStatus::Approved, PurchaseStatus::Partial], true)) {
+            throw new \DomainException('Only approved or partially received purchases can be received.');
+        }
+
+        return DB::transaction(function () use ($purchase, $items, $user) {
+            $totalReceived = 0;
+
+            foreach ($items as $itemData) {
+                $purchaseItem = PurchaseItem::where('purchase_id', $purchase->id)
+                    ->where('id', $itemData['id'])
+                    ->first();
+
+                if (! $purchaseItem) {
+                    throw new \DomainException("Purchase item #{$itemData['id']} not found.");
+                }
+
+                $acceptedQty = (float) $itemData['accepted_qty'];
+                $previousAccepted = (float) $purchaseItem->accepted_qty;
+                $delta = $acceptedQty - $previousAccepted;
+
+                if ($delta < 0) {
+                    throw new \DomainException('Accepted quantity cannot be reduced.');
+                }
+
+                if ($acceptedQty > (float) $purchaseItem->quantity) {
+                    throw new \DomainException('Accepted quantity cannot exceed ordered quantity.');
+                }
+
+                if ($delta > 0) {
+                    $this->ledger->record([
+                        'product_id' => $purchaseItem->product_id,
+                        'variant_id' => $purchaseItem->variant_id,
+                        'warehouse_id' => $purchase->warehouse_id,
+                        'quantity' => $delta,
+                        'unit_cost' => (float) $purchaseItem->unit_cost,
+                        'type' => StockMovementType::Purchase,
+                        'reference' => $purchase,
+                        'user_id' => $user->id,
+                    ]);
+
+                    Product::whereKey($purchaseItem->product_id)->update([
+                        'purchase_price' => $purchaseItem->unit_cost,
+                    ]);
+                }
+
+                $purchaseItem->update(['accepted_qty' => $acceptedQty]);
+                $totalReceived += $acceptedQty;
+            }
+
+            $allItems = $purchase->items()->get();
+            $allFullyReceived = $allItems->every(
+                fn (PurchaseItem $item) => (float) $item->accepted_qty >= (float) $item->quantity
+            );
+
+            $newStatus = $allFullyReceived ? PurchaseStatus::Received : PurchaseStatus::Partial;
+
+            $purchase->update([
+                'status' => $newStatus,
+                'received_at' => $allFullyReceived ? Carbon::now() : null,
+            ]);
+
+            if ((float) $purchase->due_amount > 0 && $purchase->supplier_id) {
+                Supplier::whereKey($purchase->supplier_id)->increment('balance', (float) $purchase->due_amount);
+            }
+
+            $this->journals->postPurchase($purchase);
+
+            return $purchase->fresh('items', 'supplier');
+        });
+    }
+
+    public function cancel(Purchase $purchase): Purchase
+    {
+        if (! in_array($purchase->status, [PurchaseStatus::Draft, PurchaseStatus::Approved], true)) {
+            throw new \DomainException('Only draft or approved purchases can be cancelled.');
+        }
+
+        $hasReceivedItems = $purchase->items()
+            ->where('accepted_qty', '>', 0)
+            ->exists();
+
+        if ($hasReceivedItems) {
+            throw new \DomainException('Cannot cancel a purchase with received items.');
+        }
+
+        $purchase->update(['status' => PurchaseStatus::Cancelled]);
+
+        return $purchase->fresh('items', 'supplier');
+    }
+
     private function netOf(PurchaseLineData $line): float
     {
         return round(max(0, ($line->unitCost * $line->quantity) - $line->discountAmount), 2);
     }
 
-    /**
-     * Resolved from the receiving warehouse's branch — a purchase has no
-     * customer, so sourcing always follows the buyer's own jurisdiction — and
-     * forced to exclusive pricing regardless of how this tenant displays sale
-     * prices to its customers.
-     */
     private function taxContextFor(CreatePurchaseData $data, User $user): TaxContext
     {
         $branch = Warehouse::find($data->warehouseId)?->branch;
@@ -153,12 +216,6 @@ class PurchaseService
             ->asExclusive();
     }
 
-    /**
-     * The form request already scopes `exists:` by tenant; this guards the
-     * service against internal callers that bypass it.
-     *
-     * @param  array<int, PurchaseLineData>  $items
-     */
     private function assertProductsExist(array $items): void
     {
         $ids = array_map(static fn (PurchaseLineData $l) => $l->productId, $items);

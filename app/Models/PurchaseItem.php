@@ -14,10 +14,9 @@ class PurchaseItem extends Model
 
     protected $fillable = [
         'tenant_id', 'purchase_id', 'product_id', 'variant_id', 'quantity',
-        'unit_cost', 'discount_amount', 'tax_amount', 'line_total',
+        'accepted_qty', 'unit_cost', 'discount_amount', 'tax_amount', 'line_total',
     ];
 
-    /** Input tax, per component — the reclaimable side of a VAT/GST return. */
     public function taxes(): HasMany
     {
         return $this->hasMany(PurchaseItemTax::class);
@@ -27,6 +26,7 @@ class PurchaseItem extends Model
     {
         return [
             'quantity' => 'decimal:4',
+            'accepted_qty' => 'decimal:4',
             'unit_cost' => 'decimal:4',
             'discount_amount' => 'decimal:2',
             'tax_amount' => 'decimal:2',

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\StoreProductRequest;
 use App\Http\Requests\Catalog\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Imports\ProductImport;
 use App\Models\Product;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
@@ -14,8 +15,15 @@ use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductController extends Controller
 {
@@ -128,5 +136,115 @@ class ProductController extends Controller
         }
 
         return response()->json(['data' => ['url' => null]]);
+    }
+
+    public function import(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx|max:10240',
+            'dry_run' => 'nullable|boolean',
+        ]);
+
+        $dryRun = $request->boolean('dry_run', false);
+        $file = $request->file('file');
+
+        if ($dryRun) {
+            return $this->dryRunImport($file);
+        }
+
+        return $this->executeImport($file);
+    }
+
+    private function dryRunImport($file): JsonResponse
+    {
+        $import = new ProductImport;
+        $errors = [];
+
+        try {
+            Excel::import($import, $file);
+            $errors = $import->errors;
+        } catch (\Throwable $e) {
+            $errors[] = [
+                'row' => 0,
+                'message' => 'File parsing error: '.$e->getMessage(),
+            ];
+        }
+
+        $rowsInvalid = count($errors);
+        $rowsValid = max(0, $this->getRowCount($file) - $rowsInvalid - 1);
+
+        return response()->json([
+            'data' => [
+                'rows_valid' => $rowsValid,
+                'rows_invalid' => $rowsInvalid,
+                'errors' => $errors,
+            ],
+        ]);
+    }
+
+    private function executeImport($file): JsonResponse
+    {
+        $import = new ProductImport;
+
+        try {
+            DB::transaction(function () use ($import, $file) {
+                Excel::import($import, $file);
+
+                if (! empty($import->errors)) {
+                    throw new ValidationException(
+                        Validator::make(
+                            ['errors' => $import->errors],
+                            ['errors' => 'required']
+                        ),
+                        'Import completed with errors'
+                    );
+                }
+            });
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Import completed with errors',
+                'data' => [
+                    'errors' => $import->errors,
+                ],
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Products imported successfully',
+        ]);
+    }
+
+    private function getRowCount($file): int
+    {
+        $path = $file->getRealPath();
+        if (! $path) {
+            $path = $file->storeAs('temp', uniqid().'.'.$file->getClientOriginalExtension());
+            $path = storage_path('app/'.$path);
+        }
+
+        try {
+            $collection = Excel::toCollection(new class implements ToCollection
+            {
+                public function collection(Collection $rows): void {}
+            }, $path)->first();
+
+            return is_countable($collection) ? count($collection) : 0;
+        } finally {
+            if (str_starts_with($path, storage_path('app/temp'))) {
+                Storage::delete(str_replace(storage_path('app/'), '', $path));
+            }
+        }
+    }
+
+    public function template()
+    {
+        $csv = "name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active\n";
+        $csv .= "Cola 500ml,SKU-COLA-001,8901030123456,Beverages,BrandX,piece,5.00,8.00,10,5,1\n";
+        $csv .= "Chips Pack,SKU-CHIPS-001,8901030123457,Snacks,BrandY,pack,3.00,5.00,10,10,1\n";
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=product_import_template.csv',
+        ]);
     }
 }

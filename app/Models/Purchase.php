@@ -19,7 +19,8 @@ class Purchase extends Model
     protected $fillable = [
         'tenant_id', 'business_id', 'warehouse_id', 'supplier_id', 'user_id',
         'reference_number', 'status', 'payment_status', 'subtotal', 'discount_amount',
-        'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'due_amount', 'note', 'purchased_at',
+        'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'due_amount', 'note',
+        'purchased_at', 'approved_at', 'received_at',
     ];
 
     protected function casts(): array
@@ -35,6 +36,8 @@ class Purchase extends Model
             'paid_amount' => 'decimal:2',
             'due_amount' => 'decimal:2',
             'purchased_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'received_at' => 'datetime',
         ];
     }
 

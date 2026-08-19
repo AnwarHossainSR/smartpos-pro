@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Product;
+use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,11 +30,10 @@ class PurchaseTest extends TestCase
         $response = $this->postJson('/api/v1/purchases', [
             'warehouse_id' => $warehouse->id,
             'supplier_id' => $supplier->id,
-            'status' => 'received',
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 100, 'unit_cost' => 2.5],
             ],
-            'payments' => [['method' => 'cash', 'amount' => 100]], // total is 250, so 150 due
+            'payments' => [['method' => 'cash', 'amount' => 100]],
         ]);
 
         $response->assertCreated()
@@ -41,9 +41,18 @@ class PurchaseTest extends TestCase
             ->assertJsonPath('data.due_amount', 150)
             ->assertJsonPath('data.payment_status', 'partial');
 
+        $purchase = Purchase::with('items')->first();
+
+        $this->postJson("/api/v1/purchases/{$purchase->id}/approve")->assertOk();
+
+        $itemId = $purchase->items->first()->id;
+        $this->postJson("/api/v1/purchases/{$purchase->id}/receive", [
+            'items' => [['id' => $itemId, 'accepted_qty' => 100]],
+        ])->assertOk();
+
         app(TenantContext::class)->set($owner->tenant_id);
         $this->assertEqualsWithDelta(100, $product->fresh()->totalStock(), 0.001);
-        $this->assertEqualsWithDelta(2.5, (float) $product->fresh()->purchase_price, 0.001); // cost refreshed
+        $this->assertEqualsWithDelta(2.5, (float) $product->fresh()->purchase_price, 0.001);
         $this->assertEqualsWithDelta(150, (float) $supplier->fresh()->balance, 0.001);
         $this->assertDatabaseHas('stock_movements', ['type' => 'purchase', 'direction' => 'in', 'quantity' => 100]);
     }
