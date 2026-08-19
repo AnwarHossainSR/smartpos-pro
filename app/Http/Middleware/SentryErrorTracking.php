@@ -4,28 +4,24 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Sentry\SentrySdk;
+use Sentry\Severity;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Reports 5xx API responses to Sentry. No-ops when no DSN is configured.
+ */
 class SentryErrorTracking
 {
-    public function handle(Request $request, Closure $next): mixed
+    public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        $statusCode = $response->status();
+        if ($response->getStatusCode() >= 500) {
+            $endpoint = $request->method().' '.$request->getPathInfo();
 
-        if (status::$statusCode[$statusCode] ?? false && status::$statusCode[$statusCode] >= 500) {
-            $endpoint = $request->method().' '.$request->pathInfo();
-
-            SentrySdk::addBreadcrumb([
-                'category' => 'api',
-                'message' => $endpoint.' returned '.$statusCode,
-                'type' => 'http',
-            ]);
-
-            SentrySdk::captureMessage(
-                "API error: {$endpoint} returned {$statusCode}",
-                'error'
+            \Sentry\captureMessage(
+                "API error: {$endpoint} returned {$response->getStatusCode()}",
+                Severity::error()
             );
         }
 

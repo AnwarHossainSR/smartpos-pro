@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Account;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Seeder;
 
 class AccountSeeder extends Seeder
@@ -29,7 +30,7 @@ class AccountSeeder extends Seeder
     {
         foreach ($this->accounts as $account) {
             Account::updateOrCreate(
-                ['tenant_id' => tenant('id'), 'account_number' => $account['account_number']],
+                ['tenant_id' => app(TenantContext::class)->id(), 'account_number' => $account['account_number']],
                 [
                     'name' => $account['name'],
                     'type' => $account['type'],

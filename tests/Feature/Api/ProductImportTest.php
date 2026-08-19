@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
@@ -134,9 +135,16 @@ CSV;
     public function test_import_requires_products_create_permission(): void
     {
         $owner = $this->createTenant();
-        $owner->assignRole('cashier');
-        $owner->save();
-        Sanctum::actingAs($owner->fresh());
+
+        $cashier = User::create([
+            'business_id' => $owner->business_id,
+            'branch_id' => $owner->branch_id,
+            'name' => 'Cashier', 'email' => 'cashier@example.test',
+            'password' => 'password123', 'status' => 'active',
+        ]);
+        $cashier->assignRole('cashier');
+
+        Sanctum::actingAs($cashier->fresh('roles'));
 
         $csv = <<<'CSV'
 name,sku,barcode,category,brand,unit,purchase_price,selling_price,tax_rate,min_stock_level,is_active

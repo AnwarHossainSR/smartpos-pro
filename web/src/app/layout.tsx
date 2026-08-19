@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali, Noto_Sans_JP, Noto_Sans_Arabic } from "next/font/google";
-import ErrorBoundary from "./error";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
@@ -66,7 +65,7 @@ if(rl){var sl=JSON.parse(rl).state||{};locale=sl.locale||locale;}
 if(locale==="ar")dir="rtl";
 d.setAttribute("lang",locale);
 d.setAttribute("dir",dir);
-}catch(e){})}`;
+}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -77,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geist.variable} ${geistMono.variable} ${notoBengali.variable} ${notoJP.variable} ${notoArabic.variable}`}
       >
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -27,8 +27,7 @@ class HealthController extends Controller
             'status' => $healthy ? 'ok' : 'degraded',
             'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
-            'version' => release(),
-            'release' => $release,
+            'version' => $release,
         ], $healthy ? 200 : 503);
     }
 

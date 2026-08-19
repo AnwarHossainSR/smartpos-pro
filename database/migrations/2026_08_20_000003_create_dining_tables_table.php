@@ -1,27 +1,27 @@
 <?php
 
-namespace Database\Migrations;
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateDiningTablesTable extends Migration
+return new class extends Migration
 {
     public function up(): void
     {
         Schema::create('dining_tables', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('tenant_id');
-            $table->uuid('branch_id')->nullable();
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('branch_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUuid('active_sale_id')->nullable()->constrained('sales')->nullOnDelete();
             $table->string('name');
             $table->string('area')->nullable();
             $table->integer('seats');
-            $table->enum('status', ['available', 'occupied', 'reserved'])->default('available');
-            $table->decimal('x', 10, 2)->nullable(); // table position
+            $table->string('status')->default('available'); // available, occupied, reserved
+            $table->decimal('x', 10, 2)->nullable(); // table position on the floor plan
             $table->decimal('y', 10, 2)->nullable();
-            $table->foreignId('active_sale_id')->nullable()->constrained('sales');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['tenant_id', 'branch_id']);
             $table->unique(['tenant_id', 'name']);
@@ -30,10 +30,6 @@ class CreateDiningTablesTable extends Migration
 
     public function down(): void
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->dropForeign(['active_sale_id']);
-        });
-
-        Schema::drop('dining_tables');
+        Schema::dropIfExists('dining_tables');
     }
-}
+};
