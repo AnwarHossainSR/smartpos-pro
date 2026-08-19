@@ -33,7 +33,8 @@
     "subscription": "Abonnement",
     "notifications": "Benachrichtigungen",
     "settings": "Einstellungen",
-    "auditLog": "Audit-Protokoll"
+    "auditLog": "Audit-Protokoll",
+    "testData": "Testdaten"
   },
   "sidebar": {
     "collapse": "Seitenleiste einklappen",

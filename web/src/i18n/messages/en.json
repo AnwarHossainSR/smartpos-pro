@@ -35,7 +35,8 @@
     "settings": "Settings",
     "auditLog": "Audit Log",
     "taxSettings": "Tax Settings",
-    "taxReport": "Tax Report"
+    "taxReport": "Tax Report",
+    "testData": "Test Data"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",

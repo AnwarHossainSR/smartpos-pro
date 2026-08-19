@@ -33,7 +33,8 @@
     "subscription": "サブスクリプション",
     "notifications": "通知",
     "settings": "設定",
-    "auditLog": "監査ログ"
+    "auditLog": "監査ログ",
+    "testData": "テストデータ"
   },
   "sidebar": {
     "collapse": "サイドバーを折りたたむ",

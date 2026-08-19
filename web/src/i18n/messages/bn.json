@@ -33,7 +33,8 @@
     "subscription": "সাবস্ক্রিপশন",
     "notifications": "বিজ্ঞপ্তি",
     "settings": "সেটিংস",
-    "auditLog": "অডিট লগ"
+    "auditLog": "অডিট লগ",
+    "testData": "পরীক্ষার তথ্য"
   },
   "sidebar": {
     "collapse": "সাইডবার সংকুচিত করুন",
