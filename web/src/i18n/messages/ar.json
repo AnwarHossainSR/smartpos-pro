@@ -173,6 +173,7 @@
       "namePlaceholder": "اسم المنتج",
       "sku": "رمز المنتج / الكود",
       "skuPlaceholder": "يُنشأ تلقائيًا",
+      "image": "صورة",
       "status": "الحالة",
       "active": "نشط",
       "inactive": "غير نشط",
@@ -224,6 +225,14 @@
       "discardTitle": "إلغاء order معلق؟",
       "discardConfirm": "هل تريد إلغاء \"{reference}\"؟ لا يمكن التراجع عن هذا الإجراء.",
       "discardSuccess": "تم إلغاء ال_order"
+    },
+    "customerSearch": {
+      "placeholder": "البحث عن عميل (اختياري)…",
+      "create": "إنشاء",
+      "noMatch": "لم يتم العثور على عملاء",
+      "points": "نقطة",
+      "owing": "مدين",
+      "created": "تم إنشاء العميل"
     }
   },
   "dashboard": {

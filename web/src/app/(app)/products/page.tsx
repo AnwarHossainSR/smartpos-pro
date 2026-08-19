@@ -6,7 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
+import { api, apiUpload, ApiError, type Paginated } from "@/lib/api";
 import { formatCurrency, exportToCsv } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { useAuth } from "@/stores/auth";
 import { useTranslation } from "@/i18n/provider";
 import { useAllTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 /* ---- types ---- */
 interface Category { id: string; name: string; }
@@ -41,9 +42,7 @@ interface Product {
   is_active: boolean;
   category: Category | null;
   brand: Brand | null;
-  /** Optional: the backend's products endpoint doesn't return this relation yet as of this
-   *  writing, only the tax-groups endpoints under Settings → Tax do. Read defensively so the
-   *  form still works today and picks up the value automatically once the API adds it. */
+  image_url?: string | null;
   tax_group?: TaxGroup | null;
   tax_group_id?: string | null;
 }
@@ -71,14 +70,18 @@ function ProductForm({
   productId,
   onSuccess,
   isEdit,
+  currentImageUrl,
 }: {
   defaultValues?: Partial<FormValues>;
   productId?: string;
   onSuccess: () => void;
   isEdit: boolean;
+  currentImageUrl?: string | null;
 }) {
   const qc = useQueryClient();
   const t = useTranslation();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
   const { data: cats } = useQuery({
     queryKey: ["categories-all"],
     queryFn: () => api<{ data: Category[] }>("/categories?per_page=200"),
@@ -104,7 +107,7 @@ function ProductForm({
   });
 
   const mutation = useMutation({
-    mutationFn: (data: FormValues) => {
+    mutationFn: async (data: FormValues) => {
       const { opening_stock_qty, opening_stock_warehouse_id, ...rest } = data;
       const payload: Record<string, unknown> = { ...rest };
       if (!isEdit && opening_stock_qty && opening_stock_qty > 0) {
@@ -113,9 +116,21 @@ function ProductForm({
           warehouse_id: opening_stock_warehouse_id,
         };
       }
-      return isEdit
-        ? api(`/products/${productId}`, { method: "PUT", body: payload })
-        : api("/products", { method: "POST", body: payload });
+      const result = isEdit
+        ? await api<{ data: { id: string } }>(`/products/${productId}`, { method: "PUT", body: payload })
+        : await api<{ data: { id: string } }>("/products", { method: "POST", body: payload });
+
+      const pid = isEdit ? productId! : result.data.id;
+
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("image", imageFile);
+        await apiUpload(`/products/${pid}/image`, fd);
+      } else if (isEdit && imageRemoved) {
+        await api(`/products/${pid}/image`, { method: "DELETE" });
+      }
+
+      return result;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -147,6 +162,15 @@ function ProductForm({
             <option value="false">{t("products.form.inactive")}</option>
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label>{t("products.form.image")}</Label>
+        <ImageUpload
+          currentUrl={isEdit ? currentImageUrl : undefined}
+          onUpload={(file) => { setImageFile(file); setImageRemoved(false); }}
+          onRemove={() => { setImageFile(null); setImageRemoved(true); }}
+        />
       </div>
 
       <div>
@@ -271,6 +295,13 @@ export default function ProductsPage() {
   const lastPage = data?.meta?.last_page ?? 1;
 
   const columns: DataTableColumn<Product>[] = [
+    {
+      key: "image",
+      header: "",
+      render: (p) => p.image_url
+        ? <img src={p.image_url} alt="" className="h-8 w-8 rounded object-cover" />
+        : <div className="h-8 w-8 rounded bg-[var(--surface-2)]" />,
+    },
     { key: "name", header: t("products.name"), render: (p) => <span className="font-medium">{p.name}</span> },
     {
       key: "sku",
@@ -384,6 +415,7 @@ export default function ProductsPage() {
           key={editing?.id ?? "new"}
           isEdit={!!editing}
           productId={editing?.id}
+          currentImageUrl={editing?.image_url}
           defaultValues={
             editing
               ? {

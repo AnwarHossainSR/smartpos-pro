@@ -91,3 +91,39 @@ export interface Paginated<T> {
   meta?: { current_page: number; last_page: number; total: number };
   links?: unknown;
 }
+
+/** Upload a file via multipart/form-data (no Content-Type header — let fetch set the boundary). */
+export async function apiUpload<T = unknown>(
+  path: string,
+  formData: FormData,
+  method: string = "POST",
+): Promise<T> {
+  const token = useAuth.getState().token;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    useAuth.getState().logout();
+  }
+
+  const data = res.status === 204 ? null : await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const payload = data as { message?: string; errors?: Record<string, string[]> } | null;
+    throw new ApiError(
+      res.status,
+      payload?.message ?? `Request failed (${res.status})`,
+      payload?.errors,
+      data,
+    );
+  }
+
+  return data as T;
+}

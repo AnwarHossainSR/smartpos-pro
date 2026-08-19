@@ -173,6 +173,7 @@
       "namePlaceholder": "Produktname",
       "sku": "Artikelnummer / Code",
       "skuPlaceholder": "Automatisch generiert",
+      "image": "Bild",
       "status": "Status",
       "active": "Aktiv",
       "inactive": "Inaktiv",
@@ -224,6 +225,14 @@
       "discardTitle": "Gehaltene Bestellung verwerfen?",
       "discardConfirm": "\"{reference}\" verwerfen? Dies kann nicht rückgängig gemacht werden.",
       "discardSuccess": "Bestellung verworfen"
+    },
+    "customerSearch": {
+      "placeholder": "Kunden suchen (optional)…",
+      "create": "Erstellen",
+      "noMatch": "Keine Kunden gefunden",
+      "points": "Pkt",
+      "owing": "Schulden",
+      "created": "Kunde erstellt"
     }
   },
   "dashboard": {

@@ -173,6 +173,7 @@
       "namePlaceholder": "পণ্যের নাম",
       "sku": "এসকেইউ / কোড",
       "skuPlaceholder": "স্বয়ংক্রিয়ভাবে তৈরি",
+      "image": "ছবি",
       "status": "অবস্থা",
       "active": "সক্রিয়",
       "inactive": "নিষ্ক্রিয়",
@@ -224,6 +225,14 @@
       "discardTitle": "স্থগিত অর্ডার বাতিল করবেন?",
       "discardConfirm": "\"{reference}\" বাতিল করবেন? এটি ফিরিয়ে আনা যাবে না।",
       "discardSuccess": "অর্ডার বাতিল হয়েছে"
+    },
+    "customerSearch": {
+      "placeholder": "গ্রাহক অনুসন্ধান করুন (ঐচ্ছিক)…",
+      "create": "তৈরি করুন",
+      "noMatch": "কোনো গ্রাহক পাওয়া যায়নি",
+      "points": "পয়েন্ট",
+      "owing": "বকেয়",
+      "created": "গ্রাহক তৈরি হয়েছে"
     }
   },
   "dashboard": {

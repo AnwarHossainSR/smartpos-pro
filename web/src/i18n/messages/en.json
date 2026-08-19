@@ -175,6 +175,7 @@
       "namePlaceholder": "Product name",
       "sku": "SKU / Code",
       "skuPlaceholder": "Auto-generated",
+      "image": "Image",
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
@@ -229,6 +230,14 @@
       "discardTitle": "Discard held order?",
       "discardConfirm": "Discard \"{reference}\"? This cannot be undone.",
       "discardSuccess": "Order discarded"
+    },
+    "customerSearch": {
+      "placeholder": "Search customer (optional)…",
+      "create": "Create",
+      "noMatch": "No customers found",
+      "points": "pts",
+      "owing": "Owing",
+      "created": "Customer created"
     }
   },
   "dashboard": {
