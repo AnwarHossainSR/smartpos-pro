@@ -45,7 +45,7 @@ export function HeldOrdersPanel({ open, onClose, onResume }: HeldOrdersPanelProp
   const { data, isLoading } = useQuery<Paginated<HeldSale>>({
     queryKey: queryKeys.heldSales.list(),
     queryFn: () =>
-      api<Paginated<HeldSale>>("/sales?status=held&per_page=20&sort=sold_at&direction=desc"),
+      api<Paginated<HeldSale>>("/sales?status=held&per_page=20&sort=-sold_at"),
     enabled: open,
   });
 

@@ -417,7 +417,7 @@ export default function POSPage() {
 
   const { data: heldData } = useQuery<Paginated<{ id: string }>>({
     queryKey: queryKeys.heldSales.list(),
-    queryFn: () => api<Paginated<{ id: string }>>("/sales?status=held&per_page=20&sort=sold_at&direction=desc"),
+    queryFn: () => api<Paginated<{ id: string }>>("/sales?status=held&per_page=20&sort=-sold_at"),
   });
   const heldCount = heldData?.data?.length ?? 0;
 
