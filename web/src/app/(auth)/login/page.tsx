@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { api, ApiError } from "@/lib/api";
-import { useAuth, type AuthUser } from "@/stores/auth";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
+import { api, ApiError } from "@/lib/api";
+import { useAuth, type AuthUser } from "@/stores/auth";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface LoginResult {
   requires_2fa?: boolean;
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const setAuth = useAuth((s) => s.setAuth);
   const hydrated = useAuth((s) => s.hydrated);
   const token = useAuth((s) => s.token);
-  const [email, setEmail] = useState("owner@smartpos.test");
+  const [email, setEmail] = useState("admin@demostore.com");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

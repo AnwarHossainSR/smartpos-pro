@@ -22,7 +22,7 @@ class StoreProductRequest extends FormRequest
             'brand_id' => ['nullable', Rule::exists('brands', 'id')->where('tenant_id', $tenantId)],
             'unit_id' => ['nullable', Rule::exists('units', 'id')->where('tenant_id', $tenantId)],
             'sku' => ['nullable', 'string', 'max:100', Rule::unique('products', 'sku')->where('tenant_id', $tenantId)],
-            'barcode' => ['nullable', 'string', 'max:100'],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where('tenant_id', $tenantId)],
             'type' => ['nullable', 'in:standard,variant,service,digital,combo'],
             'description' => ['nullable', 'string'],
             'purchase_price' => ['required', 'numeric', 'min:0'],

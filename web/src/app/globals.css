@@ -248,3 +248,22 @@ body {
     animation: none;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  [data-receipt],
+  [data-receipt] * {
+    visibility: visible;
+  }
+  [data-receipt] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    color: black;
+    padding: 1rem;
+  }
+}
