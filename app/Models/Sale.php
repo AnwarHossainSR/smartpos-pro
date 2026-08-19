@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Sale extends Model
 {
@@ -18,7 +19,7 @@ class Sale extends Model
 
     protected $fillable = [
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',
-        'coupon_id', 'invoice_number', 'status', 'payment_status', 'subtotal', 'discount_amount',
+        'coupon_id', 'invoice_number', 'public_token', 'status', 'payment_status', 'subtotal', 'discount_amount',
         'coupon_discount', 'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'change_amount',
         'due_amount', 'note', 'sold_at',
     ];
@@ -39,6 +40,24 @@ class Sale extends Model
             'due_amount' => 'decimal:2',
             'sold_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Every sale carries an unguessable token from birth: it is what the customer
+     * order-status page and the Stripe pay link are addressed by, and a sale can
+     * reach either surface long after checkout (a held cart resumed, a due settled
+     * later), so minting it lazily would leave older rows unreachable.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $sale): void {
+            $sale->public_token ??= Str::random(48);
+        });
+    }
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
     }
 
     public function items(): HasMany

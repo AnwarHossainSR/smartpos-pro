@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OrderStatusController;
 use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
@@ -56,6 +57,11 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/email/verify', [AuthController::class, 'verifyEmailOtp'])->middleware('throttle:login');
     Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->middleware('signed')->name('verification.verify');
+
+    // Customer order status. The 48-char token in the URL is the only credential;
+    // throttled because it is the one endpoint an anonymous caller can hammer.
+    Route::get('orders/{token}', [OrderStatusController::class, 'show'])
+        ->middleware('throttle:30,1')->name('orders.status');
 
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
@@ -171,6 +177,7 @@ Route::prefix('v1')->group(function () {
         Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
         Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
+        Route::post('sales/{sale}/email-status-link', [SaleController::class, 'emailStatusLink'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
         Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
 

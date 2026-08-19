@@ -444,5 +444,33 @@
         "downloading": "Downloading…",
         "downloadInvoiceFailed": "Could not download the invoice",
         "downloadSlipFailed": "Could not download the slip"
+    },
+    "orderStatus": {
+        "title": "Order {invoice}",
+        "status": "Order status",
+        "notFoundTitle": "Order not found",
+        "notFoundBody": "This link is no longer valid. Ask the shop for a new one.",
+        "loadFailed": "We could not load this order. Please try again.",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "tax": "Tax",
+        "shipping": "Shipping",
+        "total": "Total",
+        "paid": "Paid",
+        "due": "Outstanding",
+        "contact": "Questions about this order?",
+        "state": {
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        },
+        "payment": {
+            "paid": "Paid",
+            "partial": "Partly paid",
+            "due": "Unpaid"
+        },
+        "linkAction": "Email order link",
+        "linkSending": "Sending…",
+        "linkSent": "Order link sent to {email}",
+        "linkFailed": "Could not send the order link"
     }
 }

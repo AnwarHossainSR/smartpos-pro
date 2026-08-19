@@ -50,7 +50,7 @@ class StripeController extends Controller
 
     public function paymentStatus(Request $request, $token)
     {
-        $sale = Sale::where('payment_url_token', $token)->first();
+        $sale = Sale::where('public_token', $token)->first();
 
         if (! $sale) {
             return response()->json(['error' => 'Sale not found'], 404);

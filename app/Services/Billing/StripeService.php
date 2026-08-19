@@ -55,8 +55,8 @@ class StripeService
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
-            'success_url' => config('app.url')."/pay/{$sale->payment_url_token}?success=1",
-            'cancel_url' => config('app.url')."/pay/{$sale->payment_url_token}?canceled=1",
+            'success_url' => config('app.url')."/pay/{$sale->public_token}?success=1",
+            'cancel_url' => config('app.url')."/pay/{$sale->public_token}?canceled=1",
             'metadata' => [
                 'sale_id' => $sale->id,
                 'tenant_id' => $sale->tenant_id,
