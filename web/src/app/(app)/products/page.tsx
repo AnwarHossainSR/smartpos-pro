@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Barcode, Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -366,6 +367,14 @@ export default function ProductsPage() {
         onExport={handleExport}
         addLabel={can("products.create") ? t("products.addProduct") : undefined}
         onAdd={can("products.create") ? openCreate : undefined}
+        filters={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/products/labels">
+              <Barcode className="h-4 w-4" />
+              Print labels
+            </Link>
+          </Button>
+        }
       />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
