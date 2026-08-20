@@ -322,6 +322,52 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out.']);
     }
 
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->string('current_password'), $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['The current password is incorrect.'],
+            ]);
+        }
+
+        $user->forceFill(['password' => Hash::make($request->string('new_password'))])->save();
+        $user->tokens()->whereKeyNot($user->currentAccessToken()->id)->delete();
+
+        $this->audit->log('auth.password_changed', $user, null, null, $user, $user->tenant_id);
+
+        return response()->json(['message' => 'Password updated. Other sessions have been signed out.']);
+    }
+
+    public function twoFactorStatus(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json(['data' => [
+            'enabled' => $user->hasEnabledTwoFactor(),
+            'recovery_codes_remaining' => $user->hasEnabledTwoFactor()
+                ? count($user->two_factor_recovery_codes ?? [])
+                : 0,
+        ]]);
+    }
+
+    public function lockoutStatus(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json(['data' => [
+            'is_locked' => $user->isLocked(),
+            'locked_until' => $user->locked_until?->toIso8601String(),
+            'failed_attempts' => $user->failed_login_attempts ?? 0,
+        ]]);
+    }
+
     /** Active devices/sessions (personal access tokens) for the current user. */
     public function sessions(Request $request): JsonResponse
     {

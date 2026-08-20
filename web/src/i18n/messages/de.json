@@ -489,5 +489,101 @@
         "warehouse": "Lager",
         "no_suggestions": "Keine Nachbestellvorschläge",
         "created": "Einkaufsentwurf erstellt"
+    },
+    "security": {
+        "title": "Sicherheitseinstellungen",
+        "password": {
+            "title": "Passwort ändern",
+            "current": "Aktuelles Passwort",
+            "new": "Neues Passwort",
+            "confirm": "Passwort bestätigen",
+            "submit": "Passwort aktualisieren",
+            "success": "Passwort aktualisiert. Andere Sitzungen wurden abgemeldet."
+        },
+        "2fa": {
+            "title": "Zwei-Faktor-Authentifizierung",
+            "enable": "2FA aktivieren",
+            "disable": "2FA deaktivieren",
+            "enabled": "Zwei-Faktor-Authentifizierung aktiviert.",
+            "disabled": "Zwei-Faktor-Authentifizierung deaktiviert.",
+            "qr": "QR-Code mit Authenticator-App scannen",
+            "recovery": "Wiederherstellungscodes",
+            "recovery_warning": "Speichern Sie diese Codes sicher. Jeder Code kann nur einmal verwendet werden."
+        },
+        "sessions": {
+            "title": "Aktive Sitzungen",
+            "device": "Gerät",
+            "ip": "IP-Adresse",
+            "last_used": "Zuletzt verwendet",
+            "current": "Dieses Gerät",
+            "empty": "Keine aktiven Sitzungen.",
+            "revoke": "Widerrufen",
+            "revoke_confirm": "Dieses Gerät wird sofort abgemeldet.",
+            "revoked": "Sitzung widerrufen.",
+            "revoke_all": "Alle widerrufen",
+            "revoke_all_confirm": "Sie bleiben auf diesem Gerät angemeldet.",
+            "revoked_all": "Alle anderen Sitzungen widerrufen."
+        },
+        "lockout": {
+            "title": "Sperrstatus",
+            "locked": "Konto gesperrt",
+            "attempts": "Fehlversuche"
+        }
+    },
+    "portal": {
+        "login": {
+            "title": "Bei Ihrem Konto anmelden",
+            "email": "E-Mail-Adresse",
+            "submit": "Magic Link senden",
+            "sent": "Überprüfen Sie Ihre E-Mail"
+        },
+        "dashboard": {
+            "title": "Mein Konto"
+        },
+        "invoices": "Rechnungen",
+        "invoice": {
+            "total": "Gesamt",
+            "paid": "Bezahlt",
+            "due": "Offen",
+            "pay": "Jetzt bezahlen",
+            "detail": "Rechnungsdetails"
+        }
+    },
+    "pos": {
+        "printReceipt": "Beleg drucken",
+        "printFallback": "PDF herunterladen",
+        "printConnect": "Drucker verbinden",
+        "printerConnected": "Drucker verbunden",
+        "printerDisconnected": "Drucker getrennt",
+        "printerNotFound": "Kein Drucker gefunden",
+        "printerError": "Druckerfehler",
+        "printSuccess": "Beleg gedruckt",
+        "printFallbackMsg": "PDF-Beleg wird heruntergeladen",
+        "printError": "Drucken fehlgeschlagen",
+        "printNoUsb": "WebUSB ist in diesem Browser nicht verfügbar. Verwenden Sie den PDF-Download.",
+        "printNoData": "Keine Verkaufsdaten verfügbar",
+        "printTest": "Testdruck gesendet"
+    },
+    "settings.printer": {
+        "title": "Druckereinstellungen",
+        "about": "Über Drucker",
+        "aboutHint1": "Verbinden Sie ESC/POS-Belegdrucker über WebUSB für sofortiges Drucken.",
+        "aboutHint2": "USB-Drucker werden in Chrome und Edge unterstützt.",
+        "aboutHint3": "Netzwerkdrucker können für TCP/IP-Druck konfiguriert werden.",
+        "add": "Drucker hinzufügen",
+        "edit": "Drucker bearbeiten",
+        "name": "Druckername",
+        "type": "Verbindungstyp",
+        "usb": "USB",
+        "network": "Netzwerk",
+        "serial": "Seriell",
+        "paper_width": "Papierbreite",
+        "auto_cut": "Automatisch schneiden",
+        "open_drawer": "Schublade öffnen",
+        "test": "Testdruck",
+        "testSent": "Testdruck gesendet",
+        "none": "Keine Drucker konfiguriert",
+        "saved": "Druckerprofil gespeichert",
+        "deleted": "Druckerprofil gelöscht"
     }
 }

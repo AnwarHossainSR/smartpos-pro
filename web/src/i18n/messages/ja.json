@@ -489,5 +489,101 @@
         "warehouse": "倉庫",
         "no_suggestions": "発注提案はありません",
         "created": "発注書ドラフトを作成しました"
+    },
+    "security": {
+        "title": "セキュリティ設定",
+        "password": {
+            "title": "パスワードを変更",
+            "current": "現在のパスワード",
+            "new": "新しいパスワード",
+            "confirm": "パスワードを確認",
+            "submit": "パスワードを更新",
+            "success": "パスワードを更新しました。他のセッションはサインアウトされました。"
+        },
+        "2fa": {
+            "title": "二要素認証",
+            "enable": "2FAを有効にする",
+            "disable": "2FAを無効にする",
+            "enabled": "二要素認証が有効になりました。",
+            "disabled": "二要素認証が無効になりました。",
+            "qr": "認証アプリでQRコードをスキャン",
+            "recovery": "リカバリーコード",
+            "recovery_warning": "これらのコードを安全に保存してください。それぞれは1回のみ使用できます。"
+        },
+        "sessions": {
+            "title": "アクティブセッション",
+            "device": "デバイス",
+            "ip": "IPアドレス",
+            "last_used": "最終使用",
+            "current": "このデバイス",
+            "empty": "アクティブなセッションはありません。",
+            "revoke": "取り消す",
+            "revoke_confirm": "このデバイスは直ちにサインアウトされます。",
+            "revoked": "セッションを取り消しました。",
+            "revoke_all": "すべて取り消す",
+            "revoke_all_confirm": "このデバイスではサインインしたままになります。",
+            "revoked_all": "他のすべてのセッションを取り消しました。"
+        },
+        "lockout": {
+            "title": "ロック状態",
+            "locked": "アカウントがロックされています",
+            "attempts": "失敗回数"
+        }
+    },
+    "portal": {
+        "login": {
+            "title": "アカウントにサインイン",
+            "email": "メールアドレス",
+            "submit": "マジックリンクを送信",
+            "sent": "メールを確認してください"
+        },
+        "dashboard": {
+            "title": "マイアカウント"
+        },
+        "invoices": "請求書",
+        "invoice": {
+            "total": "合計",
+            "paid": "支払済み",
+            "due": "未払い",
+            "pay": "今すぐ支払う",
+            "detail": "請求書の詳細"
+        }
+    },
+    "pos": {
+        "printReceipt": "レシートを印刷",
+        "printFallback": "PDFをダウンロード",
+        "printConnect": "プリンターを接続",
+        "printerConnected": "プリンターが接続されました",
+        "printerDisconnected": "プリンターが切断されました",
+        "printerNotFound": "プリンターが見つかりません",
+        "printerError": "プリンターエラー",
+        "printSuccess": "レシートが印刷されました",
+        "printFallbackMsg": "PDFレシートをダウンロード中",
+        "printError": "印刷に失敗しました",
+        "printNoUsb": "このブラウザではWebUSBが利用できません。PDFダウンロードを使用してください。",
+        "printNoData": "販売データがありません",
+        "printTest": "テスト印刷を送信しました"
+    },
+    "settings.printer": {
+        "title": "プリンター設定",
+        "about": "プリンターについて",
+        "aboutHint1": "WebUSBでESC/POSレシートプリンターを接続し、即座に印刷できます。",
+        "aboutHint2": "USBプリンターはChromeおよびEdgeブラウザでサポートされています。",
+        "aboutHint3": "ネットワークプリンターはTCP/IP印刷用に設定できます。",
+        "add": "プリンターを追加",
+        "edit": "プリンターを編集",
+        "name": "プリンター名",
+        "type": "接続タイプ",
+        "usb": "USB",
+        "network": "ネットワーク",
+        "serial": "シリアル",
+        "paper_width": "用紙幅",
+        "auto_cut": "自動カット",
+        "open_drawer": "ドロワーを開く",
+        "test": "テスト印刷",
+        "testSent": "テスト印刷を送信しました",
+        "none": "プリンターが設定されていません",
+        "saved": "プリンタープロファイルが保存されました",
+        "deleted": "プリンタープロファイルが削除されました"
     }
 }

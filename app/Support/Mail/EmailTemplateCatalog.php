@@ -13,6 +13,8 @@ final class EmailTemplateCatalog
 {
     public const ORDER_STATUS_LINK = 'order.status_link';
 
+    public const CUSTOMER_PORTAL_MAGIC_LINK = 'customer.portal_magic_link';
+
     public const DAILY_REPORT = 'report.daily';
 
     /**
@@ -88,6 +90,10 @@ final class EmailTemplateCatalog
     public static function sampleVariables(string $key): array
     {
         $samples = [
+            self::CUSTOMER_PORTAL_MAGIC_LINK => [
+                'customer_name' => 'John Doe',
+                'url' => 'https://example.test/portal/auth?token=preview-token',
+            ],
             self::ORDER_STATUS_LINK => [
                 'invoice_number' => 'INV-000123',
                 'seller_name' => 'Demo Store',

@@ -543,5 +543,101 @@
         "warehouse": "Warehouse",
         "no_suggestions": "No reorder suggestions",
         "created": "Draft PO created"
+    },
+    "security": {
+        "title": "Security Settings",
+        "password": {
+            "title": "Change Password",
+            "current": "Current Password",
+            "new": "New Password",
+            "confirm": "Confirm Password",
+            "submit": "Update Password",
+            "success": "Password updated. Other sessions have been signed out."
+        },
+        "2fa": {
+            "title": "Two-Factor Authentication",
+            "enable": "Enable 2FA",
+            "disable": "Disable 2FA",
+            "enabled": "Two-factor authentication enabled.",
+            "disabled": "Two-factor authentication disabled.",
+            "qr": "Scan QR code with authenticator app",
+            "recovery": "Recovery Codes",
+            "recovery_warning": "Save these codes securely. Each can only be used once."
+        },
+        "sessions": {
+            "title": "Active Sessions",
+            "device": "Device",
+            "ip": "IP Address",
+            "last_used": "Last Used",
+            "current": "This device",
+            "empty": "No active sessions.",
+            "revoke": "Revoke",
+            "revoke_confirm": "This device will be signed out immediately.",
+            "revoked": "Session revoked.",
+            "revoke_all": "Revoke All",
+            "revoke_all_confirm": "You will stay signed in on this device.",
+            "revoked_all": "All other sessions revoked."
+        },
+        "lockout": {
+            "title": "Lockout Status",
+            "locked": "Account locked",
+            "attempts": "Failed attempts"
+        }
+    },
+    "portal": {
+        "login": {
+            "title": "Sign in to your account",
+            "email": "Email address",
+            "submit": "Send magic link",
+            "sent": "Check your email"
+        },
+        "dashboard": {
+            "title": "My Account"
+        },
+        "invoices": "Invoices",
+        "invoice": {
+            "total": "Total",
+            "paid": "Paid",
+            "due": "Due",
+            "pay": "Pay Now",
+            "detail": "Invoice Detail"
+        }
+    },
+    "pos": {
+        "printReceipt": "Print Receipt",
+        "printFallback": "Download PDF",
+        "printConnect": "Connect Printer",
+        "printerConnected": "Printer connected",
+        "printerDisconnected": "Printer disconnected",
+        "printerNotFound": "No printer found",
+        "printerError": "Printer error",
+        "printSuccess": "Receipt printed",
+        "printFallbackMsg": "Downloading PDF receipt",
+        "printError": "Print failed",
+        "printNoUsb": "WebUSB is not available in this browser. Use PDF download.",
+        "printNoData": "No sale data available",
+        "printTest": "Test print sent"
+    },
+    "settings.printer": {
+        "title": "Printer Settings",
+        "about": "About Printers",
+        "aboutHint1": "Connect ESC/POS receipt printers via WebUSB for instant printing.",
+        "aboutHint2": "USB printers are supported in Chrome and Edge browsers.",
+        "aboutHint3": "Network printers can be configured for TCP/IP printing.",
+        "add": "Add Printer",
+        "edit": "Edit Printer",
+        "name": "Printer Name",
+        "type": "Connection Type",
+        "usb": "USB",
+        "network": "Network",
+        "serial": "Serial",
+        "paper_width": "Paper Width",
+        "auto_cut": "Auto Cut",
+        "open_drawer": "Open Drawer",
+        "test": "Test Print",
+        "testSent": "Test print sent",
+        "none": "No printers configured",
+        "saved": "Printer profile saved",
+        "deleted": "Printer profile deleted"
     }
 }
