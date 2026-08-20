@@ -26,7 +26,7 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 
 ### Sprint 9 — Scale & operations (P3)
 
-- [ ] T115 · G36 Multi-currency
+- [x] T115 · G36 Multi-currency
 - [ ] T116 · G37 Scale / weight products
 - [ ] T117 · G92 Stocktake / cycle count
 - [ ] T118 · G93 Reorder suggestions → draft PO

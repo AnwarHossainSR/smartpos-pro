@@ -12,7 +12,7 @@ class Tenant extends Model
 {
     use HasUuids, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'plan', 'status', 'trial_ends_at', 'feature_limits', 'invoice_sequence'];
+    protected $fillable = ['name', 'slug', 'plan', 'status', 'trial_ends_at', 'feature_limits', 'invoice_sequence', 'base_currency', 'fallback_exchange_rate'];
 
     protected function casts(): array
     {
@@ -21,6 +21,7 @@ class Tenant extends Model
             'trial_ends_at' => 'datetime',
             'feature_limits' => 'array',
             'invoice_sequence' => 'integer',
+            'fallback_exchange_rate' => 'decimal:6',
         ];
     }
 

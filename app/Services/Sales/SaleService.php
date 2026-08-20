@@ -20,9 +20,11 @@ use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Sale;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Accounting\TradingJournalService;
 use App\Services\Audit\AuditLogService;
+use App\Services\Currency\CurrencyService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Loyalty\LoyaltyService;
 use App\Services\Pos\ApprovalService;
@@ -54,6 +56,7 @@ class SaleService
         protected InvoiceNumberService $invoiceNumbers,
         protected TradingJournalService $journals,
         protected ApprovalService $approvals,
+        protected CurrencyService $currency,
     ) {}
 
     public function create(CreateSaleData $data, User $cashier): Sale
@@ -84,6 +87,17 @@ class SaleService
             $change = max(0, round($paid - $total, 2));
             $due = max(0, round($total - $paid, 2));
 
+            $fxRate = $data->fxRate;
+            $tenderCurrency = $data->tenderCurrency;
+            $tenderAmount = $data->tenderAmount;
+
+            if ($tenderCurrency && ! $fxRate) {
+                $tenant = Tenant::find($cashier->tenant_id);
+                $baseCurrency = $tenant?->base_currency ?? 'USD';
+                $fxRate = $this->currency->getRate($baseCurrency, $tenderCurrency);
+                $tenderAmount = $this->currency->convert($total, $baseCurrency, $tenderCurrency);
+            }
+
             // A number is issued only to a sale that is actually being completed, and
             // only from inside this transaction — a held/draft cart gets none until it
             // is resumed, and a checkout that rolls back hands its number straight back.
@@ -113,6 +127,9 @@ class SaleService
                 'due_amount' => $due,
                 'note' => $data->note,
                 'sold_at' => Carbon::now(),
+                'tender_currency' => $tenderCurrency,
+                'tender_amount' => $tenderAmount > 0 ? $tenderAmount : null,
+                'fx_rate' => $fxRate,
             ]);
 
             $this->recordLines($sale, $basket->lines, $data, $cashier, $affectsStock);
@@ -134,6 +151,10 @@ class SaleService
             if ($data->status === SaleStatus::Completed) {
                 SaleCompleted::dispatch($sale);
                 $this->journals->postSale($sale);
+
+                if ($tenderCurrency && $fxRate && $tenderAmount > 0) {
+                    $this->currency->postFxGainLoss($sale, $tenderCurrency, $tenderAmount, $fxRate);
+                }
             }
 
             return $sale->load('items.taxes', 'payments', 'customer', 'coupon');

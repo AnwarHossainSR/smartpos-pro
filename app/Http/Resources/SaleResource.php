@@ -28,6 +28,9 @@ class SaleResource extends JsonResource
             'paid_amount' => (float) $this->paid_amount,
             'change_amount' => (float) $this->change_amount,
             'due_amount' => (float) $this->due_amount,
+            'tender_currency' => $this->tender_currency,
+            'tender_amount' => $this->tender_amount !== null ? (float) $this->tender_amount : null,
+            'fx_rate' => $this->fx_rate !== null ? (float) $this->fx_rate : null,
             'items' => SaleItemResource::collection($this->whenLoaded('items')),
             'payments' => $this->whenLoaded('payments', fn () => $this->payments->map(fn ($p) => [
                 'method' => $p->method,

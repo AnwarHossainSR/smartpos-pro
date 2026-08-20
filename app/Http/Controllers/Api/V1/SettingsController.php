@@ -43,12 +43,20 @@ class SettingsController extends Controller
             'tax_profile_id' => ['nullable', 'exists:tax_profiles,id'],
             'price_display' => ['sometimes', 'in:inclusive,exclusive'],
             'currency' => ['sometimes', 'string', 'size:3'],
+            'base_currency' => ['sometimes', 'string', 'size:3'],
             'timezone' => ['sometimes', 'string', 'max:64'],
             'logo_path' => ['nullable', 'string', 'max:2048'],
             'settings' => ['nullable', 'array'],
         ]);
 
+        $baseCurrency = $data['base_currency'] ?? null;
+        unset($data['base_currency']);
+
         $business->update($data);
+
+        if ($baseCurrency) {
+            $business->tenant->update(['base_currency' => $baseCurrency]);
+        }
 
         return response()->json(['data' => $this->present($business->fresh())]);
     }
