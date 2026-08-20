@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n/provider";
+import { type PermissionSlug } from "@/lib/permissions";
 import { useAuth } from "@/stores/auth";
 import { useOnboardingState, useRecordOnboardingStep, useCompleteOnboarding } from "./hooks";
 
@@ -27,7 +28,7 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
   register_sale: <ShoppingCart className="h-5 w-5" />,
 };
 
-const STEP_PERMISSIONS: Record<StepKey, string | null> = {
+const STEP_PERMISSIONS: Record<StepKey, PermissionSlug | null> = {
   business_profile: null,
   first_product: "products.create",
   tax_setup: "settings.update",

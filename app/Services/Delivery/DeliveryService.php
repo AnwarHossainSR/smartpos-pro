@@ -17,7 +17,7 @@ class DeliveryService
      * BelongsToTenant, so a zone belonging to another tenant 404s rather than
      * leaking across the boundary.
      */
-    public function assignDelivery(Sale $sale, int $zoneId): Sale
+    public function assignDelivery(Sale $sale, string $zoneId): Sale
     {
         $zone = DeliveryZone::findOrFail($zoneId);
 

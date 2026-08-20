@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { api, ApiError, type Paginated } from "@/lib/api";
+import { type PermissionSlug } from "@/lib/permissions";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAuth } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,7 @@ interface ResourceManagerProps<T extends ResourceRecord> {
   singular: string;
   columns: ResourceColumn<T>[];
   fields: ResourceField[];
-  permissions: { create: string; update: string; delete: string };
+  permissions: { create: PermissionSlug; update: PermissionSlug; delete: PermissionSlug };
   searchPlaceholder?: string;
   emptyLabel?: string;
   perPage?: number;

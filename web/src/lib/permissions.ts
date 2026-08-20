@@ -82,7 +82,7 @@ interface RoutePermission {
   any: PermissionSlug[];
 }
 
-const ROUTE_PERMISSIONS: RoutePermission[] = [
+const ROUTE_TABLE: RoutePermission[] = [
   { prefix: "/dashboard", any: ["dashboard.view"] },
   { prefix: "/pos", any: ["pos.view"] },
   { prefix: "/sales", any: ["sales.view"] },
@@ -118,7 +118,9 @@ const ROUTE_PERMISSIONS: RoutePermission[] = [
   // Personal to the signed-in user, no module grant involved.
   { prefix: "/notifications", any: [] },
   { prefix: "/support", any: [] },
-].sort((a, b) => b.prefix.length - a.prefix.length);
+];
+
+const ROUTE_PERMISSIONS = [...ROUTE_TABLE].sort((a, b) => b.prefix.length - a.prefix.length);
 
 /**
  * The permissions a pathname requires, or `[]` when the route is open to any signed-in user.

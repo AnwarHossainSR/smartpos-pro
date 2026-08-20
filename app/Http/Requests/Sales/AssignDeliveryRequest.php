@@ -18,7 +18,7 @@ class AssignDeliveryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'zone_id' => ['required', 'integer'],
+            'zone_id' => ['required', 'uuid'],
         ];
     }
 }

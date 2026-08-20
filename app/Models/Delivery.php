@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Support\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Delivery extends Model
 {
-    use BelongsToTenant, SoftDeletes;
+    use BelongsToTenant, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'sale_id', 'zone_id', 'driver_id', 'status', 'tracking_token',

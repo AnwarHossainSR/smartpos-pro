@@ -19,7 +19,7 @@ class DeliveryController extends Controller
 
     public function assign(AssignDeliveryRequest $request, Sale $sale): JsonResponse
     {
-        $sale = $this->service->assignDelivery($sale, (int) $request->validated('zone_id'));
+        $sale = $this->service->assignDelivery($sale, (string) $request->validated('zone_id'));
 
         return (new DeliveryResource($sale->delivery))->response()->setStatusCode(201);
     }

@@ -1,197 +1,335 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { api } from "@/lib/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "@/i18n/provider";
-import { useAuth } from "@/stores/auth";
-import { cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Grid2x2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Table as TableIcon, X } from "lucide-react";
-import { useDrag } from "react-use";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/provider";
+import { api, ApiError, type Paginated } from "@/lib/api";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
 
-interface Table {
+type TableStatus = "available" | "occupied" | "reserved";
+
+interface DiningTable {
   id: string;
   name: string;
   seats: number;
-  status: "available" | "occupied" | "reserved";
-  x: number;
-  y: number;
-  area?: string;
+  status: TableStatus;
+  area?: string | null;
 }
 
-interface TableCardProps {
-  table: Table;
-  onSelect: (table: Table) => void;
-  onDragEnd: (tableId: string, x: number, y: number) => void;
+const STATUSES: TableStatus[] = ["available", "occupied", "reserved"];
+
+const STATUS_TONE: Record<TableStatus, "success" | "warning" | "danger"> = {
+  available: "success",
+  occupied: "warning",
+  reserved: "danger",
+};
+
+const STATUS_RING: Record<TableStatus, string> = {
+  available: "border-green-500/40",
+  occupied: "border-amber-500/40",
+  reserved: "border-red-500/40",
+};
+
+interface FormState {
+  name: string;
+  seats: string;
+  area: string;
+  status: TableStatus;
 }
 
-function TableCard({ table, onSelect, onDragEnd }: TableCardProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef<HTMLDivElement>(null);
-  const {
-    state: { clientX, clientY },
-    handleDragEnd,
-    isDragging: isDragState,
-  } = useDrag({
-    element: dragRef,
-    onDragEnd: (provided, monitor) => {
-      const { deltaX, deltaY } = monitor;
-      const rect = dragRef.current?.getBoundingClientRect();
-      if (rect) {
-        onDragEnd(table.id, rect.x + deltaX, rect.y + deltaY);
-      }
-      setIsDragging(false);
+const EMPTY_FORM: FormState = { name: "", seats: "4", area: "", status: "available" };
+
+function TableForm({
+  table,
+  onDone,
+}: {
+  table: DiningTable | null;
+  onDone: () => void;
+}) {
+  const t = useTranslation();
+  const qc = useQueryClient();
+  const [form, setForm] = useState<FormState>(
+    table
+      ? {
+          name: table.name,
+          seats: String(table.seats),
+          area: table.area ?? "",
+          status: table.status,
+        }
+      : EMPTY_FORM,
+  );
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+  const save = useMutation({
+    mutationFn: () => {
+      const body = {
+        name: form.name.trim(),
+        seats: Number(form.seats),
+        area: form.area.trim() || null,
+        status: form.status,
+      };
+      return table
+        ? api(`/tables/${table.id}`, { method: "PUT", body })
+        : api("/tables", { method: "POST", body });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dining-tables"] });
+      qc.invalidateQueries({ queryKey: ["dining-tables-all"] });
+      toast(table ? t("tables.updated") : t("tables.created"));
+      onDone();
+    },
+    onError: (e: unknown) => {
+      if (e instanceof ApiError && e.errors) setErrors(e.errors);
+      toast(e instanceof ApiError ? e.message : t("tables.saveFailed"), "error");
     },
   });
 
-  const statusClass = {
-    available: "bg-green-100 text-green-800",
-    occupied: "bg-yellow-100 text-yellow-800",
-    reserved: "bg-red-100 text-red-800",
-  }[table.status];
+  const seats = Number(form.seats);
+  const localError =
+    !form.name.trim()
+      ? t("tables.nameRequired")
+      : !Number.isFinite(seats) || seats < 1
+        ? t("tables.seatsInvalid")
+        : null;
 
   return (
-    <div
-      ref={dragRef}
-      className={cn(
-        "table-card relative group cursor-pointer select-none flex-shrink-0 w-48 h-64 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] transition-all duration-200 " + statusClass,
-        "shadow-sm",
-        isDragging ? "opacity-50" : "",
-        isDragState ? "opacity-80" : "",
-      )}
-      style={{ transform: `translate(${isDragging ? clientX - 24 : 0}px, ${isDragging ? clientY - 32 : 0}px)` }}
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (localError) {
+          setErrors({ name: [localError] });
+          return;
+        }
+        setErrors({});
+        save.mutate();
+      }}
     >
-      <div className="absolute top-2 right-2">
-        <Button variant="ghost" size="icon" className="text-[var(--muted)] hover:text-[var(--color-danger)]">
-          <X className="h-3.5 w-3.5" />
-        </Button>
+      <div>
+        <Label htmlFor="table-name">{t("tables.name")} *</Label>
+        <Input
+          id="table-name"
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        />
+        {errors.name?.[0] && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name[0]}</p>}
       </div>
-      <div className="p-4 flex flex-col h-full">
-        <div className="flex items-center justify-between mb-3">
-          <span className="font-medium truncate">{table.name}</span>
-          <span className="text-xs text-[var(--muted)]">{table.seats} {t("tables.seats")}</span>
-        </div>
-        <div className="h-24 flex items-center justify-center">
-          <span className="text-xs capitalize">{t(`tables.${table.status}`)}</span>
-        </div>
-        <p className="mt-auto text-sm text-[var(--muted)] text-center">
-          {table.area || "-"}
-        </p>
+
+      <div>
+        <Label htmlFor="table-seats">{t("tables.seats")} *</Label>
+        <Input
+          id="table-seats"
+          type="number"
+          min={1}
+          value={form.seats}
+          onChange={(e) => setForm((f) => ({ ...f, seats: e.target.value }))}
+        />
+        {errors.seats?.[0] && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.seats[0]}</p>}
       </div>
-    </div>
+
+      <div>
+        <Label htmlFor="table-area">{t("tables.area")}</Label>
+        <Input
+          id="table-area"
+          value={form.area}
+          placeholder={t("tables.areaPlaceholder")}
+          onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="table-status">{t("tables.status")}</Label>
+        <Select
+          id="table-status"
+          value={form.status}
+          onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as TableStatus }))}
+        >
+          {STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {t(`tables.${status}`)}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      <Button type="submit" className="w-full" disabled={save.isPending}>
+        {save.isPending ? t("common.saving") : t("common.save")}
+      </Button>
+    </form>
   );
 }
 
 export default function TablesPage() {
-  const { user } = useAuth();
-  const { t, r: translate } = useTranslation();
-  const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const t = useTranslation();
+  const { can } = useAuth();
+  const user = useAuth((s) => s.user);
 
-  const { data: tablesData, isLoading } = useQuery<Table[]>({
-    queryKey: ["dining-tables", search],
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TableStatus | "all">("all");
+  const [editing, setEditing] = useState<DiningTable | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<DiningTable | null>(null);
+
+  const debouncedSearch = useDebouncedValue(search);
+
+  const { data, isLoading, isError, refetch } = useQuery<Paginated<DiningTable>>({
+    queryKey: ["dining-tables", user?.branch_id],
+    // `/tables` returns the whole (small, per-branch) floor plan in one un-paginated
+    // collection, so search and status filtering happen client-side below.
     queryFn: () => {
       const params = new URLSearchParams();
-      if (search) params.set("search", search);
       if (user?.branch_id) params.set("branch_id", user.branch_id);
-      return api<Table[]>(`/v1/tables?${params.toString()}`);
+      const query = params.toString();
+      return api<Paginated<DiningTable>>(query ? `/tables?${query}` : "/tables");
     },
-    enabled: !!user,
   });
 
-  const tables = (tablesData ?? []).filter((t) => {
-    const searchLower = search.toLowerCase();
-    return t.name.toLowerCase().includes(searchLower) || `${t.seats}`.includes(searchLower);
-  });
+  const all = useMemo(() => data?.data ?? [], [data]);
 
-  const handleTableSelect = useCallback((table: Table) => {
-    setSelectedTable(table);
-  }, []);
-
-  const handleDragEnd = useCallback((tableId: string, x: number, y: number) => {
-    qc.setQueryData<Table[]>(["dining-tables"], (old) => {
-      if (!old) return old;
-      return old.map((t) => (t.id === tableId ? { ...t, x, y } : t));
+  const tables = useMemo(() => {
+    const needle = debouncedSearch.trim().toLowerCase();
+    return all.filter((table) => {
+      if (statusFilter !== "all" && table.status !== statusFilter) return false;
+      if (!needle) return true;
+      return (
+        table.name.toLowerCase().includes(needle) ||
+        (table.area ?? "").toLowerCase().includes(needle) ||
+        String(table.seats).includes(needle)
+      );
     });
-  }, [qc]);
+  }, [all, debouncedSearch, statusFilter]);
 
-  useEffect(() => {
-    setSearch("");
-  }, []);
-
-  if (!user) {
-    return null;
-  }
+  const canCreate = can("tables.create");
+  const canUpdate = can("tables.update");
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{t("tables.title")}</h2>
-        <Button
-          variant="outline"
-          onClick={() => setSelectedTable(null)}
-          disabled={isLoading}
-        >
-          {t("common.close")}
-        </Button>
-      </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t("tables.searchPlaceholder")}
+        filters={
+          <Select
+            className="sm:w-44"
+            aria-label={t("tables.status")}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as TableStatus | "all")}
+          >
+            <option value="all">{t("tables.allStatuses")}</option>
+            {STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {t(`tables.${status}`)}
+              </option>
+            ))}
+          </Select>
+        }
+        addLabel={canCreate ? t("tables.add") : undefined}
+        onAdd={canCreate ? () => setCreating(true) : undefined}
+      />
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-48 rounded-[var(--radius)]" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-[var(--radius)]" />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] py-12 text-center">
+          <p className="text-sm text-[var(--muted)]">{t("tables.loadFailed")}</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+            {t("tables.retry")}
+          </Button>
         </div>
       ) : tables.length === 0 ? (
-        <div className="text-center py-12 text-sm text-[var(--muted)]">
-          {t("common.no_data_found")}
+        <div className="flex flex-col items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] py-14 text-center">
+          <Grid2x2 className="h-8 w-8 text-[var(--muted)]" aria-hidden="true" />
+          <p className="text-sm text-[var(--muted)]">
+            {debouncedSearch || statusFilter !== "all" ? t("tables.emptySearch") : t("tables.empty")}
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {tables.map((table) => (
-            <TableCard
-              key={table.id}
-              table={table}
-              onSelect={() => handleTableSelect(table)}
-              onDragEnd={handleDragEnd}
-            />
+            <li key={table.id}>
+              <button
+                type="button"
+                onClick={() => setSelected(table)}
+                className={cn(
+                  "flex w-full flex-col gap-1 rounded-[var(--radius)] border-2 bg-[var(--surface)] p-4 text-start transition-colors hover:bg-[var(--surface-2)]",
+                  STATUS_RING[table.status],
+                )}
+              >
+                <span className="truncate font-medium">{table.name}</span>
+                <span className="text-xs text-[var(--muted)]">
+                  {t("tables.seatsCount", { count: table.seats })}
+                  {table.area ? ` · ${table.area}` : ""}
+                </span>
+                <Badge tone={STATUS_TONE[table.status]} className="mt-1 self-start">
+                  {t(`tables.${table.status}`)}
+                </Badge>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
-      {selectedTable && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-[var(--surface)] rounded-[var(--radius)] p-6 w-full max-w-sm shadow-2l">
-            <h3 className="text-xl font-semibold mb-4">{selectedTable.name}</h3>
-            <p className="text-[var(--muted)] mb-4">{t(`tables.${selectedTable.status}`)}</p>
-            <p className="text-lg font-medium mb-6">{selectedTable.seats} {t("tables.seats")}</p>
-            {selectedTable.status === "available" && (
-              <Button
-                onClick={() => {
-                  // Open sale with this table pre-selected
-                  // This would integrate with POS flow
-                  qc.setQueryData(["pos", "selected-table"], selectedTable);
-                  setSelectedTable(null);
-                }}
-                className="w-full"
-              >
-                {t("pos.table_selector")}
-              </Button>
-            )}
+      <Drawer
+        open={creating || !!editing}
+        onClose={() => {
+          setCreating(false);
+          setEditing(null);
+        }}
+        title={editing ? t("tables.edit") : t("tables.add")}
+      >
+        <TableForm
+          key={editing?.id ?? "new"}
+          table={editing}
+          onDone={() => {
+            setCreating(false);
+            setEditing(null);
+          }}
+        />
+      </Drawer>
+
+      <Dialog
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? ""}
+        description={
+          selected
+            ? `${t("tables.seatsCount", { count: selected.seats })} · ${t(`tables.${selected.status}`)}`
+            : undefined
+        }
+      >
+        <div className="flex flex-col gap-2">
+          {canUpdate && selected && (
             <Button
               variant="outline"
-              onClick={() => setSelectedTable(null)}
-              className="mt-3 w-full"
+              onClick={() => {
+                setEditing(selected);
+                setSelected(null);
+              }}
             >
-              {t("common.close")}
+              {t("tables.edit")}
             </Button>
-          </div>
+          )}
+          <Button variant="ghost" onClick={() => setSelected(null)}>
+            {t("common.close")}
+          </Button>
         </div>
-      )}
+      </Dialog>
     </div>
   );
 }

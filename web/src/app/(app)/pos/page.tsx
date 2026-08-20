@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star, Grid2x2 as TableIcon } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
@@ -468,7 +468,7 @@ export default function POSPage() {
   // `api()` already targets /api/v1 — a "/v1/…" path here would resolve to /api/v1/v1/….
   const { data: tablesData } = useQuery<{ data: Table[] }>({
     queryKey: ["dining-tables-all"],
-    queryFn: () => api<{ data: Table[] }>("/tables?per_page=100"),
+    queryFn: () => api<{ data: Table[] }>("/tables"),
     enabled: !!user && canViewTables,
   });
 
@@ -662,6 +662,7 @@ export default function POSPage() {
           branch_id: user?.branch_id,
           warehouse_id: defaultWarehouse?.id,
           customer_id: customerId,
+          table_id: tableId,
           items: cart.map((i) => ({
             product_id: i.product.id,
             quantity: i.qty,
@@ -719,6 +720,7 @@ export default function POSPage() {
           branch_id: user?.branch_id,
           warehouse_id: defaultWarehouse?.id,
           customer_id: customerId,
+          table_id: tableId,
           status: "held",
           items: cart.map((i) => ({
             product_id: i.product.id,

@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\Export\ExportService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
     public function __construct(protected ExportService $exportService) {}
 
-    public function index(string $module, Request $request): Response
+    public function index(string $module, Request $request): StreamedResponse
     {
         $this->validatePermission($module);
 
@@ -49,15 +49,16 @@ class ExportController extends Controller
         );
     }
 
+    /**
+     * The module is a URL segment, so the `<module>.export` slug can only be known
+     * here — a static `permission:` middleware alias cannot see it.
+     */
     protected function validatePermission(string $module): void
     {
-        $action = 'export';
-        $slug = "{$module}.{$action}";
+        $slug = "{$module}.export";
 
-        if (! auth()->user()->can($slug)) {
-            throw new ValidationException([
-                'message' => ["Unauthorized. Missing permission: {$slug}."],
-            ])->status(403);
+        if (! auth()->user()?->can($slug)) {
+            throw new AccessDeniedHttpException("Unauthorized. Missing permission: {$slug}.");
         }
     }
 }

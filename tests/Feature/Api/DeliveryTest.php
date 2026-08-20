@@ -7,7 +7,9 @@ use App\Models\DeliveryZone;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
 use Tests\TestCase;
@@ -43,7 +45,7 @@ class DeliveryTest extends TestCase
             'customer_id' => null,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'payments' => [['method' => 'cash', 'amount' => 100]],
-        ])->assertCreated()->json('data.id');
+        ])->dump()->assertCreated()->json('data.id');
 
         return Sale::findOrFail($id);
     }
@@ -129,7 +131,22 @@ class DeliveryTest extends TestCase
     {
         $sale = $this->completedSale();
 
-        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", ['zone_id' => 9999])
+        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", ['zone_id' => (string) Str::uuid()])
+            ->assertNotFound();
+    }
+
+    public function test_cannot_assign_a_zone_belonging_to_another_tenant(): void
+    {
+        $sale = $this->completedSale();
+
+        $otherOwner = $this->createTenant('zone-thief@example.test');
+        app(TenantContext::class)->set($otherOwner->tenant_id);
+        $foreignZone = DeliveryZone::create(['name' => 'Their Zone', 'delivery_fee' => 1.00]);
+        app(TenantContext::class)->set($this->owner->tenant_id);
+
+        Sanctum::actingAs($this->owner);
+
+        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", ['zone_id' => $foreignZone->id])
             ->assertNotFound();
     }
 
