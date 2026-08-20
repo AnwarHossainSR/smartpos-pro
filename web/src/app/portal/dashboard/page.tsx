@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/ui/logo";
-import { api, ApiError } from "@/lib/api";
+import { clearPortalToken, portalFetch, usePortalToken } from "@/lib/portal";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface PortalCustomer {
@@ -28,21 +28,6 @@ interface PortalInvoice {
   sold_at: string;
 }
 
-function portalFetch<T>(path: string): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("portal_token") : null;
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}${path}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-  }).then(async (res) => {
-    if (res.status === 401) {
-      window.location.href = "/portal";
-      throw new Error("Unauthorized");
-    }
-    const data = res.status === 204 ? null : await res.json();
-    if (!res.ok) throw new Error(data?.message ?? "Request failed");
-    return data as T;
-  });
-}
-
 function statusBadge(status: string) {
   switch (status) {
     case "paid": return <Badge tone="success">Paid</Badge>;
@@ -54,13 +39,12 @@ function statusBadge(status: string) {
 
 export default function PortalDashboardPage() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const token = usePortalToken();
+  const ready = !!token;
 
   useEffect(() => {
-    const t = localStorage.getItem("portal_token");
-    if (!t) { router.replace("/portal"); return; }
-    setReady(true);
-  }, [router]);
+    if (!token) router.replace("/portal");
+  }, [token, router]);
 
   const { data: customer, isLoading: loadingCustomer } = useQuery({
     queryKey: ["portal", "me"],
@@ -84,7 +68,7 @@ export default function PortalDashboardPage() {
             <Logo size={28} />
             <span className="font-semibold">My Account</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { localStorage.removeItem("portal_token"); window.location.href = "/portal"; }}>
+          <Button variant="ghost" size="sm" onClick={() => { clearPortalToken(); window.location.href = "/portal"; }}>
             <LogOut className="mr-1 h-4 w-4" /> Sign out
           </Button>
         </div>

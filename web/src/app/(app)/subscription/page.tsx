@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, Sparkles, TrendingUp, Rocket, Briefcase, X } from "lucide-react";
+import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, TrendingUp, Rocket, Briefcase, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -104,7 +104,9 @@ export default function SubscriptionPage() {
   const allPlans = plansData?.data ?? [];
   const paidPlans = allPlans.filter((p) => p.price > 0);
   const freePlan = allPlans.find((p) => p.price === 0);
-  const isOnFreePlan = !sub && freePlan;
+  // `sub` is undefined while /subscription is still in flight, so gating on it alone
+  // flashes "You're on the Free Plan" at paying customers on every page load.
+  const isOnFreePlan = !subLoading && !sub && freePlan;
 
   const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
     active: "success",
@@ -244,7 +246,7 @@ export default function SubscriptionPage() {
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
-          {paidPlans.map((plan, idx) => {
+          {paidPlans.map((plan) => {
             const isCurrent = sub?.plan.id === plan.id;
             const isDowngrade = !!sub && plan.price < sub.plan.price;
             const isPopular = plan.slug === "professional";

@@ -5,37 +5,51 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError } from "@/lib/api";
+import { setPortalToken } from "@/lib/portal";
 
 export default function PortalAuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // "No token in the URL" is knowable at render time, so it is derived rather than pushed
+  // into state from an effect — only the verification request's outcome needs state.
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(!!token);
 
   useEffect(() => {
-    if (!token) {
-      setError("No token provided.");
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
 
+    let active = true;
     api<{ token: string }>(`/portal/verify/${token}`)
       .then((res) => {
-        localStorage.setItem("portal_token", res.token);
+        if (!active) return;
+        setPortalToken(res.token);
         router.replace("/portal/dashboard");
       })
-      .catch((err) => {
-        setError(err instanceof ApiError ? err.message : "Invalid or expired link.");
-        setLoading(false);
+      .catch((err: unknown) => {
+        if (!active) return;
+        setVerifyError(err instanceof ApiError ? err.message : "Invalid or expired link.");
+        setVerifying(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [token, router]);
+
+  const error = token ? verifyError : "No sign-in token was provided.";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] p-6">
       <div className="w-full max-w-md text-center">
         <Logo size={44} className="mx-auto mb-4" />
-        {loading && <Spinner className="mx-auto" />}
+        {verifying && (
+          <div role="status" aria-live="polite">
+            <Spinner className="mx-auto" />
+            <span className="sr-only">Signing you in</span>
+          </div>
+        )}
         {error && (
           <>
             <h1 className="text-2xl font-semibold">Sign-in failed</h1>

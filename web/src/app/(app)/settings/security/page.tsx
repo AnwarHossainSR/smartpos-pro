@@ -52,7 +52,6 @@ type PasswordForm = z.infer<typeof passwordSchema>;
 
 function PasswordSection() {
   const t = useTranslation();
-  const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<PasswordForm>({
     resolver: zodResolver(passwordSchema),
   });
@@ -106,7 +105,6 @@ function TwoFactorSection() {
 
   const [enrolling, setEnrolling] = useState(false);
   const [secret, setSecret] = useState<string | null>(null);
-  const [otpauthUrl, setOtpauthUrl] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
@@ -131,7 +129,6 @@ function TwoFactorSection() {
     mutationFn: () => api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", { method: "POST" }),
     onSuccess: (res) => {
       setSecret(res.data.secret);
-      setOtpauthUrl(res.data.otpauth_url);
       setEnrolling(true);
       import("qrcode").then((QRCode) => {
         QRCode.default.toDataURL(res.data.otpauth_url, { width: 200 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
