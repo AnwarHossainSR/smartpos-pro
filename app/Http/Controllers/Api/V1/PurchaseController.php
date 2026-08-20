@@ -81,4 +81,37 @@ class PurchaseController extends Controller
             throw ValidationException::withMessages(['status' => $e->getMessage()]);
         }
     }
+
+    public function edit(Request $request, Purchase $purchase): JsonResponse
+    {
+        try {
+            $purchase = $this->purchases->edit($purchase, $request->all());
+
+            return (new PurchaseResource($purchase))->response()->setStatusCode(200);
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages(['status' => $e->getMessage()]);
+        }
+    }
+
+    public function destroy(Purchase $purchase): JsonResponse
+    {
+        try {
+            $purchase = $this->purchases->cancel($purchase);
+
+            return (new PurchaseResource($purchase))->response()->setStatusCode(200);
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages(['status' => $e->getMessage()]);
+        }
+    }
+
+    public function return(Request $request, Purchase $purchase): JsonResponse
+    {
+        try {
+            $purchase = $this->purchases->returnPurchase($purchase, $request->all());
+
+            return (new PurchaseResource($purchase))->response()->setStatusCode(200);
+        } catch (\DomainException $e) {
+            throw ValidationException::withMessages(['status' => $e->getMessage()]);
+        }
+    }
 }

@@ -216,7 +216,15 @@
     "theme": {
         "syncFailed": "Couldn't save your theme to your account. It's still applied on this device."
     },
+    "tables": {
+        "title": "Tables",
+        "available": "Available",
+        "occupied": "Occupied",
+        "reserved": "Reserved",
+        "seats": "Seats"
+    },
     "pos": {
+        "table_selector": "Table",
         "numpadConfirm": "OK",
         "quantity": "Qty",
         "weight": "Weight",

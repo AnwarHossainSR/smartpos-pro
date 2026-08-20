@@ -40,8 +40,8 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 
 ### Sprint 11 — Long tail & unfinished lanes (P2/P3)
 
-- [ ] T123 · G26 Delivery management
-- [ ] T124 · G39 AI demand forecasting
-- [ ] T125 · G24 Tables & floor plan (completion)
-- [ ] T105 · G19 Purchase edit / cancel / return
-- [ ] T108 · G11 Server-side export endpoints
+- [x] T123 · G26 Delivery management
+- [x] T124 · G39 AI demand forecasting
+- [x] T125 · G24 Tables & floor plan (completion)
+- [x] T105 · G19 Purchase edit / cancel / return
+- [x] T108 · G11 Server-side export endpoints

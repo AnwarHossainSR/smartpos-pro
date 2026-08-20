@@ -203,6 +203,48 @@ class PurchaseService
         return $purchase->fresh('items', 'supplier');
     }
 
+    public function edit(Purchase $purchase, array $data): Purchase
+    {
+        if ($purchase->status !== PurchaseStatus::Draft) {
+            throw new \DomainException('Only draft purchases can be edited.');
+        }
+
+        if (isset($data['note'])) {
+            $purchase->update(['note' => $data['note']]);
+        }
+
+        return $purchase->fresh('items', 'supplier');
+    }
+
+    public function returnPurchase(Purchase $purchase, array $data): Purchase
+    {
+        if (! in_array($purchase->status, [PurchaseStatus::Draft, PurchaseStatus::Approved], true)) {
+            throw new \DomainException('Only draft or approved purchases can be returned.');
+        }
+
+        $hasReceivedItems = $purchase->items()
+            ->where('accepted_qty', '>', 0)
+            ->exists();
+
+        if ($hasReceivedItems) {
+            throw new \DomainException('Cannot return a purchase with received items.');
+        }
+
+        if (isset($data['note'])) {
+            $purchase->update(['note' => $data['note']]);
+        }
+
+        $supplier = $purchase->supplier;
+
+        $purchase->update(['status' => PurchaseStatus::Returned]);
+
+        if ($supplier) {
+            Supplier::whereKey($supplier->id)->decrement('balance', (float) $purchase->total);
+        }
+
+        return $purchase->fresh('items', 'supplier');
+    }
+
     private function netOf(PurchaseLineData $line): float
     {
         return round(max(0, ($line->unitCost * $line->quantity) - $line->discountAmount), 2);

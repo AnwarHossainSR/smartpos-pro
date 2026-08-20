@@ -14,6 +14,7 @@ enum PurchaseStatus: string
     case Partial = 'partial';
     case Received = 'received';
     case Cancelled = 'cancelled';
+    case Returned = 'returned';
 
     public function affectsStock(): bool
     {

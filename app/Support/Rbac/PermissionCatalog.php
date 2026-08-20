@@ -19,7 +19,7 @@ class PermissionCatalog
         // discount, a price override or a void at the till (see ApprovalService).
         'pos' => ['view', 'create', 'refund', 'discount', 'price_override', 'approve'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
-        'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export'],
+        'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export', 'edit', 'return'],
         'customers' => ['view', 'create', 'update', 'delete', 'export'],
         'suppliers' => ['view', 'create', 'update', 'delete', 'export'],
         'expenses' => ['view', 'create', 'update', 'delete', 'approve'],

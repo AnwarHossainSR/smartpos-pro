@@ -3,10 +3,18 @@
 namespace App\Services\Inventory;
 
 use App\Models\Product;
+use App\Services\Analytics\ForecastService;
 use Illuminate\Support\Collection;
 
 class ReorderSuggestionService
 {
+    protected ForecastService $forecast;
+
+    public function __construct(ForecastService $forecast)
+    {
+        $this->forecast = $forecast;
+    }
+
     public function getSuggestions(): Collection
     {
         $products = Product::query()
@@ -27,7 +35,12 @@ class ReorderSuggestionService
 
             $avgDailySales = (float) $product->avg_daily_sales;
             $leadTimeDays = (int) $product->reorder_lead_time_days;
-            $suggestedQty = max(0, ceil(($avgDailySales * $leadTimeDays) - $currentStock + $reorderPoint));
+            $forecast = $this->forecast->forecastProduct($product->id);
+            $predictedDaily = $forecast['predicted_demand'] / 30;
+            $forecastAdjustment = $avgDailySales > 0 && $forecast['predicted_demand'] > 0
+                ? $predictedDaily / $avgDailySales
+                : 1;
+            $suggestedQty = max(0, ceil(($avgDailySales * $leadTimeDays * $forecastAdjustment) - $currentStock + $reorderPoint));
 
             $suggestions->push([
                 'product' => [
@@ -45,6 +58,7 @@ class ReorderSuggestionService
                 'avg_daily_sales' => $avgDailySales,
                 'lead_time_days' => $leadTimeDays,
                 'suggested_qty' => $suggestedQty,
+                'forecast' => $forecast,
             ]);
         }
 

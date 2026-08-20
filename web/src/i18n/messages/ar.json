@@ -211,7 +211,15 @@
     "theme": {
         "syncFailed": "تعذّر حفظ المظهر في حسابك. لا يزال مطبَّقًا على هذا الجهاز."
     },
+    "tables": {
+        "title": "الطاولات",
+        "available": "متاح",
+        "occupied": "مشغول",
+        "reserved": "محجوز",
+        "seats": "مقاعد"
+    },
     "pos": {
+        "table_selector": "طاولة",
         "numpadConfirm": "موافق",
         "quantity": "الكمية",
         "weight": "الوزن",

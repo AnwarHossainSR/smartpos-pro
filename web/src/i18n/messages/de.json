@@ -211,8 +211,15 @@
     "theme": {
         "syncFailed": "Dein Design konnte nicht in deinem Konto gespeichert werden. Auf diesem Gerät bleibt es aktiv."
     },
+    "tables": {
+        "title": "Tische",
+        "available": "Verfügbar",
+        "occupied": "Occupied",
+        "reserved": "Reserviert",
+        "seats": "plätze"
+    },
     "pos": {
-        "numpadConfirm": "OK",
+        "table_selector": "Tisch",
         "quantity": "Menge",
         "weight": "Gewicht",
         "shortcuts": {
