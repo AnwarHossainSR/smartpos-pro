@@ -211,8 +211,15 @@
     "theme": {
         "syncFailed": "テーマをアカウントに保存できませんでした。この端末には適用されています。"
     },
+    "tables": {
+        "title": "テーブル",
+        "available": "利用可能",
+        "occupied": "occupied",
+        "reserved": "予約",
+        "seats": "席"
+    },
     "pos": {
-        "numpadConfirm": "OK",
+        "table_selector": "テーブル",
         "quantity": "数量",
         "weight": "重量",
         "shortcuts": {

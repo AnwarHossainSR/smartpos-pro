@@ -211,8 +211,15 @@
     "theme": {
         "syncFailed": "আপনার থিম অ্যাকাউন্টে সংরক্ষণ করা যায়নি। এই ডিভাইসে এটি প্রয়োগ করা আছে।"
     },
+    "tables": {
+        "title": "mese",
+        "available": "উপलब्ध",
+        "occupied": "বলয়করা",
+        "reserved": "যমা",
+        "seats": "ব্যাহার"
+    },
     "pos": {
-        "numpadConfirm": "OK",
+        "table_selector": "mese",
         "quantity": "পরিমাণ",
         "weight": "ওজন",
         "shortcuts": {
