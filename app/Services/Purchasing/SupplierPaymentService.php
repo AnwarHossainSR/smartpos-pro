@@ -9,7 +9,6 @@ use App\Services\Accounting\JournalService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SupplierPaymentService
 {
@@ -17,20 +16,21 @@ class SupplierPaymentService
 
     public function recordPayment(Supplier $supplier, float $amount, string $method, ?string $reference = null, ?string $paidAt = null): SupplierPayment
     {
-        return DB::transaction(function () use ($supplier, $amount, $method, $reference) {
+        return DB::transaction(function () use ($supplier, $amount, $method, $reference, $paidAt) {
             $supplier->load('tenant');
 
             $supplier->balance = (float) $supplier->balance - $amount;
             $supplier->save();
 
+            // No explicit `id`: SupplierPayment uses HasUuids, which mints the key on
+            // insert, and `id` is deliberately not mass-assignable.
             $payment = $supplier->payments()->create([
-                'id' => (string) Str::uuid(),
                 'tenant_id' => $supplier->tenant_id,
                 'supplier_id' => $supplier->id,
                 'amount' => $amount,
                 'method' => $method,
                 'reference' => $reference,
-                'paid_at' => Carbon::now()->startOfDay(),
+                'paid_at' => $paidAt ? Carbon::parse($paidAt)->startOfDay() : Carbon::now()->startOfDay(),
                 'notes' => null,
             ]);
 

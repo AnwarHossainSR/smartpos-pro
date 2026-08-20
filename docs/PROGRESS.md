@@ -11,8 +11,8 @@ Z-report, shifts, loyalty & coupons, tax engine, quotations, stock transfers, va
 batches / serials, sale void, CSV product import, webhooks, Stripe payments, onboarding
 wizard, subscriptions, i18n + palettes, PWA.
 
-Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105**
-(purchase edit / cancel / return) and **T108** (server-side exports).
+Both Phase 10 stragglers — **T105** (purchase edit / cancel / return) and **T108**
+(server-side exports) — landed in sprint 11 below and now have routes.
 
 ## Phase 11 — backlog sprints
 
@@ -45,3 +45,31 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 - [x] T125 · G24 Tables & floor plan (completion)
 - [x] T105 · G19 Purchase edit / cancel / return
 - [x] T108 · G11 Server-side export endpoints
+
+## Post-sprint-11 audit
+
+Sprint 11's last five tasks were ticked before their endpoints actually worked. A backend
+audit pass fixed them and brought this file and [`API.md`](API.md) back in line with the
+routes that exist:
+
+- `routes/api.php` was left mangled by commit `83281f3`: four live `sales/{sale}/*` routes
+  (payments, email-status-link, resume, void) deleted, the `StripeController` import
+  dropped, and every em dash in the file corrupted to mojibake. Restored and repaired.
+- **T108 exports** never worked: the route was shadowed by `products/{product}` and
+  friends, `ExportController` had a duplicate property (fatal), and `ExportService`
+  stripped the tenant scope. Exports are now tenant-scoped, correctly ordered, and honour
+  the same filters as each module's index endpoint.
+- **T123 deliveries**, **T124 forecasts** and **T125 tables** each shipped with a fatal
+  defect (missing `deliveries` table, unimported `Product`, and a model pointing at a
+  non-existent `tables` table respectively). All three now have passing feature tests.
+- `GET /reports/z-report` now routes to the layered `ZReportController`; the duplicate
+  copy on `ReportController` (whose `branch_id` was not tenant-scoped) is gone.
+
+- The T125 floor plan collected a table selection the API then discarded: `POST /sales`
+  now validates and persists `table_id` (tenant-scoped) on both checkout and park, and
+  `SaleResource` returns it.
+
+`tables.*` and `deliveries.*` are now in `PermissionCatalog::MATRIX`, so these endpoints
+are reachable by roles other than owner — `cashier` holds `tables.view`/`tables.update`
+for seating and clearing, but not `create`/`delete`.
+

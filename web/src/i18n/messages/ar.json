@@ -16,7 +16,8 @@
     "of": "من",
     "accessDenied": "لا تملك صلاحية الوصول",
     "accessDeniedBody": "ليست لديك صلاحية لعرض هذه الصفحة. تواصل مع أحد المسؤولين إذا كنت بحاجة إلى الوصول.",
-    "backToDashboard": "العودة إلى لوحة التحكم"
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "status": "الحالة"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -283,7 +284,42 @@
     "printNoUsb": "WebUSB غير متاح في هذا المتصفح. استخدم تحميل PDF.",
     "printNoData": "لا توجد بيانات مبيعات متاحة",
     "printTest": "تم إرسال طباعة تجريبية",
-    "tableNone": "بدون طاولة"
+    "tableNone": "بدون طاولة",
+    "checkout": "إتمام البيع",
+    "park": "تعليق البيع",
+    "parkSuccess": "تم تعليق البيع",
+    "weight": "الوزن",
+    "table_selector": "الطاولة",
+    "customerSearch": {
+      "placeholder": "ابحث عن عميل…",
+      "noMatch": "لم يُعثر على عميل",
+      "create": "إضافة عميل",
+      "created": "تمت إضافة العميل",
+      "points": "نقطة",
+      "owing": "عليه مستحقات"
+    },
+    "heldOrders": {
+      "button": "معلَّقة ({count})",
+      "title": "الطلبات المعلَّقة",
+      "empty": "لا توجد طلبات معلَّقة.",
+      "walkIn": "عميل عابر",
+      "items": "عنصرًا",
+      "resume": "استئناف",
+      "discard": "إلغاء",
+      "discardTitle": "إلغاء الطلب المعلَّق",
+      "discardConfirm": "هل تريد إلغاء الطلب المعلَّق {reference}؟ لا يمكن التراجع عن هذا الإجراء.",
+      "discardSuccess": "تم إلغاء الطلب المعلَّق"
+    },
+    "shortcuts": {
+      "title": "اختصارات لوحة المفاتيح",
+      "focusSearch": "الانتقال إلى بحث المنتجات",
+      "holdSale": "تعليق البيع الحالي",
+      "openPayment": "فتح الدفع",
+      "voidLastLine": "إلغاء آخر بند",
+      "closeOrClear": "إغلاق النافذة / مسح البحث",
+      "confirmPayment": "تأكيد الدفع",
+      "toggleHelp": "إظهار هذه المساعدة أو إخفاؤها"
+    }
   },
   "dashboard": {
     "todaySales": "مبيعات اليوم",

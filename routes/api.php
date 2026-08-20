@@ -233,7 +233,7 @@ Route::prefix('v1')->group(function () {
         Route::put('tables/{table}', [TableController::class, 'update'])->middleware('permission:tables.update');
         Route::delete('tables/{table}', [TableController::class, 'destroy'])->middleware('permission:tables.delete');
 
-        // T124 — Deliveries
+        // T123 — Deliveries
         Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
         Route::get('deliveries', [DeliveryController::class, 'index'])->middleware('permission:deliveries.view');
         Route::get('deliveries/{delivery}', [DeliveryController::class, 'show'])->middleware('permission:deliveries.view');
@@ -433,9 +433,8 @@ Route::prefix('v1')->group(function () {
 
         // T118 — Reorder suggestions
         Route::get('reorder-suggestions', [ReorderSuggestionController::class, 'index'])->middleware('permission:reorder-suggestions.view');
-        Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('forecasts', [ForecastController::class, 'index']);
-        });
+        Route::get('forecasts', [ForecastController::class, 'index'])
+            ->middleware('permission:reorder-suggestions.view');
         Route::post('reorder-suggestions/create-draft-po', [ReorderSuggestionController::class, 'createDraftPo'])->middleware('permission:reorder-suggestions.create');
 
         // T30 — Quotations

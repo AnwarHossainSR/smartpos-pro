@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError } from "@/lib/api";
 import { setPortalToken } from "@/lib/portal";
 
-export default function PortalAuthPage() {
+function PortalAuthScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -41,22 +41,32 @@ export default function PortalAuthPage() {
   const error = token ? verifyError : "No sign-in token was provided.";
 
   return (
+    <div className="w-full max-w-md text-center">
+      <Logo size={44} className="mx-auto mb-4" />
+      {verifying && (
+        <div role="status" aria-live="polite">
+          <Spinner className="mx-auto" />
+          <span className="sr-only">Signing you in</span>
+        </div>
+      )}
+      {error && (
+        <>
+          <h1 className="text-2xl font-semibold">Sign-in failed</h1>
+          <p className="mt-2 text-sm text-[var(--muted)]">{error}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// `useSearchParams()` opts a route out of static prerendering unless it sits under a Suspense
+// boundary — same wrapper the other query-string screens (verify-email, reset-password) use.
+export default function PortalAuthPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] p-6">
-      <div className="w-full max-w-md text-center">
-        <Logo size={44} className="mx-auto mb-4" />
-        {verifying && (
-          <div role="status" aria-live="polite">
-            <Spinner className="mx-auto" />
-            <span className="sr-only">Signing you in</span>
-          </div>
-        )}
-        {error && (
-          <>
-            <h1 className="text-2xl font-semibold">Sign-in failed</h1>
-            <p className="mt-2 text-sm text-[var(--muted)]">{error}</p>
-          </>
-        )}
-      </div>
+      <Suspense fallback={<Spinner className="mx-auto" />}>
+        <PortalAuthScreen />
+      </Suspense>
     </div>
   );
 }

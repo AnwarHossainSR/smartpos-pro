@@ -1,11 +1,27 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CommandPalette } from "../ui/command-palette";
+import { useAuth } from "@/stores/auth";
 
 // next/navigation mock
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
+
+// The palette hides destinations the route guard would refuse, so these tests need a signed-in
+// user. The owner role implicitly holds everything, which keeps the assertions about *filtering*
+// independent of the permission matrix.
+beforeEach(() => {
+  useAuth.setState({
+    token: "test-token",
+    hydrated: true,
+    user: { id: "1", name: "Owner", email: "owner@example.com", roles: ["owner"] },
+  });
+});
+
+afterEach(() => {
+  useAuth.setState({ token: null, user: null, hydrated: false });
+});
 
 describe("CommandPalette", () => {
   it("does not render when closed", () => {
@@ -39,6 +55,24 @@ describe("CommandPalette", () => {
     const backdrop = document.querySelector(".absolute.inset-0.bg-black\\/40");
     if (backdrop) fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("hides destinations the user has no permission for", () => {
+    useAuth.setState({
+      user: {
+        id: "2",
+        name: "Cashier",
+        email: "cashier@example.com",
+        roles: ["cashier"],
+        permissions: ["dashboard.view", "pos.view", "sales.view"],
+      },
+    });
+
+    render(<CommandPalette open={true} onClose={vi.fn()} />);
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("POS Terminal")).toBeInTheDocument();
+    expect(screen.queryByText("Accounting")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audit log")).not.toBeInTheDocument();
   });
 
   it("calls onClose on Escape key", () => {

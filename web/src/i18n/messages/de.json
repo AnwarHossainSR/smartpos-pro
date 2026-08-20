@@ -16,7 +16,8 @@
     "of": "von",
     "accessDenied": "Kein Zugriff",
     "accessDeniedBody": "Sie haben keine Berechtigung, diese Seite zu sehen. Wenden Sie sich an eine Administratorin oder einen Administrator, wenn Sie Zugriff benötigen.",
-    "backToDashboard": "Zurück zum Dashboard"
+    "backToDashboard": "Zurück zum Dashboard",
+    "status": "Status"
   },
   "nav": {
     "dashboard": "Übersicht",
@@ -283,7 +284,42 @@
     "printNoUsb": "WebUSB ist in diesem Browser nicht verfügbar. Verwenden Sie den PDF-Download.",
     "printNoData": "Keine Verkaufsdaten verfügbar",
     "printTest": "Testdruck gesendet",
-    "tableNone": "Kein Tisch"
+    "tableNone": "Kein Tisch",
+    "checkout": "Kassieren",
+    "park": "Verkauf parken",
+    "parkSuccess": "Verkauf geparkt",
+    "weight": "Gewicht",
+    "table_selector": "Tisch",
+    "customerSearch": {
+      "placeholder": "Kunden suchen…",
+      "noMatch": "Kein Kunde gefunden",
+      "create": "Kunde anlegen",
+      "created": "Kunde angelegt",
+      "points": "Pkt.",
+      "owing": "Offen"
+    },
+    "heldOrders": {
+      "button": "Geparkt ({count})",
+      "title": "Geparkte Verkäufe",
+      "empty": "Keine geparkten Verkäufe.",
+      "walkIn": "Laufkundschaft",
+      "items": "Artikel",
+      "resume": "Fortsetzen",
+      "discard": "Verwerfen",
+      "discardTitle": "Geparkten Verkauf verwerfen",
+      "discardConfirm": "Geparkten Verkauf {reference} verwerfen? Das lässt sich nicht rückgängig machen.",
+      "discardSuccess": "Geparkter Verkauf verworfen"
+    },
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "focusSearch": "Produktsuche fokussieren",
+      "holdSale": "Aktuellen Verkauf parken",
+      "openPayment": "Zahlung öffnen",
+      "voidLastLine": "Letzte Position stornieren",
+      "closeOrClear": "Dialog schließen / Suche leeren",
+      "confirmPayment": "Zahlung bestätigen",
+      "toggleHelp": "Diese Hilfe ein-/ausblenden"
+    }
   },
   "dashboard": {
     "todaySales": "Heute-Umsatz",

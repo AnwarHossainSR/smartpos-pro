@@ -16,7 +16,8 @@
     "of": "/",
     "accessDenied": "アクセス権がありません",
     "accessDeniedBody": "このページを表示する権限がありません。アクセスが必要な場合は管理者にお問い合わせください。",
-    "backToDashboard": "ダッシュボードに戻る"
+    "backToDashboard": "ダッシュボードに戻る",
+    "status": "ステータス"
   },
   "nav": {
     "dashboard": "ダッシュボード",
@@ -283,7 +284,42 @@
     "printNoUsb": "このブラウザではWebUSBが利用できません。PDFダウンロードを使用してください。",
     "printNoData": "販売データがありません",
     "printTest": "テスト印刷を送信しました",
-    "tableNone": "テーブルなし"
+    "tableNone": "テーブルなし",
+    "checkout": "会計",
+    "park": "会計を保留",
+    "parkSuccess": "会計を保留しました",
+    "weight": "重量",
+    "table_selector": "テーブル",
+    "customerSearch": {
+      "placeholder": "顧客を検索…",
+      "noMatch": "顧客が見つかりません",
+      "create": "顧客を作成",
+      "created": "顧客を作成しました",
+      "points": "ポイント",
+      "owing": "未収"
+    },
+    "heldOrders": {
+      "button": "保留中（{count}）",
+      "title": "保留中の注文",
+      "empty": "保留中の注文はありません。",
+      "walkIn": "一見客",
+      "items": "点",
+      "resume": "再開",
+      "discard": "破棄",
+      "discardTitle": "保留中の注文を破棄",
+      "discardConfirm": "保留中の注文 {reference} を破棄しますか？この操作は取り消せません。",
+      "discardSuccess": "保留中の注文を破棄しました"
+    },
+    "shortcuts": {
+      "title": "キーボードショートカット",
+      "focusSearch": "商品検索にフォーカス",
+      "holdSale": "現在の会計を保留",
+      "openPayment": "支払いを開く",
+      "voidLastLine": "最後の明細を取り消す",
+      "closeOrClear": "ダイアログを閉じる／検索をクリア",
+      "confirmPayment": "支払いを確定",
+      "toggleHelp": "このヘルプの表示切り替え"
+    }
   },
   "dashboard": {
     "todaySales": "今日の売上",

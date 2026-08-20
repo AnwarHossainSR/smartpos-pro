@@ -21,6 +21,9 @@ class StoreSaleRequest extends FormRequest
             'branch_id' => ['required', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
             'warehouse_id' => ['required', Rule::exists('warehouses', 'id')->where('tenant_id', $tenantId)],
             'customer_id' => ['nullable', Rule::exists('customers', 'id')->where('tenant_id', $tenantId)],
+            // Which dining table the order was rung up on (T125). Scoped to the
+            // caller's tenant so a table id from another business cannot be attached.
+            'table_id' => ['nullable', Rule::exists('dining_tables', 'id')->where('tenant_id', $tenantId)],
             'status' => ['nullable', 'in:draft,quotation,held,completed'],
             'note' => ['nullable', 'string', 'max:1000'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
