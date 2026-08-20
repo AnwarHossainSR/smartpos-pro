@@ -27,6 +27,9 @@ class StoreSaleRequest extends FormRequest
             'shipping_amount' => ['nullable', 'numeric', 'min:0'],
             'coupon_code' => ['nullable', 'string', 'max:64'],
             'approval_token' => ['nullable', 'string', 'max:64'],
+            'tender_currency' => ['nullable', 'string', 'size:3'],
+            'tender_amount' => ['nullable', 'numeric', 'min:0'],
+            'fx_rate' => ['nullable', 'numeric', 'min:0'],
 
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('tenant_id', $tenantId)],

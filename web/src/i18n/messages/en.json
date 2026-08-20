@@ -176,6 +176,11 @@
         "deleteSuccess": "Product deleted",
         "deleteFailed": "Delete failed",
         "somethingWentWrong": "Something went wrong",
+        "weighed": "Weighed product",
+        "weight_unit": "Weight unit",
+        "price_per_unit": "Price per unit",
+        "per_kg": "per kg",
+        "per_lb": "per lb",
         "form": {
             "name": "Name",
             "namePlaceholder": "Product name",
@@ -212,6 +217,7 @@
     "pos": {
         "numpadConfirm": "OK",
         "quantity": "Qty",
+        "weight": "Weight",
         "shortcuts": {
             "title": "Keyboard Shortcuts",
             "focusSearch": "Focus search / scan",
@@ -496,5 +502,15 @@
         "testSent": "Test email queued to {email}",
         "testFailed": "Could not send the test email",
         "noPermission": "You do not have permission to edit email templates."
+    },
+    "currency": {
+        "title": "Currency Settings",
+        "base": "Base Currency",
+        "tender": "Tender Currency",
+        "rate": "Exchange Rate",
+        "convert": "Convert",
+        "baseHint": "The currency your books are kept in",
+        "saved": "Base currency updated",
+        "tenderDescription": "Pay in a different currency at POS"
     }
 }

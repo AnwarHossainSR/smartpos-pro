@@ -47,6 +47,9 @@ interface Product {
   image_url?: string | null;
   tax_group?: TaxGroup | null;
   tax_group_id?: string | null;
+  is_weighed?: boolean;
+  weight_unit?: string | null;
+  price_per_unit?: number | null;
 }
 
 /* ---- form schema ---- */
@@ -61,6 +64,9 @@ const schema = z.object({
   purchase_price: z.number().min(0, "Must be ≥ 0"),
   selling_price: z.number().min(0.01, "Must be > 0"),
   is_active: z.boolean(),
+  is_weighed: z.boolean().optional(),
+  weight_unit: z.string().optional(),
+  price_per_unit: z.number().min(0).optional(),
   opening_stock_qty: z.number().min(0).optional(),
   opening_stock_warehouse_id: z.string().optional(),
 });
@@ -103,10 +109,12 @@ function ProductForm({
   });
   const { data: taxGroups } = useAllTaxGroups();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { is_active: true, purchase_price: 0, selling_price: 0, ...defaultValues },
+    defaultValues: { is_active: true, purchase_price: 0, selling_price: 0, is_weighed: false, ...defaultValues },
   });
+
+  const isWeighed = watch("is_weighed");
 
   const mutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -226,6 +234,29 @@ function ProductForm({
           <Input type="number" step="0.01" min="0" {...register("selling_price", { valueAsNumber: true })} />
           {errors.selling_price && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.selling_price.message}</p>}
         </div>
+      </div>
+
+      <div className="rounded-[var(--radius)] border border-[var(--border)] p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="is_weighed" {...register("is_weighed")} className="h-4 w-4" />
+          <Label htmlFor="is_weighed">{t("products.weighed")}</Label>
+        </div>
+        {isWeighed && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>{t("products.weight_unit")}</Label>
+              <Select {...register("weight_unit")}>
+                <option value="kg">{t("products.per_kg")}</option>
+                <option value="lb">{t("products.per_lb")}</option>
+                <option value="g">per g</option>
+              </Select>
+            </div>
+            <div>
+              <Label>{t("products.price_per_unit")}</Label>
+              <Input type="number" step="0.01" min="0" {...register("price_per_unit", { valueAsNumber: true })} />
+            </div>
+          </div>
+        )}
       </div>
 
       {!isEdit && (
@@ -439,6 +470,9 @@ export default function ProductsPage() {
                   category_id: editing.category?.id,
                   brand_id: editing.brand?.id,
                   tax_group_id: editing.tax_group?.id ?? editing.tax_group_id ?? null,
+                  is_weighed: editing.is_weighed ?? false,
+                  weight_unit: editing.weight_unit ?? undefined,
+                  price_per_unit: editing.price_per_unit ?? undefined,
                 }
               : undefined
           }

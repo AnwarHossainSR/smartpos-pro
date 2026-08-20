@@ -46,6 +46,9 @@ export interface Product {
   image_url?: string | null;
   is_active: boolean;
   category: { id: string; name: string } | null;
+  is_weighed?: boolean;
+  weight_unit?: string | null;
+  price_per_unit?: number | null;
 }
 
 interface Customer {
@@ -71,6 +74,7 @@ interface CartItem {
   qty: number;
   unit_price: number;
   discount: number;
+  weight?: number | null;
 }
 
 interface SaleResult {
@@ -225,10 +229,20 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
 const PAYMENT_METHODS = [
   { value: "cash", label: "Cash" },
   { value: "card", label: "Card" },
-  { value: "mobile_banking", label: "Mobile banking" },
-  { value: "bank", label: "Bank transfer" },
+  { value: "bank", label: "Bank Transfer" },
+  { value: "mobile_banking", label: "Mobile Banking" },
   { value: "wallet", label: "Wallet" },
   { value: "due", label: "Due / Credit" },
+];
+
+const CURRENCIES = [
+  { code: "USD", name: "US Dollar" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British Pound" },
+  { code: "BDT", name: "Bangladeshi Taka" },
+  { code: "JPY", name: "Japanese Yen" },
+  { code: "SAR", name: "Saudi Riyal" },
+  { code: "AED", name: "UAE Dirham" },
 ];
 
 interface PaymentRow { id: string; method: string; amount: string; }
@@ -243,19 +257,26 @@ function PaymentModal({
   onConfirm,
   onClose,
   loading,
+  baseCurrency,
 }: {
   total: number;
-  onConfirm: (payments: { method: string; amount: number }[]) => void;
+  onConfirm: (payments: { method: string; amount: number }[], tenderCurrency?: string, fxRate?: number, tenderAmount?: number) => void;
   onClose: () => void;
   loading: boolean;
+  baseCurrency?: string;
 }) {
+  const t = useTranslation();
   const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) }]);
+  const [tenderCurrency, setTenderCurrency] = useState<string>("");
+  const tenderAmount = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
-  const tendered = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-  const remaining = round2(total - tendered);
+  const effectiveCurrency = tenderCurrency || baseCurrency || "USD";
+  const isForeign = tenderCurrency && tenderCurrency !== (baseCurrency || "USD");
 
   const addRow = () =>
     setRows((prev) => [...prev, { id: String(++paymentRowSeq), method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
+
+  const remaining = round2(total - tenderAmount);
   const removeRow = (id: string) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
   const updateRow = (id: string, patch: Partial<Omit<PaymentRow, "id">>) =>
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -265,7 +286,7 @@ function PaymentModal({
       .map((r) => ({ method: r.method, amount: round2(parseFloat(r.amount) || 0) }))
       .filter((p) => p.amount > 0);
     if (payments.length === 0) { toast("Enter a valid amount", "error"); return; }
-    onConfirm(payments);
+    onConfirm(payments, tenderCurrency || undefined);
   };
 
   return (
@@ -273,7 +294,25 @@ function PaymentModal({
       <div className="space-y-4">
         <div>
           <Label>Amount due</Label>
-          <p className="text-2xl font-bold">{formatCurrency(total)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(total)} {baseCurrency && <span className="text-sm font-normal text-[var(--muted)]">{baseCurrency}</span>}</p>
+          {isForeign && (
+            <p className="text-sm text-[var(--muted)]">
+              ~ {formatCurrency(round2(total))} {effectiveCurrency}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <Label>{t("currency.tender")}</Label>
+          <Select
+            value={tenderCurrency}
+            onChange={(e) => setTenderCurrency(e.target.value)}
+          >
+            <option value="">{baseCurrency || "USD"} ({t("currency.base")})</option>
+            {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
+              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+            ))}
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -419,7 +458,7 @@ export default function POSPage() {
   // cache hit in practice rather than an extra request just for the POS screen.
   const { data: businessSettings } = useQuery({
     queryKey: queryKeys.businessSettings,
-    queryFn: () => api<{ data: { price_display: PriceDisplay } }>("/settings/business"),
+    queryFn: () => api<{ data: { price_display: PriceDisplay; currency?: string } }>("/settings/business"),
   });
   const priceDisplay: PriceDisplay = businessSettings?.data?.price_display ?? "exclusive";
 
@@ -471,15 +510,18 @@ export default function POSPage() {
     },
   });
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: Product, weight?: number | null) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find((i) => i.product.id === product.id && i.weight === weight);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i,
+          i.product.id === product.id && i.weight === weight ? { ...i, qty: i.qty + 1 } : i,
         );
       }
-      return [...prev, { product, qty: 1, unit_price: product.selling_price, discount: 0 }];
+      const unitPrice = product.is_weighed && weight && product.price_per_unit
+        ? product.price_per_unit
+        : product.selling_price;
+      return [...prev, { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null }];
     });
   }, []);
 
@@ -488,9 +530,9 @@ export default function POSPage() {
   const tryBarcodeLookup = useCallback(async (code: string) => {
     if (!code.trim()) return;
     try {
-      const found = await api<{ data: Product }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
+      const found = await api<{ data: Product; parsed_weight?: number | null }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
       if (found?.data) {
-        addToCart(found.data);
+        addToCart(found.data, found.parsed_weight);
         setSearch("");
         try { navigator.vibrate?.(50); } catch {}
         try {
@@ -591,7 +633,7 @@ export default function POSPage() {
   }, [cart, priceDisplay]);
 
   const checkoutMutation = useMutation({
-    mutationFn: ({ payments, approvalToken }: { payments: { method: string; amount: number }[]; approvalToken?: string }) => {
+    mutationFn: ({ payments, approvalToken, tenderCurrency }: { payments: { method: string; amount: number }[]; approvalToken?: string; tenderCurrency?: string }) => {
       const idempotencyKey = crypto.randomUUID();
       return api<SaleResult>("/sales", {
         method: "POST",
@@ -608,6 +650,7 @@ export default function POSPage() {
           })),
           payments,
           approval_token: approvalToken ?? null,
+          tender_currency: tenderCurrency ?? null,
         },
       });
     },
@@ -1002,6 +1045,9 @@ export default function POSPage() {
                     <X className="h-3.5 w-3.5 text-[var(--muted)] hover:text-[var(--color-danger)]" />
                   </button>
                 </div>
+                {item.weight != null && (
+                  <p className="text-xs text-[var(--muted)]">{t("pos.weight")}: {item.weight.toFixed(3)} {item.product.weight_unit}</p>
+                )}
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty - 1)}>
@@ -1103,9 +1149,10 @@ export default function POSPage() {
       {showPayment && (
         <PaymentModal
           total={cartTotal}
-          onConfirm={(payments) => {
+          baseCurrency={businessSettings?.data?.currency ?? "USD"}
+          onConfirm={(payments, tenderCurrency) => {
             setPendingPayments(payments);
-            checkoutMutation.mutate({ payments });
+            checkoutMutation.mutate({ payments, tenderCurrency });
           }}
           onClose={() => setShowPayment(false)}
           loading={checkoutMutation.isPending}

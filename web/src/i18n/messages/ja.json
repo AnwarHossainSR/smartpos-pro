@@ -174,6 +174,11 @@
         "deleteSuccess": "商品を削除しました",
         "deleteFailed": "削除に失敗しました",
         "somethingWentWrong": "エラーが発生しました",
+        "weighed": "計量商品",
+        "weight_unit": "重量単位",
+        "price_per_unit": "単価",
+        "per_kg": "kgあたり",
+        "per_lb": "lbあたり",
         "form": {
             "name": "名前",
             "namePlaceholder": "商品名",
@@ -207,6 +212,7 @@
     "pos": {
         "numpadConfirm": "OK",
         "quantity": "数量",
+        "weight": "重量",
         "shortcuts": {
             "title": "キーボードショートカット",
             "focusSearch": "検索 / スキャンにフォーカス",
@@ -442,5 +448,15 @@
         "days": "Retention days",
         "anonymize": "Anonymize customer",
         "confirm": "Are you sure you want to anonymize this customer? This will hash all PII but keep financial records."
+    },
+    "currency": {
+        "title": "Currency Settings",
+        "base": "Base Currency",
+        "tender": "Tender Currency",
+        "rate": "Exchange Rate",
+        "convert": "Convert",
+        "baseHint": "The currency your books are kept in",
+        "saved": "Base currency updated",
+        "tenderDescription": "Pay in a different currency at POS"
     }
 }

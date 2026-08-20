@@ -32,6 +32,9 @@ class ProductResource extends JsonResource
             'is_active' => (bool) $this->is_active,
             'stock' => $this->when(isset($this->stock_quantity), fn () => (float) $this->stock_quantity),
             'tags' => $this->tags ?? [],
+            'is_weighed' => (bool) $this->is_weighed,
+            'weight_unit' => $this->weight_unit,
+            'price_per_unit' => $this->price_per_unit !== null ? (float) $this->price_per_unit : null,
             'created_at' => $this->created_at,
         ];
     }

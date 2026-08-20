@@ -21,7 +21,7 @@ class Sale extends Model
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',
         'coupon_id', 'invoice_number', 'public_token', 'status', 'payment_status', 'subtotal', 'discount_amount',
         'coupon_discount', 'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'change_amount',
-        'due_amount', 'note', 'sold_at',
+        'due_amount', 'note', 'sold_at', 'tender_currency', 'tender_amount', 'fx_rate',
     ];
 
     protected function casts(): array
@@ -38,6 +38,8 @@ class Sale extends Model
             'paid_amount' => 'decimal:2',
             'change_amount' => 'decimal:2',
             'due_amount' => 'decimal:2',
+            'tender_amount' => 'decimal:2',
+            'fx_rate' => 'decimal:6',
             'sold_at' => 'datetime',
         ];
     }

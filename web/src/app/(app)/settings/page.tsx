@@ -17,7 +17,7 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Building2, ChevronRight, Clock, Laptop, Mail, Percent, ShieldCheck, Smartphone, Webhook } from "lucide-react";
+import { BookOpen, Building2, ChevronRight, Clock, DollarSign, Laptop, Mail, Percent, ShieldCheck, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -58,6 +58,58 @@ function AutoBookkeepingCard({ autoPostJournals }: { autoPostJournals: boolean }
             />
           </div>
         </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+const CURRENCIES = [
+  { code: "USD", name: "US Dollar" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British Pound" },
+  { code: "BDT", name: "Bangladeshi Taka" },
+  { code: "JPY", name: "Japanese Yen" },
+  { code: "SAR", name: "Saudi Riyal" },
+  { code: "AED", name: "UAE Dirham" },
+];
+
+function CurrencySettingsCard() {
+  const t = useTranslation();
+  const qc = useQueryClient();
+  const { data } = useQuery<{ data: { currency?: string; tenant?: { base_currency?: string } } }>({
+    queryKey: ["business-settings"],
+    queryFn: () => api("/settings/business"),
+  });
+  const baseCurrency = data?.data?.tenant?.base_currency ?? data?.data?.currency ?? "USD";
+
+  const mutation = useMutation({
+    mutationFn: (base_currency: string) => api("/settings/business", { method: "PUT", body: { base_currency } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["business-settings"] }); toast(t("currency.saved")); },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]">
+          <DollarSign className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">{t("currency.title")}</p>
+            <p className="text-xs text-[var(--muted)]">{t("currency.baseHint")}</p>
+          </div>
+        </div>
+        <div className="px-5 pb-5">
+          <Label className="mb-1.5">{t("currency.base")}</Label>
+          <Select
+            value={baseCurrency}
+            onChange={(e) => mutation.mutate(e.target.value)}
+            disabled={mutation.isPending}
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+            ))}
+          </Select>
+        </div>
       </CardContent>
     </Card>
   );
@@ -373,6 +425,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
           <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
+          <CurrencySettingsCard />
 
           <Card>
             <CardContent className="p-0">

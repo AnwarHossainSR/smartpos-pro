@@ -8,6 +8,7 @@ use App\Http\Requests\Catalog\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Imports\ProductImport;
 use App\Models\Product;
+use App\Services\Barcode\WeightedBarcodeParser;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
 use App\Support\Query\AllowedFilter;
@@ -82,6 +83,19 @@ class ProductController extends Controller
     /** POS barcode-scanner lookup: resolves a single product by its exact barcode. */
     public function findByBarcode(string $barcode): ProductResource
     {
+        $parser = app(WeightedBarcodeParser::class);
+        $parsed = $parser->parse($barcode);
+
+        if ($parsed['product_id'] !== null) {
+            $product = Product::findOrFail($parsed['product_id']);
+            $product->loadSum('inventoryBalances as stock_quantity', 'quantity');
+
+            $resource = new ProductResource($product->load('category', 'brand', 'unit', 'taxGroup'));
+            $resource->additional['parsed_weight'] = $parsed['weight'];
+
+            return $resource;
+        }
+
         $product = Product::where('barcode', $barcode)->firstOrFail();
         $product->loadSum('inventoryBalances as stock_quantity', 'quantity');
 
