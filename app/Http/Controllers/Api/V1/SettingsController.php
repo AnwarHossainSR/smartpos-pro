@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateApprovalSettingsRequest;
 use App\Http\Resources\TaxProfileResource;
 use App\Models\Business;
+use App\Services\Media\MediaService;
+use App\Support\Media\BusinessMediaSlots;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -45,7 +47,6 @@ class SettingsController extends Controller
             'currency' => ['sometimes', 'string', 'size:3'],
             'base_currency' => ['sometimes', 'string', 'size:3'],
             'timezone' => ['sometimes', 'string', 'max:64'],
-            'logo_path' => ['nullable', 'string', 'max:2048'],
             'settings' => ['nullable', 'array'],
         ]);
 
@@ -122,6 +123,32 @@ class SettingsController extends Controller
         return response()->json(['data' => ['onboarding_state' => $state]]);
     }
 
+    /**
+     * Every branding slot, resolved to URLs.
+     *
+     * Driven off BusinessMediaSlots so the read side and the upload side cannot
+     * drift: adding a slot there adds it here.
+     *
+     * @return array<string, array{path: string|null, url: string|null, urls: array<string, string>|null}>
+     */
+    protected function media(Business $business): array
+    {
+        $media = app(MediaService::class);
+        $out = [];
+
+        foreach (BusinessMediaSlots::ALL as $slot => $config) {
+            $path = $business->{$config['column']};
+
+            $out[$slot] = [
+                'path' => $path,
+                'url' => $media->url($path),
+                'urls' => $media->urls($path, $config['collection']),
+            ];
+        }
+
+        return $out;
+    }
+
     protected function present(Business $business): array
     {
         return [
@@ -137,6 +164,8 @@ class SettingsController extends Controller
             'price_display' => $business->price_display,
             'currency' => $business->currency,
             'timezone' => $business->timezone,
+            'media' => $this->media($business),
+            // Kept alongside `media` for the clients that already read it.
             'logo_path' => $business->logo_path,
             'settings' => $business->settings ?? [],
             'onboarding_completed' => (bool) $business->onboarding_completed,

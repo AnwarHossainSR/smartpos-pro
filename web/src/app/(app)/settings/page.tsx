@@ -1,6 +1,7 @@
 "use client";
 
 import { ApprovalPinCard } from "@/components/approval-pin-card";
+import { BrandingCard } from "@/features/settings/branding-card";
 import { TwoFactorCard } from "@/components/two-factor-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -549,6 +550,12 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Sits outside the profile form on purpose: images upload on selection, so
+            there is nothing for the form's submit button to save. */}
+        <div className="xl:col-span-3 xl:order-last">
+          <BrandingCard />
+        </div>
 
         <div className="space-y-5">
           <Card>

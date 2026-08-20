@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SessionLink } from "@/components/landing/session-link";
+import { JsonLd } from "@/components/seo/json-ld";
+import { faqLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "SmartPOS Pro — Run the whole shop from one counter",
   description:
-    "Point of sale, live stock, purchasing, and double-entry books for independent retailers. One system, every branch.",
+    "Point of sale, live stock, purchasing, and double-entry books for independent retailers. One system, every branch — free to start.",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
 };
 
 /** The hero receipt. Each row prints in sequence, like paper leaving a printer. */
@@ -28,9 +32,46 @@ const modules = [
   { name: "Loyalty", detail: "Points, coupons, customer history, store credit", tag: "crm" },
 ];
 
+/**
+ * Rendered on the page *and* emitted as FAQPage structured data below.
+ *
+ * The two must stay in step: schema describing answers a visitor cannot see is
+ * cloaking, and gets the rich result revoked rather than granted. Driving both from
+ * this one array is what guarantees they cannot drift.
+ */
+const faqs = [
+  {
+    q: "Does SmartPOS Pro work with more than one shop or branch?",
+    a: "Yes. Stock, sales, and staff are tracked per branch, and transfers move stock between them. Every branch reports into one set of books, so you close the day once rather than per location.",
+  },
+  {
+    q: "What happens when the internet goes down mid-sale?",
+    a: "The till keeps selling. Sales are queued locally and sync automatically once the connection returns, so a dropped line never stops the queue at the counter.",
+  },
+  {
+    q: "Do I need separate accounting software?",
+    a: "No. Sales, purchases, and expenses post double-entry journals as they happen, and the ledgers, trial balance, profit and loss, and balance sheet are built in.",
+  },
+  {
+    q: "Can it handle my country's tax rules?",
+    a: "Tax is configured per market as profiles, rates, groups, and zones, including multi-component taxes such as CGST and SGST split, and prices can display inclusive or exclusive of tax.",
+  },
+  {
+    q: "What hardware do I need?",
+    a: "Any browser on a laptop, tablet, or till. Barcode scanners work as keyboard input, and receipts print to standard 80mm thermal printers.",
+  },
+  {
+    q: "What does it cost?",
+    a: "There is a free plan with unlimited products and no card required. Paid plans add branches, users, and higher limits.",
+  },
+] as const;
+
 export default function Home() {
   return (
     <div className="min-h-screen">
+      {/* Mirrors the FAQ rendered further down — same array, so the two cannot diverge. */}
+      <JsonLd data={faqLd(faqs)} />
+
       {/* ---- Nav ---- */}
       <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
@@ -160,6 +201,30 @@ export default function Home() {
               ))}
             </ul>
           </div>
+        </section>
+
+        {/* ---- Questions people actually ask before signing up ---- */}
+        <section aria-labelledby="faq-heading" className="mx-auto max-w-6xl px-6 py-20">
+          <h2
+            id="faq-heading"
+            className="max-w-lg text-2xl font-semibold tracking-[-0.02em] text-balance sm:text-3xl"
+          >
+            Questions worth answering before you switch.
+          </h2>
+
+          <dl className="mt-12 border-t border-[var(--border)]">
+            {faqs.map((item) => (
+              <div
+                key={item.q}
+                className="grid gap-2 border-b border-[var(--border)] py-6 sm:grid-cols-[22rem_1fr] sm:gap-10"
+              >
+                <dt className="font-medium tracking-tight text-pretty">{item.q}</dt>
+                <dd className="text-sm leading-relaxed text-[var(--muted)] text-pretty">
+                  {item.a}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* ---- Close ---- */}

@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Media\MediaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
@@ -19,7 +19,10 @@ class ProductResource extends JsonResource
             'type' => $this->type,
             'description' => $this->description,
             'image_path' => $this->image_path,
-            'image_url' => $this->image_path ? Storage::disk('public')->url($this->image_path) : null,
+            'image_url' => app(MediaService::class)->url($this->image_path),
+            // Named sizes rather than one URL so the POS grid can pull the 160px
+            // thumbnail instead of a 1600px original for every tile.
+            'image_urls' => app(MediaService::class)->urls($this->image_path, 'product.image'),
             'category' => new CategoryResource($this->whenLoaded('category')),
             'brand' => $this->whenLoaded('brand', fn () => ['id' => $this->brand?->id, 'name' => $this->brand?->name]),
             'purchase_price' => (float) $this->purchase_price,

@@ -60,6 +60,31 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Cloudflare R2. S3-compatible, so it rides the same driver — the only
+         * differences that matter are that the region is always "auto" and the
+         * bucket is addressed through the account endpoint rather than a
+         * bucket-flavoured hostname.
+         *
+         * `url` must be the *public* bucket URL (an r2.dev subdomain, or better, a
+         * custom domain bound to the bucket). It is deliberately separate from the
+         * API endpoint: the endpoint is credentialed and private, the URL is what
+         * ends up in an <img src>. Leave it null and the media layer will hand out
+         * temporary signed URLs instead.
+         */
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', true),
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*
