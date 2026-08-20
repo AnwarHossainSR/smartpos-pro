@@ -46,15 +46,16 @@ class ExportTest extends TestCase
             'is_active' => true,
         ]);
 
+        dump(['svc' => app(\App\Services\Export\ExportService::class)->exportCsv('products', []), 'q' => \App\Models\Product::query()->get()->count()]);
         $response = $this->getJson('/api/v1/products/export?format=csv&is_active=true');
         $response->assertStatus(200);
-        $data = $response->getContent();
+        $data = $response->streamedContent();
         $this->assertStringContainsString('TEST001', $data);
         $this->assertStringContainsString('Test Product', $data);
 
         $response2 = $this->getJson('/api/v1/products/export?format=csv&is_active=false');
         $response2->assertStatus(200);
-        $data2 = $response2->getContent();
+        $data2 = $response2->streamedContent();
         $this->assertStringNotContainsString('TEST001', $data2);
     }
 

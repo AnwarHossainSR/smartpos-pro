@@ -36,7 +36,7 @@ const TAB_LABELS: Record<Tab, string> = {
   units: "Units",
 };
 
-const PERMISSIONS = { create: "products.create", update: "products.update", delete: "products.delete" };
+const PERMISSIONS = { create: "products.create", update: "products.update", delete: "products.delete" } as const;
 
 export default function CatalogSetupPage() {
   const { can } = useAuth();

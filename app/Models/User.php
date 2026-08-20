@@ -46,6 +46,13 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'approval_pin'];
 
     /**
+     * The guard roles and permissions are keyed by. Pinned rather than derived from
+     * `auth.defaults.guard`, which `auth:sanctum` rewrites per request — see
+     * {@see \App\Models\Role::$guard_name}.
+     */
+    protected $guard_name = 'web';
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

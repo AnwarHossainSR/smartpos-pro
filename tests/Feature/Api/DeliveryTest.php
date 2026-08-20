@@ -7,6 +7,7 @@ use App\Models\DeliveryZone;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\Inventory\StockLedgerService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -39,13 +40,17 @@ class DeliveryTest extends TestCase
             'purchase_price' => 40, 'selling_price' => 100, 'min_stock_level' => 0,
         ]);
 
+        // Stock through the ledger, same as the rest of the suite — a sale of an
+        // unstocked product is rejected with 422 before it ever reaches delivery.
+        app(StockLedgerService::class)->addOpeningStock($product->id, $warehouse->id, 100, 40);
+
         $id = $this->postJson('/api/v1/sales', [
             'branch_id' => $this->owner->branch_id,
             'warehouse_id' => $warehouse->id,
             'customer_id' => null,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
             'payments' => [['method' => 'cash', 'amount' => 100]],
-        ])->dump()->assertCreated()->json('data.id');
+        ])->assertCreated()->json('data.id');
 
         return Sale::findOrFail($id);
     }

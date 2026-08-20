@@ -21,6 +21,9 @@ class Permission extends SpatiePermission
 {
     use HasUuids;
 
+    /** Pinned for the same reason as {@see Role::$guard_name}. */
+    protected $guard_name = 'web';
+
     /**
      * Alias so older call sites (and API resources) can keep reading `->slug`.
      * Note this is an accessor, not a column: query builders must use `name`.

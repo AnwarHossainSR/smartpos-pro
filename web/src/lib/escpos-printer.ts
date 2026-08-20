@@ -1,4 +1,4 @@
-import { formatReceipt, type EscPos } from "./escpos";
+import { EscPos, formatReceipt } from "./escpos";
 
 interface UsbPrinter {
   device: USBDevice;

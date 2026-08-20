@@ -34,10 +34,11 @@ interface InvoiceDetail {
   items: InvoiceItem[];
 }
 
-function portalFetch<T>(path: string): Promise<T> {
+function portalFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = typeof window !== "undefined" ? localStorage.getItem("portal_token") : null;
   return fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}${path}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    ...init,
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}`, ...init.headers },
   }).then(async (res) => {
     if (res.status === 401) {
       window.location.href = "/portal";

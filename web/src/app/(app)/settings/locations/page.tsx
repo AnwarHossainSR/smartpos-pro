@@ -91,7 +91,7 @@ export default function LocationsPage() {
           queryKey="branches"
           singular="Branch"
           columns={branchColumns}
-          permissions={{ create: "branches.create", update: "branches.update", delete: "branches.delete" }}
+          permissions={{ create: "branches.create", update: "branches.update", delete: "branches.delete" } as const}
           fields={[
             { name: "name", label: "Name", type: "text", required: true },
             { name: "code", label: "Code", type: "text", placeholder: "BR-01" },
@@ -109,7 +109,7 @@ export default function LocationsPage() {
           queryKey="warehouses"
           singular="Warehouse"
           columns={warehouseColumns}
-          permissions={{ create: "warehouses.create", update: "warehouses.update", delete: "warehouses.delete" }}
+          permissions={{ create: "warehouses.create", update: "warehouses.update", delete: "warehouses.delete" } as const}
           fields={[
             { name: "name", label: "Name", type: "text", required: true },
             { name: "code", label: "Code", type: "text", placeholder: "WH-01" },

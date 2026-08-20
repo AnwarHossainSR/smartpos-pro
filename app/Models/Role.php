@@ -22,6 +22,15 @@ class Role extends SpatieRole
 {
     use Auditable, BelongsToTenant, HasUuids;
 
+    /**
+     * Pinned rather than derived. `auth:sanctum` calls `Auth::shouldUse('sanctum')`,
+     * which rewrites `auth.defaults.guard` for the rest of the request — and spatie
+     * falls back to that default for models no auth provider points at, so new roles
+     * would silently be stamped `sanctum` (a guard with no provider) mid-request.
+     * Everything here authenticates through the `web` provider; say so once.
+     */
+    protected $guard_name = 'web';
+
     protected function casts(): array
     {
         return ['is_system' => 'boolean'];
