@@ -100,9 +100,9 @@ class ExportService
             'accounting' => Account::query(),
         ];
 
-        $query = $models[$module] ?? JournalEntry::query();
-
-        return $query->withoutGlobalScopes()->withTenant(false);
+        // Do NOT strip global scopes here: TenantScope is the only thing keeping one
+        // business's products/sales/customers out of another's export file.
+        return $models[$module] ?? JournalEntry::query();
     }
 
     protected function mapRow(string $module, array $row): array

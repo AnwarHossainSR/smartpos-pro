@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Clock, KeyRound } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Clock, KeyRound, Shield } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { useTranslation } from "@/i18n/provider";
 import { queryKeys } from "@/lib/query-keys";
+import { RolesTab } from "@/features/roles/roles-tab";
 
 interface Role { id: string; slug: string; name: string; }
 interface TeamUser {
@@ -212,11 +213,22 @@ function ShiftsTab() {
   );
 }
 
+type TeamTab = "members" | "roles" | "shifts";
+
 export default function TeamPage() {
   const { can } = useAuth();
   const t = useTranslation();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"members" | "shifts">("members");
+
+  const canViewMembers = can("users.view");
+  const canViewRoles = can("roles.view");
+  const canViewShifts = can("shifts.view");
+
+  // The route guard lets anyone through who holds *any* of the three grants, so the landing
+  // tab has to be the first one this particular user can actually see.
+  const [tab, setTab] = useState<TeamTab>(() =>
+    canViewMembers ? "members" : canViewRoles ? "roles" : "shifts",
+  );
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
@@ -226,11 +238,15 @@ export default function TeamPage() {
   const { data, isLoading } = useQuery<Paginated<TeamUser>>({
     queryKey: ["team", debouncedSearch, page],
     queryFn: () => api<Paginated<TeamUser>>(`/users?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+    enabled: canViewMembers,
   });
 
+  // `/roles` is guarded by `roles.view` — fetching it unconditionally 403s for anyone who can
+  // manage members but not roles, which is exactly the branch-manager case.
   const { data: rolesData } = useQuery<{ data: Role[] }>({
     queryKey: ["roles-list"],
     queryFn: () => api<{ data: Role[] }>("/roles?per_page=50"),
+    enabled: canViewRoles,
   });
 
   const deleteMutation = useMutation({
@@ -255,12 +271,15 @@ export default function TeamPage() {
         {can("users.create") && tab === "members" && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />{t("team.inviteUser")}</Button>}
       </div>
 
-      <div className="flex gap-2 border-b border-[var(--border)] pb-2">
-        <Button size="sm" variant={tab === "members" ? "primary" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>
-        {can("shifts.view") && <Button size="sm" variant={tab === "shifts" ? "primary" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
+      <div role="tablist" aria-label={t("team.title")} className="flex gap-2 border-b border-[var(--border)] pb-2">
+        {canViewMembers && <Button role="tab" aria-selected={tab === "members"} size="sm" variant={tab === "members" ? "primary" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>}
+        {canViewRoles && <Button role="tab" aria-selected={tab === "roles"} size="sm" variant={tab === "roles" ? "primary" : "ghost"} onClick={() => setTab("roles")}><Shield className="h-3.5 w-3.5" /> {t("team.rolesTab")}</Button>}
+        {canViewShifts && <Button role="tab" aria-selected={tab === "shifts"} size="sm" variant={tab === "shifts" ? "primary" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
       </div>
 
-      {tab === "members" ? (
+      {tab === "roles" ? (
+        <RolesTab />
+      ) : tab === "members" ? (
         <>
           <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder={t("team.searchPlaceholder")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
           <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
