@@ -28,23 +28,8 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Product variants (combination of attribute values)
-        // This migration should not recreate the table if it already exists (earlier migration creates it).
-        if (! Schema::hasTable('product_variants')) {
-            Schema::create('product_variants', function (Blueprint $table) {
-                $table->uuid('id')->primary();
-                $table->unique('id');
-                $table->foreignUuid('product_id')->constrained('products')->cascadeOnDelete();
-                $table->string('sku')->nullable();
-                $table->string('barcode')->nullable();
-                $table->decimal('purchase_price', 12, 4)->nullable();
-                $table->decimal('selling_price', 12, 4)->nullable();
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
-            });
-        }
-
         // Which attribute values make up each variant
+        // (`product_variants` itself is created by its own earlier migration.)
         Schema::create('product_variant_attributes', function (Blueprint $table) {
             $table->foreignUuid('variant_id')->constrained('product_variants')->cascadeOnDelete();
             $table->foreignUuid('attribute_value_id')->constrained('product_attribute_values')->cascadeOnDelete();
@@ -93,7 +78,6 @@ return new class extends Migration
         Schema::dropIfExists('stock_serials');
         Schema::dropIfExists('stock_batches');
         Schema::dropIfExists('product_variant_attributes');
-        Schema::dropIfExists('product_variants');
         Schema::dropIfExists('product_attribute_values');
         Schema::dropIfExists('product_attributes');
     }

@@ -22,7 +22,7 @@ class UpdateUserRequest extends FormRequest
             'status' => ['sometimes', 'in:active,invited,suspended'],
             'branch_id' => ['nullable', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
             'roles' => ['sometimes', 'array'],
-            'roles.*' => [Rule::exists('roles', 'slug')->where('tenant_id', $tenantId)],
+            'roles.*' => [Rule::exists('roles', 'name')->where('tenant_id', $tenantId)],
         ];
     }
 }

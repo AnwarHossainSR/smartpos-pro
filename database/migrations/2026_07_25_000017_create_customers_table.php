@@ -17,6 +17,12 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('customer_group')->nullable();
             $table->string('tax_number')->nullable();
+            $table->boolean('tax_exempt')->default(false);
+            $table->string('tax_exemption_reference')->nullable();
+            // Structured address parts, matched against tax_zones under destination sourcing.
+            $table->string('country_code', 2)->nullable();
+            $table->string('state')->nullable();
+            $table->string('postcode')->nullable();
             $table->text('billing_address')->nullable();
             $table->text('shipping_address')->nullable();
             $table->decimal('credit_limit', 14, 2)->default(0);
@@ -25,6 +31,9 @@ return new class extends Migration
             $table->integer('loyalty_points')->default(0);
             $table->date('birthday')->nullable();
             $table->boolean('is_active')->default(true);
+            // Short-lived bearer token for the passwordless customer portal.
+            $table->string('portal_token')->nullable()->unique();
+            $table->timestamp('portal_token_expires_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

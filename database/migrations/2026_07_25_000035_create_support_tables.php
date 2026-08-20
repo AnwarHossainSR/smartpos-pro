@@ -17,11 +17,16 @@ return new class extends Migration
             $table->string('key');
             $table->string('method');
             $table->string('path');
+            // Hash of the request body, so a replayed key carrying different input
+            // can be rejected rather than silently served the first response.
+            $table->string('payload_hash')->nullable();
             $table->integer('response_status')->nullable();
             $table->json('response_body')->nullable();
             $table->timestamps();
 
-            $table->unique(['tenant_id', 'key']);
+            // A key is only unique for the endpoint it was issued against: the same
+            // client-generated key may legitimately be replayed at a different route.
+            $table->unique(['tenant_id', 'key', 'method', 'path'], 'idempotency_keys_scoped_unique');
         });
 
         Schema::create('audit_logs', function (Blueprint $table) {

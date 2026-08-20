@@ -13,6 +13,9 @@ return new class extends Migration
             $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('parent_id')->nullable()->constrained('categories')->nullOnDelete();
+            // Products fall back to their category's tax group, so a shop can set
+            // "food is zero-rated" once rather than on every product in it.
+            $table->foreignUuid('tax_group_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('slug');
             $table->string('description')->nullable();

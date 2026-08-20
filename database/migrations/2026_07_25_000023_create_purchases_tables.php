@@ -28,6 +28,9 @@ return new class extends Migration
             $table->decimal('due_amount', 14, 2)->default(0);
             $table->string('note')->nullable();
             $table->timestamp('purchased_at')->nullable();
+            // Draft -> ordered -> approved -> received workflow stamps.
+            $table->timestamp('approved_at')->nullable();
+            $table->timestamp('received_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -43,6 +46,9 @@ return new class extends Migration
             $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('quantity', 16, 4);
+            // What was actually accepted at goods-in, which can be short of what was
+            // ordered. Null until the receipt is recorded.
+            $table->decimal('accepted_qty', 16, 4)->nullable();
             $table->decimal('unit_cost', 14, 4);
             $table->decimal('discount_amount', 14, 2)->default(0);
             $table->decimal('tax_amount', 14, 2)->default(0);

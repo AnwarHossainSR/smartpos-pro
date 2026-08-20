@@ -7,17 +7,19 @@ use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
-use App\Support\Concerns\HasRoles;
+use App\Support\Rbac\PermissionCatalog;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -56,6 +58,67 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'approval_pin_set_at' => 'datetime',
             'theme' => 'array',
         ];
+    }
+
+    /**
+     * spatie's `roles` relation, plus the `branch_id` pivot column this app carries on
+     * `model_has_roles` — a role grant may be pinned to one branch rather than the
+     * whole tenant (see UserController::guardBranchScope).
+     */
+    public function roles(): BelongsToMany
+    {
+        return parent::roles()->withPivot('branch_id');
+    }
+
+    /**
+     * Does this user hold `<module>.<action>`?
+     *
+     * Thin, forgiving wrapper over spatie's permission check, kept because it is the
+     * vocabulary the whole app speaks (`CheckPermission` middleware, `ApprovalService`,
+     * policies). Two short circuits survive from the hand-rolled implementation:
+     * platform super admins bypass everything, and a business owner implicitly holds
+     * every permission inside their own tenant.
+     *
+     * Unlike `hasPermissionTo()` this never throws for an unknown slug — callers such
+     * as the middleware treat the answer as a plain boolean, and a typo in a route
+     * guard must fail closed (403), not 500.
+     */
+    public function hasPermission(string $slug): bool
+    {
+        if ($this->is_super_admin ?? false) {
+            return true;
+        }
+
+        if ($this->hasRole('owner')) {
+            return true;
+        }
+
+        return $this->checkPermissionTo($slug);
+    }
+
+    /**
+     * Every permission slug this user holds — the `permissions[]` array the frontend
+     * builds its `can()` checks from, and the ability list minted onto API tokens.
+     *
+     * Super admins and owners hold everything implicitly (`hasPermission()` above), so
+     * they get the whole catalogue rather than whatever happens to be in their pivot
+     * rows; anything less would have the UI hide features the API would in fact allow.
+     *
+     * @return string[]
+     */
+    public function permissionSlugs(): array
+    {
+        if (($this->is_super_admin ?? false) || $this->hasRole('owner')) {
+            return array_column(PermissionCatalog::all(), 'slug');
+        }
+
+        $this->loadMissing('permissions', 'roles.permissions');
+
+        return $this->getAllPermissions()
+            ->pluck('name')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function hasEnabledTwoFactor(): bool

@@ -10,8 +10,6 @@ use Illuminate\Validation\ValidationException;
 
 class ExportController extends Controller
 {
-    protected $exportService;
-
     public function __construct(protected ExportService $exportService) {}
 
     public function index(string $module, Request $request): Response

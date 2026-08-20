@@ -6,13 +6,11 @@ use App\Domain\Enums\UserStatus;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Business;
-use App\Models\Permission;
-use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Support\Accounting\ChartOfAccounts;
-use App\Support\Rbac\PermissionCatalog;
+use App\Support\Rbac\RbacProvisioner;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -107,35 +105,7 @@ class TenantProvisioner
     /** Ensure the global permission rows exist, then create this tenant's roles. */
     public function provisionRoles(Tenant $tenant): void
     {
-        foreach (PermissionCatalog::all() as $permission) {
-            Permission::firstOrCreate(['slug' => $permission['slug']], $permission);
-        }
-
-        $allPermissionIds = Permission::pluck('id')->all();
-
-        $owner = Role::create([
-            'tenant_id' => $tenant->id,
-            'name' => 'Owner',
-            'slug' => 'owner',
-            'description' => 'Full access to everything within the business.',
-            'is_system' => true,
-        ]);
-        $owner->permissions()->sync($allPermissionIds);
-
-        foreach (PermissionCatalog::defaultRoles() as $slug => $definition) {
-            $role = Role::create([
-                'tenant_id' => $tenant->id,
-                'name' => $definition['name'],
-                'slug' => $slug,
-                'is_system' => true,
-            ]);
-
-            $permissionIds = $definition['permissions'] === '*'
-                ? $allPermissionIds
-                : Permission::whereIn('slug', $definition['permissions'])->pluck('id')->all();
-
-            $role->permissions()->sync($permissionIds);
-        }
+        app(RbacProvisioner::class)->provisionDefaultRoles($tenant->id);
     }
 
     protected function uniqueSlug(string $name): string

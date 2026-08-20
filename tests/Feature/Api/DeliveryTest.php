@@ -6,6 +6,7 @@ use App\Models\Delivery;
 use App\Models\DeliveryZone;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
@@ -15,19 +16,29 @@ class DeliveryTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
 
+    protected User $owner;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // One tenant per test. createTenant() defaults to owner@example.test, so calling
+        // it more than once in a test hits the users.email unique index.
+        $this->owner = $this->createTenant();
+        Sanctum::actingAs($this->owner);
+    }
+
     private function completedSale(): Sale
     {
-        $owner = $this->createTenant();
-        Sanctum::actingAs($owner);
-        $warehouse = $this->warehouseFor($owner);
+        $warehouse = $this->warehouseFor($this->owner);
 
         $product = Product::create([
             'name' => 'Widget', 'slug' => 'widget-'.uniqid(), 'sku' => 'SKU-'.uniqid(),
             'purchase_price' => 40, 'selling_price' => 100, 'min_stock_level' => 0,
         ]);
 
-        $id = $this->postJson("/api/v1/sales", [
-            'branch_id' => $owner->branch_id,
+        $id = $this->postJson('/api/v1/sales', [
+            'branch_id' => $this->owner->branch_id,
             'warehouse_id' => $warehouse->id,
             'customer_id' => null,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
@@ -39,47 +50,26 @@ class DeliveryTest extends TestCase
 
     private function createZone(): DeliveryZone
     {
-        $owner = $this->createTenant()->fresh();
         return DeliveryZone::create([
-            'tenant_id' => $owner->id,
             'name' => 'Zone A',
             'delivery_fee' => 5.99,
         ]);
     }
 
-public function test_can_create_delivery_for_sale(): void
+    public function test_can_create_delivery_for_sale(): void
     {
-        $owner = $this->createTenant();
-        Sanctum::actingAs($owner);
-
         $sale = $this->completedSale();
-
         $zone = $this->createZone();
 
-        $response = $this->postJson("/api/v1/sales/{$sale->id}/deliveries", [
-            'zone_id' => $zone->id,
-        ]);
-
-        // Debug: capture 422 details
-        if ($response->status() === 422) {
-            $json = $response->json();
-            file_put_contents('/tmp/delivery_422.json', json_encode($json, JSON_PRETTY_PRINT));
-            // Also dump the sale creation response
-            file_put_contents('/tmp/sale_creation.json', json_encode($sale->toArray(), JSON_PRETTY_PRINT));
-        }
-
-        $response->assertCreated()
+        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", ['zone_id' => $zone->id])
+            ->assertCreated()
             ->assertJsonPath('data.status', 'dispatched')
-            ->assertJsonContains(['data.zone_name' => 'Zone A']);
+            ->assertJsonPath('data.zone_name', 'Zone A');
     }
 
     public function test_driver_view_shows_correct_details(): void
     {
-        $owner = $this->createTenant('test@test.test');
-        Sanctum::actingAs($owner);
-
         $sale = $this->completedSale();
-
         $zone = $this->createZone();
 
         $delivery = Delivery::create([
@@ -89,9 +79,8 @@ public function test_can_create_delivery_for_sale(): void
             'tracking_token' => $sale->public_token,
         ]);
 
-        $response = $this->getJson("/api/v1/deliveries/{$delivery->id}");
-
-        $response->assertOk()
+        $this->getJson("/api/v1/deliveries/{$delivery->id}")
+            ->assertOk()
             ->assertJsonPath('data.status', 'dispatched')
             ->assertJsonPath('data.zone_name', 'Zone A')
             ->assertJsonPath('data.delivery_fee', 5.99);
@@ -99,11 +88,7 @@ public function test_can_create_delivery_for_sale(): void
 
     public function test_status_update_works(): void
     {
-        $owner = $this->createTenant('test@test.test');
-        Sanctum::actingAs($owner);
-
         $sale = $this->completedSale();
-
         $zone = $this->createZone();
 
         $delivery = Delivery::create([
@@ -113,11 +98,8 @@ public function test_can_create_delivery_for_sale(): void
             'tracking_token' => $sale->public_token,
         ]);
 
-        $response = $this->putJson("/api/v1/deliveries/{$delivery->id}/status", [
-            'status' => 'in-transit',
-        ]);
-
-        $response->assertOk()
+        $this->putJson("/api/v1/deliveries/{$delivery->id}/status", ['status' => 'in-transit'])
+            ->assertOk()
             ->assertJsonPath('data.status', 'in-transit');
 
         $this->assertDatabaseHas('deliveries', [
@@ -126,29 +108,36 @@ public function test_can_create_delivery_for_sale(): void
         ]);
     }
 
-    public function test_cannot_assign_delivery_to_unknown_zone(): void
+    public function test_delivery_is_scoped_to_its_tenant(): void
     {
-        $owner = $this->createTenant('test@test.test');
-        Sanctum::actingAs($owner);
-
         $sale = $this->completedSale();
+        $zone = $this->createZone();
 
-        $response = $this->postJson("/api/v1/sales/{$sale->id}/deliveries", [
-            'zone_id' => 9999,
+        $delivery = Delivery::create([
+            'sale_id' => $sale->id,
+            'zone_id' => $zone->id,
+            'status' => 'dispatched',
+            'tracking_token' => $sale->public_token,
         ]);
 
-        $response->assertNotFound();
+        Sanctum::actingAs($this->createTenant('other-owner@example.test'));
+
+        $this->getJson("/api/v1/deliveries/{$delivery->id}")->assertNotFound();
+    }
+
+    public function test_cannot_assign_delivery_to_unknown_zone(): void
+    {
+        $sale = $this->completedSale();
+
+        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", ['zone_id' => 9999])
+            ->assertNotFound();
     }
 
     public function test_cannot_create_delivery_without_zone(): void
     {
-        $owner = $this->createTenant('test@test.test');
-        Sanctum::actingAs($owner);
-
         $sale = $this->completedSale();
 
-        $response = $this->postJson("/api/v1/sales/{$sale->id}/deliveries", []);
-
-        $response->assertUnprocessable();
+        $this->postJson("/api/v1/sales/{$sale->id}/deliveries", [])
+            ->assertUnprocessable();
     }
 }

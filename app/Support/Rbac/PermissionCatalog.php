@@ -39,7 +39,12 @@ class PermissionCatalog
     ];
 
     /**
-     * @return array<int, array{slug:string, name:string, module:string, action:string}>
+     * The flattened catalogue. `slug` is the machine key stored in `permissions.name`
+     * (spatie keys everything off `name`); `title` is the human label stored in
+     * `permissions.title`. `name` is kept as an alias of `title` so the shape stays
+     * backwards compatible for older callers.
+     *
+     * @return array<int, array{slug:string, title:string, name:string, module:string, action:string}>
      */
     public static function all(): array
     {
@@ -47,9 +52,12 @@ class PermissionCatalog
 
         foreach (self::MATRIX as $module => $actions) {
             foreach ($actions as $action) {
+                $title = ucfirst(str_replace('_', ' ', $action)).' '.ucfirst(str_replace('-', ' ', $module));
+
                 $permissions[] = [
                     'slug' => "{$module}.{$action}",
-                    'name' => ucfirst($action).' '.ucfirst($module),
+                    'title' => $title,
+                    'name' => $title,
                     'module' => $module,
                     'action' => $action,
                 ];

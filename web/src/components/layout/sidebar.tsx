@@ -2,14 +2,37 @@
 
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/provider";
-import { NAV_GROUPS } from "@/lib/nav";
+import { NAV_GROUPS, type NavGroup } from "@/lib/nav";
+import { permissionsForPathname } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/stores/auth";
+import { hasPermission, useAuth } from "@/stores/auth";
 import { useSidebarStore } from "@/stores/sidebar";
 import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
+/**
+ * The nav mirrors the route guard: an entry is shown only when its destination would let the
+ * user in, using the same `ROUTE_PERMISSIONS` table `AppShell` guards with — so a link can
+ * never lead to an access-denied panel. Groups whose every child is hidden drop out entirely
+ * rather than leaving a header with nothing under it.
+ */
+function useVisibleNavGroups(): NavGroup[] {
+  const user = useAuth((s) => s.user);
+
+  return useMemo(
+    () =>
+      NAV_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          const required = permissionsForPathname(item.href);
+          return required.length === 0 || required.some((slug) => hasPermission(user, slug));
+        }),
+      })).filter((group) => group.items.length > 0),
+    [user],
+  );
+}
 
 interface SidebarProps {
   open?: boolean;
@@ -24,7 +47,7 @@ function SidebarGroup({
   collapsed,
   onClose,
 }: {
-  group: (typeof NAV_GROUPS)[number];
+  group: NavGroup;
   pathname: string;
   collapsed: boolean;
   onClose?: () => void;
@@ -128,6 +151,8 @@ function SidebarGroup({
   return (
     <div className="space-y-0.5">
       <button
+        type="button"
+        aria-expanded={isExpanded}
         onClick={() => setExpandedGroup(groupKey)}
         className={cn(
           "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors",
@@ -215,16 +240,17 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
   const expandedGroup = useSidebarStore((s) => s.expandedGroup);
   const setExpandedGroup = useSidebarStore((s) => s.setExpandedGroup);
   const user = useAuth((s) => s.user);
+  const groups = useVisibleNavGroups();
 
   const collapseLabel = t(collapsed ? "sidebar.expand" : "sidebar.collapse");
 
   useEffect(() => {
     if (collapsed || expandedGroup) return;
-    const activeGroup = NAV_GROUPS.find((g) =>
+    const activeGroup = groups.find((g) =>
       g.items.some((item) => pathname === item.href || pathname.startsWith(item.href + "/")),
     );
-    setExpandedGroup(activeGroup?.key ?? NAV_GROUPS[0]?.key ?? null);
-  }, [collapsed, expandedGroup, pathname, setExpandedGroup]);
+    setExpandedGroup(activeGroup?.key ?? groups[0]?.key ?? null);
+  }, [collapsed, expandedGroup, groups, pathname, setExpandedGroup]);
 
   return (
     <div className="flex h-full flex-col text-[var(--sidebar-fg)]">
@@ -264,8 +290,8 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
       </div>
       <div className="mx-4 border-b border-white/10" />
 
-      <nav className="scrollbar-on-hover flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
-        {NAV_GROUPS.map((group) => (
+      <nav aria-label={t("nav.primary")} className="scrollbar-on-hover flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+        {groups.map((group) => (
           <SidebarGroup
             key={group.key}
             group={group}

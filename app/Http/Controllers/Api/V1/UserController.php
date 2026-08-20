@@ -25,7 +25,9 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = QueryPipeline::for(User::query()->with('roles'), $request)
+        // `permissions` + `roles.permissions` are what UserResource derives `can_approve`
+        // and the `permissions[]` payload from; without them that is an N+1 per row.
+        $users = QueryPipeline::for(User::query()->with(['permissions', 'roles.permissions']), $request)
             ->search(['name', 'email'])
             ->allow(
                 AllowedFilter::exact('branch_id'),
@@ -136,6 +138,8 @@ class UserController extends Controller
             return;
         }
 
+        // `model_has_roles` carries a nullable `branch_id`: null means the grant is
+        // tenant-wide, a value pins it to one branch.
         $roles = $actor->roles()->get();
         $isTenantWide = $roles->isEmpty() || $roles->contains(fn (Role $role) => $role->pivot->branch_id === null);
 
@@ -150,13 +154,20 @@ class UserController extends Controller
         }
     }
 
-    /** @param  string[]  $roleSlugs */
+    /**
+     * Role slugs live in `roles.name`. Going through spatie's `syncRoles()` rather than
+     * a raw pivot sync is what stamps the tenant (team) id onto `model_has_roles` and
+     * invalidates the permission cache.
+     *
+     * @param  string[]  $roleSlugs
+     */
     protected function syncRoles(User $user, array $roleSlugs, ?User $actor = null): void
     {
-        $before = $user->roles()->pluck('slug')->sort()->values()->all();
-        $roleIds = Role::whereIn('slug', $roleSlugs)->pluck('id');
-        $user->roles()->sync($roleIds);
-        $after = Role::whereIn('id', $roleIds)->pluck('slug')->sort()->values()->all();
+        $before = $user->roles()->pluck('name')->sort()->values()->all();
+
+        $user->syncRoles($roleSlugs);
+
+        $after = Role::query()->whereIn('name', $roleSlugs)->pluck('name')->sort()->values()->all();
 
         if ($before !== $after) {
             $this->audit->log('user.roles_changed', $user, ['roles' => $before], ['roles' => $after], $actor);

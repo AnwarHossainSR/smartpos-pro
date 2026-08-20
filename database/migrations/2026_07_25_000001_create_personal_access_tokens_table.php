@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();
+            // Where the token was minted from — surfaced in the active-sessions list.
+            $table->string('ip_address')->nullable();
             $table->timestamp('last_used_at')->nullable();
             $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();

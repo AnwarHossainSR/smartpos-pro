@@ -4,7 +4,6 @@ namespace Tests\Feature\Api;
 
 use App\Domain\Pos\ApprovalPolicy;
 use App\Models\AuditLog;
-use App\Models\Permission;
 use App\Models\PosApproval;
 use App\Models\Product;
 use App\Models\Sale;
@@ -58,9 +57,7 @@ class ManagerApprovalPinTest extends TestCase
     private function cashier(User $owner, string $email = 'cashier@example.test'): User
     {
         $cashier = $this->member($owner, 'cashier', $email);
-        $cashier->roles->first()->permissions()->syncWithoutDetaching(
-            Permission::whereIn('slug', ['pos.discount', 'pos.price_override'])->pluck('id'),
-        );
+        $cashier->roles->first()->givePermissionTo(['pos.discount', 'pos.price_override']);
 
         return $cashier->fresh(['roles.permissions', 'business']);
     }
@@ -316,9 +313,7 @@ class ManagerApprovalPinTest extends TestCase
         ]);
         $product = $this->seedProduct($this->warehouseFor($owner)->id);
         $cashier = $this->cashier($owner);
-        $cashier->roles->first()->permissions()->syncWithoutDetaching(
-            Permission::where('slug', 'sales.delete')->pluck('id'),
-        );
+        $cashier->roles->first()->givePermissionTo('sales.delete');
         $cashier = $cashier->fresh(['roles.permissions', 'business']);
         $this->managerWithPin($owner, '4821');
 

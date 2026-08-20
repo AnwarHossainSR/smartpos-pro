@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -95,5 +96,10 @@ class Sale extends Model
     public function table(): BelongsTo
     {
         return $this->belongsTo(Table::class, 'table_id');
+    }
+
+    public function delivery(): HasOne
+    {
+        return $this->hasOne(Delivery::class);
     }
 }

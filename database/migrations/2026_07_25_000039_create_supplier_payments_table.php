@@ -9,16 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('supplier_payments', function (Blueprint $table) {
-            $table->uuid('id');
-            $table->foreignId('tenant_id')->index();
-            $table->foreignId('supplier_id')->index();
-            $table->decimal('amount', 10, 2);
+            $table->uuid('id')->primary();
+            $table->unique('id');
+            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('supplier_id')->constrained()->cascadeOnDelete();
+            $table->decimal('amount', 14, 2);
             $table->enum('method', ['cash', 'card', 'mobile_banking', 'bank', 'wallet', 'due']);
-            $table->string('reference')->nullable()->default(null);
+            $table->string('reference')->nullable();
             $table->date('paid_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
 
+            $table->index(['tenant_id']);
             $table->index(['supplier_id', 'paid_at']);
         });
     }

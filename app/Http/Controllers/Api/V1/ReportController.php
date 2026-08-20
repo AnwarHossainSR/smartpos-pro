@@ -10,12 +10,10 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Supplier;
 use App\Services\Accounting\FinancialStatementService;
-use App\Services\Reporting\ZReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Read-only reporting endpoints. Every query is tenant-scoped by the global
@@ -245,45 +243,6 @@ class ReportController extends Controller
     }
 
     /** End-of-day Z-report: sales, tax, cash reconciliation, voids/returns. */
-    public function zReport(Request $request): JsonResponse
-    {
-        $request->validate([
-            'date' => 'required|date',
-            'branch_id' => 'nullable|string',
-        ]);
-
-        $business = $request->user()->business;
-        $date = Carbon::parse($request->input('date'));
-        $branchId = $request->input('branch_id');
-
-        $report = app(ZReportService::class)->generate($business, $date, $branchId);
-
-        return response()->json(['data' => $report]);
-    }
-
-    /** Thermal-friendly PDF of the Z-report. */
-    public function zReportPdf(Request $request): Response
-    {
-        $request->validate([
-            'date' => 'required|date',
-            'branch_id' => 'nullable|string',
-            'download' => 'nullable|boolean',
-        ]);
-
-        $business = $request->user()->business;
-        $date = Carbon::parse($request->input('date'));
-        $branchId = $request->input('branch_id');
-        $download = $request->boolean('download', false);
-
-        $pdf = app(ZReportService::class)->pdf($business, $date, $branchId);
-
-        $filename = 'z-report-'.$date->format('Y-m-d').($branchId ? '-'.$branchId : '').'.pdf';
-
-        return $download
-            ? $pdf->download($filename)
-            : $pdf->stream($filename);
-    }
-
     public function profitLoss(Request $request): JsonResponse
     {
         [$from, $to] = $this->range($request);

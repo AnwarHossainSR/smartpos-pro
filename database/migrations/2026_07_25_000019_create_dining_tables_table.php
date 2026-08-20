@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Restaurant floor plan. `dining_tables` rather than `tables`, which is far too
+ * generic a name to claim; App\Models\Table pins it with an explicit $table.
+ */
 return new class extends Migration
 {
     public function up(): void
@@ -13,7 +17,10 @@ return new class extends Migration
             $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('branch_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignUuid('active_sale_id')->nullable()->constrained('sales')->nullOnDelete();
+            // `dining_tables` and `sales` reference each other, so this half of the
+            // cycle is declared as a bare column here and constrained by the sales
+            // migration.
+            $table->uuid('active_sale_id')->nullable();
             $table->string('name');
             $table->string('area')->nullable();
             $table->integer('seats');
