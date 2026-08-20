@@ -69,6 +69,15 @@ interface Warehouse {
   is_default: boolean;
 }
 
+interface Table {
+  id: string;
+  name: string;
+  seats: number;
+  status: "available" | "occupied" | "reserved";
+  x: number;
+  y: number;
+}
+
 interface CartItem {
   product: Product;
   qty: number;
@@ -369,15 +378,16 @@ function PaymentModal({
 
 /* ---- main POS page ---- */
 export default function POSPage() {
-  const { user, can } = useAuth();
+const { user, can } = useAuth();
   const canOverridePrice = can("pos.price_override");
   const canDiscount = can("pos.discount");
   const t = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [tableId, setTableId] = useState<string | null>(null);
+  const [tableSelectRef, setTableSelectRef] = useRef<HTMLSelectElement>(null);
   const debouncedSearch = useDebouncedValue(search);
   const debouncedCustomerSearch = useDebouncedValue(customerSearch);
   const [showPayment, setShowPayment] = useState(false);
@@ -452,6 +462,12 @@ export default function POSPage() {
   const { data: warehousesData } = useQuery({
     queryKey: ["warehouses-all"],
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
+  });
+
+  const { data: tablesData } = useQuery<{ data: Table[] }>({
+    queryKey: ["dining-tables-all"],
+    queryFn: () => api<{ data: Table[] }>("/v1/tables?per_page=100"),
+    enabled: !!user,
   });
 
   // Same query key as Settings → Business and the app shell's currency sync, so this is a
@@ -933,6 +949,39 @@ export default function POSPage() {
               Clear
             </button>
           )}
+        </div>
+
+        {/* Table selector */}
+        <div className="border-b border-[var(--border)] bg-[var(--surface)] p-3">
+          <div className="flex items-center gap-2">
+            <TableIcon className="h-4 w-4 text-[var(--muted)]" />
+            <Label className="font-medium">{t("pos.table_selector")}</Label>
+            <Select
+              ref={tableSelectRef}
+              className="w-32"
+              onChange={(e) => {
+                const tableId = e.target.value;
+                if (tableId) {
+                  // Pre-fill with selected table
+                  setTableId(tableId);
+                }
+              }}
+            >
+              <option value="">{t("pos.table_selector") ?? "Table"}</option>
+              {tablesData?.data?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} {t.seats}{t("tables.seats")} -{" "}
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full bg-green-100 text-green-800 text-xs px-2 py-0.5",
+                      t.status === "available" ? "text-green-800" : t.status === "occupied" ? "text-yellow-800" : "text-red-800",
+                    )}>
+                    {t.status === "available" ? t("tables.available") : t.status === "occupied" ? t("tables.occupied") : t("tables.reserved")}
+                  </span>
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
 
         {/* Customer selector */}
