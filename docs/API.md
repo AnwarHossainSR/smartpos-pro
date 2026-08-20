@@ -244,6 +244,7 @@ product/customer counts, low-stock count) and a 14-day sales trend.
 | `POST /products` | `products.create` | optional `opening_stock: { warehouse_id, quantity }` |
 | `PUT /products/{product}` | `products.update` | |
 | `DELETE /products/{product}` | `products.delete` | soft delete |
+| `POST /products/{product}/image` · `DELETE` | `products.update` | multipart, field `file` — see [Media & images](#media--images) |
 
 Create example:
 ```json
@@ -707,9 +708,80 @@ logged explicitly through `AuditLogService`. Rows carry `old_values`/`new_values
 | `GET /settings/approvals` · `PUT /settings/approvals` | `settings.view` / `settings.update` |
 | `POST /settings/onboarding/complete` | `settings.update` |
 
+`GET /settings/business` includes a `media` object keyed by slot, each carrying
+`{ path, url, urls }` — an empty slot reports `null` rather than being absent, so a
+client can render a placeholder without special-casing missing keys. `logo_path` is
+still returned alongside it for clients that already read it. Uploads go through
+`POST /settings/business/media/{slot}`, not `PUT /settings/business` — the `PUT` no
+longer accepts a `logo_path`, so a path cannot be set to point at an object the
+caller does not own.
+
 `settings.invoice_prefix` (free-form string, default `INV-`) prefixes every invoice number
 this business issues — see `POST /sales`. Changing it does not renumber past sales and does
 not reset the counter.
+
+## Media & images
+
+Every image in the app goes through one pipeline. Uploads are `multipart/form-data`
+with a single field named **`file`**.
+
+| Method & path | Permission | Collection |
+| --- | --- | --- |
+| `GET /media/collections` | — (any authenticated user) | the limits catalogue itself |
+| `POST /products/{product}/image` · `DELETE` | `products.update` | `product.image` |
+| `POST /brands/{brand}/logo` · `DELETE` | `products.update` | `brand.logo` |
+| `POST /settings/business/media/{slot}` · `DELETE` | `settings.update` | `business.*` |
+| `POST /me/avatar` · `DELETE` | — (the caller's own photo) | `user.avatar` |
+
+`{slot}` is one of `logo`, `logo-dark`, `favicon`, `receipt-logo`, `cover`. Anything
+else `404`s at the router.
+
+**Upload response**
+
+```json
+{
+  "data": {
+    "path": "media/{tenant}/product.image/01J8Z.../",
+    "url": "https://cdn.example.com/media/.../original.webp",
+    "urls": {
+      "original": "https://cdn.example.com/media/.../original.webp",
+      "md": "https://cdn.example.com/media/.../md.webp",
+      "sm": "https://cdn.example.com/media/.../sm.webp"
+    }
+  }
+}
+```
+
+`path` is what is persisted on the model; `url`/`urls` are derived at read time and
+must not be stored, because the bucket a path resolves against is environment
+configuration. `DELETE` returns the same shape with every value `null`.
+
+**What happens to an upload**
+
+Each file is re-encoded to WebP at every size declared for its collection, then
+written to the media bucket. The re-encode is not only for bandwidth: it normalises
+the format, bounds storage cost, strips EXIF (a phone photo of a shelf carries the
+shop's GPS coordinates), and means the bytes served are never the bytes uploaded.
+
+SVG cannot be re-encoded, so it is run through an allowlist sanitiser instead —
+`<script>`, `on*` handlers, external references, CSS `@import`/`url()`, and entity
+declarations are removed, and the artwork is kept.
+
+**Limits** are declared server-side in `config/media.php` and served by
+`GET /media/collections`, which returns `key`, `label`, `max_kb`, `mimes`, a
+ready-made `accept` string, and the variant boxes. Clients read their client-side
+validation from there rather than hardcoding it, so the browser and the server
+cannot disagree about what is allowed.
+
+**Errors**: `422` with a `file` key for a file that is too large, the wrong type, or
+undecodable. Cross-tenant ids `404` as everywhere else.
+
+**Storage**: production writes to Cloudflare R2 (`MEDIA_DISK=r2`); local development
+and the test suite fall back to the `public` disk, so neither needs credentials.
+Keys are `media/{tenant_id}/{collection}/{ulid}/{variant}.webp` — tenant-first, so a
+tenant's media can be removed wholesale on account closure. If the bucket has no
+public URL configured it is treated as private and URLs come back as time-limited
+signed links.
 
 ## Webhooks
 

@@ -46,6 +46,50 @@ Both Phase 10 stragglers — **T105** (purchase edit / cancel / return) and **T1
 - [x] T105 · G19 Purchase edit / cancel / return
 - [x] T108 · G11 Server-side export endpoints
 
+## Media pipeline & SEO
+
+Two pieces of production plumbing that had no owner before.
+
+**Object storage.** Images used to be written straight to the local `public` disk by
+`ProductController`, which does not survive a container restart and cannot be shared
+between app instances. Uploads now go through `App\Services\Media\MediaService` onto
+Cloudflare R2 (`MEDIA_DISK=r2`; local and CI stay on `public`, so neither needs
+credentials). Every upload is re-encoded to WebP at the sizes declared in
+`config/media.php` — which normalises the format, caps storage, strips EXIF, and means
+the bytes served are never the bytes uploaded. SVG is sanitised against an allowlist
+instead, since it cannot be re-encoded and is otherwise a stored-XSS vector.
+
+Keys are `media/{tenant_id}/{collection}/{ulid}/{variant}.webp` — tenant-first, so one
+tenant's media cannot collide with another's and the set is removable on account
+closure. Read-time URL building does **no** existence probing: a HEAD per image per row
+would turn a catalogue page into hundreds of round trips.
+
+**Branding.** A business now has five image slots — `logo`, `logo-dark`, `favicon`,
+`receipt-logo`, `cover` — declared once in `App\Support\Media\BusinessMediaSlots` and
+read by the router, the upload request, the controller, and the settings payload, so they
+cannot drift. Brands and user avatars use the same pipeline. Columns are folded into the
+existing create migrations, per the reset-the-DB convention.
+
+`PUT /settings/business` no longer accepts `logo_path`: a client could otherwise point a
+business at an object it does not own. Paths are only ever set by an upload.
+
+**SEO.** Every route now carries real metadata, driven from `web/src/lib/seo.ts`. The
+public surface (`/`, `/login`, `/register`) is indexable with canonicals, OG/Twitter cards,
+a generated OG image, and JSON-LD (`Organization`, `WebSite`, `SoftwareApplication`, plus
+a `FAQPage` built from the same array the page renders — schema describing invisible
+content is cloaking, not optimisation).
+
+The security-relevant half is the exclusions. `/order/*` and `/portal/*` need no login but
+are addressed by a per-record token and render a named customer's purchases; they were in
+neither the robots disallow list nor carrying `noindex`. Both now do — belt and braces,
+because robots.txt is a request and does nothing about a URL pasted somewhere crawlable.
+`/reset-password` and `/verify-email` are noindex for the same reason: their URLs carry
+single-use tokens.
+
+For agents specifically there is `/llms.txt`, which states what the product is, what it
+is not, and which paths not to fetch or cite. AI crawlers are allowed on the same public
+surface as search crawlers and held to the same exclusions.
+
 ## Post-sprint-11 audit
 
 Sprint 11's last five tasks were ticked before their endpoints actually worked. A backend
