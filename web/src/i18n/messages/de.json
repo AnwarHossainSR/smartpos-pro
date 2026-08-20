@@ -37,7 +37,9 @@
         "auditLog": "Audit-Protokoll",
         "testData": "Testdaten",
         "catalogSetup": "Kategorien & Marken",
-        "locations": "Filialen & Lager"
+        "locations": "Filialen & Lager",
+        "stocktakes": "Inventur",
+        "reorderSuggestions": "Nachbestellvorschläge"
     },
     "sidebar": {
         "collapse": "Seitenleiste einklappen",
@@ -458,5 +460,34 @@
         "baseHint": "The currency your books are kept in",
         "saved": "Base currency updated",
         "tenderDescription": "Pay in a different currency at POS"
+    },
+    "stocktakes": {
+        "title": "Inventur",
+        "new": "Neue Inventur",
+        "start": "Zählung starten",
+        "complete": "Abschließen",
+        "cancel": "Abbrechen",
+        "system_qty": "System-Menge",
+        "counted_qty": "Gezählte Menge",
+        "variance": "Differenz",
+        "status": {
+            "draft": "Entwurf",
+            "counting": "In Zählung",
+            "completed": "Abgeschlossen"
+        }
+    },
+    "reorder": {
+        "title": "Nachbestellvorschläge",
+        "product": "Produkt",
+        "current_stock": "Aktueller Bestand",
+        "reorder_point": "Nachbestellpunkt",
+        "avg_daily_sales": "Ø Tagesverkauf",
+        "lead_time": "Lieferzeit (Tage)",
+        "suggested_qty": "Vorgeschlagene Menge",
+        "supplier": "Lieferant",
+        "create_draft": "Einkaufsentwurf erstellen",
+        "warehouse": "Lager",
+        "no_suggestions": "Keine Nachbestellvorschläge",
+        "created": "Einkaufsentwurf erstellt"
     }
 }

@@ -15,11 +15,12 @@ class Product extends Model
     use BelongsToTenant, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'category_id', 'brand_id', 'unit_id', 'tax_group_id', 'name', 'slug', 'sku',
-        'barcode', 'type', 'description', 'image_path', 'purchase_price', 'selling_price',
-        'wholesale_price', 'tax_rate', 'tax_inclusive', 'min_stock_level', 'max_stock_level',
-        'reorder_quantity',         'track_inventory', 'track_batches', 'track_serials',
-        'track_expiry', 'is_active', 'tags',
+        'tenant_id', 'category_id', 'brand_id', 'unit_id', 'tax_group_id', 'default_supplier_id',
+        'name', 'slug', 'sku', 'barcode', 'type', 'description', 'image_path',
+        'purchase_price', 'selling_price', 'wholesale_price', 'tax_rate', 'tax_inclusive',
+        'min_stock_level', 'max_stock_level', 'reorder_quantity', 'reorder_point',
+        'reorder_lead_time_days', 'avg_daily_sales',
+        'track_inventory', 'track_batches', 'track_serials', 'track_expiry', 'is_active', 'tags',
         'is_weighed', 'weight_unit', 'price_per_unit',
     ];
 
@@ -41,6 +42,9 @@ class Product extends Model
             'track_expiry' => 'boolean',
             'is_active' => 'boolean',
             'tags' => 'array',
+            'reorder_point' => 'integer',
+            'reorder_lead_time_days' => 'integer',
+            'avg_daily_sales' => 'decimal:2',
             'is_weighed' => 'boolean',
             'price_per_unit' => 'decimal:2',
         ];
@@ -59,6 +63,11 @@ class Product extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function defaultSupplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'default_supplier_id');
     }
 
     public function taxGroup(): BelongsTo

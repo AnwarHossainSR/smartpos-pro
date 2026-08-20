@@ -261,6 +261,36 @@ Requires `inventory.update`. Ledger-backed manual adjustment.
 ```
 `201` → `{ "message": "Stock adjusted.", "quantity_after": 60 }`
 
+## Stocktakes
+
+### `GET /stocktakes`
+Requires `stocktakes.view`. `?search=&warehouse_id=&branch_id=&status=`. Paginated.
+
+### `POST /stocktakes`
+Requires `stocktakes.create`. Creates a draft stocktake.
+```json
+{ "branch_id": 1, "warehouse_id": 1, "name": "Monthly Count", "notes": "Optional" }
+```
+`201` → `{ "data": { "id": "...", "status": "draft", ... } }`
+
+### `GET /stocktakes/{stocktake}`
+Requires `stocktakes.view`. Returns stocktake with items, product, warehouse, branch.
+
+### `POST /stocktakes/{stocktake}/start`
+Requires `stocktakes.update`. Snapshots current stock levels into items, sets status to `counting`.
+
+### `POST /stocktakes/{stocktake}/items/{item}/count`
+Requires `stocktakes.update`. Records counted quantity for an item.
+```json
+{ "counted_qty": 12.5 }
+```
+
+### `POST /stocktakes/{stocktake}/complete`
+Requires `stocktakes.update`. Posts stock adjustments via `StockLedgerService` for variances, sets status to `completed`.
+
+### `POST /stocktakes/{stocktake}/cancel`
+Requires `stocktakes.update`. Cancels a draft or counting stocktake.
+
 ## Customers
 
 | Method & path | Permission |

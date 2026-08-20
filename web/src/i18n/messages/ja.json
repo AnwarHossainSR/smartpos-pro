@@ -37,7 +37,9 @@
         "auditLog": "監査ログ",
         "testData": "テストデータ",
         "catalogSetup": "カテゴリーとブランド",
-        "locations": "店舗と倉庫"
+        "locations": "店舗と倉庫",
+        "stocktakes": "棚卸",
+        "reorderSuggestions": "発注提案"
     },
     "sidebar": {
         "collapse": "サイドバーを折りたたむ",
@@ -458,5 +460,34 @@
         "baseHint": "The currency your books are kept in",
         "saved": "Base currency updated",
         "tenderDescription": "Pay in a different currency at POS"
+    },
+    "stocktakes": {
+        "title": "棚卸",
+        "new": "新規棚卸",
+        "start": "棚卸開始",
+        "complete": "完了",
+        "cancel": "キャンセル",
+        "system_qty": "システム数量",
+        "counted_qty": "実棚数量",
+        "variance": "差異",
+        "status": {
+            "draft": "下書き",
+            "counting": "棚卸中",
+            "completed": "完了"
+        }
+    },
+    "reorder": {
+        "title": "発注提案",
+        "product": "商品",
+        "current_stock": "現在の在庫",
+        "reorder_point": "発注点",
+        "avg_daily_sales": "平均日販売数",
+        "lead_time": "リードタイム（日）",
+        "suggested_qty": "提案数量",
+        "supplier": "仕入先",
+        "create_draft": "発注書ドラフト作成",
+        "warehouse": "倉庫",
+        "no_suggestions": "発注提案はありません",
+        "created": "発注書ドラフトを作成しました"
     }
 }

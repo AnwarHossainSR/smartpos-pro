@@ -37,7 +37,9 @@
         "auditLog": "অডিট লগ",
         "testData": "পরীক্ষার তথ্য",
         "catalogSetup": "ক্যাটাগরি ও ব্র্যান্ড",
-        "locations": "শাখা ও গুদাম"
+        "locations": "শাখা ও গুদাম",
+        "stocktakes": "স্টকটেক",
+        "reorderSuggestions": "পুনরায় অর্ডারের পরামর্শ"
     },
     "sidebar": {
         "collapse": "সাইডবার সংকুচিত করুন",
@@ -458,5 +460,34 @@
         "baseHint": "The currency your books are kept in",
         "saved": "Base currency updated",
         "tenderDescription": "Pay in a different currency at POS"
+    },
+    "stocktakes": {
+        "title": "স্টকটেক",
+        "new": "নতুন স্টকটেক",
+        "start": "গণনা শুরু করুন",
+        "complete": "সম্পন্ন",
+        "cancel": "বাতিল",
+        "system_qty": "সিস্টেম পরিমাণ",
+        "counted_qty": "গণিত পরিমাণ",
+        "variance": "পার্থক্য",
+        "status": {
+            "draft": "খসড়া",
+            "counting": "গণনাধীন",
+            "completed": "সম্পন্ন"
+        }
+    },
+    "reorder": {
+        "title": "পুনরায় অর্ডারের পরামর্শ",
+        "product": "পণ্য",
+        "current_stock": "বর্তমান স্টক",
+        "reorder_point": "পুনরায় অর্ডার পয়েন্ট",
+        "avg_daily_sales": "গড় দৈনিক বিক্রয়",
+        "lead_time": "লিড টাইম (দিন)",
+        "suggested_qty": "প্রস্তাবিত পরিমাণ",
+        "supplier": "সরবরাহকারী",
+        "create_draft": "খসড়া ক্রয় তৈরি করুন",
+        "warehouse": "গুদাম",
+        "no_suggestions": "কোনো পুনরায় অর্ডারের পরামর্শ নেই",
+        "created": "খসড়া ক্রয় তৈরি হয়েছে"
     }
 }
