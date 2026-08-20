@@ -35,7 +35,7 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 
 - [ ] T119 · G40 Mobile POS layout
 - [ ] T120 · G42 Customer portal
-- [ ] T121 · G95 ESC/POS hardware
+- [x] T121 · G95 ESC/POS hardware
 - [ ] T122 · G90 Security settings page
 
 ### Sprint 11 — Long tail & unfinished lanes (P2/P3)

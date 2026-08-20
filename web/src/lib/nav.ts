@@ -2,7 +2,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText, Percent,
   LayoutGrid, Tag, TruckIcon, UsersRound, Landmark, PieChart, CircleUserRound, FlaskConical, Layers, Building2,
-  Barcode, ClipboardList, AlertTriangle,
+  Barcode, ClipboardList, AlertTriangle, Shield,
 } from "lucide-react";
 
 export interface NavItem {
@@ -94,6 +94,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/audit-log", key: "auditLog", icon: ScrollText },
       { href: "/settings/tax", key: "taxSettings", icon: Percent },
       { href: "/settings/locations", key: "locations", icon: Building2 },
+      { href: "/settings/security", key: "security", icon: Shield },
       { href: "/settings", key: "settings", icon: Settings },
       { href: "/test-data", key: "testData", icon: FlaskConical },
     ],

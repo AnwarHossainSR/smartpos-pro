@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\V1\CashRegisterController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerPortalController;
+use App\Http\Controllers\Api\V1\CustomerPortalDataController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\EmailTemplateController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderStatusController;
 use App\Http\Controllers\Api\V1\PosApprovalController;
 use App\Http\Controllers\Api\V1\PosController;
+use App\Http\Controllers\Api\V1\PrinterProfileController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
 use App\Http\Controllers\Api\V1\PurchaseController;
@@ -68,6 +71,19 @@ Route::prefix('v1')->group(function () {
     Route::get('orders/{token}', [OrderStatusController::class, 'show'])
         ->middleware('throttle:30,1')->name('orders.status');
 
+    // Customer portal — public auth
+    Route::post('portal/magic-link', [CustomerPortalController::class, 'magicLink'])
+        ->middleware('throttle:login');
+    Route::get('portal/verify/{token}', [CustomerPortalController::class, 'verify']);
+
+    // Customer portal — authenticated
+    Route::middleware(['auth:portal'])->prefix('portal')->group(function () {
+        Route::get('me', [CustomerPortalDataController::class, 'me']);
+        Route::get('invoices', [CustomerPortalDataController::class, 'invoices']);
+        Route::get('invoices/{sale}', [CustomerPortalDataController::class, 'invoiceDetail']);
+        Route::post('pay/{sale}', [CustomerPortalDataController::class, 'pay']);
+    });
+
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
@@ -80,10 +96,13 @@ Route::prefix('v1')->group(function () {
         Route::delete('auth/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
         Route::post('auth/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
 
+        Route::post('auth/change-password', [AuthController::class, 'changePassword']);
+        Route::get('auth/2fa/status', [AuthController::class, 'twoFactorStatus']);
         Route::post('auth/2fa/enable', [TwoFactorController::class, 'enable']);
         Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
         Route::post('auth/2fa/disable', [TwoFactorController::class, 'disable']);
         Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+        Route::get('auth/lockout-status', [AuthController::class, 'lockoutStatus']);
 
         // Supervisor approval PIN. No `permission:` guard — these only ever touch the
         // caller's own row; revoking someone else's is the `users.update` route below.
@@ -315,6 +334,12 @@ Route::prefix('v1')->group(function () {
         Route::put('settings/approvals', [SettingsController::class, 'updateApprovals'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/complete', [SettingsController::class, 'completeOnboarding'])->middleware('permission:settings.update');
         Route::post('settings/onboarding/step', [SettingsController::class, 'recordOnboardingStep'])->middleware('permission:settings.update');
+
+        // Printer profiles
+        Route::get('printer-profiles', [PrinterProfileController::class, 'index'])->middleware('permission:settings.view');
+        Route::post('printer-profiles', [PrinterProfileController::class, 'store'])->middleware('permission:settings.update');
+        Route::put('printer-profiles/{printerProfile}', [PrinterProfileController::class, 'update'])->middleware('permission:settings.update');
+        Route::delete('printer-profiles/{printerProfile}', [PrinterProfileController::class, 'destroy'])->middleware('permission:settings.update');
 
         // Webhooks
         Route::get('webhooks', [WebhookController::class, 'index'])->middleware('permission:settings.update');

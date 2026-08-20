@@ -17,9 +17,9 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Building2, ChevronRight, Clock, DollarSign, Laptop, Mail, Percent, ShieldCheck, Smartphone, Webhook } from "lucide-react";
+import { BookOpen, Building2, ChevronRight, Clock, DollarSign, Laptop, Mail, Percent, Printer, Shield, ShieldCheck, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -112,6 +112,208 @@ function CurrencySettingsCard() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+interface PrinterProfile {
+  id: string;
+  name: string;
+  connection_type: "usb" | "network" | "serial";
+  ip_address: string | null;
+  port: number | null;
+  paper_width: number;
+  auto_cut: boolean;
+  open_drawer: boolean;
+}
+
+function PrinterProfilesCard() {
+  const t = useTranslation();
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<PrinterProfile | null>(null);
+  const [deleting, setDeleting] = useState<PrinterProfile | null>(null);
+
+  const { data, isLoading } = useQuery<{ data: PrinterProfile[] }>({
+    queryKey: ["printer-profiles"],
+    queryFn: () => api<{ data: PrinterProfile[] }>("/printer-profiles"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api(`/printer-profiles/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
+      toast(t("common.delete") + "d");
+      setDeleting(null);
+    },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const profiles = data?.data ?? [];
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle>{t("settings.printer.title")}</CardTitle>
+        <Button size="sm" onClick={() => { setEditing(null); setShowForm(true); }}>
+          {t("settings.printer.add")}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : profiles.length === 0 ? (
+          <p className="text-sm text-[var(--muted)]">{t("settings.printer.none")}</p>
+        ) : (
+          <ul className="divide-y divide-[var(--border)]">
+            {profiles.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Printer className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {t(`settings.printer.${p.connection_type}`)} · {p.paper_width}mm
+                      {p.auto_cut && ` · ${t("settings.printer.auto_cut")}`}
+                      {p.open_drawer && ` · ${t("settings.printer.open_drawer")}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => { setEditing(p); setShowForm(true); }}>
+                    {t("common.edit")}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
+                    {t("common.delete")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+
+      <PrinterProfileForm
+        open={showForm}
+        profile={editing}
+        onClose={() => { setShowForm(false); setEditing(null); }}
+      />
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title={t("common.delete")}
+        description={t("common.delete") + "?"}
+        confirmLabel={t("common.delete")}
+        confirmVariant="danger"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+      />
+    </Card>
+  );
+}
+
+function PrinterProfileForm({
+  open,
+  profile,
+  onClose,
+}: {
+  open: boolean;
+  profile: PrinterProfile | null;
+  onClose: () => void;
+}) {
+  const t = useTranslation();
+  const qc = useQueryClient();
+
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Partial<PrinterProfile>>({
+    defaultValues: profile ?? {
+      name: "",
+      connection_type: "usb",
+      paper_width: 80,
+      auto_cut: true,
+      open_drawer: false,
+    },
+    values: profile ?? undefined,
+  });
+
+  const connType = watch("connection_type");
+
+  const mutation = useMutation({
+    mutationFn: (d: Partial<PrinterProfile>) =>
+      profile
+        ? api(`/printer-profiles/${profile.id}`, { method: "PUT", body: d })
+        : api("/printer-profiles", { method: "POST", body: d }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
+      toast(profile ? t("common.save") + "d" : t("common.add") + "d");
+      reset();
+      onClose();
+    },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+  });
+
+  const handleTestPrint = useCallback(async () => {
+    toast(t("settings.printer.testSent"));
+  }, [t]);
+
+  return (
+    <Dialog open={open} onClose={onClose} title={profile ? t("common.edit") : t("settings.printer.add")}>
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        <div>
+          <Label>{t("settings.printer.name")} *</Label>
+          <Input {...register("name", { required: true })} />
+          {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+        </div>
+        <div>
+          <Label>{t("settings.printer.type")} *</Label>
+          <Select {...register("connection_type")}>
+            <option value="usb">{t("settings.printer.usb")}</option>
+            <option value="network">{t("settings.printer.network")}</option>
+            <option value="serial">{t("settings.printer.serial")}</option>
+          </Select>
+        </div>
+        {connType === "network" && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>IP Address</Label>
+              <Input {...register("ip_address")} placeholder="192.168.1.100" />
+            </div>
+            <div>
+              <Label>Port</Label>
+              <Input type="number" {...register("port")} placeholder="9100" />
+            </div>
+          </div>
+        )}
+        <div>
+          <Label>{t("settings.printer.paper_width")} *</Label>
+          <Select {...register("paper_width", { valueAsNumber: true })}>
+            <option value={58}>58mm</option>
+            <option value={80}>80mm</option>
+          </Select>
+        </div>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" {...register("auto_cut")} className="rounded" />
+            <span className="text-sm">{t("settings.printer.auto_cut")}</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" {...register("open_drawer")} className="rounded" />
+            <span className="text-sm">{t("settings.printer.open_drawer")}</span>
+          </label>
+        </div>
+        <div className="flex justify-between gap-2">
+          <Button type="button" variant="outline" onClick={handleTestPrint}>
+            {t("settings.printer.test")}
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+            <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? t("common.saving") : t("common.save")}</Button>
+          </div>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 
@@ -397,6 +599,21 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
+                href="/settings/printer"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Printer className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{t("settings.printer.title")}</p>
+                  <p className="text-xs text-[var(--muted)]">ESC/POS receipt printers</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-0">
+              <Link
                 href="/settings/approvals"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
@@ -404,6 +621,21 @@ export default function SettingsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">Manager approvals</p>
                   <p className="text-xs text-[var(--muted)]">Discount limits, price override & void PIN rules</p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
+              </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-0">
+              <Link
+                href="/settings/security"
+                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Shield className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{t("security.title")}</p>
+                  <p className="text-xs text-[var(--muted)]">{t("security.sessions.title")}, {t("security.2fa.title")}, {t("security.password.title")}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
               </Link>
@@ -426,6 +658,7 @@ export default function SettingsPage() {
           </Card>
           <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
           <CurrencySettingsCard />
+          <PrinterProfilesCard />
 
           <Card>
             <CardContent className="p-0">

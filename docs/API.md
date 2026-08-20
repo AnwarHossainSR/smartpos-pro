@@ -135,6 +135,15 @@ Revokes every session **except** the one making the request.
 | `POST /auth/2fa/recovery-codes/regenerate` | `{ password }`. Invalidates existing recovery codes and issues a fresh set. |
 
 Codes are standard 30-second, 6-digit, SHA-1 TOTP (RFC 6238) — compatible with Google
+
+### `GET /auth/2fa/status`
+Returns 2FA enabled status and recovery codes count: `{ data: { enabled, recovery_codes_remaining } }`.
+
+### `POST /auth/change-password`
+`{ current_password, new_password, new_password_confirmation }`. Validates the current password, updates it, and invalidates all other sessions.
+
+### `GET /auth/lockout-status`
+Returns the caller's lockout state: `{ data: { is_locked, locked_until, failed_attempts } }`.
 Authenticator, Authy, 1Password, etc. A tenant can require 2FA for every user by setting
 `settings.require_2fa: true` via `PUT /settings/business`; `GET /auth/me` and the login
 response then include `requires_two_factor_setup: true` for users who haven't enrolled yet
