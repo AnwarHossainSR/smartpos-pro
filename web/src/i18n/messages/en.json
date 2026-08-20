@@ -39,7 +39,9 @@
         "taxReport": "Tax Report",
         "testData": "Test Data",
         "catalogSetup": "Categories & brands",
-        "locations": "Branches & warehouses"
+        "locations": "Branches & warehouses",
+        "stocktakes": "Stocktakes",
+        "reorderSuggestions": "Reorder Suggestions"
     },
     "sidebar": {
         "collapse": "Collapse sidebar",
@@ -512,5 +514,34 @@
         "baseHint": "The currency your books are kept in",
         "saved": "Base currency updated",
         "tenderDescription": "Pay in a different currency at POS"
+    },
+    "stocktakes": {
+        "title": "Stocktakes",
+        "new": "New Stocktake",
+        "start": "Start Counting",
+        "complete": "Complete",
+        "cancel": "Cancel",
+        "system_qty": "System Qty",
+        "counted_qty": "Counted Qty",
+        "variance": "Variance",
+        "status": {
+            "draft": "Draft",
+            "counting": "Counting",
+            "completed": "Completed"
+        }
+    },
+    "reorder": {
+        "title": "Reorder Suggestions",
+        "product": "Product",
+        "current_stock": "Current Stock",
+        "reorder_point": "Reorder Point",
+        "avg_daily_sales": "Avg Daily Sales",
+        "lead_time": "Lead Time (days)",
+        "suggested_qty": "Suggested Qty",
+        "supplier": "Supplier",
+        "create_draft": "Create Draft PO",
+        "warehouse": "Warehouse",
+        "no_suggestions": "No reorder suggestions",
+        "created": "Draft PO created"
     }
 }

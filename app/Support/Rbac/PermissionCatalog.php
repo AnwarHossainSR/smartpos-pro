@@ -33,6 +33,8 @@ class PermissionCatalog
         'users' => ['view', 'create', 'update', 'delete'],
         'roles' => ['view', 'create', 'update', 'delete'],
         'settings' => ['view', 'update'],
+        'stocktakes' => ['view', 'create', 'update'],
+        'reorder-suggestions' => ['view', 'create'],
         'audit' => ['view'],
     ];
 
@@ -73,6 +75,7 @@ class PermissionCatalog
                 'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override', 'pos.approve',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
                 'reports.view', 'reports.export', 'shifts.view', 'shifts.manage',
+                'stocktakes.view', 'stocktakes.create', 'stocktakes.update',
             ]],
             'cashier' => ['name' => 'Cashier', 'permissions' => [
                 'dashboard.view', 'products.view', 'pos.view', 'pos.create',

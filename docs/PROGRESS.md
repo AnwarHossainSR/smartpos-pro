@@ -28,8 +28,8 @@ Two Phase 10 tasks never got routes and are carried into sprint 11 below: **T105
 
 - [x] T115 · G36 Multi-currency
 - [x] T116 · G37 Scale / weight products
-- [ ] T117 · G92 Stocktake / cycle count
-- [ ] T118 · G93 Reorder suggestions → draft PO
+- [x] T117 · G92 Stocktake / cycle count
+- [x] T118 · G93 Reorder suggestions → draft PO
 
 ### Sprint 10 — Customer & hardware (P2/P3)
 

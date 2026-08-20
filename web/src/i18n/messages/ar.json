@@ -37,7 +37,9 @@
         "auditLog": "سجل التدقيق",
         "testData": "بيانات الاختبار",
         "catalogSetup": "الفئات والعلامات التجارية",
-        "locations": "الفروع والمستودعات"
+        "locations": "الفروع والمستودعات",
+        "stocktakes": "جرد المخزون",
+        "reorderSuggestions": "اقتراحات إعادة الطلب"
     },
     "sidebar": {
         "collapse": "طي الشريط الجانبي",
@@ -458,5 +460,34 @@
         "baseHint": "The currency your books are kept in",
         "saved": "Base currency updated",
         "tenderDescription": "Pay in a different currency at POS"
+    },
+    "stocktakes": {
+        "title": "جرد المخزون",
+        "new": "جرد جديد",
+        "start": "بدء العد",
+        "complete": "إتمام",
+        "cancel": "إلغاء",
+        "system_qty": "الكمية بالنظام",
+        "counted_qty": "الكمية المعدودة",
+        "variance": "الفرق",
+        "status": {
+            "draft": "مسودة",
+            "counting": "قيد العد",
+            "completed": "مكتمل"
+        }
+    },
+    "reorder": {
+        "title": "اقتراحات إعادة الطلب",
+        "product": "المنتج",
+        "current_stock": "المخزون الحالي",
+        "reorder_point": "نقطة إعادة الطلب",
+        "avg_daily_sales": "متوسط المبيعات اليومية",
+        "lead_time": "وقت التسليم (أيام)",
+        "suggested_qty": "الكمية المقترحة",
+        "supplier": "المورد",
+        "create_draft": "إنشاء مسودة أمر شراء",
+        "warehouse": "المستودع",
+        "no_suggestions": "لا توجد اقتراحات إعادة طلب",
+        "created": "تم إنشاء مسودة أمر الشراء"
     }
 }

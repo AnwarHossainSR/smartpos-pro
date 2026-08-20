@@ -27,12 +27,14 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductVariantController;
 use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\QuotationController;
+use App\Http\Controllers\Api\V1\ReorderSuggestionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\ShiftController;
+use App\Http\Controllers\Api\V1\StocktakeController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\StripeController;
 use App\Http\Controllers\Api\V1\StripeWebhookController;
@@ -349,6 +351,15 @@ Route::prefix('v1')->group(function () {
         Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware(['permission:subscriptions.view', 'verified']);
         Route::post('subscription/checkout', [SubscriptionController::class, 'checkout'])->middleware(['permission:subscriptions.manage', 'verified']);
 
+        // T117 — Stocktakes
+        Route::get('stocktakes', [StocktakeController::class, 'index'])->middleware('permission:stocktakes.view');
+        Route::post('stocktakes', [StocktakeController::class, 'store'])->middleware('permission:stocktakes.create');
+        Route::get('stocktakes/{stocktake}', [StocktakeController::class, 'show'])->middleware('permission:stocktakes.view');
+        Route::post('stocktakes/{stocktake}/start', [StocktakeController::class, 'start'])->middleware('permission:stocktakes.update');
+        Route::post('stocktakes/{stocktake}/items/{item}/count', [StocktakeController::class, 'recordCount'])->middleware('permission:stocktakes.update');
+        Route::post('stocktakes/{stocktake}/complete', [StocktakeController::class, 'complete'])->middleware('permission:stocktakes.update');
+        Route::post('stocktakes/{stocktake}/cancel', [StocktakeController::class, 'cancel'])->middleware('permission:stocktakes.update');
+
         // T28 — Stock transfers
         Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');
         Route::post('stock-transfers', [StockTransferController::class, 'store'])->middleware('permission:inventory.adjust');
@@ -363,6 +374,10 @@ Route::prefix('v1')->group(function () {
         Route::post('stock/batches', [ProductVariantController::class, 'storeBatch'])->middleware('permission:inventory.adjust');
         Route::get('stock/serials', [ProductVariantController::class, 'serials'])->middleware('permission:inventory.view');
         Route::post('stock/serials', [ProductVariantController::class, 'storeSerial'])->middleware('permission:inventory.adjust');
+
+        // T118 — Reorder suggestions
+        Route::get('reorder-suggestions', [ReorderSuggestionController::class, 'index'])->middleware('permission:reorder-suggestions.view');
+        Route::post('reorder-suggestions/create-draft-po', [ReorderSuggestionController::class, 'createDraftPo'])->middleware('permission:reorder-suggestions.create');
 
         // T30 — Quotations
         Route::get('quotations', [QuotationController::class, 'index'])->middleware('permission:sales.view');
