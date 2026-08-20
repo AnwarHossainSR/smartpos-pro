@@ -14,8 +14,13 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->unique('id');
             $table->foreignUuid('tenant_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('key');
-            $table->string('method');
+            // Widths are sized deliberately, not left at the default 255: all four
+            // columns below share one unique index, and MySQL caps an InnoDB key at
+            // 3072 bytes. A CHAR(36) uuid plus three utf8mb4 varchar(255) columns
+            // comes to 3204 and the migration fails outright. A client-generated key
+            // is a ULID or a uuid, a method is an HTTP verb, and neither needs 255.
+            $table->string('key', 128);
+            $table->string('method', 10);
             $table->string('path');
             // Hash of the request body, so a replayed key carrying different input
             // can be rejected rather than silently served the first response.

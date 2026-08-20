@@ -51,7 +51,10 @@ return new class extends Migration
             $table->string('reason')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['tenant_id', 'cash_register_session_id']);
+            // Named explicitly: the generated name would be 67 characters, and MySQL
+            // rejects an identifier over 64. Postgres silently truncates instead, so
+            // this only shows up on MySQL.
+            $table->index(['tenant_id', 'cash_register_session_id'], 'cash_reg_txn_tenant_session_idx');
         });
     }
 

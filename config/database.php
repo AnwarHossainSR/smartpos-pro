@@ -54,7 +54,17 @@ return [
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            // Case- and accent-SENSITIVE on purpose. MySQL's usual default,
+            // utf8mb4_unicode_ci, folds both: it would make 'ABC-1' and 'abc-1' the
+            // same value, and 'cafe' with an accent the same as without. That changes
+            // the meaning of every unique constraint in this schema - sku, barcode,
+            // invoice_number, reference_number, slug, code, email - from "distinct
+            // string" to "distinct after folding", which is a duplicate-key error at
+            // seed time and a merged product at run time. It also silently makes
+            // `like` search case-insensitive, hiding case-sensitivity bugs in
+            // development. _as_cs keeps the Postgres semantics this schema was
+            // designed against.
+            'collation' => env('DB_COLLATION', 'utf8mb4_0900_as_cs'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
@@ -74,7 +84,9 @@ return [
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            // MariaDB has no _0900_ collations; utf8mb4_bin is the case- and
+            // accent-sensitive equivalent. See the note on the mysql connection.
+            'collation' => env('DB_COLLATION', 'utf8mb4_bin'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
