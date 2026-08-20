@@ -46,7 +46,6 @@ class ExportTest extends TestCase
             'is_active' => true,
         ]);
 
-        dump(['svc' => app(\App\Services\Export\ExportService::class)->exportCsv('products', []), 'q' => \App\Models\Product::query()->get()->count()]);
         $response = $this->getJson('/api/v1/products/export?format=csv&is_active=true');
         $response->assertStatus(200);
         $data = $response->streamedContent();

@@ -10,7 +10,14 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Supplier;
+use App\Domain\Enums\AccountType;
+use App\Domain\Enums\PaymentStatus;
+use App\Domain\Enums\PurchaseStatus;
+use App\Domain\Enums\SaleStatus;
+use App\Support\Query\AllowedFilter;
+use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use PDF;
 
 class ExportService
@@ -50,9 +57,9 @@ class ExportService
         ],
     ];
 
-    public function exportCsv(string $module, array $filters): string
+    public function exportCsv(string $module, Request $request): string
     {
-        $query = $this->getQuery($module, $filters);
+        $query = $this->getQuery($module, $request);
         $rows = $query->get()->toArray();
 
         $headers = $this->columnMappings[$module];
@@ -72,9 +79,9 @@ class ExportService
         return stream_get_contents($output);
     }
 
-    public function exportPdf(string $module, array $filters): string
+    public function exportPdf(string $module, Request $request): string
     {
-        $data = $this->exportCsv($module, $filters);
+        $data = $this->exportCsv($module, $request);
 
         $pdf = PDF::loadView('exports.export', [
             'module' => $module,
@@ -87,22 +94,93 @@ class ExportService
         return $pdf->output();
     }
 
-    protected function getQuery(string $module, array $filters): Builder
+    /**
+     * The export must return exactly what the matching index endpoint would, minus
+     * pagination — an export that silently ignores the filters the user set is worse
+     * than no export. Each module therefore declares the same filters as its index
+     * action, run through the same QueryPipeline.
+     *
+     * `lenient()` because the export URL also carries `format`, which is not a filter.
+     */
+    protected function getQuery(string $module, Request $request): Builder
     {
-        $models = [
-            'products' => Product::query(),
-            'inventory' => InventoryBalance::query(),
-            'sales' => Sale::query(),
-            'purchases' => Purchase::query(),
-            'customers' => Customer::query(),
-            'suppliers' => Supplier::query(),
-            'reports' => JournalEntry::query(),
-            'accounting' => Account::query(),
-        ];
+        return match ($module) {
+            'products' => QueryPipeline::for(Product::query()->with(['category', 'brand']), $request)
+                ->lenient()
+                ->search(['name', 'sku', 'barcode'])
+                ->allow(
+                    AllowedFilter::exact('category_id'),
+                    AllowedFilter::exact('brand_id'),
+                    AllowedFilter::boolean('is_active'),
+                )
+                ->sortable(['name', 'sku', 'selling_price', 'purchase_price', 'created_at'], default: 'name')
+                ->toQuery(),
 
-        // Do NOT strip global scopes here: TenantScope is the only thing keeping one
-        // business's products/sales/customers out of another's export file.
-        return $models[$module] ?? JournalEntry::query();
+            'inventory' => QueryPipeline::for(InventoryBalance::query()->with(['product', 'warehouse']), $request)
+                ->lenient()
+                ->allow(
+                    AllowedFilter::exact('warehouse_id'),
+                    AllowedFilter::exact('product_id'),
+                    AllowedFilter::searchRelation('search', 'product', ['name', 'sku']),
+                )
+                ->sortable(['quantity', 'average_cost'], default: '-quantity')
+                ->toQuery(),
+
+            'sales' => QueryPipeline::for(Sale::query()->with(['customer', 'cashier']), $request)
+                ->lenient()
+                ->search(['invoice_number'])
+                ->allow(
+                    AllowedFilter::exact('branch_id'),
+                    AllowedFilter::exact('customer_id'),
+                    AllowedFilter::enum('status', SaleStatus::class),
+                    AllowedFilter::enum('payment_status', PaymentStatus::class),
+                    AllowedFilter::dateRange('sold_at'),
+                )
+                ->sortable(['id', 'invoice_number', 'total', 'sold_at'], default: '-id')
+                ->toQuery(),
+
+            'purchases' => QueryPipeline::for(Purchase::query()->with('supplier'), $request)
+                ->lenient()
+                ->search(['reference_number'])
+                ->allow(
+                    AllowedFilter::exact('supplier_id'),
+                    AllowedFilter::enum('status', PurchaseStatus::class),
+                    AllowedFilter::enum('payment_status', PaymentStatus::class),
+                    AllowedFilter::dateRange('purchased_at'),
+                )
+                ->sortable(['id', 'reference_number', 'total', 'purchased_at'], default: '-id')
+                ->toQuery(),
+
+            'customers' => QueryPipeline::for(Customer::query(), $request)
+                ->lenient()
+                ->search(['name', 'phone', 'email'])
+                ->sortable(['name', 'phone', 'email', 'balance', 'created_at'], default: 'name')
+                ->toQuery(),
+
+            'suppliers' => QueryPipeline::for(Supplier::query(), $request)
+                ->lenient()
+                ->search(['name', 'company', 'phone'])
+                ->sortable(['name', 'company', 'phone', 'balance', 'created_at'], default: 'name')
+                ->toQuery(),
+
+            'accounting' => QueryPipeline::for(Account::query(), $request)
+                ->lenient()
+                ->search(['name', 'account_number'])
+                ->allow(
+                    AllowedFilter::enum('type', AccountType::class),
+                    AllowedFilter::boolean('is_active'),
+                )
+                ->sortable(['name', 'balance'], default: 'name')
+                ->toQuery(),
+
+            // 'reports' exports the journal, matching JournalController@index.
+            default => QueryPipeline::for(JournalEntry::query(), $request)
+                ->lenient()
+                ->search(['reference', 'description'])
+                ->allow(AllowedFilter::dateRange('entry_date'))
+                ->sortable(['id', 'entry_date'], default: '-id')
+                ->toQuery(),
+        };
     }
 
     protected function mapRow(string $module, array $row): array

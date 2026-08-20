@@ -17,12 +17,9 @@ class ExportController extends Controller
         $this->validatePermission($module);
 
         $format = $request->query('format', 'csv');
-        $filters = $request->only([
-            'sort', 'per_page', 'page', 'search',
-        ]);
 
         if ($format === 'pdf') {
-            $pdfData = $this->exportService->exportPdf($module, $filters);
+            $pdfData = $this->exportService->exportPdf($module, $request);
 
             $filename = "{$module}-export-".now()->format('Y-m-d').'.pdf';
 
@@ -38,7 +35,7 @@ class ExportController extends Controller
             );
         }
 
-        $data = $this->exportService->exportCsv($module, $filters);
+        $data = $this->exportService->exportCsv($module, $request);
 
         return response()->streamDownload(
             function () use ($data) {

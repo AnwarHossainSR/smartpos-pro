@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\Rbac\PermissionCatalog;
 use App\Support\Rbac\RbacProvisioner;
 use Illuminate\Database\Seeder;
 
@@ -9,7 +10,7 @@ use Illuminate\Database\Seeder;
  * Brings the global `permissions` table in line with the catalogue.
  *
  * Idempotent, and independent of tenants: run it after adding a module to
- * {@see \App\Support\Rbac\PermissionCatalog} so existing installs pick up the new
+ * {@see PermissionCatalog} so existing installs pick up the new
  * slugs without re-registering anyone. Tenant roles are provisioned separately, at
  * registration (see TenantProvisioner).
  */

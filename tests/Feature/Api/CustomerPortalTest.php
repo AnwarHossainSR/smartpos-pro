@@ -155,7 +155,12 @@ class CustomerPortalTest extends TestCase
         $token = $customer->createToken('portal', ['portal'])->plainTextToken;
 
         $this->mock(StripeService::class, function ($mock) use ($sale) {
-            $mock->shouldReceive('createCheckoutSession')->once()->with($sale)->andReturn('cs_test_123');
+            // Match on identity, not object equality: the controller re-loads the sale,
+            // so it is an equivalent-but-distinct model instance.
+            $mock->shouldReceive('createCheckoutSession')
+                ->once()
+                ->withArgs(fn (Sale $arg) => $arg->id === $sale->id)
+                ->andReturn('cs_test_123');
         });
 
         $this->withHeader('Authorization', 'Bearer '.$token)
