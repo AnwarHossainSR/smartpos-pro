@@ -5,19 +5,20 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\StoreProductRequest;
 use App\Http\Requests\Catalog\UpdateProductRequest;
+use App\Http\Requests\Media\UploadImageRequest;
 use App\Http\Resources\ProductResource;
 use App\Imports\ProductImport;
 use App\Models\Product;
 use App\Services\Barcode\WeightedBarcodeParser;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Inventory\StockLedgerService;
+use App\Services\Media\MediaService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -25,7 +26,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
-    public function __construct(protected StockLedgerService $ledger) {}
+    public function __construct(
+        protected StockLedgerService $ledger,
+        protected MediaService $media,
+    ) {}
 
     public function index(Request $request)
     {
@@ -116,37 +120,32 @@ class ProductController extends Controller
         return response()->noContent();
     }
 
-    public function uploadImage(Request $request, Product $product): JsonResponse
+    public function uploadImage(UploadImageRequest $request, Product $product): JsonResponse
     {
-        $validated = $request->validate([
-            'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $path = $this->media->replace(
+            $product->image_path,
+            $request->file('file'),
+            $request->collection(),
+            $product->tenant_id,
+        );
 
-        $file = $validated['image'];
-        $tenantId = $product->tenant_id;
-
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
-        }
-
-        $path = $file->store("products/{$tenantId}", 'public');
         $product->update(['image_path' => $path]);
 
         return response()->json([
             'data' => [
-                'url' => Storage::disk('public')->url($path),
+                'path' => $path,
+                'url' => $this->media->url($path),
+                'urls' => $this->media->urls($path, $request->collection()),
             ],
         ]);
     }
 
     public function deleteImage(Product $product): JsonResponse
     {
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
-            $product->update(['image_path' => null]);
-        }
+        $this->media->delete($product->image_path);
+        $product->update(['image_path' => null]);
 
-        return response()->json(['data' => ['url' => null]]);
+        return response()->json(['data' => ['path' => null, 'url' => null, 'urls' => null]]);
     }
 
     public function import(Request $request): JsonResponse

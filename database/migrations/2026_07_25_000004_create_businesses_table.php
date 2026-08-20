@@ -24,7 +24,16 @@ return new class extends Migration
             $table->string('price_display')->default('exclusive');
             $table->string('currency', 3)->default('USD');
             $table->string('timezone')->default('UTC');
+            // Media paths, not URLs — the bucket a path resolves against is an
+            // environment concern, so the URL is built at read time by
+            // App\Services\Media\MediaService rather than frozen into a row.
             $table->string('logo_path')->nullable();
+            $table->string('logo_dark_path')->nullable();
+            $table->string('favicon_path')->nullable();
+            // Sized for an 80mm thermal roll; kept apart from `logo_path` because a
+            // colour logo prints as mud on a 1-bit printer.
+            $table->string('receipt_logo_path')->nullable();
+            $table->string('cover_path')->nullable();
             $table->json('settings')->nullable();
             $table->boolean('onboarding_completed')->default(false);
             $table->json('onboarding_state')->nullable();

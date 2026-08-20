@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Media\MediaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,6 +16,8 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'status' => $this->status,
+            'avatar_path' => $this->avatar_path,
+            'avatar_url' => app(MediaService::class)->url($this->avatar_path, 'sm'),
             'email_verified_at' => $this->email_verified_at,
             'two_factor_enabled' => $this->hasEnabledTwoFactor(),
             // Whether a PIN exists — never the PIN or its hash.

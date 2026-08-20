@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
+use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderStatusController;
 use App\Http\Controllers\Api\V1\PosApprovalController;
@@ -59,6 +60,7 @@ use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\ZReportController;
+use App\Support\Media\BusinessMediaSlots;
 
 Route::prefix('v1')->group(function () {
     // ---- Public ----
@@ -92,6 +94,14 @@ Route::prefix('v1')->group(function () {
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
+        // The caller's own profile photo — every authenticated user may change
+        // their own, so this is deliberately ungated by any permission.
+        Route::post('me/avatar', [MediaController::class, 'uploadAvatar'])
+            ->defaults('media_collection', 'user.avatar');
+        Route::delete('me/avatar', [MediaController::class, 'destroyAvatar']);
+        // Upload limits, so the browser can reject a bad file before spending the
+        // upload and the two sides cannot disagree about what is allowed.
+        Route::get('media/collections', [MediaController::class, 'collections']);
         // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
         // caller's own row, so an admin permission would be wrong here (see the controller).
         Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
@@ -152,6 +162,10 @@ Route::prefix('v1')->group(function () {
         Route::post('brands', [BrandController::class, 'store'])->middleware('permission:products.create');
         Route::put('brands/{brand}', [BrandController::class, 'update'])->middleware('permission:products.update');
         Route::delete('brands/{brand}', [BrandController::class, 'destroy'])->middleware('permission:products.delete');
+        Route::post('brands/{brand}/logo', [MediaController::class, 'uploadBrandLogo'])
+            ->middleware('permission:products.update')
+            ->defaults('media_collection', 'brand.logo');
+        Route::delete('brands/{brand}/logo', [MediaController::class, 'destroyBrandLogo'])->middleware('permission:products.update');
 
         // Catalog — units
         Route::get('units', [UnitController::class, 'index'])->middleware('permission:products.view');
@@ -168,7 +182,9 @@ Route::prefix('v1')->group(function () {
         Route::post('products', [ProductController::class, 'store'])->middleware('permission:products.create');
         Route::put('products/{product}', [ProductController::class, 'update'])->middleware('permission:products.update');
         Route::delete('products/{product}', [ProductController::class, 'destroy'])->middleware('permission:products.delete');
-        Route::post('products/{product}/image', [ProductController::class, 'uploadImage'])->middleware('permission:products.update');
+        Route::post('products/{product}/image', [ProductController::class, 'uploadImage'])
+            ->middleware('permission:products.update')
+            ->defaults('media_collection', 'product.image');
         Route::delete('products/{product}/image', [ProductController::class, 'deleteImage'])->middleware('permission:products.update');
 
         // Inventory
@@ -360,6 +376,14 @@ Route::prefix('v1')->group(function () {
 
         Route::get('settings/business', [SettingsController::class, 'showBusiness'])->middleware('permission:settings.view');
         Route::put('settings/business', [SettingsController::class, 'updateBusiness'])->middleware('permission:settings.update');
+        // Business branding. The slot list is constrained at the router, so an
+        // unknown slot 404s before it can reach validation.
+        Route::post('settings/business/media/{slot}', [MediaController::class, 'uploadBusiness'])
+            ->middleware('permission:settings.update')
+            ->whereIn('slot', BusinessMediaSlots::keys());
+        Route::delete('settings/business/media/{slot}', [MediaController::class, 'destroyBusiness'])
+            ->middleware('permission:settings.update')
+            ->whereIn('slot', BusinessMediaSlots::keys());
         Route::get('settings/retention', [SettingsController::class, 'retention'])->middleware('permission:settings.view');
         Route::get('settings/approvals', [SettingsController::class, 'approvals'])->middleware('permission:settings.view');
         Route::put('settings/approvals', [SettingsController::class, 'updateApprovals'])->middleware('permission:settings.update');

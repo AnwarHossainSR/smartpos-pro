@@ -36,6 +36,32 @@ trait CreatesTenants
         return $owner->fresh(['roles', 'branch']);
     }
 
+    /**
+     * A second user inside an existing tenant, holding one of the default roles.
+     *
+     * Returned already refreshed with `roles` loaded, because permission checks read
+     * the relation and an unloaded one would silently evaluate as "no roles".
+     */
+    protected function userWithRole(User $owner, string $role, ?string $email = null): User
+    {
+        $user = User::create([
+            'business_id' => $owner->business_id,
+            'branch_id' => $owner->branch_id,
+            'name' => ucfirst($role),
+            'email' => $email ?? $role.'-'.uniqid().'@example.test',
+            'password' => 'password123',
+            'status' => 'active',
+        ]);
+
+        // Not mass-assignable, and deliberately so — verification is a state the
+        // app grants, never something a create payload can claim for itself.
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $user->assignRole($role);
+
+        return $user->fresh('roles');
+    }
+
     protected function warehouseFor(User $owner): Warehouse
     {
         return Warehouse::where('business_id', $owner->business_id)->firstOrFail();

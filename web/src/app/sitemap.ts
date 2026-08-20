@@ -1,15 +1,21 @@
 import type { MetadataRoute } from "next";
+import { PUBLIC_ROUTES, SITE_URL } from "@/lib/seo";
 
-/** Only the public, unauthenticated routes belong here — everything under `(app)` is
- *  per-tenant and noindex'd (see `src/app/(app)/layout.tsx`), so it has nothing to offer a
- *  crawler and would just be a landing-page-shaped 302 to `/login` anyway. */
+/**
+ * Only the public, unauthenticated routes belong here — everything under `(app)`,
+ * `/portal` and `/order` is per-tenant or token-addressed, noindex'd at the page
+ * level, and would be a landing-page-shaped redirect to `/login` anyway.
+ *
+ * Driven off PUBLIC_ROUTES so this file and `robots.ts` cannot disagree about which
+ * surface is public.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.smartpospro.com";
   const now = new Date();
 
-  return [
-    { url: `${base}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${base}/login`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${base}/register`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
-  ];
+  return PUBLIC_ROUTES.map((route) => ({
+    url: `${SITE_URL}${route.path}`,
+    lastModified: now,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
+  }));
 }

@@ -134,7 +134,7 @@ function ProductForm({
 
       if (imageFile) {
         const fd = new FormData();
-        fd.append("image", imageFile);
+        fd.append("file", imageFile);
         await apiUpload(`/products/${pid}/image`, fd);
       } else if (isEdit && imageRemoved) {
         await api(`/products/${pid}/image`, { method: "DELETE" });
