@@ -18,8 +18,9 @@ class Product extends Model
         'tenant_id', 'category_id', 'brand_id', 'unit_id', 'tax_group_id', 'name', 'slug', 'sku',
         'barcode', 'type', 'description', 'image_path', 'purchase_price', 'selling_price',
         'wholesale_price', 'tax_rate', 'tax_inclusive', 'min_stock_level', 'max_stock_level',
-        'reorder_quantity', 'track_inventory', 'track_batches', 'track_serials',
+        'reorder_quantity',         'track_inventory', 'track_batches', 'track_serials',
         'track_expiry', 'is_active', 'tags',
+        'is_weighed', 'weight_unit', 'price_per_unit',
     ];
 
     protected function casts(): array
@@ -40,6 +41,8 @@ class Product extends Model
             'track_expiry' => 'boolean',
             'is_active' => 'boolean',
             'tags' => 'array',
+            'is_weighed' => 'boolean',
+            'price_per_unit' => 'decimal:2',
         ];
     }
 

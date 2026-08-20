@@ -46,6 +46,9 @@ export interface Product {
   image_url?: string | null;
   is_active: boolean;
   category: { id: string; name: string } | null;
+  is_weighed?: boolean;
+  weight_unit?: string | null;
+  price_per_unit?: number | null;
 }
 
 interface Customer {
@@ -71,6 +74,7 @@ interface CartItem {
   qty: number;
   unit_price: number;
   discount: number;
+  weight?: number | null;
 }
 
 interface SaleResult {
@@ -506,15 +510,18 @@ export default function POSPage() {
     },
   });
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: Product, weight?: number | null) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find((i) => i.product.id === product.id && i.weight === weight);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i,
+          i.product.id === product.id && i.weight === weight ? { ...i, qty: i.qty + 1 } : i,
         );
       }
-      return [...prev, { product, qty: 1, unit_price: product.selling_price, discount: 0 }];
+      const unitPrice = product.is_weighed && weight && product.price_per_unit
+        ? product.price_per_unit
+        : product.selling_price;
+      return [...prev, { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null }];
     });
   }, []);
 
@@ -523,9 +530,9 @@ export default function POSPage() {
   const tryBarcodeLookup = useCallback(async (code: string) => {
     if (!code.trim()) return;
     try {
-      const found = await api<{ data: Product }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
+      const found = await api<{ data: Product; parsed_weight?: number | null }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
       if (found?.data) {
-        addToCart(found.data);
+        addToCart(found.data, found.parsed_weight);
         setSearch("");
         try { navigator.vibrate?.(50); } catch {}
         try {
@@ -1038,6 +1045,9 @@ export default function POSPage() {
                     <X className="h-3.5 w-3.5 text-[var(--muted)] hover:text-[var(--color-danger)]" />
                   </button>
                 </div>
+                {item.weight != null && (
+                  <p className="text-xs text-[var(--muted)]">{t("pos.weight")}: {item.weight.toFixed(3)} {item.product.weight_unit}</p>
+                )}
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty - 1)}>

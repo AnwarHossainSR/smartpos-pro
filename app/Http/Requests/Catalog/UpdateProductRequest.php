@@ -33,6 +33,9 @@ class UpdateProductRequest extends FormRequest
             'track_inventory' => ['boolean'],
             'is_active' => ['boolean'],
             'tags' => ['nullable', 'array'],
+            'is_weighed' => ['boolean'],
+            'weight_unit' => ['nullable', 'string', 'in:kg,lb,g'],
+            'price_per_unit' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

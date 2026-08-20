@@ -890,8 +890,10 @@ exceeds it.
 
 ### `GET /products/barcode/{barcode}`
 Requires `products.view`. POS barcode-scanner lookup — resolves a single product by its
-exact barcode (`404` if not found). Previously the only way to find a product by barcode was
-the general `?search=` filter on `GET /products`.
+exact barcode (`404` if not found). For weighed products with weight-embedded barcodes
+(GS1 prefix `21` or ITF-14 format), the response includes a `parsed_weight` field with
+the weight in the product's `weight_unit`. Previously the only way to find a product by
+barcode was the general `?search=` filter on `GET /products`.
 
 ## Stock ledger history (T102)
 
