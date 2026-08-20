@@ -46,8 +46,9 @@ class RichDemoSeeder extends Seeder
         $context = app(TenantContext::class);
         $returnService = app(SaleReturnService::class);
 
-        // Find the demo owner created by DemoSeeder
-        $owner = User::where('email', 'owner@smartpos.test')->firstOrFail();
+        // Find the demo owner created by DemoSeeder. withoutTenancy() because no tenant
+        // is bound yet at this point — that is what the next line is for.
+        $owner = User::withoutTenancy()->where('email', 'admin@demostore.com')->firstOrFail();
         $context->set($owner->tenant_id);
 
         // ------------------------------------------------------------------
@@ -245,8 +246,10 @@ class RichDemoSeeder extends Seeder
         // ------------------------------------------------------------------
         // 7. Stock transfer from branch 1 to the new Downtown branch
         // ------------------------------------------------------------------
-        $transferProduct = Product::inRandomOrder()->first();
         $wh1 = Warehouse::where('business_id', $owner->business_id)->where('id', '!=', $wh2->id)->first();
+
+        $transferQty = 10;
+        $transferProduct = $wh1 ? $this->stockedProduct($wh1->id, $transferQty) : null;
 
         if ($transferProduct && $wh1) {
             $transfers = app(StockTransferService::class);
@@ -254,7 +257,7 @@ class RichDemoSeeder extends Seeder
                 'from_warehouse_id' => $wh1->id,
                 'to_warehouse_id' => $wh2->id,
                 'note' => 'Restocking the Downtown branch',
-                'items' => [['product_id' => $transferProduct->id, 'quantity' => 10]],
+                'items' => [['product_id' => $transferProduct->id, 'quantity' => $transferQty]],
             ], $owner);
             $transfer = $transfers->approve($transfer, $owner);
             $transfers->receive($transfer, [
@@ -309,7 +312,7 @@ class RichDemoSeeder extends Seeder
         // ------------------------------------------------------------------
         // 9. A quotation converted into a sale
         // ------------------------------------------------------------------
-        $quoteProduct = Product::inRandomOrder()->first();
+        $quoteProduct = $wh1 ? $this->stockedProduct($wh1->id, 5) : null;
         if ($quoteProduct && $wh1) {
             $quotations = app(QuotationService::class);
             $quotation = $quotations->create([
@@ -328,7 +331,7 @@ class RichDemoSeeder extends Seeder
         // 10. A partially-settled credit sale, to showcase collecting the rest
         // ------------------------------------------------------------------
         $creditCustomer = Customer::inRandomOrder()->first();
-        $creditProduct = Product::inRandomOrder()->first();
+        $creditProduct = $wh1 ? $this->stockedProduct($wh1->id, 4) : null;
 
         if ($creditCustomer && $creditProduct && $wh1) {
             $sales = app(SaleService::class);
@@ -352,5 +355,21 @@ class RichDemoSeeder extends Seeder
         $this->command?->info('Rich demo data seeded: branch 2, returns, journals, expenses, coupons, loyalty,');
         $this->command?->info('stock transfer, variants/batch/serial, a converted quotation, and a partially-paid credit sale.');
         $this->command?->info('Branch 2 cashier: cashier2@smartpos.test / password123');
+    }
+
+    /**
+     * A product with at least `$quantity` on hand in the given warehouse.
+     *
+     * The demo data is generated randomly, so picking a product with
+     * `inRandomOrder()` and then selling or transferring a fixed quantity of it
+     * fails whenever the draw lands on something unstocked. Ask for stock first.
+     */
+    private function stockedProduct(string $warehouseId, float $quantity): ?Product
+    {
+        return Product::whereHas('inventoryBalances', fn ($q) => $q
+            ->where('warehouse_id', $warehouseId)
+            ->where('quantity', '>=', $quantity))
+            ->inRandomOrder()
+            ->first();
     }
 }

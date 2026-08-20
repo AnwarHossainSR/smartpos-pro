@@ -3,7 +3,6 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Branch;
-use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,7 +81,7 @@ class RoleEscalationGuardTest extends TestCase
     {
         $owner = $this->createTenant();
         $admin = $this->adminFor($owner);
-        $ownerRole = Role::where('slug', 'owner')->firstOrFail();
+        $ownerRole = Role::where('name', 'owner')->firstOrFail();
 
         Sanctum::actingAs($admin);
         $this->putJson("/api/v1/roles/{$ownerRole->id}", [
@@ -102,9 +101,9 @@ class RoleEscalationGuardTest extends TestCase
 
         $scopedRole = Role::create([
             'tenant_id' => $owner->tenant_id,
-            'name' => 'Branch Admin', 'slug' => 'branch-admin-'.uniqid(),
+            'name' => 'branch-admin-'.uniqid(), 'title' => 'Branch Admin',
         ]);
-        $scopedRole->permissions()->sync(Permission::whereIn('slug', ['users.view', 'users.update'])->pluck('id'));
+        $scopedRole->syncPermissions(['users.view', 'users.update']);
 
         $manager = User::create([
             'business_id' => $owner->business_id,
@@ -112,7 +111,12 @@ class RoleEscalationGuardTest extends TestCase
             'name' => 'Branch Manager', 'email' => 'manager@example.test',
             'password' => 'password123', 'status' => 'active',
         ]);
-        $manager->roles()->attach($scopedRole->id, ['branch_id' => $owner->branch_id]);
+        // Pinned to one branch: `model_has_roles.branch_id` is what makes this grant
+        // branch-scoped rather than tenant-wide.
+        $manager->roles()->attach($scopedRole->id, [
+            'tenant_id' => $owner->tenant_id,
+            'branch_id' => $owner->branch_id,
+        ]);
 
         $userInOtherBranch = User::create([
             'business_id' => $owner->business_id,

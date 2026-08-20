@@ -2,10 +2,18 @@
 
 namespace App\Support\Tenancy;
 
+use Spatie\Permission\PermissionRegistrar;
+
 /**
  * Holds the current tenant id for the lifetime of a request (or job).
  * Every tenant-scoped model reads from here to constrain its queries and
  * to auto-fill tenant_id on insert.
+ *
+ * It is also the single place the tenant is handed to spatie/laravel-permission,
+ * whose "teams" feature is configured with `tenant_id` as the team key. Keeping
+ * that in here — rather than in ResolveTenant, seeders and jobs separately —
+ * means role lookups and role assignments can never drift out of step with the
+ * tenant the rest of the request is reading under.
  */
 class TenantContext
 {
@@ -17,6 +25,7 @@ class TenantContext
     public function set(?string $tenantId): void
     {
         $this->tenantId = $tenantId;
+        $this->syncPermissionsTeam($tenantId);
     }
 
     public function id(): ?string
@@ -32,6 +41,7 @@ class TenantContext
     public function forget(): void
     {
         $this->tenantId = null;
+        $this->syncPermissionsTeam(null);
     }
 
     public function unscopedAllowed(): bool
@@ -52,11 +62,13 @@ class TenantContext
     {
         $previous = $this->tenantId;
         $this->tenantId = $tenantId;
+        $this->syncPermissionsTeam($tenantId);
 
         try {
             return $callback();
         } finally {
             $this->tenantId = $previous;
+            $this->syncPermissionsTeam($previous);
         }
     }
 
@@ -81,5 +93,15 @@ class TenantContext
         } finally {
             $this->unscoped = $previous;
         }
+    }
+
+    /**
+     * Keep spatie's team id (configured as `tenant_id`) in lockstep with ours, so
+     * `assignRole('cashier')`, `hasRole()` and the `model_has_roles` pivot all resolve
+     * against the tenant that is actually bound.
+     */
+    protected function syncPermissionsTeam(?string $tenantId): void
+    {
+        app(PermissionRegistrar::class)->setPermissionsTeamId($tenantId);
     }
 }

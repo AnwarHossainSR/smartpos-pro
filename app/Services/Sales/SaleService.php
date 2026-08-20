@@ -111,6 +111,7 @@ class SaleService
                 'branch_id' => $data->branchId,
                 'warehouse_id' => $data->warehouseId,
                 'customer_id' => $data->customerId,
+                'table_id' => $data->tableId,
                 'user_id' => $cashier->id,
                 'coupon_id' => $redemption?->coupon->id,
                 'invoice_number' => $invoiceNumber,

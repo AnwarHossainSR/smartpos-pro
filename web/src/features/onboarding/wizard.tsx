@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n/provider";
+import { type PermissionSlug } from "@/lib/permissions";
 import { useAuth } from "@/stores/auth";
 import { useOnboardingState, useRecordOnboardingStep, useCompleteOnboarding } from "./hooks";
 
@@ -27,7 +28,7 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
   register_sale: <ShoppingCart className="h-5 w-5" />,
 };
 
-const STEP_PERMISSIONS: Record<StepKey, string | null> = {
+const STEP_PERMISSIONS: Record<StepKey, PermissionSlug | null> = {
   business_profile: null,
   first_product: "products.create",
   tax_setup: "settings.update",
@@ -74,17 +75,17 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "business_profile":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.businessProfile.description")}</p>
+          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.business_profile.description")}</p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
-            {t("onboarding.steps.businessProfile.action")}
+            {t("onboarding.steps.business_profile.action")}
           </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/settings")}
             className="w-full"
           >
-            {t("onboarding.steps.businessProfile.configure")}
+            {t("onboarding.steps.business_profile.configure")}
           </Button>
         </div>
       );
@@ -92,17 +93,17 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "first_product":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.firstProduct.description")}</p>
+          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.first_product.description")}</p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
-            {t("onboarding.steps.firstProduct.action")}
+            {t("onboarding.steps.first_product.action")}
           </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/products")}
             className="w-full"
           >
-            {t("onboarding.steps.firstProduct.configure")}
+            {t("onboarding.steps.first_product.configure")}
           </Button>
         </div>
       );
@@ -110,17 +111,17 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "tax_setup":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.taxSetup.description")}</p>
+          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.tax_setup.description")}</p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
-            {t("onboarding.steps.taxSetup.action")}
+            {t("onboarding.steps.tax_setup.action")}
           </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/settings")}
             className="w-full"
           >
-            {t("onboarding.steps.taxSetup.configure")}
+            {t("onboarding.steps.tax_setup.configure")}
           </Button>
         </div>
       );
@@ -128,17 +129,17 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "register_sale":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.registerSale.description")}</p>
+          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.register_sale.description")}</p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
-            {t("onboarding.steps.registerSale.action")}
+            {t("onboarding.steps.register_sale.action")}
           </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/pos")}
             className="w-full"
           >
-            {t("onboarding.steps.registerSale.configure")}
+            {t("onboarding.steps.register_sale.configure")}
           </Button>
         </div>
       );

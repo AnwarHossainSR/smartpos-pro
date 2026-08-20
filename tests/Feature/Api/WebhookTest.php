@@ -258,15 +258,19 @@ class WebhookTest extends TestCase
 
     protected function createCashier($owner)
     {
+        // `roles.name` holds the slug; `roles.title` the human label.
         $cashierRole = Role::where('tenant_id', $owner->tenant_id)
-            ->where('slug', 'cashier')->first();
+            ->where('name', 'cashier')->first();
 
         if (! $cashierRole) {
             $cashierRole = Role::create([
                 'tenant_id' => $owner->tenant_id,
-                'name' => 'Cashier',
-                'slug' => 'cashier',
-                'permissions' => ['dashboard.view', 'products.view', 'pos.view', 'pos.create', 'sales.view', 'customers.view', 'customers.create'],
+                'name' => 'cashier',
+                'title' => 'Cashier',
+            ]);
+            $cashierRole->syncPermissions([
+                'dashboard.view', 'products.view', 'pos.view', 'pos.create',
+                'sales.view', 'customers.view', 'customers.create',
             ]);
         }
 
@@ -279,7 +283,7 @@ class WebhookTest extends TestCase
 
         $cashier->forceFill(['tenant_id' => $owner->tenant_id, 'email_verified_at' => now()])->save();
 
-        $cashier->roles()->attach($cashierRole->id);
+        $cashier->assignRole($cashierRole);
 
         return $cashier;
     }

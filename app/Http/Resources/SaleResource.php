@@ -16,6 +16,8 @@ class SaleResource extends JsonResource
             'payment_status' => $this->payment_status,
             'branch_id' => $this->branch_id,
             'warehouse_id' => $this->warehouse_id,
+            'table_id' => $this->table_id,
+            'table' => $this->whenLoaded('table', fn () => ['id' => $this->table?->id, 'name' => $this->table?->name]),
             'customer' => new CustomerResource($this->whenLoaded('customer')),
             'cashier' => $this->whenLoaded('cashier', fn () => ['id' => $this->cashier?->id, 'name' => $this->cashier?->name]),
             'subtotal' => (float) $this->subtotal,

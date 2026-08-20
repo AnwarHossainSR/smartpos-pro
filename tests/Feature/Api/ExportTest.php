@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
@@ -11,6 +12,8 @@ use Tests\TestCase;
 class ExportTest extends TestCase
 {
     use CreatesTenants, RefreshDatabase;
+
+    protected User $owner;
 
     protected function setUp(): void
     {
@@ -24,7 +27,7 @@ class ExportTest extends TestCase
         $modules = ['products', 'inventory', 'sales', 'purchases', 'customers', 'suppliers', 'reports', 'accounting'];
 
         foreach ($modules as $module) {
-            $response = $this->getJson("/v1/{$module}/export?format=csv");
+            $response = $this->getJson("/api/v1/{$module}/export?format=csv");
             $response->assertStatus(200)->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         }
     }
@@ -43,23 +46,33 @@ class ExportTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->getJson('/v1/products/export?format=csv&is_active=true');
+        $response = $this->getJson('/api/v1/products/export?format=csv&is_active=true');
         $response->assertStatus(200);
-        $data = $response->getContent();
+        $data = $response->streamedContent();
         $this->assertStringContainsString('TEST001', $data);
         $this->assertStringContainsString('Test Product', $data);
 
-        $response2 = $this->getJson('/v1/products/export?format=csv&is_active=false');
+        $response2 = $this->getJson('/api/v1/products/export?format=csv&is_active=false');
         $response2->assertStatus(200);
-        $data2 = $response2->getContent();
+        $data2 = $response2->streamedContent();
         $this->assertStringNotContainsString('TEST001', $data2);
     }
 
     public function test_permission_403_without_export_slug(): void
     {
+        // The owner in setUp() holds every slug, so the negative case needs a role that
+        // does not: `cashier` has none of the *.export permissions.
+        $cashier = User::create([
+            'business_id' => $this->owner->business_id, 'branch_id' => $this->owner->branch_id,
+            'name' => 'Cashier', 'email' => 'cashier@example.test',
+            'password' => 'password123', 'status' => 'active',
+        ]);
+        $cashier->assignRole('cashier');
+
+        Sanctum::actingAs($cashier->fresh('roles'));
+
         foreach (['products', 'inventory', 'sales', 'purchases', 'customers', 'suppliers', 'reports', 'accounting'] as $module) {
-            $response = $this->getJson("/v1/{$module}/export?format=csv");
-            $response->assertForbidden();
+            $this->getJson("/api/v1/{$module}/export?format=csv")->assertForbidden();
         }
     }
 }

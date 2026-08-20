@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Services\Billing\StripeService;
@@ -54,7 +55,7 @@ class CustomerPortalDataController extends Controller
 
         abort_if(! $saleModel, 404);
         abort_if($saleModel->customer_id !== $customer->id, 403);
-        abort_if($saleModel->status !== 'completed', 404);
+        abort_if($saleModel->status !== SaleStatus::Completed, 404);
 
         $saleModel->load('items');
 
@@ -88,7 +89,7 @@ class CustomerPortalDataController extends Controller
 
         abort_if(! $saleModel, 404);
         abort_if($saleModel->customer_id !== $customer->id, 403);
-        abort_if($saleModel->status !== 'completed', 404);
+        abort_if($saleModel->status !== SaleStatus::Completed, 404);
         abort_if($saleModel->due_amount <= 0, 422, 'This invoice has no outstanding balance.');
 
         $stripe = app(StripeService::class);

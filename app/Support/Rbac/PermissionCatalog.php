@@ -19,6 +19,11 @@ class PermissionCatalog
         // discount, a price override or a void at the till (see ApprovalService).
         'pos' => ['view', 'create', 'refund', 'discount', 'price_override', 'approve'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
+        // Restaurant vertical: the dining-room floor plan. `update` is the one a
+        // cashier uses constantly — seating a party, clearing a table.
+        'tables' => ['view', 'create', 'update', 'delete'],
+        // Delivery vertical: dispatching an order and tracking it to the door.
+        'deliveries' => ['view', 'create', 'update'],
         'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export', 'edit', 'return'],
         'customers' => ['view', 'create', 'update', 'delete', 'export'],
         'suppliers' => ['view', 'create', 'update', 'delete', 'export'],
@@ -39,7 +44,12 @@ class PermissionCatalog
     ];
 
     /**
-     * @return array<int, array{slug:string, name:string, module:string, action:string}>
+     * The flattened catalogue. `slug` is the machine key stored in `permissions.name`
+     * (spatie keys everything off `name`); `title` is the human label stored in
+     * `permissions.title`. `name` is kept as an alias of `title` so the shape stays
+     * backwards compatible for older callers.
+     *
+     * @return array<int, array{slug:string, title:string, name:string, module:string, action:string}>
      */
     public static function all(): array
     {
@@ -47,9 +57,12 @@ class PermissionCatalog
 
         foreach (self::MATRIX as $module => $actions) {
             foreach ($actions as $action) {
+                $title = ucfirst(str_replace('_', ' ', $action)).' '.ucfirst(str_replace('-', ' ', $module));
+
                 $permissions[] = [
                     'slug' => "{$module}.{$action}",
-                    'name' => ucfirst($action).' '.ucfirst($module),
+                    'title' => $title,
+                    'name' => $title,
                     'module' => $module,
                     'action' => $action,
                 ];
@@ -76,10 +89,18 @@ class PermissionCatalog
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
                 'reports.view', 'reports.export', 'shifts.view', 'shifts.manage',
                 'stocktakes.view', 'stocktakes.create', 'stocktakes.update',
+                // Runs the room and the dispatch board; tearing down the floor plan
+                // itself (tables.delete) stays with the owner/admin.
+                'tables.view', 'tables.create', 'tables.update',
+                'deliveries.view', 'deliveries.create', 'deliveries.update',
             ]],
             'cashier' => ['name' => 'Cashier', 'permissions' => [
                 'dashboard.view', 'products.view', 'pos.view', 'pos.create',
                 'sales.view', 'customers.view', 'customers.create', 'shifts.view',
+                // Seats and clears tables and rings up delivery orders, but does not
+                // redraw the floor plan or re-dispatch someone else's run.
+                'tables.view', 'tables.update',
+                'deliveries.view', 'deliveries.create',
             ]],
             'accountant' => ['name' => 'Accountant', 'permissions' => [
                 'dashboard.view', 'accounting.view', 'accounting.create', 'accounting.approve',

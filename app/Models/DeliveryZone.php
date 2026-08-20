@@ -15,8 +15,17 @@ class DeliveryZone extends Model
         'tenant_id', 'name', 'description', 'delivery_fee', 'active', 'sort_order',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'delivery_fee' => 'decimal:2',
+            'active' => 'boolean',
+            'sort_order' => 'integer',
+        ];
+    }
+
     public function deliveries(): HasMany
     {
-        return $this->hasMany(Delivery::class);
+        return $this->hasMany(Delivery::class, 'zone_id');
     }
 }

@@ -3,57 +3,48 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\AssignDeliveryRequest;
+use App\Http\Requests\Sales\UpdateDeliveryStatusRequest;
 use App\Http\Resources\DeliveryResource;
 use App\Models\Delivery;
 use App\Models\Sale;
 use App\Services\Delivery\DeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DeliveryController extends Controller
 {
-    protected $service;
+    public function __construct(protected DeliveryService $service) {}
 
-    public function __construct(DeliveryService $service)
+    public function assign(AssignDeliveryRequest $request, Sale $sale): JsonResponse
     {
-        $this->service = $service;
+        $sale = $this->service->assignDelivery($sale, (string) $request->validated('zone_id'));
+
+        return (new DeliveryResource($sale->delivery))->response()->setStatusCode(201);
     }
 
-    public function assign(Request $request, Sale $sale): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $zoneId = $request->input('zone_id');
+        $deliveries = Delivery::query()
+            ->with(['sale', 'zone'])
+            ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
+            ->when($request->query('zone_id'), fn ($q, $zoneId) => $q->where('zone_id', $zoneId))
+            ->latest('id')
+            ->paginate($request->integer('per_page', 20));
 
-        $sale = $this->service->assignDelivery($sale, $zoneId);
-
-        return new DeliveryResource($sale->delivery);
+        return DeliveryResource::collection($deliveries);
     }
 
-    public function index(Request $request): JsonResponse
-    {
-        $query = Delivery::query();
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('zone_id')) {
-            $query->where('zone_id', $request->zone_id);
-        }
-
-        $deliveries = $query->with(['sale', 'zone'])->latest('id')->paginate(20);
-
-        return new DeliveryResourceCollection($deliveries);
-    }
-
-    public function show(Request $request, Delivery $delivery): JsonResponse
+    public function show(Delivery $delivery): DeliveryResource
     {
         return new DeliveryResource($delivery->load('sale', 'zone'));
     }
 
-    public function updateStatus(Request $request, int $deliveryId): JsonResponse
+    public function updateStatus(UpdateDeliveryStatusRequest $request, Delivery $delivery): DeliveryResource
     {
-        $delivery = $this->service->updateStatus($deliveryId, $request->input('status'));
-
-        return new DeliveryResource($delivery);
+        return new DeliveryResource(
+            $this->service->updateStatus($delivery, $request->validated('status')),
+        );
     }
 }

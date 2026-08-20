@@ -13,7 +13,7 @@ class SupplierPayment extends Model
     use Auditable, BelongsToTenant, HasUuids;
 
     protected $fillable = [
-        'tenant_id', 'supplier_id', 'amount', 'method', 'reference', 'paid_at', 'notes', 'id',
+        'tenant_id', 'supplier_id', 'amount', 'method', 'reference', 'paid_at', 'notes',
     ];
 
     protected function casts(): array
@@ -21,7 +21,6 @@ class SupplierPayment extends Model
         return [
             'amount' => 'decimal:2',
             'paid_at' => 'date',
-            'is_active' => 'boolean',
         ];
     }
 

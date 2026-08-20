@@ -17,6 +17,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
@@ -46,6 +47,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // Platform super admins bypass every ability. Doing it as a Gate::before hook
+        // (spatie's recommended pattern) rather than as a role row means policies,
+        // `$user->can()` and spatie's own gate check all agree with
+        // `User::hasPermission()`, and no super admin ever needs a tenant-scoped role.
+        //
+        // Returning null — not false — for everyone else is load bearing: a `before`
+        // callback that returns false short circuits the gate and would deny ordinary
+        // users everything, tenant scoping included.
+        Gate::before(fn ($user) => ($user->is_super_admin ?? false) ? true : null);
 
         Product::observe(ProductObserver::class);
         ProductVariant::observe(ProductVariantObserver::class);

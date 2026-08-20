@@ -3,50 +3,41 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\ForecastRequest;
+use App\Models\Product;
 use App\Services\Analytics\ForecastService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
+/**
+ * Demand forecasts behind the reorder suggestions. Reads only; the arithmetic
+ * lives in {@see ForecastService}.
+ */
 class ForecastController extends Controller
 {
-    protected ForecastService $forecast;
+    /** How many products the unfiltered call forecasts. */
+    private const DEFAULT_LIMIT = 10;
 
-    public function __construct(ForecastService $forecast)
+    public function __construct(private readonly ForecastService $forecast) {}
+
+    public function index(ForecastRequest $request): JsonResponse
     {
-        $this->forecast = $forecast;
-    }
+        $ids = $request->productIds();
 
-    public function index(Request $request): JsonResponse
-    {
-        $productId = $request->input('product_id');
-
-        if ($productId) {
-            $forecast = $this->forecast->forecastProduct($productId);
-
-            return response()->json(['data' => [$forecast]]);
+        if ($ids === []) {
+            // Product ids are UUIDs, so they can only come from a real lookup —
+            // never from casting the query string to an integer.
+            $ids = Product::query()
+                ->where('is_active', true)
+                ->whereNotNull('avg_daily_sales')
+                ->take(self::DEFAULT_LIMIT)
+                ->pluck('id')
+                ->all();
         }
 
-        $productIds = $request->input('product_ids');
-        if ($productIds) {
-            $ids = array_map('intval', explode(',', $productIds));
-            $forecasts = [];
-            foreach ($ids as $id) {
-                $forecasts = array_merge($forecasts, $this->forecast->forecastProduct($id));
-            }
-
-            return response()->json(['data' => $forecasts]);
-        }
-
-        $products = Product::where('is_active', true)
-            ->whereNotNull('avg_daily_sales')
-            ->take(10)
-            ->get();
-
-        $forecasts = [];
-        foreach ($products as $product) {
-            $forecast = $this->forecast->forecastProduct($product->id);
-            $forecasts = array_merge($forecasts, [$forecast]);
-        }
+        $forecasts = array_map(
+            fn (string $id): array => $this->forecast->forecastProduct($id),
+            $ids,
+        );
 
         return response()->json(['data' => $forecasts]);
     }

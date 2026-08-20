@@ -16,6 +16,7 @@ use App\Services\Audit\AuditLogService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -140,10 +141,13 @@ class SuperAdminController extends Controller
 
         $admin = $request->user();
 
-        // Find the owner of this tenant
-        $owner = User::withoutTenancy()->where('tenant_id', $tenant->id)
-            ->whereHas('roles', fn ($q) => $q->withoutGlobalScope(TenantScope::class)->where('slug', 'owner'))
-            ->firstOrFail();
+        // Find the owner of this tenant. The `roles` relation is scoped to spatie's
+        // current team, and a super admin has no tenant of their own bound — so borrow
+        // the target tenant's context for the lookup.
+        $owner = app(TenantContext::class)->runAs($tenant->id, fn () => User::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->whereHas('roles', fn ($q) => $q->withoutGlobalScope(TenantScope::class)->where('name', 'owner'))
+            ->firstOrFail());
 
         // Issue a short-lived, narrowly-scoped token — 30 minutes, impersonate-only ability.
         $expiresAt = now()->addMinutes(self::IMPERSONATION_MINUTES);

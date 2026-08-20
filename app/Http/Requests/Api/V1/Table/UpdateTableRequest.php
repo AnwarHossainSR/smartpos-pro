@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Table;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTableRequest extends FormRequest
 {
@@ -13,13 +14,16 @@ class UpdateTableRequest extends FormRequest
 
     public function rules(): array
     {
+        $tenantId = $this->user()?->tenant_id;
+
         return [
-            'name' => 'sometimes|required|string|max:255',
-            'area' => 'sometimes|nullable|string|max:255',
-            'seats' => 'sometimes|required|integer|min:1',
-            'status' => 'sometimes|required|in:available,occupied,reserved',
-            'x' => 'sometimes|nullable|numeric',
-            'y' => 'sometimes|nullable|numeric',
+            'branch_id' => ['sometimes', 'nullable', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'area' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'seats' => ['sometimes', 'required', 'integer', 'min:1'],
+            'status' => ['sometimes', 'required', Rule::in(['available', 'occupied', 'reserved'])],
+            'x' => ['sometimes', 'nullable', 'numeric'],
+            'y' => ['sometimes', 'nullable', 'numeric'],
         ];
     }
 }

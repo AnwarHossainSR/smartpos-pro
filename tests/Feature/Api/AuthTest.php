@@ -5,11 +5,13 @@ namespace Tests\Feature\Api;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Tests\Support\CreatesTenants;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesTenants, RefreshDatabase;
 
     public function test_registration_provisions_a_tenant_business_and_owner(): void
     {
@@ -55,5 +57,24 @@ class AuthTest extends TestCase
     public function test_me_requires_authentication(): void
     {
         $this->getJson('/api/v1/auth/me')->assertUnauthorized();
+    }
+
+    /**
+     * The frontend's `can()` escalates on `is_super_admin` and reads its allow-list
+     * from `permissions[]`, so both keys are part of the /auth/me contract rather
+     * than incidental output — dropping either silently blanks the whole UI.
+     */
+    public function test_me_returns_the_identity_fields_the_frontend_gates_on(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $response = $this->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonStructure(['data' => ['id', 'email', 'is_super_admin', 'roles', 'permissions']]);
+
+        $this->assertFalse($response->json('data.is_super_admin'));
+        $this->assertSame(['owner'], $response->json('data.roles'));
+        $this->assertContains('tables.view', $response->json('data.permissions'));
     }
 }

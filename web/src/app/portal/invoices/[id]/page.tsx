@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/ui/logo";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
-import { api, ApiError } from "@/lib/api";
+import { portalFetch, usePortalToken } from "@/lib/portal";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface InvoiceItem {
@@ -34,21 +34,6 @@ interface InvoiceDetail {
   items: InvoiceItem[];
 }
 
-function portalFetch<T>(path: string): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("portal_token") : null;
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}${path}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-  }).then(async (res) => {
-    if (res.status === 401) {
-      window.location.href = "/portal";
-      throw new Error("Unauthorized");
-    }
-    const data = res.status === 204 ? null : await res.json();
-    if (!res.ok) throw new Error(data?.message ?? "Request failed");
-    return data as T;
-  });
-}
-
 function statusBadge(status: string) {
   switch (status) {
     case "paid": return <Badge tone="success">Paid</Badge>;
@@ -62,13 +47,12 @@ export default function PortalInvoiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const [ready, setReady] = useState(false);
+  const token = usePortalToken();
+  const ready = !!token;
 
   useEffect(() => {
-    const t = localStorage.getItem("portal_token");
-    if (!t) { router.replace("/portal"); return; }
-    setReady(true);
-  }, [router]);
+    if (!token) router.replace("/portal");
+  }, [token, router]);
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: ["portal", "invoice", id],

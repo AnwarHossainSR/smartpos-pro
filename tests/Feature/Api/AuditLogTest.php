@@ -55,7 +55,7 @@ class AuditLogTest extends TestCase
     public function test_a_role_change_produces_a_queryable_audit_row(): void
     {
         $owner = $this->createTenant();
-        $role = Role::where('slug', 'cashier')->firstOrFail();
+        $role = Role::where('name', 'cashier')->firstOrFail();
 
         Sanctum::actingAs($owner);
         $this->putJson("/api/v1/roles/{$role->id}", [

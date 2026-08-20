@@ -16,22 +16,19 @@ class Delivery extends Model
         'tenant_id', 'sale_id', 'zone_id', 'driver_id', 'status', 'tracking_token',
     ];
 
-    protected $casts = [
-        'status' => 'string',
-    ];
-
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
 
+    /** Column is `zone_id`, not the `delivery_zone_id` Eloquent would infer. */
     public function zone(): BelongsTo
     {
-        return $this->belongsTo(DeliveryZone::class);
+        return $this->belongsTo(DeliveryZone::class, 'zone_id');
     }
 
     public function driver(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }

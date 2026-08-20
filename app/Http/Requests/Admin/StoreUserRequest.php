@@ -24,7 +24,7 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'branch_id' => ['nullable', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
             'roles' => ['nullable', 'array'],
-            'roles.*' => [Rule::exists('roles', 'slug')->where('tenant_id', $tenantId)],
+            'roles.*' => [Rule::exists('roles', 'name')->where('tenant_id', $tenantId)],
         ];
     }
 }

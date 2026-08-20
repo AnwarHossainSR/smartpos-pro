@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\EmailTemplateController;
 use App\Http\Controllers\Api\V1\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InventoryController;
@@ -41,11 +42,12 @@ use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StocktakeController;
 use App\Http\Controllers\Api\V1\StockTransferController;
-use App\Http\Controllers\Api\V1\TableController;
+use App\Http\Controllers\Api\V1\StripeController;
 use App\Http\Controllers\Api\V1\StripeWebhookController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TableController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
 use App\Http\Controllers\Api\V1\TaxRateController;
@@ -56,6 +58,7 @@ use App\Http\Controllers\Api\V1\UnitController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Api\V1\ZReportController;
 
 Route::prefix('v1')->group(function () {
     // ---- Public ----
@@ -73,12 +76,12 @@ Route::prefix('v1')->group(function () {
     Route::get('orders/{token}', [OrderStatusController::class, 'show'])
         ->middleware('throttle:30,1')->name('orders.status');
 
-    // Customer portal â€” public auth
+    // Customer portal — public auth
     Route::post('portal/magic-link', [CustomerPortalController::class, 'magicLink'])
         ->middleware('throttle:login');
     Route::get('portal/verify/{token}', [CustomerPortalController::class, 'verify']);
 
-    // Customer portal â€” authenticated
+    // Customer portal — authenticated
     Route::middleware(['auth:portal'])->prefix('portal')->group(function () {
         Route::get('me', [CustomerPortalDataController::class, 'me']);
         Route::get('invoices', [CustomerPortalDataController::class, 'invoices']);
@@ -89,7 +92,7 @@ Route::prefix('v1')->group(function () {
     // ---- Authenticated + tenant-scoped ----
     Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
-        // Per-user UI preferences (theme). No `permission:` guard â€” it only ever writes the
+        // Per-user UI preferences (theme). No `permission:` guard — it only ever writes the
         // caller's own row, so an admin permission would be wrong here (see the controller).
         Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -106,7 +109,7 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
         Route::get('auth/lockout-status', [AuthController::class, 'lockoutStatus']);
 
-        // Supervisor approval PIN. No `permission:` guard â€” these only ever touch the
+        // Supervisor approval PIN. No `permission:` guard — these only ever touch the
         // caller's own row; revoking someone else's is the `users.update` route below.
         Route::put('auth/approval-pin', [ApprovalPinController::class, 'update'])->middleware('throttle:approval-pin');
         Route::delete('auth/approval-pin', [ApprovalPinController::class, 'destroy'])->middleware('throttle:approval-pin');
@@ -116,39 +119,47 @@ Route::prefix('v1')->group(function () {
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
 
-        // Organization â€” branches
+        // CSV/PDF exports. Declared *before* the resource routes below: `{module}/export`
+        // would otherwise be shadowed by `products/{product}`, `sales/{sale}` and friends,
+        // which match first and then 404 in model binding. The per-module `<module>.export`
+        // permission is enforced inside ExportController — a static middleware alias cannot
+        // see the module segment.
+        Route::get('{module}/export', [ExportController::class, 'index'])
+            ->where('module', 'products|inventory|sales|purchases|customers|suppliers|reports|accounting');
+
+        // Organization — branches
         Route::get('branches', [BranchController::class, 'index'])->middleware('permission:branches.view');
         Route::get('branches/{branch}', [BranchController::class, 'show'])->middleware('permission:branches.view');
         Route::post('branches', [BranchController::class, 'store'])->middleware('permission:branches.create');
         Route::put('branches/{branch}', [BranchController::class, 'update'])->middleware('permission:branches.update');
         Route::delete('branches/{branch}', [BranchController::class, 'destroy'])->middleware('permission:branches.delete');
 
-        // Organization â€” warehouses
+        // Organization — warehouses
         Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('permission:warehouses.view');
         Route::get('warehouses/{warehouse}', [WarehouseController::class, 'show'])->middleware('permission:warehouses.view');
         Route::post('warehouses', [WarehouseController::class, 'store'])->middleware('permission:warehouses.create');
         Route::put('warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:warehouses.update');
         Route::delete('warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:warehouses.delete');
 
-        // Catalog â€” categories
+        // Catalog — categories
         Route::get('categories', [CategoryController::class, 'index'])->middleware('permission:products.view');
         Route::post('categories', [CategoryController::class, 'store'])->middleware('permission:products.create');
         Route::put('categories/{category}', [CategoryController::class, 'update'])->middleware('permission:products.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->middleware('permission:products.delete');
 
-        // Catalog â€” brands
+        // Catalog — brands
         Route::get('brands', [BrandController::class, 'index'])->middleware('permission:products.view');
         Route::post('brands', [BrandController::class, 'store'])->middleware('permission:products.create');
         Route::put('brands/{brand}', [BrandController::class, 'update'])->middleware('permission:products.update');
         Route::delete('brands/{brand}', [BrandController::class, 'destroy'])->middleware('permission:products.delete');
 
-        // Catalog â€” units
+        // Catalog — units
         Route::get('units', [UnitController::class, 'index'])->middleware('permission:products.view');
         Route::post('units', [UnitController::class, 'store'])->middleware('permission:products.create');
         Route::put('units/{unit}', [UnitController::class, 'update'])->middleware('permission:products.update');
         Route::delete('units/{unit}', [UnitController::class, 'destroy'])->middleware('permission:products.delete');
 
-        // Catalog â€” products
+        // Catalog — products
         Route::get('products', [ProductController::class, 'index'])->middleware('permission:products.view');
         Route::get('products/import-template', [ProductController::class, 'template'])->middleware('permission:products.view');
         Route::post('products/import', [ProductController::class, 'import'])->middleware('permission:products.create');
@@ -208,29 +219,31 @@ Route::prefix('v1')->group(function () {
         // Sales / POS
         Route::get('sales', [SaleController::class, 'index'])->middleware('permission:sales.view');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view');
-
-        // T125 – Dining tables & floor plan
-        Route::get('tables', [TableController::class, 'index'])->middleware('permission:tables.view');
-        Route::post('tables', [TableController::class, 'store'])->middleware('permission:tables.create');
-        Route::put('tables/{table}', [TableController::class, 'update'])->middleware('permission:tables.update');
         Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales', [SaleController::class, 'store'])->middleware(['permission:pos.create', 'idempotency']);
-        Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])
-            ->middleware('permission:deliveries.create');
+        Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
+        Route::post('sales/{sale}/email-status-link', [SaleController::class, 'emailStatusLink'])->middleware(['permission:sales.view', 'throttle:reports']);
+        Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
+        Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
 
-        Route::get('deliveries', [DeliveryController::class, 'index'])
-            ->middleware('permission:deliveries.view');
+        // T125 — Dining tables & floor plan
+        Route::get('tables', [TableController::class, 'index'])->middleware('permission:tables.view');
+        Route::post('tables', [TableController::class, 'store'])->middleware('permission:tables.create');
+        Route::get('tables/{table}', [TableController::class, 'show'])->middleware('permission:tables.view');
+        Route::put('tables/{table}', [TableController::class, 'update'])->middleware('permission:tables.update');
+        Route::delete('tables/{table}', [TableController::class, 'destroy'])->middleware('permission:tables.delete');
 
-        Route::get('deliveries/{delivery}', [DeliveryController::class, 'show']);
+        // T123 — Deliveries
+        Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
+        Route::get('deliveries', [DeliveryController::class, 'index'])->middleware('permission:deliveries.view');
+        Route::get('deliveries/{delivery}', [DeliveryController::class, 'show'])->middleware('permission:deliveries.view');
+        Route::put('deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus'])->middleware('permission:deliveries.update');
 
-        Route::put('deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus'])
-            ->middleware('permission:deliveries.update');
-
-        // POS â€” one request for everything the terminal needs to open a register.
+        // POS — one request for everything the terminal needs to open a register.
         Route::get('pos/bootstrap', [PosController::class, 'bootstrap'])->middleware('permission:pos.view');
 
         // Supervisor challenge: verify a manager's PIN and mint a single-use approval
-        // for an over-limit discount, a price override or a void. Throttled hard â€” a
+        // for an over-limit discount, a price override or a void. Throttled hard — a
         // 4-digit PIN is guessable if you are allowed to guess quickly.
         Route::post('pos/approvals', [PosApprovalController::class, 'store'])
             ->middleware(['permission:pos.create', 'throttle:approval-pin']);
@@ -249,19 +262,21 @@ Route::prefix('v1')->group(function () {
             Route::get('low-stock', [ReportController::class, 'lowStock']);
             Route::get('dues', [ReportController::class, 'dues']);
             Route::get('payables-aging', [ReportController::class, 'payablesAging']);
-            Route::get('z-report', [ReportController::class, 'zReport']);
-            Route::get('z-report/pdf', [ReportController::class, 'zReportPdf']);
+            // ZReportController is the layered implementation (ZReportRequest scopes
+            // `branch_id` to the caller's tenant); ReportController's inline copy did not.
+            Route::get('z-report', [ZReportController::class, 'show']);
+            Route::get('z-report/pdf', [ZReportController::class, 'pdf']);
             Route::get('profit-loss', [ReportController::class, 'profitLoss']);
             Route::get('balance-sheet', [ReportController::class, 'balanceSheet']);
         });
 
-        // Reports â€” tax (output vs input tax, VAT/GST return shape)
+        // Reports — tax (output vs input tax, VAT/GST return shape)
         Route::middleware(['permission:taxes.view', 'throttle:reports'])->prefix('reports')->group(function () {
             Route::get('tax-summary', [TaxReportController::class, 'summary']);
             Route::get('tax-return', [TaxReportController::class, 'taxReturn']);
         });
 
-        // Tax â€” rates, groups (component sets), zones (jurisdictions), and the
+        // Tax — rates, groups (component sets), zones (jurisdictions), and the
         // read-only country profile catalogue a business selects from.
         Route::get('tax-rates', [TaxRateController::class, 'index'])->middleware('permission:taxes.view');
         Route::post('tax-rates', [TaxRateController::class, 'store'])->middleware('permission:taxes.manage');
@@ -281,12 +296,12 @@ Route::prefix('v1')->group(function () {
         Route::get('tax-profiles', [TaxProfileController::class, 'index'])->middleware('permission:taxes.view');
         Route::get('tax-profiles/{taxProfile}', [TaxProfileController::class, 'show'])->middleware('permission:taxes.view');
 
-        // Accounting â€” chart of accounts
+        // Accounting — chart of accounts
         Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');
         Route::post('accounts', [AccountController::class, 'store'])->middleware('permission:accounting.create');
         Route::put('accounts/{account}', [AccountController::class, 'update'])->middleware('permission:accounting.update');
 
-        // Accounting â€” double-entry journals & reports
+        // Accounting — double-entry journals & reports
         Route::get('journals', [JournalController::class, 'index'])->middleware('permission:accounting.view');
         Route::get('journals/trial-balance', [JournalController::class, 'trialBalance'])->middleware('permission:accounting.view');
         Route::get('journals/{journal}', [JournalController::class, 'show'])->middleware('permission:accounting.view');
@@ -303,7 +318,7 @@ Route::prefix('v1')->group(function () {
         Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
         Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
 
-        // Team â€” users
+        // Team — users
         Route::get('users', [UserController::class, 'index'])->middleware('permission:users.view');
         Route::get('users/{user}', [UserController::class, 'show'])->middleware('permission:users.view');
         Route::post('users', [UserController::class, 'store'])->middleware('permission:users.create');
@@ -318,7 +333,7 @@ Route::prefix('v1')->group(function () {
         Route::get('shifts', [ShiftController::class, 'index'])->middleware('permission:shifts.view');
         Route::get('reports/shifts', [ShiftController::class, 'report'])->middleware(['permission:reports.view', 'throttle:reports']);
 
-        // Team â€” roles & permissions
+        // Team — roles & permissions
         Route::get('permissions', [RoleController::class, 'permissions'])->middleware('permission:roles.view');
         Route::get('roles', [RoleController::class, 'index'])->middleware('permission:roles.view');
         Route::post('roles', [RoleController::class, 'store'])->middleware('permission:roles.create');
@@ -331,10 +346,10 @@ Route::prefix('v1')->group(function () {
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
 
-        // Audit trail (immutable â€” read-only)
+        // Audit trail (immutable — read-only)
         Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
-        // Settings â€” business profile
+        // Settings — business profile
         // ---- Email templates ----
         Route::get('email-templates', [EmailTemplateController::class, 'index'])->middleware('permission:settings.view');
         Route::get('email-templates/{key}', [EmailTemplateController::class, 'show'])->middleware('permission:settings.view');
@@ -392,7 +407,7 @@ Route::prefix('v1')->group(function () {
         Route::get('subscription/usage', [SubscriptionController::class, 'usage'])->middleware(['permission:subscriptions.view', 'verified']);
         Route::post('subscription/checkout', [SubscriptionController::class, 'checkout'])->middleware(['permission:subscriptions.manage', 'verified']);
 
-        // T117 â€” Stocktakes
+        // T117 — Stocktakes
         Route::get('stocktakes', [StocktakeController::class, 'index'])->middleware('permission:stocktakes.view');
         Route::post('stocktakes', [StocktakeController::class, 'store'])->middleware('permission:stocktakes.create');
         Route::get('stocktakes/{stocktake}', [StocktakeController::class, 'show'])->middleware('permission:stocktakes.view');
@@ -401,7 +416,7 @@ Route::prefix('v1')->group(function () {
         Route::post('stocktakes/{stocktake}/complete', [StocktakeController::class, 'complete'])->middleware('permission:stocktakes.update');
         Route::post('stocktakes/{stocktake}/cancel', [StocktakeController::class, 'cancel'])->middleware('permission:stocktakes.update');
 
-        // T28 â€” Stock transfers
+        // T28 — Stock transfers
         Route::get('stock-transfers', [StockTransferController::class, 'index'])->middleware('permission:inventory.view');
         Route::post('stock-transfers', [StockTransferController::class, 'store'])->middleware('permission:inventory.adjust');
         Route::get('stock-transfers/{stockTransfer}', [StockTransferController::class, 'show'])->middleware('permission:inventory.view');
@@ -409,43 +424,37 @@ Route::prefix('v1')->group(function () {
         Route::post('stock-transfers/{stockTransfer}/receive', [StockTransferController::class, 'receive'])->middleware('permission:inventory.adjust');
         Route::post('stock-transfers/{stockTransfer}/cancel', [StockTransferController::class, 'cancel'])->middleware('permission:inventory.adjust');
 
-        // T29 â€” Variants, batches, serials
+        // T29 — Variants, batches, serials
         Route::get('products/{product}/variants', [ProductVariantController::class, 'variants'])->middleware('permission:inventory.view');
         Route::get('stock/batches', [ProductVariantController::class, 'batches'])->middleware('permission:inventory.view');
         Route::post('stock/batches', [ProductVariantController::class, 'storeBatch'])->middleware('permission:inventory.adjust');
         Route::get('stock/serials', [ProductVariantController::class, 'serials'])->middleware('permission:inventory.view');
         Route::post('stock/serials', [ProductVariantController::class, 'storeSerial'])->middleware('permission:inventory.adjust');
 
-        // T118 â€” Reorder suggestions
+        // T118 — Reorder suggestions
         Route::get('reorder-suggestions', [ReorderSuggestionController::class, 'index'])->middleware('permission:reorder-suggestions.view');
-        Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('forecasts', [ForecastController::class, 'index']);
-        });
+        Route::get('forecasts', [ForecastController::class, 'index'])
+            ->middleware('permission:reorder-suggestions.view');
         Route::post('reorder-suggestions/create-draft-po', [ReorderSuggestionController::class, 'createDraftPo'])->middleware('permission:reorder-suggestions.create');
 
-        // T30 â€” Quotations
+        // T30 — Quotations
         Route::get('quotations', [QuotationController::class, 'index'])->middleware('permission:sales.view');
         Route::post('quotations', [QuotationController::class, 'store'])->middleware('permission:sales.create');
         Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->middleware('permission:sales.view');
         Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('permission:sales.update');
         Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy'])->middleware('permission:sales.delete');
         Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convert'])->middleware('permission:pos.create');
-
-        // Export endpoints
-        Route::get('{module}/export', [ExportController::class, 'index'])
-            ->where('module', 'products|inventory|sales|purchases|customers|suppliers|reports|accounting')
-            ->middleware('permission.export');
     });
 
     // Called from *inside* an impersonated session (the tenant owner's own token, not a
-    // super-admin token) â€” deliberately outside the super-admin-gated group below.
+    // super-admin token) — deliberately outside the super-admin-gated group below.
     Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
         ->middleware(['auth:sanctum']);
 
-    // Admin â€” cache management
+    // Admin — cache management
     Route::get('cache/flush', [CacheController::class, 'flush'])->middleware('permission:super_admin.view');
 
-    // T31-T33 â€” Super-admin (separate guard, no tenant scope)
+    // T31-T33 — Super-admin (separate guard, no tenant scope)
     Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
         Route::get('tenants', [SuperAdminController::class, 'tenants']);
         Route::get('tenants/{tenant}', [SuperAdminController::class, 'showTenant']);

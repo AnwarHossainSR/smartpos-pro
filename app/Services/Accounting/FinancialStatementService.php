@@ -3,12 +3,25 @@
 namespace App\Services\Accounting;
 
 use App\Domain\Enums\AccountType;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class FinancialStatementService
 {
+    public function __construct(private readonly TenantContext $tenant) {}
+
+    /**
+     * These two statements are built with the query builder, not Eloquent, so the
+     * TenantScope global scope does not apply — the tenant filter has to be explicit
+     * or one business's journal would be aggregated into another's P&L.
+     */
+    private function tenantId(): ?string
+    {
+        return $this->tenant->id();
+    }
+
     public function profitLoss(string $from, string $to): array
     {
         $fromDate = Carbon::parse($from)->startOfDay();
@@ -19,6 +32,7 @@ class FinancialStatementService
             ->join('accounts', 'accounts.id', '=', 'journal_lines.account_id')
             ->where('journal_entries.entry_date', '>=', $fromDate)
             ->where('journal_entries.entry_date', '<=', $toDate)
+            ->where('journal_lines.tenant_id', $this->tenantId())
             ->select(
                 'accounts.id as account_id',
                 'accounts.name as account_name',
@@ -62,6 +76,7 @@ class FinancialStatementService
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_lines.account_id')
             ->where('journal_entries.entry_date', '<=', $asOfDate)
+            ->where('journal_lines.tenant_id', $this->tenantId())
             ->select(
                 'accounts.id as account_id',
                 'accounts.name as account_name',

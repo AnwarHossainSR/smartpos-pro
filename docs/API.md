@@ -333,6 +333,11 @@ over-limit discount or a supervised price override returns `403` with
 `code: approval_required` unless the caller holds `pos.approve` or the body carries a
 valid `approval_token`. See *Manager approvals* below.
 
+An optional `table_id` records which dining table the order was rung up on
+(see [Dining tables & floor plan](#dining-tables--floor-plan-t125)). It is accepted on both
+a checkout and a park (`status: "held"`), must belong to the caller's tenant — a table id
+from another business is a `422` — and comes back on the sale as `table_id`.
+
 ```json
 {
   "branch_id": 1,
@@ -590,9 +595,20 @@ All require `reports.view`; all accept `?from=&to=` (and `branch_id` where relev
 | `GET /reports/inventory-valuation` | stock value (qty × avg cost) per warehouse |
 | `GET /reports/low-stock` | products at/below minimum stock level |
 | `GET /reports/dues` | customer receivables & supplier payables |
+| `GET /reports/payables-aging` | supplier payables bucketed by age |
+| `GET /reports/profit-loss` | P&L from the journal, by account section |
+| `GET /reports/balance-sheet` | assets, liabilities, equity and retained earnings |
+| `GET /reports/shifts` | hours worked per user/period with an overtime flag |
 
 `GET /reports/tax-summary` and `GET /reports/tax-return` require `taxes.view` instead (not
 `reports.view`) — see [Tax administration](#tax-administration) below.
+
+### `GET /reports/z-report`
+The end-of-day close for one trading day: headline totals, a payment-method grid, tax by
+component, discounts, the invoice-number range and corrections (voids/returns). `?date=`
+(defaults to today) and an optional `?branch_id=`, which must belong to the caller's tenant.
+`GET /reports/z-report/pdf` returns the same figures as an 80mm receipt-roll PDF —
+streamed inline, or as a download with `?download=1`.
 
 ## Tax administration
 
@@ -945,3 +961,69 @@ Requires `inventory.view`. `?product_id=&warehouse_id=&variant_id=&type=&directi
 paginated, newest first. Returns each movement's `type`, `direction`, `quantity`,
 `quantity_after` (the running balance at that point), `unit_cost`, `reference_type`/
 `reference_id` (e.g. the sale or transfer that caused it), and the acting user.
+
+## Data export
+
+### `GET /{module}/export`
+One endpoint per exportable module: `products`, `inventory`, `sales`, `purchases`,
+`customers`, `suppliers`, `reports` (the journal) and `accounting`. Anything else 404s —
+the module segment is constrained by the route.
+
+`?format=csv` (default) streams `text/csv; charset=utf-8`; `?format=pdf` streams a PDF of
+the same rows.
+
+Authorisation is the per-module `<module>.export` slug — `products.export`,
+`sales.export` and so on — checked inside the controller, because the module is a URL
+segment and a static `permission:` middleware alias cannot see it. A caller without the
+slug gets `403`.
+
+Every other query parameter is the **same filter the module's own index endpoint accepts**
+(`search`, `sort`, and the module's declared filters — e.g. `is_active`, `category_id` for
+products; `status`, `payment_status`, `from`/`to` for sales). An export therefore returns
+exactly what the list the user is looking at would, minus pagination. Unknown parameters
+are ignored rather than rejected.
+
+Exports are tenant-scoped like every other read: a business can only ever export its own
+rows.
+
+## Dining tables & floor plan (T125)
+
+Table layout for food-service tenants. Rows live in `dining_tables`.
+
+| Path | Permission | Notes |
+| --- | --- | --- |
+| `GET /tables` | `tables.view` | all tables, ordered by name; `?branch_id=` and `?status=` filter |
+| `POST /tables` | `tables.create` | `name`, `seats` required; `branch_id`, `area`, `status`, `x`, `y` optional |
+| `GET /tables/{table}` | `tables.view` | one table |
+| `PUT /tables/{table}` | `tables.update` | partial update |
+| `DELETE /tables/{table}` | `tables.delete` | soft delete |
+
+`status` is one of `available`, `occupied`, `reserved` and defaults to `available`.
+`x`/`y` are the table's position on the floor plan. `branch_id` must belong to the caller's
+tenant. Each table exposes `has_active_sale`, driven by `active_sale_id`; `sales.table_id`
+links a sale back to the table it was rung up on.
+
+## Deliveries (T123)
+
+| Path | Permission | Notes |
+| --- | --- | --- |
+| `POST /sales/{sale}/deliveries` | `deliveries.create` | body `{ "zone_id": "<uuid>" }`; `201` with the new delivery |
+| `GET /deliveries` | `deliveries.view` | paginated; `?status=` and `?zone_id=` filter |
+| `GET /deliveries/{delivery}` | `deliveries.view` | one delivery with its sale and zone |
+| `PUT /deliveries/{delivery}/status` | `deliveries.update` | body `{ "status": "…" }` |
+
+`status` is one of `dispatched`, `in-transit`, `completed`, `cancelled`; a new delivery
+starts `dispatched`. A missing `zone_id` is a `422`; a `zone_id` that does not exist —
+or belongs to another tenant — is a `404`. `tracking_token` mirrors the sale's public
+token so a customer can follow the drop without logging in.
+
+## Demand forecasts (T124)
+
+### `GET /forecasts`
+Requires `reorder-suggestions.view`. Projected 30-day demand per product, with a
+confidence score and a `trend` of `up`/`down`/`stable`, computed from the last 90 days of
+completed sales.
+
+`?product_id=<uuid>` forecasts one product; `?product_ids=<uuid>,<uuid>` forecasts several.
+With neither, it returns the first 10 active products that have a recorded average daily
+sales figure. The same figures feed `GET /reorder-suggestions`.

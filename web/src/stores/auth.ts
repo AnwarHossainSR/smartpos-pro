@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ServerTheme } from "@/stores/theme";
+import { splitSlug, type PermissionSlug } from "@/lib/permissions";
 
 export interface AuthUser {
   id: string;
@@ -12,6 +13,8 @@ export interface AuthUser {
   two_factor_enabled?: boolean;
   /** Whether a supervisor approval PIN is set. The PIN itself is never returned. */
   has_approval_pin?: boolean;
+  /** Platform staff. Implicitly holds every permission (mirrors HasRoles::hasPermission). */
+  is_super_admin?: boolean;
   roles?: string[];
   permissions?: string[];
   business_id?: string | null;
@@ -29,7 +32,38 @@ interface AuthState {
   setUser: (user: AuthUser) => void;
   setHydrated: () => void;
   logout: () => void;
-  can: (permission: string) => boolean;
+  can: (permission: PermissionSlug) => boolean;
+  /** True when the user holds at least one of `permissions`; `[]` means "no grant required". */
+  canAny: (permissions: readonly PermissionSlug[]) => boolean;
+  /** True only when the user holds every one of `permissions`. */
+  canAll: (permissions: readonly PermissionSlug[]) => boolean;
+}
+
+/**
+ * Pure permission check, exported so route guards and tests can reason about a user object
+ * without going through the store. Mirrors `App\Support\Concerns\HasRoles::hasPermission()`:
+ *
+ *  - platform super admins hold everything;
+ *  - the tenant `owner` role holds everything within its tenant;
+ *  - otherwise the slug must be in the granted list.
+ *
+ * A bare `*` (and a `<module>.*` wildcard) is honoured too. The catalog's `admin` role is
+ * declared with `'permissions' => '*'` server-side, and while the seeder expands that to
+ * concrete slugs today, accepting the wildcard means a future API that ships it literally
+ * doesn't lock every admin out of their own UI.
+ */
+export function hasPermission(user: AuthUser | null, permission: string): boolean {
+  if (!user) return false;
+  if (user.is_super_admin) return true;
+  if (user.roles?.includes("owner")) return true;
+
+  const granted = user.permissions;
+  if (!granted?.length) return false;
+  if (granted.includes("*")) return true;
+  if (granted.includes(permission)) return true;
+
+  const parts = splitSlug(permission);
+  return parts ? granted.includes(`${parts.module}.*`) : false;
 }
 
 const TOKEN_COOKIE = "smartpos_token";
@@ -75,12 +109,12 @@ export const useAuth = create<AuthState>()(
         writeTokenCookie(null);
         set({ token: null, user: null });
       },
-      can: (permission) => {
-        const user = get().user;
-        if (!user) return false;
-        if (user.roles?.includes("owner")) return true;
-        return user.permissions?.includes(permission) ?? false;
-      },
+      can: (permission) => hasPermission(get().user, permission),
+      canAny: (permissions) =>
+        permissions.length === 0 ||
+        permissions.some((permission) => hasPermission(get().user, permission)),
+      canAll: (permissions) =>
+        permissions.every((permission) => hasPermission(get().user, permission)),
     }),
     {
       name: "smartpos-auth",

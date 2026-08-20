@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { permissionsForPathname } from "@/lib/permissions";
+import { hasPermission, useAuth } from "@/stores/auth";
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
-  Layers, Building2, Mail, Percent, Webhook, ScrollText, Clock, LifeBuoy, Barcode, ShieldCheck,
+  Layers, Building2, Mail, Percent, Webhook, ScrollText, LifeBuoy, Barcode, ShieldCheck,
+  Grid2x2, ClipboardList, AlertTriangle,
 } from "lucide-react";
 
 interface NavItem {
@@ -40,7 +43,9 @@ const items: NavItem[] = [
   { label: "Approval limits", href: "/settings/approvals", icon: ShieldCheck, keywords: "manager pin supervisor discount limit override void approval" },
   { label: "Tax settings", href: "/settings/tax", icon: Percent, keywords: "vat gst tax rate group" },
   { label: "Webhooks", href: "/settings/webhooks", icon: Webhook, keywords: "integration events" },
-  { label: "Data retention", href: "/settings/retention", icon: Clock, keywords: "anonymize gdpr privacy" },
+  { label: "Dining tables", href: "/tables", icon: Grid2x2, keywords: "floor plan restaurant seats table" },
+  { label: "Stocktakes", href: "/stocktakes", icon: ClipboardList, keywords: "count cycle count stock take variance" },
+  { label: "Reorder suggestions", href: "/reorder-suggestions", icon: AlertTriangle, keywords: "restock low stock replenish purchase" },
   { label: "Audit log", href: "/audit-log", icon: ScrollText, keywords: "history changes" },
   { label: "Support", href: "/support", icon: LifeBuoy, keywords: "help ticket" },
   { label: "Tax report", href: "/reports/tax", icon: Percent, keywords: "vat return filing" },
@@ -57,11 +62,23 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [index, setIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // The palette is navigation, so it hides the same destinations the sidebar does — jumping
+  // to a page the route guard will refuse is worse than the command not existing.
+  const user = useAuth((s) => s.user);
+  const allowed = useMemo(
+    () =>
+      items.filter((it) => {
+        const required = permissionsForPathname(it.href);
+        return required.length === 0 || required.some((slug) => hasPermission(user, slug));
+      }),
+    [user],
+  );
+
   const filtered = query
-    ? items.filter((it) =>
+    ? allowed.filter((it) =>
         `${it.label} ${it.keywords ?? ""}`.toLowerCase().includes(query.toLowerCase()),
       )
-    : items;
+    : allowed;
 
   // Reset search + selection when the palette opens, and selection whenever the query
   // changes — adjusted directly during render (React's documented pattern for deriving state

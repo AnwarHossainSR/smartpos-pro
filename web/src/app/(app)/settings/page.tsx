@@ -17,7 +17,7 @@ import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Building2, ChevronRight, Clock, DollarSign, Laptop, Mail, Percent, Printer, Shield, ShieldCheck, Smartphone, Webhook } from "lucide-react";
+import { BookOpen, Building2, ChevronRight, DollarSign, Laptop, Mail, Percent, Printer, Shield, ShieldCheck, Smartphone, Webhook } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -659,22 +659,6 @@ export default function SettingsPage() {
           <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
           <CurrencySettingsCard />
           <PrinterProfilesCard />
-
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                href="/settings/retention"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Clock className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("retention.days")}</p>
-                  <p className="text-xs text-[var(--muted)]">{t("retention.anonymize")}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader><CardTitle>{t("settings.localization")}</CardTitle></CardHeader>

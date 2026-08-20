@@ -5,52 +5,44 @@ namespace App\Services\Delivery;
 use App\Models\Delivery;
 use App\Models\DeliveryZone;
 use App\Models\Sale;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DeliveryService
 {
-    public function assignDelivery(Sale $sale, int $zoneId): Sale
+    public const STATUSES = ['dispatched', 'in-transit', 'completed', 'cancelled'];
+
+    /**
+     * Attach a delivery to a sale. The zone lookup is tenant-scoped by
+     * BelongsToTenant, so a zone belonging to another tenant 404s rather than
+     * leaking across the boundary.
+     */
+    public function assignDelivery(Sale $sale, string $zoneId): Sale
     {
         $zone = DeliveryZone::findOrFail($zoneId);
 
-        $delivery = Delivery::create([
-            'sale_id' => $sale->id,
-            'zone_id' => $zone->id,
-            'status' => 'dispatched',
-            'tracking_token' => $sale->public_token,
-        ]);
+        DB::transaction(function () use ($sale, $zone): void {
+            Delivery::create([
+                'sale_id' => $sale->id,
+                'zone_id' => $zone->id,
+                'status' => 'dispatched',
+                'tracking_token' => $sale->public_token,
+            ]);
+        });
 
-        return $sale->load('delivery');
+        return $sale->load('delivery.zone');
     }
 
-    public function getDriverView(int $deliveryId): array
+    public function updateStatus(Delivery $delivery, string $status): Delivery
     {
-        $delivery = Delivery::with(['sale', 'zone'])->findOrFail($deliveryId);
-
-        return [
-            'id' => $delivery->id,
-            'sale_id' => $delivery->sale_id,
-            'zone_id' => $delivery->zone_id,
-            'zone_name' => $delivery->zone?->name,
-            'delivery_fee' => $delivery->zone?->delivery_fee ?? 0,
-            'status' => $delivery->status,
-            'tracking_token' => $delivery->tracking_token,
-            'created_at' => $delivery->created_at,
-        ];
-    }
-
-    public function updateStatus(int $deliveryId, string $status): Delivery
-    {
-        $delivery = Delivery::findOrFail($deliveryId);
-
-        $validStatuses = ['dispatched', 'in-transit', 'completed', 'cancelled'];
-
-        if (! in_array($status, $validStatuses)) {
-            throw new \InvalidArgumentException("Invalid status: {$status}");
+        if (! in_array($status, self::STATUSES, true)) {
+            throw ValidationException::withMessages([
+                'status' => ["Invalid delivery status: {$status}."],
+            ]);
         }
 
-        $delivery->status = $status;
-        $delivery->save();
+        $delivery->update(['status' => $status]);
 
-        return $delivery;
+        return $delivery->fresh(['sale', 'zone']);
     }
 }

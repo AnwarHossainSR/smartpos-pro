@@ -24,6 +24,8 @@ final readonly class CreateSaleData
         public array $items,
         public array $payments = [],
         public ?string $customerId = null,
+        /** The dining table this order was rung up on, when the tenant uses a floor plan. */
+        public ?string $tableId = null,
         public SaleStatus $status = SaleStatus::Completed,
         public ?string $note = null,
         public float $discountAmount = 0.0,
@@ -45,6 +47,7 @@ final readonly class CreateSaleData
             items: SaleLineData::collection($data['items']),
             payments: PaymentData::collection($data['payments'] ?? []),
             customerId: $data['customer_id'] ?? null,
+            tableId: ($data['table_id'] ?? null) ?: null,
             status: SaleStatus::coerce($data['status'] ?? null, SaleStatus::Completed),
             note: $data['note'] ?? null,
             discountAmount: round((float) ($data['discount_amount'] ?? 0), 2),

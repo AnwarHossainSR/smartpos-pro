@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Shift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesTenants;
 use Tests\TestCase;
@@ -89,6 +90,10 @@ class ShiftTest extends TestCase
 
     public function test_shifts_report_overtime_flag(): void
     {
+        // Pin the clock: `now()->subHours(9)` lands on the previous day whenever the
+        // suite runs before 09:00, which put the shift outside the reported range.
+        $this->travelTo(Carbon::today()->setTime(18, 0));
+
         $owner = $this->createTenant();
         Sanctum::actingAs($owner);
 

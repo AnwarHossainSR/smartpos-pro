@@ -44,7 +44,7 @@ class SendDailyReportJob implements ShouldQueue
         }
 
         $owner = User::where('tenant_id', $this->tenantId)
-            ->whereHas('roles', fn ($q) => $q->where('slug', 'owner'))
+            ->whereHas('roles', fn ($q) => $q->where('name', 'owner'))
             ->first();
         if (! $owner) {
             return;

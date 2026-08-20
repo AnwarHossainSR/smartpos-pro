@@ -10,6 +10,8 @@ import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
 import { navKeyForPathname } from "@/lib/nav";
+import { permissionsForPathname } from "@/lib/permissions";
+import { RequirePermission } from "@/components/require-permission";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ThemeSync } from "@/components/theme-sync";
@@ -42,6 +44,28 @@ function SuspendedScreen() {
   );
 }
 
+function ProfileUnavailableScreen() {
+  const logout = useAuth((s) => s.logout);
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <ShieldAlert className="h-10 w-10 text-[var(--color-danger)]" />
+      <h1 className="text-lg font-semibold">Could not load your profile</h1>
+      <p className="max-w-sm text-sm text-[var(--muted)]">
+        We could not reach the server to confirm who you are. Check your connection and reload,
+        or sign in again.
+      </p>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Reload
+        </Button>
+        <Button variant="outline" onClick={logout}>
+          Log out
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** The authenticated app chrome (sidebar/header/guards) — split out from `(app)/layout.tsx` so
  *  that file can stay a Server Component and carry the `noindex` metadata every authenticated,
  *  per-tenant route needs (a client component can't export `metadata`). */
@@ -50,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useTranslation();
   const token = useAuth((s) => s.token);
+  const user = useAuth((s) => s.user);
   const hydrated = useAuth((s) => s.hydrated);
   const setUser = useAuth((s) => s.setUser);
   const locale = useLocaleStore((s) => s.locale);
@@ -96,6 +121,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <SuspendedScreen />;
   }
 
+  // `/auth/me` is what tells the client which permissions the user holds. If it has failed
+  // outright and nothing was persisted from a previous session, the permission guard below
+  // would have no basis to decide on and would spin forever — say so instead.
+  if (error && !user) {
+    return <ProfileUnavailableScreen />;
+  }
+
   const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
@@ -116,7 +148,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               imperatively (via getState()), so pages that don't otherwise subscribe to either
               store would keep rendering stale numbers until an unrelated re-render happened. */}
           <main key={`${locale}:${currency}`} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-            {children}
+            {/* Every (app) route is guarded here rather than page by page, so a route added
+                without a hand-written check still inherits the requirement declared in
+                `ROUTE_PERMISSIONS`. Denied users never render the page, so its queries never
+                mount and never fire a request the API would 403. */}
+            <RequirePermission any={permissionsForPathname(pathname)}>{children}</RequirePermission>
           </main>
         </div>
       </div>

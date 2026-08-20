@@ -32,7 +32,8 @@ class UserResource extends JsonResource
             'branch_id' => $this->branch_id,
             // Per-user UI preference: {"mode": "...", "palette": "..."}, or null when never set.
             'theme' => $this->theme,
-            'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('slug')),
+            // `roles.name` is the slug (`cashier`) — see RoleResource for the naming split.
+            'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'permissions' => $this->when(
                 $this->relationLoaded('roles'),
                 fn () => $this->permissionSlugs()

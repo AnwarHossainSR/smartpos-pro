@@ -18,7 +18,7 @@ class StoreRoleRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
             'permissions' => ['nullable', 'array'],
-            'permissions.*' => [Rule::exists('permissions', 'slug')],
+            'permissions.*' => [Rule::exists('permissions', 'name')],
         ];
     }
 }
