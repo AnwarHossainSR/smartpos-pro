@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('brand_id')->nullable()->constrained()->nullOnDelete();
@@ -58,6 +57,11 @@ return new class extends Migration
             // A barcode has to resolve to exactly one product for the POS scanner,
             // so this is a unique constraint rather than a plain lookup index.
             $table->unique(['tenant_id', 'barcode']);
+
+            // Every list endpoint runs `where tenant_id = ? order by name limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'name']);
         });
     }
 

@@ -14,13 +14,12 @@ use App\Models\TaxZone;
 use App\Models\Unit;
 use App\Services\Auth\TenantProvisioner;
 use App\Support\Tenancy\TenantContext;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class DemoSeeder extends Seeder
+class DemoSeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         $this->seedPlans();
 

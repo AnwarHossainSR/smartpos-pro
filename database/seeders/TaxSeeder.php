@@ -6,13 +6,12 @@ use App\Models\TaxGroup;
 use App\Models\TaxRate;
 use App\Models\TaxZone;
 use App\Support\Tenancy\TenantContext;
-use Illuminate\Database\Seeder;
 
-class TaxSeeder extends Seeder
+class TaxSeeder extends TransactionalSeeder
 {
     public function __construct(private ?string $tenantId = null) {}
 
-    public function run(): void
+    protected function seed(): void
     {
         $tenantId = $this->tenantId ?? app(TenantContext::class)->id();
 

@@ -49,6 +49,11 @@ return new class extends Migration
             $table->timestamps();
             $table->index('tenant_id', 'roles_tenant_foreign_key_index');
             $table->unique(['tenant_id', 'name', 'guard_name']);
+
+            // Every list endpoint runs `where tenant_id = ? order by title limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'title']);
         });
 
         Schema::create('model_has_permissions', function (Blueprint $table) {

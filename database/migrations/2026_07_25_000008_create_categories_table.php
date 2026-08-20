@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('parent_id')->nullable()->constrained('categories')->nullOnDelete();
             // Products fall back to their category's tax group, so a shop can set
@@ -25,6 +24,11 @@ return new class extends Migration
 
             $table->index(['tenant_id']);
             $table->unique(['tenant_id', 'slug']);
+
+            // Every list endpoint runs `where tenant_id = ? order by name limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'name']);
         });
     }
 

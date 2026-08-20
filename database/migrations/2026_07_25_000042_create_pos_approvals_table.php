@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('pos_approvals', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('business_id')->nullable()->constrained()->nullOnDelete();
             $table->string('action'); // discount | price_override | void

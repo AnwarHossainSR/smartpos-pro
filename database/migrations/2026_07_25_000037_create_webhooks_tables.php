@@ -16,6 +16,11 @@ return new class extends Migration
             $table->string('secret');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            // Every list endpoint runs `where tenant_id = ? order by created_at limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'created_at']);
         });
 
         Schema::create('webhook_deliveries', function (Blueprint $table) {
@@ -33,6 +38,11 @@ return new class extends Migration
             $table->index('webhook_id');
             $table->index('event');
             $table->index('delivered_at');
+
+            // Every list endpoint runs `where tenant_id = ? order by created_at limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'created_at']);
         });
     }
 

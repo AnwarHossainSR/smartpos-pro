@@ -40,10 +40,10 @@ checkout. It is the foundation of the product described in
 | ------------ | ------------------------------------------------------ |
 | Framework    | Laravel 13, PHP 8.4                                     |
 | Auth         | Laravel Sanctum (token-based)                          |
-| Database     | PostgreSQL 16 (SQLite in-memory for tests)             |
+| Database     | MySQL 8.4 (SQLite in-memory for the fast test job)     |
 | Cache/Queue  | Redis                                                   |
 | Tooling      | Pint (style), PHPStan/Larastan (static analysis), PHPUnit |
-| Infra        | Docker Compose (app, nginx, postgres, redis, queue), GitHub Actions |
+| Infra        | Docker Compose (app, nginx, mysql, redis, queue), GitHub Actions |
 
 ## Getting started
 
@@ -59,7 +59,12 @@ docker compose exec app php artisan migrate --seed
 
 ### Local (without Docker)
 
-Requires PHP 8.4, Composer, and a PostgreSQL database (or use the bundled SQLite).
+Requires PHP 8.4, Composer, and a MySQL 8.4 database (or use the bundled SQLite).
+
+> The schema is designed against a case- and accent-sensitive collation
+> (`utf8mb4_0900_as_cs`). MySQL's default folds both, which would quietly loosen
+> every unique index on `sku`, `barcode`, and `email`. `docker-compose.yml` and
+> `.env.example` already set it; a hand-rolled database needs it too.
 
 ```bash
 composer install

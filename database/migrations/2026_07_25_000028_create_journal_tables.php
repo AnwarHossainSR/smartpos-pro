@@ -14,7 +14,6 @@ return new class extends Migration
     {
         Schema::create('journal_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reference');
@@ -31,7 +30,6 @@ return new class extends Migration
 
         Schema::create('journal_lines', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('journal_entry_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();

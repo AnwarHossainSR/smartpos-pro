@@ -11,7 +11,6 @@ return new class extends Migration
         // Global catalogue of subscription plans (not tenant-scoped).
         Schema::create('plans', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->string('name');
             $table->string('slug')->unique();
             $table->decimal('price', 10, 2)->default(0);
@@ -25,7 +24,6 @@ return new class extends Migration
 
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('plan_id')->constrained()->cascadeOnDelete();
             $table->string('status')->default('active'); // trialing, active, past_due, cancelled

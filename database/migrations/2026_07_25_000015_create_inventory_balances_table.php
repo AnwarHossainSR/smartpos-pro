@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('inventory_balances', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('variant_id')->nullable()->constrained('product_variants')->cascadeOnDelete();
@@ -23,6 +22,11 @@ return new class extends Migration
             // One balance row per product/variant/warehouse — target of atomic upserts + row locks.
             $table->unique(['tenant_id', 'product_id', 'variant_id', 'warehouse_id'], 'inventory_balance_unique');
             $table->index(['tenant_id', 'warehouse_id']);
+
+            // Every list endpoint runs `where tenant_id = ? order by quantity limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'quantity']);
         });
     }
 

@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('sale_returns', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('branch_id')->constrained()->cascadeOnDelete();
@@ -32,7 +31,6 @@ return new class extends Migration
 
         Schema::create('sale_return_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_return_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_item_id')->nullable()->constrained()->nullOnDelete();

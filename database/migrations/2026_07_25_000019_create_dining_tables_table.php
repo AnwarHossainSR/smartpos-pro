@@ -14,7 +14,6 @@ return new class extends Migration
     {
         Schema::create('dining_tables', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('branch_id')->nullable()->constrained()->cascadeOnDelete();
             // `dining_tables` and `sales` reference each other, so this half of the

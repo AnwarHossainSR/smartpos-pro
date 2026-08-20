@@ -3,11 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Plan;
-use Illuminate\Database\Seeder;
 
-class PlanOnlySeeder extends Seeder
+class PlanOnlySeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         $plans = [
             [
