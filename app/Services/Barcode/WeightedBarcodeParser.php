@@ -75,13 +75,16 @@ class WeightedBarcodeParser
     {
         $productCode = substr($barcode, 0, $productPartLength);
 
-        $product = Product::withoutTenancy()
+        // Tenant-scoped on purpose: two businesses can legitimately use the same
+        // weighed-item barcode, and an unscoped match would resolve to the other
+        // tenant's product id — which the caller then cannot load, so the scan fails.
+        $product = Product::query()
             ->where('barcode', 'LIKE', $productCode.'%')
             ->where('is_weighed', true)
             ->first();
 
         if (! $product) {
-            $product = Product::withoutTenancy()
+            $product = Product::query()
                 ->where('barcode', $productCode)
                 ->first();
         }

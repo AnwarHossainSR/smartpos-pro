@@ -24,7 +24,13 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasRoles, HasUuids, MustVerifyEmailTrait, Notifiable, SoftDeletes;
+    use Auditable, BelongsToTenant, HasApiTokens, HasFactory, HasUuids, MustVerifyEmailTrait, Notifiable, SoftDeletes;
+
+    // Aliased rather than plain `use HasRoles` so `roles()` below can extend the
+    // package's relation: `parent::` cannot reach a trait method.
+    use HasRoles {
+        roles as protected spatieRoles;
+    }
 
     /**
      * `tenant_id` and `is_super_admin` are deliberately excluded — tenant_id is filled
@@ -67,7 +73,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
      */
     public function roles(): BelongsToMany
     {
-        return parent::roles()->withPivot('branch_id');
+        return $this->spatieRoles()->withPivot('branch_id');
     }
 
     /**

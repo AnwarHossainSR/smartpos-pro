@@ -378,16 +378,17 @@ function PaymentModal({
 
 /* ---- main POS page ---- */
 export default function POSPage() {
-const { user, can } = useAuth();
+  const { user, can } = useAuth();
   const canOverridePrice = can("pos.price_override");
   const canDiscount = can("pos.discount");
+  const canViewTables = can("tables.view");
   const t = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [tableId, setTableId] = useState<string | null>(null);
-  const [tableSelectRef, setTableSelectRef] = useRef<HTMLSelectElement>(null);
   const debouncedSearch = useDebouncedValue(search);
   const debouncedCustomerSearch = useDebouncedValue(customerSearch);
   const [showPayment, setShowPayment] = useState(false);
@@ -464,10 +465,11 @@ const { user, can } = useAuth();
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
   });
 
+  // `api()` already targets /api/v1 — a "/v1/…" path here would resolve to /api/v1/v1/….
   const { data: tablesData } = useQuery<{ data: Table[] }>({
     queryKey: ["dining-tables-all"],
-    queryFn: () => api<{ data: Table[] }>("/v1/tables?per_page=100"),
-    enabled: !!user,
+    queryFn: () => api<{ data: Table[] }>("/tables?per_page=100"),
+    enabled: !!user && canViewTables,
   });
 
   // Same query key as Settings → Business and the app shell's currency sync, so this is a
@@ -483,6 +485,8 @@ const { user, can } = useAuth();
     queryFn: () => api<Paginated<{ id: string }>>("/sales?status=held&per_page=20&sort=-sold_at"),
   });
   const heldCount = heldData?.data?.length ?? 0;
+
+  const tables = useMemo(() => tablesData?.data ?? [], [tablesData]);
 
   const defaultWarehouse = useMemo(
     () => warehousesData?.data?.find((w) => w.is_default) ?? warehousesData?.data?.[0],
@@ -951,38 +955,31 @@ const { user, can } = useAuth();
           )}
         </div>
 
-        {/* Table selector */}
-        <div className="border-b border-[var(--border)] bg-[var(--surface)] p-3">
-          <div className="flex items-center gap-2">
-            <TableIcon className="h-4 w-4 text-[var(--muted)]" />
-            <Label className="font-medium">{t("pos.table_selector")}</Label>
-            <Select
-              ref={tableSelectRef}
-              className="w-32"
-              onChange={(e) => {
-                const tableId = e.target.value;
-                if (tableId) {
-                  // Pre-fill with selected table
-                  setTableId(tableId);
-                }
-              }}
-            >
-              <option value="">{t("pos.table_selector") ?? "Table"}</option>
-              {tablesData?.data?.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} {t.seats}{t("tables.seats")} -{" "}
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full bg-green-100 text-green-800 text-xs px-2 py-0.5",
-                      t.status === "available" ? "text-green-800" : t.status === "occupied" ? "text-yellow-800" : "text-red-800",
-                    )}>
-                    {t.status === "available" ? t("tables.available") : t.status === "occupied" ? t("tables.occupied") : t("tables.reserved")}
-                  </span>
-                </option>
-              ))}
-            </Select>
+        {/* Table selector — only for tenants that actually have a floor plan. */}
+        {tables.length > 0 && (
+          <div className="border-b border-[var(--border)] bg-[var(--surface)] p-3">
+            <div className="flex items-center gap-2">
+              <TableIcon className="h-4 w-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+              <Label htmlFor="pos-table" className="mb-0 font-medium">
+                {t("pos.table_selector")}
+              </Label>
+              <Select
+                id="pos-table"
+                className="w-40"
+                value={tableId ?? ""}
+                onChange={(e) => setTableId(e.target.value || null)}
+              >
+                <option value="">{t("pos.tableNone")}</option>
+                {tables.map((table) => (
+                  <option key={table.id} value={table.id} disabled={table.status !== "available"}>
+                    {table.name} · {t("tables.seatsCount", { count: table.seats })} ·{" "}
+                    {t(`tables.${table.status}`)}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Customer selector */}
         <div className="border-b border-[var(--border)] p-3">
