@@ -1,5 +1,3 @@
-"use client";
-
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -7,8 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
 import { api, ApiError } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 
 interface LoginResult {
@@ -19,7 +16,7 @@ interface LoginResult {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslation();
   const setAuth = useAuth((s) => s.setAuth);
   const hydrated = useAuth((s) => s.hydrated);
@@ -33,10 +30,9 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
-  // Someone who still has a valid session should not see the form again.
   useEffect(() => {
-    if (hydrated && token) router.replace("/dashboard");
-  }, [hydrated, token, router]);
+    if (hydrated && token) navigate("/dashboard", { replace: true });
+  }, [hydrated, token, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,9 +48,9 @@ export default function LoginPage() {
       } else if (res.token && res.user) {
         setAuth(res.token, res.user);
         if (res.user.email_verified_at) {
-          router.replace("/dashboard");
+          navigate("/dashboard", { replace: true });
         } else {
-          router.replace(`/verify-email?email=${encodeURIComponent(res.user.email)}`);
+          navigate(`/verify-email?email=${encodeURIComponent(res.user.email)}`, { replace: true });
         }
       }
     } catch (err) {
@@ -76,7 +72,7 @@ export default function LoginPage() {
           : { challenge_token: challengeToken, code },
       });
       setAuth(res.token, res.user);
-      router.replace("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code");
     } finally {
@@ -125,7 +121,7 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center justify-between">
             <Label>{t("auth.password")}</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-[var(--primary)]">
+            <Link to="/forgot-password" className="text-xs font-medium text-[var(--primary)]">
               {t("auth.forgotPassword")}
             </Link>
           </div>
@@ -138,7 +134,7 @@ export default function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
         {t("auth.newBusiness")}{" "}
-        <Link href="/register" className="font-medium text-[var(--primary)]">
+        <Link to="/register" className="font-medium text-[var(--primary)]">
           {t("auth.createAnAccount")}
         </Link>
       </p>

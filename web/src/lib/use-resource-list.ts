@@ -1,15 +1,10 @@
-"use client";
-
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useLocation, useSearchParams } from "react-router";
 import { useQuery, keepPreviousData, type QueryKey } from "@tanstack/react-query";
 import type { Paginated } from "@/lib/api";
 
-/** The one query-string protocol every list endpoint speaks: `search`, `sort` (prefix
- *  `-` for descending, never a separate `direction` param), `page`, `per_page`. */
 export interface ResourceListParams<F extends Record<string, string>> {
   search: string;
-  /** e.g. "name" or "-created_at". Undefined means "let the server pick its default". */
   sort: string | undefined;
   page: number;
   perPage: number;
@@ -17,20 +12,15 @@ export interface ResourceListParams<F extends Record<string, string>> {
 }
 
 interface UseResourceListOptions<T, F extends Record<string, string>> {
-  /** Base query key for this resource, e.g. queryKeys.taxRates.lists(). */
   queryKey: QueryKey;
   queryFn: (params: ResourceListParams<F>) => Promise<Paginated<T>>;
   defaultSort?: string;
   perPage?: number;
-  /** Extra filter query params this list supports (e.g. ["is_active", "country_code"]). */
   filterKeys?: readonly (keyof F & string)[];
   staleTime?: number;
   enabled?: boolean;
 }
 
-/** Builds the `?search=&sort=&page=&per_page=&<filters>` query string every list endpoint
- *  expects, from a `ResourceListParams` bag — the counterpart every feature's `api.ts`
- *  `queryFn` should use so the URL protocol is defined in exactly one place. */
 export function buildListQuery<F extends Record<string, string>>(params: ResourceListParams<F>): string {
   const qs = new URLSearchParams();
   if (params.search) qs.set("search", params.search);
@@ -43,15 +33,6 @@ export function buildListQuery<F extends Record<string, string>>(params: Resourc
   return qs.toString();
 }
 
-/**
- * Owns search + filter + sort + pagination state for a list page, synced to the URL query
- * string (so back/forward/refresh preserve it) and backed by a TanStack Query call against
- * the `Paginated<T>` shape every list endpoint returns.
- *
- * Requires a Suspense boundary somewhere above it in the tree (it calls `useSearchParams`,
- * per Next.js App Router rules) — wrap the page body in `<Suspense>` the way
- * `src/app/(auth)/reset-password/page.tsx` does.
- */
 export function useResourceList<T, F extends Record<string, string> = Record<string, string>>({
   queryKey,
   queryFn,
@@ -61,9 +42,9 @@ export function useResourceList<T, F extends Record<string, string> = Record<str
   staleTime,
   enabled = true,
 }: UseResourceListOptions<T, F>) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const search = searchParams.get("search") ?? "";
   const sort = searchParams.get("sort") ?? defaultSort;
@@ -88,9 +69,9 @@ export function useResourceList<T, F extends Record<string, string> = Record<str
         else params.set(key, String(value));
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      navigate(qs ? `${pathname}?${qs}` : pathname, { replace: true });
     },
-    [router, pathname, searchParams],
+    [navigate, pathname, searchParams],
   );
 
   const setSearch = useCallback((value: string) => setParams({ search: value, page: null }), [setParams]);
@@ -124,24 +105,20 @@ export function useResourceList<T, F extends Record<string, string> = Record<str
   const total = query.data?.meta?.total ?? query.data?.data?.length ?? 0;
 
   return {
-    // state
     search,
     sort,
     page,
     perPage,
     filters,
-    // data
     data: query.data?.data ?? [],
     meta: query.data?.meta,
     lastPage,
     total,
-    // query flags
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
-    // setters
     setSearch,
     setSort,
     setPage,
