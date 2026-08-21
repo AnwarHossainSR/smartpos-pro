@@ -1,5 +1,5 @@
 /**
- * Typed TanStack Query key factory.
+ * Typed TanStack Query key factory — the single source of truth for every cache key.
  *
  * Every module gets `all` (invalidate everything for that resource), `lists()` /
  * `list(params)` (paginated/filterable collections — `params` is whatever shape the
@@ -7,34 +7,65 @@
  * own hook can pass its own filter/sort/search/page bag without this file needing to
  * know every module's filter set), and `detail(id)` for single-record fetches.
  *
- * Keeping this in one place means `qc.invalidateQueries({ queryKey: queryKeys.products.all })`
- * reads the same everywhere and a rename only happens once.
+ * **Never write an inline key array.** Two call sites that spell the same resource
+ * differently (`["products"]` vs `["pos-products"]`) fetch and store it twice; two that
+ * spell it the *same* but fetch different shapes (`/notifications?per_page=1` vs
+ * `?per_page=50`) collide in one cache entry and clobber each other. Both bugs existed
+ * here before this file was adopted everywhere.
  */
 
 type ListParams = Record<string, unknown> | undefined;
 
-function resource(name: string) {
+interface ResourceKeys {
+  readonly all: readonly [string];
+  lists: () => readonly [string, "list"];
+  list: (params?: ListParams) => readonly [string, "list", Record<string, unknown>];
+  /** Unpaginated variant used to fill selects/comboboxes — cached apart from paged lists. */
+  options: (params?: ListParams) => readonly [string, "options", Record<string, unknown>];
+  detail: (id: string | undefined) => readonly [string, "detail", string];
+}
+
+function resource(name: string): ResourceKeys {
   return {
     all: [name] as const,
     lists: () => [name, "list"] as const,
     list: (params?: ListParams) => [name, "list", params ?? {}] as const,
-    detail: (id: string) => [name, "detail", id] as const,
+    options: (params?: ListParams) => [name, "options", params ?? {}] as const,
+    detail: (id: string | undefined) => [name, "detail", id ?? ""] as const,
   };
 }
 
 export const queryKeys = {
+  /* ---- catalog ---- */
   products: resource("products"),
   categories: resource("categories"),
   brands: resource("brands"),
   units: resource("units"),
+
+  /* ---- locations & stock ---- */
   warehouses: resource("warehouses"),
+  branches: resource("branches"),
+  inventory: resource("inventory"),
+  stocktakes: resource("stocktakes"),
+  reorderSuggestions: resource("reorder-suggestions"),
+
+  /* ---- trading ---- */
   sales: resource("sales"),
   heldSales: resource("held-sales"),
   purchases: resource("purchases"),
   customers: resource("customers"),
   suppliers: resource("suppliers"),
-  inventory: resource("inventory"),
+  expenses: resource("expenses"),
+  expenseCategories: resource("expense-categories"),
+  coupons: resource("coupons"),
+  diningTables: resource("dining-tables"),
 
+  /* ---- accounting ---- */
+  accounts: resource("accounts"),
+  journals: resource("journals"),
+  trialBalance: resource("trial-balance"),
+
+  /* ---- tax ---- */
   taxRates: resource("tax-rates"),
   taxGroups: resource("tax-groups"),
   taxZones: resource("tax-zones"),
@@ -49,7 +80,38 @@ export const queryKeys = {
       ["tax-reports", "return", params] as const,
   },
 
+  reports: {
+    all: ["reports"] as const,
+    run: (params?: ListParams) => ["reports", "run", params ?? {}] as const,
+    zReport: (params?: ListParams) => ["reports", "z-report", params ?? {}] as const,
+  },
+
+  dashboard: {
+    all: ["dashboard"] as const,
+    summary: () => ["dashboard", "summary"] as const,
+  },
+
+  /* ---- account & session ---- */
+  me: ["me"] as const,
   businessSettings: ["business-settings"] as const,
+  twoFactorStatus: ["two-factor-status"] as const,
+  authSessions: ["auth-sessions"] as const,
+  lockoutStatus: ["lockout-status"] as const,
+  approvalPolicy: ["approval-policy"] as const,
+  emailTemplates: resource("email-templates"),
+  team: resource("team"),
+  roles: resource("roles"),
+  auditLogs: resource("audit-logs"),
+
+  /**
+   * The badge count (`per_page=1`) and the full page (`per_page=50`) are different fetches
+   * of the same endpoint — they must not share one cache entry.
+   */
+  notifications: {
+    all: ["notifications"] as const,
+    badge: () => ["notifications", "badge"] as const,
+    list: (params?: ListParams) => ["notifications", "list", params ?? {}] as const,
+  },
 
   shifts: {
     all: ["shifts"] as const,
@@ -57,6 +119,31 @@ export const queryKeys = {
     list: (params?: ListParams) => ["shifts", "list", params ?? {}] as const,
     report: (params?: ListParams) => ["shifts", "report", params ?? {}] as const,
   },
+
+  registers: {
+    all: ["registers"] as const,
+    list: () => ["registers", "list"] as const,
+    session: (registerId: string | undefined) => ["registers", "session", registerId ?? ""] as const,
+    sessionDetail: (sessionId: string | undefined) =>
+      ["registers", "session-detail", sessionId ?? ""] as const,
+  },
+
+  subscription: {
+    all: ["subscription"] as const,
+    current: () => ["subscription", "current"] as const,
+    plans: () => ["subscription", "plans"] as const,
+  },
+
   webhooks: resource("webhooks"),
   webhookDeliveries: resource("webhook-deliveries"),
+  labels: resource("labels"),
+
+  /** Public/portal surfaces — a separate token, so a separate namespace. */
+  portal: {
+    all: ["portal"] as const,
+    me: () => ["portal", "me"] as const,
+    invoices: (params?: ListParams) => ["portal", "invoices", params ?? {}] as const,
+    invoice: (id: string | undefined) => ["portal", "invoice", id ?? ""] as const,
+  },
+  orderStatus: (token: string | undefined) => ["order-status", token ?? ""] as const,
 } as const;
