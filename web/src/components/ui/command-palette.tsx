@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { permissionsForPathname } from "@/lib/permissions";
 import { hasPermission, useAuth } from "@/stores/auth";
 import {
@@ -57,7 +55,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -106,12 +104,12 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }
   }, [open]);
 
-  const navigate = useCallback(
+  const onNavigate = useCallback(
     (href: string) => {
-      router.push(href);
+      navigate(href);
       onClose();
     },
-    [router, onClose],
+    [navigate, onClose],
   );
 
   useEffect(() => {
@@ -120,11 +118,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowDown") { e.preventDefault(); setIndex((i) => Math.min(i + 1, filtered.length - 1)); }
       if (e.key === "ArrowUp") { e.preventDefault(); setIndex((i) => Math.max(i - 1, 0)); }
-      if (e.key === "Enter") { e.preventDefault(); if (filtered[index]) navigate(filtered[index].href); }
+      if (e.key === "Enter") { e.preventDefault(); if (filtered[index]) onNavigate(filtered[index].href); }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, filtered, index, navigate, onClose]);
+  }, [open, filtered, index, onNavigate, onClose]);
 
   if (!open) return null;
 
@@ -152,7 +150,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       i === index ? "bg-[var(--primary)] text-[var(--primary-fg)]" : "hover:bg-[var(--surface-2)]"
                     }`}
                     onMouseEnter={() => setIndex(i)}
-                    onClick={() => navigate(it.href)}
+                    onClick={() => onNavigate(it.href)}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     {it.label}

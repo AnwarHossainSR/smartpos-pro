@@ -1,11 +1,9 @@
-"use client";
-
 import { ActiveBadge, ResourceManager, type ResourceColumn, type ResourceRecord } from "@/components/ui/resource-manager";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useState } from "react";
 
 interface Branch extends ResourceRecord {
@@ -62,7 +60,7 @@ export default function LocationsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
+        <Link to="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-lg font-semibold">Branches & warehouses</h1>

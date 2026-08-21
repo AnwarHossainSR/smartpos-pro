@@ -1,5 +1,4 @@
-"use client";
-
+import { useParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +6,6 @@ import { useTranslation } from "@/i18n/provider";
 import { api, ApiError } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { use } from "react";
 
 interface OrderStatus {
   invoice_number: string | null;
@@ -32,8 +30,8 @@ const PAYMENT_TONE: Record<string, "success" | "warning" | "danger"> = {
   due: "danger",
 };
 
-export default function OrderStatusPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = use(params);
+export default function OrderStatusPage() {
+  const { token } = useParams<{ token: string }>();
   const t = useTranslation();
 
   const { data, isPending, error } = useQuery({

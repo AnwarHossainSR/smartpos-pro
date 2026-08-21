@@ -1,8 +1,6 @@
-"use client";
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
+import { Link } from "react-router";
 import { Barcode, Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -400,7 +398,7 @@ export default function ProductsPage() {
         onAdd={can("products.create") ? openCreate : undefined}
         filters={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/products/labels">
+            <Link to="/products/labels">
               <Barcode className="h-4 w-4" />
               Print labels
             </Link>

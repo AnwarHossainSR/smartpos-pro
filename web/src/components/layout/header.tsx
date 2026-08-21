@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Clock, LogIn, LogOut as LogOutIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
@@ -39,7 +37,7 @@ function formatElapsed(minutes: number): string {
 }
 
 export function Header({ title, onMenuClick }: HeaderProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslation();
   const qc = useQueryClient();
   const logout = useAuth((s) => s.logout);
@@ -105,7 +103,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   async function onLogout() {
     try { await api("/auth/logout", { method: "POST" }); } catch {}
     logout();
-    router.replace("/login");
+    navigate("/login", { replace: true });
   }
 
   const ThemeIcon = themeIcons[theme];
@@ -165,7 +163,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")} title={t("header.notifications")} className="relative">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} title={t("header.notifications")} className="relative">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute end-1.5 top-1.5 flex h-2 w-2">

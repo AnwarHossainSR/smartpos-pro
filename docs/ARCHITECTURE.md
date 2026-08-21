@@ -68,23 +68,39 @@ which:
 Callers must run inside a transaction so the balance update and ledger insert commit
 atomically.
 
-## 3. Transaction-safe POS checkout
+## 3. Static frontend build (Vite + React Router 8)
 
-[`SaleService::create()`](../app/Services/Sales/SaleService.php) wraps the entire
-checkout in `DB::transaction()`:
+The frontend is a single-page application built with Vite and React Router 8. It produces
+a static `dist/` directory consisting of HTML, CSS, and JavaScript assets. Production deployment
+uses nginx to serve `dist/` directly, with a `try_files` fallback for SPA routing:
 
-1. Resolve each requested line against the live product, **snapshotting** name, price,
-   cost and tax onto the `sale_items` row so later product edits never rewrite history.
-2. Compute subtotal, per-line tax (inclusive or exclusive), discounts and totals.
-3. Create the sale header and derive a deterministic `INV-000123` invoice number from
-   the row id.
-4. For each stock-tracked line, decrement inventory through the ledger. If any line has
-   insufficient stock, an `InsufficientStockException` aborts the transaction and the
-   **whole sale rolls back** — no partial inventory, no orphan sale.
-5. Record payments and derive `payment_status` (paid / partial / due), change and dues.
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name pos.yourdomain.com;
 
-> **Tested by** `SaleCheckoutTest` — stock decrement, insufficient-stock rollback, and
-> idempotent replay.
+    ssl_certificate     /etc/ssl/pos.yourdomain.com.crt;
+    ssl_certificate_key /etc/ssl/pos.yourdomain.com.key;
+
+    root /var/www/smartpos/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache assets immutably — content hashes in filenames ensure safe long-term caching
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+}
+```
+
+No PM2, no `next start`. The process is purely: `npm run build` → copy `dist/` → nginx reload.
+
+> **SPA fallback**: `try_files $uri $uri/ /index.html` ensures hard refreshes on deep links
+> (e.g. `/pos` or `/order/[token]`) resolve correctly. This is the one deployment detail that
+> silently breaks everything if missed.
 
 ## 4. Idempotency
 

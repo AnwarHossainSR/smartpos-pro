@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,13 +36,13 @@ function statusBadge(status: string) {
 }
 
 export default function PortalDashboardPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const token = usePortalToken();
   const ready = !!token;
 
   useEffect(() => {
-    if (!token) router.replace("/portal");
-  }, [token, router]);
+    if (!token) navigate("/portal", { replace: true });
+  }, [token, navigate]);
 
   const { data: customer, isLoading: loadingCustomer } = useQuery({
     queryKey: ["portal", "me"],
@@ -99,7 +97,7 @@ export default function PortalDashboardPage() {
               <div
                 key={inv.id}
                 className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
-                onClick={() => router.push(`/portal/invoices/${inv.id}`)}
+                onClick={() => navigate(`/portal/invoices/${inv.id}`)}
               >
                 <div>
                   <p className="font-medium">{inv.invoice_number}</p>

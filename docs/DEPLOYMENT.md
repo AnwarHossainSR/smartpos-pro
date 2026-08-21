@@ -1,7 +1,7 @@
 # SmartPOS Pro — Deployment Guide
 
 This document covers deploying SmartPOS Pro to production.  
-The stack: **Laravel 13 (PHP 8.4)** backend + **Next.js 16** frontend.
+The stack: **Laravel 13 (PHP 8.4)** backend + **Vite + React Router 8** frontend.
 
 ---
 
@@ -159,32 +159,23 @@ server {
 
 ---
 
-## 3 · Frontend (Next.js)
+## 3 · Frontend (Vite + React Router 8)
 
 ### 3.1 Build
 
 ```bash
 cd web
-cp .env.local.example .env.local      # set NEXT_PUBLIC_API_URL
+cp .env.local.example .env.local      # set VITE_API_URL
 npm ci
 npm run build
 ```
 
 `.env.local`:
 ```dotenv
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api/v1
+VITE_API_URL=https://api.yourdomain.com/api/v1
 ```
 
-### 3.2 PM2 (standalone)
-
-```bash
-npm install -g pm2
-pm2 start npm --name smartpos-web -- start
-pm2 save
-pm2 startup
-```
-
-### 3.3 nginx (frontend)
+### 3.2 nginx (frontend)
 
 ```nginx
 server {
@@ -194,18 +185,15 @@ server {
     ssl_certificate     /etc/ssl/pos.yourdomain.com.crt;
     ssl_certificate_key /etc/ssl/pos.yourdomain.com.key;
 
+    root /var/www/smartpos/dist;
+    index index.html;
+
     location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        try_files $uri $uri/ /index.html;
     }
 
-    # Cache static assets aggressively
-    location /_next/static/ {
-        proxy_pass http://127.0.0.1:3000;
+    # Cache assets immutably — content hashes in filenames ensure safe long-term caching
+    location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 }
@@ -261,8 +249,8 @@ etc.).
 
 ### 5.2 PostHog telemetry
 
-Error and product telemetry runs through PostHog on the backend only — the Next.js app
-ships no telemetry SDK.
+Error and product telemetry runs through PostHog on the backend only — the Vite + React Router
+app ships no telemetry SDK.
 
 1. Install (already in `composer.json`): `composer require posthog/posthog-php`
 2. Set the project key in `.env`:

@@ -1,5 +1,3 @@
-"use client";
-
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/provider";
 import { NAV_GROUPS, type NavGroup } from "@/lib/nav";
@@ -8,8 +6,7 @@ import { cn } from "@/lib/utils";
 import { hasPermission, useAuth } from "@/stores/auth";
 import { useSidebarStore } from "@/stores/sidebar";
 import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router";
 import { useEffect, useMemo } from "react";
 
 /**
@@ -79,9 +76,9 @@ function SidebarGroup({
           const label = t(`nav.${key}`);
 
           return (
-            <Link
-              key={href}
-              href={href}
+              <Link
+                key={href}
+                to={href}
               onClick={onClose}
               title={label}
               aria-current={active ? "page" : undefined}
@@ -119,7 +116,7 @@ function SidebarGroup({
 
     return (
       <Link
-        href={href}
+        to={href}
         onClick={onClose}
         aria-current={active ? "page" : undefined}
         className={cn(
@@ -200,7 +197,7 @@ function SidebarGroup({
               return (
                 <Link
                   key={href}
-                  href={href}
+                  to={href}
                   onClick={onClose}
                   aria-current={active ? "page" : undefined}
                   className={cn(
@@ -234,7 +231,7 @@ function SidebarGroup({
 }
 
 function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapsed: boolean }) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const t = useTranslation();
   const toggle = useSidebarStore((s) => s.toggle);
   const expandedGroup = useSidebarStore((s) => s.expandedGroup);
@@ -307,7 +304,7 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
           <div className="rounded-xl bg-gradient-to-l from-[var(--sidebar-active)]/20 via-[var(--sidebar-active)]/10 to-transparent p-[1px]">
             <div className="rounded-[11px] bg-[var(--sidebar-bg)] px-3 py-3">
               <Link
-                href="/support"
+                to="/support"
                 className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--sidebar-fg)] transition-all duration-200 hover:bg-white/[0.08]"
               >
                 <Sparkles className="h-3.5 w-3.5 text-[var(--sidebar-active)]/60 transition-transform duration-300 group-hover:scale-110 group-hover:text-[var(--sidebar-active)]" />
@@ -324,7 +321,7 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
       {collapsed && (
         <div className="mx-3 mb-3">
           <Link
-            href="/support"
+            to="/support"
             title="Support"
             className="group flex items-center justify-center rounded-xl py-2.5 transition-colors hover:bg-white/[0.06]"
           >

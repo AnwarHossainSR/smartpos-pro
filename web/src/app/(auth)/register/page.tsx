@@ -1,8 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useNavigate, Link } from "react-router";
 import { api, ApiError } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
 import { AuthShell } from "@/components/layout/auth-shell";
@@ -12,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslation();
   const setAuth = useAuth((s) => s.setAuth);
   const [form, setForm] = useState({
@@ -39,9 +36,9 @@ export default function RegisterPage() {
       });
       setAuth(res.token, res.user);
       if (res.user.email_verified_at) {
-        router.replace("/dashboard");
+        navigate("/dashboard", { replace: true });
       } else {
-        router.replace(`/verify-email?email=${encodeURIComponent(res.user.email)}`);
+        navigate(`/verify-email?email=${encodeURIComponent(res.user.email)}`, { replace: true });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Registration failed");
@@ -82,7 +79,7 @@ export default function RegisterPage() {
       </form>
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
         {t("auth.alreadyHaveAccount")}{" "}
-        <Link href="/login" className="font-medium text-[var(--primary)]">
+        <Link to="/login" className="font-medium text-[var(--primary)]">
           {t("auth.signIn")}
         </Link>
       </p>

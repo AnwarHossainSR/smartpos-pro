@@ -1,8 +1,5 @@
-"use client";
-
-import { Suspense, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
+import { Suspense, lazy, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import { api, type Paginated } from "@/lib/api";
@@ -18,12 +15,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { useTaxSummaryReport, useTaxReturnReport } from "@/features/tax/hooks";
 import type { TaxReportComponent } from "@/features/tax/types";
 
-// recharts is the heaviest dependency in the app — load it only once this page actually
-// renders, and never on the server (it reads layout metrics from the DOM).
-const TaxReportChart = dynamic(() => import("@/features/tax/components/tax-report-chart"), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
-});
+const TaxReportChart = lazy(() => import("@/features/tax/components/tax-report-chart"));
 
 interface Branch { id: string; name: string; }
 
@@ -104,7 +96,7 @@ function TaxReportBody() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div className="flex items-center gap-2">
-          <Link href="/reports" className="text-[var(--muted)] hover:text-[var(--fg)]">
+          <Link to="/reports" className="text-[var(--muted)] hover:text-[var(--fg)]">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </div>
@@ -172,7 +164,9 @@ function TaxReportBody() {
             <Card>
               <CardHeader><CardTitle>Output vs input, by component</CardTitle></CardHeader>
               <CardContent className="h-64">
-                <TaxReportChart output={data.output_tax.components} input={data.input_tax.components} />
+                <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                  <TaxReportChart output={data.output_tax.components} input={data.input_tax.components} />
+                </Suspense>
               </CardContent>
             </Card>
           )}

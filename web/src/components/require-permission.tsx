@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router";
 import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -62,7 +60,7 @@ export function AccessDenied() {
       <h1 className="text-base font-semibold">{t("common.accessDenied")}</h1>
       <p className="max-w-sm text-sm text-[var(--muted)]">{t("common.accessDeniedBody")}</p>
       <Button asChild variant="outline" size="sm">
-        <Link href="/dashboard">{t("common.backToDashboard")}</Link>
+        <Link to="/dashboard">{t("common.backToDashboard")}</Link>
       </Button>
     </div>
   );

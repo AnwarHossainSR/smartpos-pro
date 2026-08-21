@@ -1,5 +1,3 @@
-"use client";
-
 import { useTranslation } from "@/i18n/provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ShieldCheck, ShieldOff, Lock, KeyRound, Laptop, Smartphone, AlertTriangle } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -440,7 +438,7 @@ export default function SecurityPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
+        <Link to="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-lg font-semibold">{t("security.title")}</h1>

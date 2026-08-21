@@ -1,7 +1,4 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TaxGroupsSection } from "@/features/tax/components/tax-groups-section";
 import { TaxProfileCard } from "@/features/tax/components/tax-profile-card";
 import { TaxRatesSection } from "@/features/tax/components/tax-rates-section";
@@ -9,8 +6,8 @@ import { TaxZonesSection } from "@/features/tax/components/tax-zones-section";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Link } from "react-router";
+import { useState } from "react";
 
 type Tab = "rates" | "groups" | "zones";
 
@@ -37,7 +34,7 @@ function TaxSettingsBody() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
+        <Link to="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </div>
@@ -93,22 +90,6 @@ function TaxSettingsBody() {
   );
 }
 
-function TaxSettingsSkeleton() {
-  return (
-    <div className="space-y-5">
-      <Skeleton className="h-7 w-40" />
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
-        <Skeleton className="h-96 xl:col-span-3" />
-        <Skeleton className="h-96" />
-      </div>
-    </div>
-  );
-}
-
 export default function TaxSettingsPage() {
-  return (
-    <Suspense fallback={<TaxSettingsSkeleton />}>
-      <TaxSettingsBody />
-    </Suspense>
-  );
+  return <TaxSettingsBody />;
 }
