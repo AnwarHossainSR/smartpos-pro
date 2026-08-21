@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { MediaField } from "@/components/ui/media-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -87,17 +87,9 @@ export function BrandingCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Branding</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <p className="text-sm text-[var(--muted)]">
-          Images are resized and converted on upload, so you can drop in whatever the designer
-          sent without preparing sizes yourself.
-        </p>
-
+      <CardContent className="space-y-5">
         {isLoading && (
-          <div className="space-y-6">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {SLOTS.map((s) => (
               <div key={s.slot} className="flex items-start gap-3">
                 <Skeleton className="h-24 w-24 rounded-[var(--radius)]" />
@@ -123,20 +115,23 @@ export function BrandingCard() {
           </div>
         )}
 
-        {data &&
-          SLOTS.map((s) => (
-            <MediaField
-              key={s.slot}
-              collection={s.collection}
-              endpoint={`/settings/business/media/${s.slot}`}
-              label={s.label}
-              hint={s.hint}
-              aspect={s.aspect}
-              url={data.data.media?.[s.slot]?.url ?? null}
-              disabled={!editable}
-              invalidate={[["business-settings"], ["me"]]}
-            />
-          ))}
+        {data && (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {SLOTS.map((s) => (
+              <MediaField
+                key={s.slot}
+                collection={s.collection}
+                endpoint={`/settings/business/media/${s.slot}`}
+                label={s.label}
+                hint={s.hint}
+                aspect={s.aspect}
+                url={data.data.media?.[s.slot]?.url ?? null}
+                disabled={!editable}
+                invalidate={[["business-settings"], ["me"]]}
+              />
+            ))}
+          </div>
+        )}
 
         {!editable && (
           <p className="text-xs text-[var(--muted)]">

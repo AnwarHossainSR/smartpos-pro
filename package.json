@@ -3,13 +3,11 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "predev": "rimraf web/.next",
-        "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgGreen.bold.black\" --names \"api  ,queue,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun --cwd=web run dev\"",
+        "dev": "concurrently --prefix \"[{time}] {name}\" --timestamp-format \"HH:mm:ss\" --prefix-colors \"bgBlue.bold.white,bgMagenta.bold.white,bgGreen.bold.black\" --names \"api  ,queue,web  \" --kill-others \"php artisan serve --port=8080\" \"php artisan queue:listen --tries=1 --timeout=0\" \"bun --cwd=web run dev:vite\"",
         "seed": "php artisan migrate:fresh && php artisan db:seed --class=DemoSeeder",
         "seed:full": "php artisan migrate:fresh && php artisan db:seed --class=FullDemoSeeder"
     },
     "devDependencies": {
-        "concurrently": "^9.0.1",
-        "rimraf": "^6.0.1"
+        "concurrently": "^9.0.1"
     }
 }

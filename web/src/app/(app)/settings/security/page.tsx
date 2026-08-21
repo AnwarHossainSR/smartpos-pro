@@ -1,3 +1,4 @@
+import { ApprovalPinCard } from "@/components/approval-pin-card";
 import { useTranslation } from "@/i18n/provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -451,6 +452,7 @@ export default function SecurityPage() {
 
       <SessionsSection />
       <LockoutSection />
+      <ApprovalPinCard />
     </div>
   );
 }

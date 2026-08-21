@@ -34,8 +34,8 @@ class TenantProvisioner
                 'name' => $data['business_name'],
                 'slug' => $this->uniqueSlug($data['business_name']),
                 'plan' => 'free',
-                'status' => 'trialing',
-                'trial_ends_at' => now()->addDays(14),
+                'status' => 'active',
+                'trial_ends_at' => null,
             ]);
 
             // Bind context so all subsequent tenant-scoped creates are isolated.

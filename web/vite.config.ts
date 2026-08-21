@@ -15,15 +15,27 @@ export default defineConfig({
       registerType: "autoUpdate",
       devOptions: { enabled: false },
       manifest: {
-        name: "SmartPOS Pro",
+        id: "/",
+        name: "SmartPOS Pro — Point of Sale, Inventory & Accounting",
         short_name: "SmartPOS",
-        description: "Modern multi-tenant POS & retail management platform",
+        description:
+          "Run your shop end to end: point of sale, inventory, purchasing, customers and accounting in a single platform.",
+        lang: "en",
+        dir: "ltr",
+        categories: ["business", "productivity", "finance"],
+        scope: "/",
         start_url: "/dashboard",
         display: "standalone",
         background_color: "#0b1120",
         theme_color: "#4f46e5",
         orientation: "any",
         icons: [
+          {
+            src: "/favicon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
           {
             src: "/icon-192.png",
             sizes: "192x192",
@@ -55,7 +67,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "src") },
+    alias: { "@": path.resolve(import.meta.dirname, "src") },
   },
   server: {
     port: 3000,

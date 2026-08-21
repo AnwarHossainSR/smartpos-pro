@@ -123,6 +123,7 @@ export function Label({ product, preset, options }: LabelProps) {
         display: "flex",
         flexDirection: "column",
         gap: mm(pad * 0.35),
+        justifyContent: "space-between",
         color: "#000000",
         background: "#ffffff",
         outline: options.showOutline ? "0.15mm dashed #b0b0b0" : undefined,
@@ -198,7 +199,6 @@ export function Label({ product, preset, options }: LabelProps) {
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
-                flex: "1 1 auto",
               }}
             >
               {product.name}

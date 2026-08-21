@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, TrendingUp, Rocket, Briefcase, X } from "lucide-react";
+import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, TrendingUp, Rocket, Briefcase, X, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +59,8 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
 };
 
 const TRUST_BADGES = [
-  { icon: Calendar, text: "30-day free trial" },
-  { icon: CreditCard, text: "No credit card required" },
+  { icon: CreditCard, text: "Secure payment" },
+  { icon: Zap, text: "Instant activation" },
   { icon: RefreshCw, text: "Upgrade or cancel anytime" },
   { icon: ShieldCheck, text: "Secure & reliable" },
 ];
@@ -71,17 +71,6 @@ const BOTTOM_TRUST = [
   { icon: RefreshCw, title: "Flexible Plans", desc: "Upgrade, downgrade or cancel anytime." },
   { icon: ShieldCheck, title: "Trusted by Businesses", desc: "Join thousands of happy users." },
 ];
-
-function Calendar({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -115,7 +104,7 @@ export default function SubscriptionPage() {
 
   if (subError instanceof ApiError && subError.status === 403) {
     return (
-      <div className="mx-auto max-w-5xl space-y-5">
+      <div className="space-y-5">
         <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-[var(--muted)]">
@@ -129,7 +118,7 @@ export default function SubscriptionPage() {
 
   if (plansError) {
     return (
-      <div className="mx-auto max-w-5xl space-y-5">
+      <div className="space-y-5">
         <h1 className="text-xl font-semibold">Subscription</h1>
         <Card>
           <CardContent className="py-8 text-center text-[var(--muted)]">
@@ -141,7 +130,7 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="space-y-8 pb-4">
       {/* Current plan banner */}
       {sub && (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-shadow duration-300 hover:shadow-md">
@@ -175,7 +164,7 @@ export default function SubscriptionPage() {
               <div>
                 <p className="font-medium">You&apos;re on the Free Plan</p>
                 <p className="text-sm text-[var(--muted)]">
-                  Start a 30-day free trial on any paid plan. No credit card required.
+                  Upgrade to a paid plan for higher limits and the full feature set.
                 </p>
               </div>
             </div>
@@ -237,13 +226,13 @@ export default function SubscriptionPage() {
 
       {/* Plan cards */}
       {plansLoading ? (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-[550px] rounded-2xl" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {paidPlans.map((plan) => {
             const isCurrent = sub?.plan.id === plan.id;
             const isDowngrade = !!sub && plan.price < sub.plan.price;
@@ -295,7 +284,9 @@ export default function SubscriptionPage() {
                       ? "Current Plan"
                       : isDowngrade
                         ? "Downgrade"
-                        : "Start 30-day Free Trial"}
+                        : sub
+                          ? "Upgrade Now"
+                          : "Get Started"}
                     {!isCurrent && !isDowngrade && <ArrowRight className="ml-1.5 h-4 w-4" />}
                   </Button>
                 </div>

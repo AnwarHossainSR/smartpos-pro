@@ -150,7 +150,7 @@ export function MediaField({
   );
 
   const shown = preview ?? url ?? null;
-  const box = aspect === "wide" ? "aspect-[16/9] w-full max-w-sm" : "h-24 w-24";
+  const box = aspect === "wide" ? "h-24 aspect-[16/9]" : "h-24 w-24";
 
   return (
     <div className={cn("space-y-2", className)}>

@@ -2,8 +2,10 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "bun --cwd=.. run dev",
+    "dev:vite": "vite",
     "build": "vite build",
     "start": "vite preview",
     "lint": "eslint",

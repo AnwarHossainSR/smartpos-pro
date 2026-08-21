@@ -46,7 +46,7 @@ function CheckoutContent() {
         body: { plan_id: planId },
       }),
     onSuccess: () => {
-      toast("Free trial activated! Your 30-day trial has started.");
+      toast("Subscription activated. Your plan is live.");
       navigate("/subscription");
     },
     onError: (error: Error) => {
@@ -88,7 +88,7 @@ function CheckoutContent() {
         Back to Plans
       </Button>
 
-      <h1 className="text-xl font-semibold">Start Free Trial</h1>
+      <h1 className="text-xl font-semibold">Checkout</h1>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -101,17 +101,17 @@ function CheckoutContent() {
               <Badge>{plan.name}</Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--muted)]">Trial</span>
-              <span className="text-sm">30 days free</span>
+              <span className="text-[var(--muted)]">Billing</span>
+              <span className="text-sm">Monthly</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--muted)]">Then</span>
+              <span className="text-[var(--muted)]">Renews</span>
               <span className="text-sm">{formatCurrency(plan.price)}/month</span>
             </div>
             <div className="border-t border-[var(--border)] pt-4">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Due today</span>
-                <span className="text-xl font-bold text-emerald-500">Free</span>
+                <span className="text-xl font-bold">{formatCurrency(plan.price)}</span>
               </div>
             </div>
           </CardContent>
@@ -146,9 +146,9 @@ function CheckoutContent() {
           <div className="flex flex-col items-center gap-4 text-center">
             <Shield className="h-8 w-8 text-[var(--primary)]" />
             <div>
-              <p className="font-medium">30-Day Free Trial</p>
+              <p className="font-medium">Secure Checkout</p>
               <p className="text-sm text-[var(--muted)]">
-                No credit card required. Cancel anytime during the trial. After 30 days, your plan will continue at {formatCurrency(plan.price)}/month.
+                Your plan activates immediately and renews at {formatCurrency(plan.price)}/month. Upgrade or cancel anytime.
               </p>
             </div>
             <Button
@@ -160,10 +160,10 @@ function CheckoutContent() {
               {checkoutMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Activating...
+                  Processing...
                 </>
               ) : (
-                "Start 30-Day Free Trial"
+                `Pay ${formatCurrency(plan.price)}`
               )}
             </Button>
           </div>

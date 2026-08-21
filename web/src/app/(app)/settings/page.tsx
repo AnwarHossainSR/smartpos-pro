@@ -1,64 +1,110 @@
-import { ApprovalPinCard } from "@/components/approval-pin-card";
 import { BrandingCard } from "@/features/settings/branding-card";
-import { TwoFactorCard } from "@/components/two-factor-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { LocalePicker } from "@/components/ui/locale-picker";
+import { PalettePicker } from "@/components/ui/palette-picker";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/i18n/config";
 import { useTranslation } from "@/i18n/provider";
 import { api, ApiError } from "@/lib/api";
-import { formatDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
+import { useLocaleStore } from "@/stores/locale";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Building2, ChevronRight, DollarSign, Laptop, Mail, Percent, Printer, Shield, ShieldCheck, Smartphone, Webhook } from "lucide-react";
+import { Building2, ChevronRight, Mail, Percent, Printer, Shield, ShieldCheck, Webhook } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-function AutoBookkeepingCard({ autoPostJournals }: { autoPostJournals: boolean }) {
-  const t = useTranslation();
-  const qc = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: (value: boolean) => api("/settings/business", { method: "PUT", body: { auto_post_journals: value } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["business-settings"] }); toast(t("settings.autoBookkeepingSaved")); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
-  });
-
+function Section({
+  title,
+  description,
+  className,
+  children,
+}: {
+  title: string;
+  description?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <button
-          type="button"
-          onClick={() => mutation.mutate(!autoPostJournals)}
-          className="flex w-full items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-        >
-          <BookOpen className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-          <div className="min-w-0 flex-1 text-left">
-            <p className="font-medium">{t("settings.autoBookkeeping")}</p>
-            <p className="text-xs text-[var(--muted)]">{t("settings.autoBookkeepingHint")}</p>
-          </div>
-          <div
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              autoPostJournals ? "bg-[var(--primary)]" : "bg-[var(--border)]"
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
-                autoPostJournals ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </div>
-        </button>
-      </CardContent>
-    </Card>
+    <section className={cn("space-y-3", className)}>
+      <div>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        {description && <p className="mt-0.5 text-sm text-[var(--muted)]">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SettingRow({
+  label,
+  hint,
+  control,
+  stacked = false,
+}: {
+  label: string;
+  hint: string;
+  control: React.ReactNode;
+  stacked?: boolean;
+}) {
+  return (
+    <div className={stacked ? "space-y-3 p-5" : "flex flex-wrap items-center justify-between gap-4 p-5"}>
+      <div className="min-w-0 max-w-prose">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-[var(--muted)]">{hint}</p>
+      </div>
+      <div className={stacked ? undefined : "w-full shrink-0 sm:w-56"}>{control}</div>
+    </div>
+  );
+}
+
+function SettingsLink({
+  to,
+  icon: Icon,
+  title,
+  description,
+}: {
+  to: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group flex items-start gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-colors hover:border-[var(--primary)]/40 hover:bg-[var(--surface-2)]"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--primary)]/10 text-[var(--primary)]">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium">{title}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-[var(--muted)]">{description}</span>
+      </span>
+      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--muted)] transition-transform group-hover:translate-x-0.5 rtl:scale-x-[-1]" />
+    </Link>
+  );
+}
+
+function Toggle({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+        checked ? "bg-[var(--primary)]" : "bg-[var(--border)]"
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </span>
   );
 }
 
@@ -72,367 +118,93 @@ const CURRENCIES = [
   { code: "AED", name: "UAE Dirham" },
 ];
 
-function CurrencySettingsCard() {
-  const t = useTranslation();
-  const qc = useQueryClient();
-  const { data } = useQuery<{ data: { currency?: string; tenant?: { base_currency?: string } } }>({
-    queryKey: ["business-settings"],
-    queryFn: () => api("/settings/business"),
-  });
-  const baseCurrency = data?.data?.tenant?.base_currency ?? data?.data?.currency ?? "USD";
-
-  const mutation = useMutation({
-    mutationFn: (base_currency: string) => api("/settings/business", { method: "PUT", body: { base_currency } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["business-settings"] }); toast(t("currency.saved")); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
-  });
-
-  return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]">
-          <DollarSign className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">{t("currency.title")}</p>
-            <p className="text-xs text-[var(--muted)]">{t("currency.baseHint")}</p>
-          </div>
-        </div>
-        <div className="px-5 pb-5">
-          <Label className="mb-1.5">{t("currency.base")}</Label>
-          <Select
-            value={baseCurrency}
-            onChange={(e) => mutation.mutate(e.target.value)}
-            disabled={mutation.isPending}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
-            ))}
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface PrinterProfile {
-  id: string;
-  name: string;
-  connection_type: "usb" | "network" | "serial";
-  ip_address: string | null;
-  port: number | null;
-  paper_width: number;
-  auto_cut: boolean;
-  open_drawer: boolean;
-}
-
-function PrinterProfilesCard() {
-  const t = useTranslation();
-  const qc = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<PrinterProfile | null>(null);
-  const [deleting, setDeleting] = useState<PrinterProfile | null>(null);
-
-  const { data, isLoading } = useQuery<{ data: PrinterProfile[] }>({
-    queryKey: ["printer-profiles"],
-    queryFn: () => api<{ data: PrinterProfile[] }>("/printer-profiles"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api(`/printer-profiles/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
-      toast(t("common.delete") + "d");
-      setDeleting(null);
-    },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
-  });
-
-  const profiles = data?.data ?? [];
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle>{t("settings.printer.title")}</CardTitle>
-        <Button size="sm" onClick={() => { setEditing(null); setShowForm(true); }}>
-          {t("settings.printer.add")}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : profiles.length === 0 ? (
-          <p className="text-sm text-[var(--muted)]">{t("settings.printer.none")}</p>
-        ) : (
-          <ul className="divide-y divide-[var(--border)]">
-            {profiles.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Printer className="h-4 w-4 shrink-0 text-[var(--primary)]" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-xs text-[var(--muted)]">
-                      {t(`settings.printer.${p.connection_type}`)} · {p.paper_width}mm
-                      {p.auto_cut && ` · ${t("settings.printer.auto_cut")}`}
-                      {p.open_drawer && ` · ${t("settings.printer.open_drawer")}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing(p); setShowForm(true); }}>
-                    {t("common.edit")}
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
-                    {t("common.delete")}
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-
-      <PrinterProfileForm
-        open={showForm}
-        profile={editing}
-        onClose={() => { setShowForm(false); setEditing(null); }}
-      />
-
-      <Dialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        title={t("common.delete")}
-        description={t("common.delete") + "?"}
-        confirmLabel={t("common.delete")}
-        confirmVariant="danger"
-        loading={deleteMutation.isPending}
-        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
-      />
-    </Card>
-  );
-}
-
-function PrinterProfileForm({
-  open,
-  profile,
-  onClose,
+function PreferencesCard({
+  autoPostJournals,
+  baseCurrency,
 }: {
-  open: boolean;
-  profile: PrinterProfile | null;
-  onClose: () => void;
+  autoPostJournals: boolean;
+  baseCurrency: string;
 }) {
   const t = useTranslation();
   const qc = useQueryClient();
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Partial<PrinterProfile>>({
-    defaultValues: profile ?? {
-      name: "",
-      connection_type: "usb",
-      paper_width: 80,
-      auto_cut: true,
-      open_drawer: false,
-    },
-    values: profile ?? undefined,
-  });
-
-  const connType = watch("connection_type");
-
-  const mutation = useMutation({
-    mutationFn: (d: Partial<PrinterProfile>) =>
-      profile
-        ? api(`/printer-profiles/${profile.id}`, { method: "PUT", body: d })
-        : api("/printer-profiles", { method: "POST", body: d }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
-      toast(profile ? t("common.save") + "d" : t("common.add") + "d");
-      reset();
-      onClose();
-    },
+  const save = useMutation({
+    mutationFn: (body: Record<string, unknown>) => api("/settings/business", { method: "PUT", body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["business-settings"] }),
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
-
-  const handleTestPrint = useCallback(async () => {
-    toast(t("settings.printer.testSent"));
-  }, [t]);
-
-  return (
-    <Dialog open={open} onClose={onClose} title={profile ? t("common.edit") : t("settings.printer.add")}>
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-        <div>
-          <Label>{t("settings.printer.name")} *</Label>
-          <Input {...register("name", { required: true })} />
-          {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
-        </div>
-        <div>
-          <Label>{t("settings.printer.type")} *</Label>
-          <Select {...register("connection_type")}>
-            <option value="usb">{t("settings.printer.usb")}</option>
-            <option value="network">{t("settings.printer.network")}</option>
-            <option value="serial">{t("settings.printer.serial")}</option>
-          </Select>
-        </div>
-        {connType === "network" && (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>IP Address</Label>
-              <Input {...register("ip_address")} placeholder="192.168.1.100" />
-            </div>
-            <div>
-              <Label>Port</Label>
-              <Input type="number" {...register("port")} placeholder="9100" />
-            </div>
-          </div>
-        )}
-        <div>
-          <Label>{t("settings.printer.paper_width")} *</Label>
-          <Select {...register("paper_width", { valueAsNumber: true })}>
-            <option value={58}>58mm</option>
-            <option value={80}>80mm</option>
-          </Select>
-        </div>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" {...register("auto_cut")} className="rounded" />
-            <span className="text-sm">{t("settings.printer.auto_cut")}</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" {...register("open_drawer")} className="rounded" />
-            <span className="text-sm">{t("settings.printer.open_drawer")}</span>
-          </label>
-        </div>
-        <div className="flex justify-between gap-2">
-          <Button type="button" variant="outline" onClick={handleTestPrint}>
-            {t("settings.printer.test")}
-          </Button>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
-            <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? t("common.saving") : t("common.save")}</Button>
-          </div>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
-
-interface Session {
-  id: string;
-  name: string;
-  ip_address: string | null;
-  last_used_at: string | null;
-  created_at: string;
-  expires_at: string | null;
-  current: boolean;
-}
-
-function SessionsCard() {
-  const t = useTranslation();
-  const qc = useQueryClient();
-  const [revoking, setRevoking] = useState<Session | null>(null);
-  const [revokingAll, setRevokingAll] = useState(false);
-
-  const { data, isLoading } = useQuery<{ data: Session[] }>({
-    queryKey: ["auth-sessions"],
-    queryFn: () => api<{ data: Session[] }>("/auth/sessions"),
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: (id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["auth-sessions"] });
-      toast(t("settings.sessionRevoked"));
-      setRevoking(null);
-    },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
-  });
-
-  const revokeAllMutation = useMutation({
-    mutationFn: () => api("/auth/sessions/revoke-all", { method: "POST" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["auth-sessions"] });
-      toast(t("settings.sessionsRevokedAll"));
-      setRevokingAll(false);
-    },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
-  });
-
-  const sessions = data?.data ?? [];
-  const otherSessions = sessions.filter((s) => !s.current);
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle>{t("settings.security")}</CardTitle>
-        {otherSessions.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setRevokingAll(true)}>
-            {t("settings.sessionRevokeAll")}
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-[var(--muted)]">{t("settings.securityHint")}</p>
+      <CardContent className="divide-y divide-[var(--border)] p-0">
+        <button
+          type="button"
+          disabled={save.isPending}
+          onClick={() =>
+            save.mutate(
+              { auto_post_journals: !autoPostJournals },
+              { onSuccess: () => toast(t("settings.autoBookkeepingSaved")) },
+            )
+          }
+          className="flex w-full flex-wrap items-center justify-between gap-4 p-5 text-start transition-colors hover:bg-[var(--surface-2)] disabled:opacity-60"
+        >
+          <span className="min-w-0 max-w-prose">
+            <span className="block text-sm font-medium">{t("settings.autoBookkeeping")}</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-[var(--muted)]">
+              {t("settings.autoBookkeepingHint")}
+            </span>
+          </span>
+          <Toggle checked={autoPostJournals} />
+        </button>
 
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-[var(--muted)]">{t("settings.sessionsEmpty")}</p>
-        ) : (
-          <ul className="divide-y divide-[var(--border)]">
-            {sessions.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="flex items-center gap-3 min-w-0">
-                  {/^(iphone|android|phone)/i.test(s.name) ? (
-                    <Smartphone className="h-4 w-4 shrink-0 text-[var(--muted)]" />
-                  ) : (
-                    <Laptop className="h-4 w-4 shrink-0 text-[var(--muted)]" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium">{s.name}</span>
-                      {s.current && <Badge tone="success">{t("settings.sessionCurrent")}</Badge>}
-                    </div>
-                    <p className="truncate text-xs text-[var(--muted)]">
-                      {s.ip_address ?? "—"} · {t("settings.sessionLastActive")}{" "}
-                      {s.last_used_at ? formatDateTime(s.last_used_at) : formatDateTime(s.created_at)}
-                    </p>
-                  </div>
-                </div>
-                {!s.current && (
-                  <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setRevoking(s)}>
-                    {t("settings.sessionRevoke")}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <SettingRow
+          label={t("currency.base")}
+          hint={t("currency.baseHint")}
+          control={
+            <Select
+              aria-label={t("currency.base")}
+              value={baseCurrency}
+              disabled={save.isPending}
+              onChange={(e) =>
+                save.mutate({ base_currency: e.target.value }, { onSuccess: () => toast(t("currency.saved")) })
+              }
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </Select>
+          }
+        />
+
+        <SettingRow
+          label={t("settings.language")}
+          hint={t("settings.localizationHint")}
+          control={
+            <Select
+              aria-label={t("settings.language")}
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+            >
+              {LOCALES.map((code) => (
+                <option key={code} value={code}>
+                  {LOCALE_LABELS[code]}
+                </option>
+              ))}
+            </Select>
+          }
+        />
+
+        <SettingRow
+          stacked
+          label={t("settings.appearance")}
+          hint={t("settings.appearanceHint")}
+          control={<PalettePicker />}
+        />
       </CardContent>
-
-      <Dialog
-        open={!!revoking}
-        onClose={() => setRevoking(null)}
-        title={t("settings.sessionRevokeConfirmTitle")}
-        description={t("settings.sessionRevokeConfirmBody")}
-        confirmLabel={t("settings.sessionRevoke")}
-        confirmVariant="danger"
-        loading={revokeMutation.isPending}
-        onConfirm={() => revoking && revokeMutation.mutate(revoking.id)}
-      />
-
-      <Dialog
-        open={revokingAll}
-        onClose={() => setRevokingAll(false)}
-        title={t("settings.sessionRevokeAllConfirmTitle")}
-        description={t("settings.sessionRevokeAllConfirmBody")}
-        confirmLabel={t("settings.sessionRevokeAll")}
-        confirmVariant="danger"
-        loading={revokeAllMutation.isPending}
-        onConfirm={() => revokeAllMutation.mutate()}
-      />
     </Card>
   );
 }
@@ -448,6 +220,7 @@ interface BusinessSettings {
   tax_number: string | null;
   logo_path: string | null;
   auto_post_journals: boolean;
+  tenant?: { base_currency?: string };
 }
 
 const schema = z.object({
@@ -494,24 +267,57 @@ export default function SettingsPage() {
     onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
-  if (isLoading) return <div className="py-12 text-center text-[var(--muted)]">{t("common.loading")}</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-72 w-full rounded-[var(--radius)]" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-48 w-full rounded-[var(--radius)]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-5">
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
-        <Card className="xl:col-span-3">
-          <CardHeader><CardTitle>{t("settings.businessInfo")}</CardTitle></CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-              <div><Label>{t("settings.businessName")} *</Label><Input {...register("name")} />{errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}</div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div><Label>{t("settings.email")}</Label><Input type="email" {...register("email")} /></div>
-                <div><Label>{t("settings.phone")}</Label><Input {...register("phone")} /></div>
+    <div className="space-y-8 pb-4">
+      <Section
+        title={t("settings.businessInfo")}
+        description="Your legal details and the formats used on receipts, invoices and reports."
+      >
+        <Card>
+          <form onSubmit={handleSubmit((d) => mutation.mutate(d))}>
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="sm:col-span-2 xl:col-span-1">
+                <Label>{t("settings.businessName")} *</Label>
+                <Input {...register("name")} />
+                {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
               </div>
-              <div><Label>{t("settings.address")}</Label><Input {...register("address")} /></div>
-              <div><Label>{t("settings.taxNumber")}</Label><Input {...register("tax_number")} /></div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <Label>{t("settings.email")}</Label>
+                <Input type="email" {...register("email")} />
+                {errors.email && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email.message}</p>}
+              </div>
+              <div>
+                <Label>{t("settings.phone")}</Label>
+                <Input {...register("phone")} />
+              </div>
+              <div>
+                <Label>{t("settings.address")}</Label>
+                <Input {...register("address")} />
+              </div>
+              <div>
+                <Label>{t("settings.taxNumber")}</Label>
+                <Input {...register("tax_number")} />
+              </div>
+
+              <div className="border-t border-[var(--border)] pt-4 sm:col-span-2 xl:col-span-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">Regional formats</p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-3 xl:col-span-3">
                 <div>
                   <Label>{t("settings.currency")}</Label>
                   <Select {...register("currency")}>
@@ -544,154 +350,104 @@ export default function SettingsPage() {
                   </Select>
                 </div>
               </div>
-              <Button type="submit" disabled={mutation.isPending || !isDirty} className="w-full sm:w-auto">{mutation.isPending ? t("settings.saving") : t("settings.save")}</Button>
-            </form>
-          </CardContent>
+            </CardContent>
+
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border)] px-5 py-3">
+              {isDirty && <p className="text-xs text-[var(--muted)]">You have unsaved changes.</p>}
+              <Button type="submit" disabled={mutation.isPending || !isDirty}>
+                {mutation.isPending ? t("settings.saving") : t("settings.save")}
+              </Button>
+            </div>
+          </form>
         </Card>
+      </Section>
 
-        {/* Sits outside the profile form on purpose: images upload on selection, so
-            there is nothing for the form's submit button to save. */}
-        <div className="xl:col-span-3 xl:order-last">
-          <BrandingCard />
+      {/* Sits outside the profile form on purpose: images upload on selection, so
+          there is nothing for the form's submit button to save. */}
+      <Section
+        title="Branding"
+        description="Images are resized and converted on upload, so you can drop in whatever the designer sent without preparing sizes yourself."
+      >
+        <BrandingCard />
+      </Section>
+
+      <Section title="Configuration" description="Settings with a page of their own.">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <SettingsLink
+            to="/settings/tax"
+            icon={Percent}
+            title="Tax"
+            description="Rates, groups, jurisdictions & price display"
+          />
+          <SettingsLink
+            to="/settings/locations"
+            icon={Building2}
+            title={t("nav.locations")}
+            description="Stores, outlets and stock locations"
+          />
+          <SettingsLink
+            to="/settings/printer"
+            icon={Printer}
+            title={t("settings.printer.title")}
+            description="ESC/POS receipt printers"
+          />
+          <SettingsLink
+            to="/settings/approvals"
+            icon={ShieldCheck}
+            title="Manager approvals"
+            description="Discount limits, price override & void PIN rules"
+          />
+          <SettingsLink
+            to="/settings/security"
+            icon={Shield}
+            title={t("security.title")}
+            description={`${t("security.sessions.title")}, ${t("security.2fa.title")}, ${t("security.password.title")}`}
+          />
+          <SettingsLink
+            to="/settings/email-templates"
+            icon={Mail}
+            title={t("emailTemplates.title")}
+            description={t("emailTemplates.settingsHint")}
+          />
+          <SettingsLink
+            to="/settings/webhooks"
+            icon={Webhook}
+            title={t("webhooks.title")}
+            description={t("webhooks.settingsHint")}
+          />
         </div>
+      </Section>
 
-        <div className="space-y-5">
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/tax"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Percent className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Tax</p>
-                  <p className="text-xs text-[var(--muted)]">Rates, groups, jurisdictions & price display</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/webhooks"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Webhook className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("webhooks.title")}</p>
-                  <p className="text-xs text-[var(--muted)]">{t("webhooks.settingsHint")}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/locations"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Building2 className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("nav.locations")}</p>
-                  <p className="text-xs text-[var(--muted)]">Stores, outlets and stock locations</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/printer"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Printer className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("settings.printer.title")}</p>
-                  <p className="text-xs text-[var(--muted)]">ESC/POS receipt printers</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/approvals"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <ShieldCheck className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Manager approvals</p>
-                  <p className="text-xs text-[var(--muted)]">Discount limits, price override & void PIN rules</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/security"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Shield className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("security.title")}</p>
-                  <p className="text-xs text-[var(--muted)]">{t("security.sessions.title")}, {t("security.2fa.title")}, {t("security.password.title")}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Link
-                to="/settings/email-templates"
-                className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <Mail className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t("emailTemplates.title")}</p>
-                  <p className="text-xs text-[var(--muted)]">{t("emailTemplates.settingsHint")}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)] rtl:scale-x-[-1]" />
-              </Link>
-            </CardContent>
-          </Card>
-          <AutoBookkeepingCard autoPostJournals={data?.data?.auto_post_journals ?? false} />
-          <CurrencySettingsCard />
-          <PrinterProfilesCard />
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
+        <Section
+          title="Preferences"
+          description="Saved as soon as you change them."
+          className="xl:col-span-2"
+        >
+          <PreferencesCard
+            autoPostJournals={data?.data?.auto_post_journals ?? false}
+            baseCurrency={data?.data?.tenant?.base_currency ?? data?.data?.currency ?? "USD"}
+          />
+        </Section>
 
+        <Section title={t("settings.account")} description="The account you are signed in with.">
           <Card>
-            <CardHeader><CardTitle>{t("settings.localization")}</CardTitle></CardHeader>
-            <CardContent>
-              <p className="mb-3 text-sm text-[var(--muted)]">{t("settings.localizationHint")}</p>
-              <LocalePicker />
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
+              <div className="min-w-0">
+                <p className="text-xs text-[var(--muted)]">{t("settings.name")}</p>
+                <p className="truncate text-sm font-medium">{user?.name ?? "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-[var(--muted)]">{t("settings.email")}</p>
+                <p className="truncate text-sm font-medium">{user?.email ?? "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-[var(--muted)]">{t("settings.roles")}</p>
+                <p className="truncate text-sm font-medium">{user?.roles?.join(", ") ?? "—"}</p>
+              </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader><CardTitle>{t("settings.account")}</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.name")}</span><span className="truncate text-right">{user?.name}</span></div>
-              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.email")}</span><span className="truncate text-right">{user?.email}</span></div>
-              <div className="flex justify-between gap-3"><span className="text-[var(--muted)]">{t("settings.roles")}</span><span className="truncate text-right">{user?.roles?.join(", ") ?? "—"}</span></div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
-        <div className="space-y-5 xl:col-span-3">
-          <SessionsCard />
-        </div>
-        <div className="space-y-5">
-          <TwoFactorCard />
-          <ApprovalPinCard />
-        </div>
+        </Section>
       </div>
     </div>
   );
