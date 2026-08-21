@@ -1,8 +1,5 @@
-"use client";
-
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import { api, ApiError } from "@/lib/api";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -10,10 +7,10 @@ import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/provider";
 
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
   const t = useTranslation();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
 
@@ -28,7 +25,7 @@ function ResetPasswordForm() {
       <AuthShell title={t("auth.resetPasswordTitle")} subtitle={t("auth.resetPasswordSubtitle")}>
         <p className="text-sm text-[var(--color-danger)]">{t("auth.resetPasswordMissingLink")}</p>
         <p className="mt-6 text-center text-sm text-[var(--muted)]">
-          <Link href="/forgot-password" className="font-medium text-[var(--primary)]">
+          <Link to="/forgot-password" className="font-medium text-[var(--primary)]">
             {t("auth.forgotPassword")}
           </Link>
         </p>
@@ -46,7 +43,7 @@ function ResetPasswordForm() {
         body: { token, email, password, password_confirmation: passwordConfirmation },
       });
       setSuccess(true);
-      setTimeout(() => router.replace("/login"), 2000);
+      setTimeout(() => navigate("/login", { replace: true }), 2000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Reset failed");
     } finally {
@@ -82,13 +79,5 @@ function ResetPasswordForm() {
         </form>
       )}
     </AuthShell>
-  );
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={null}>
-      <ResetPasswordForm />
-    </Suspense>
   );
 }

@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { api, ApiError } from "@/lib/api";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -50,7 +48,7 @@ export default function ForgotPasswordPage() {
         </form>
       )}
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
-        <Link href="/login" className="font-medium text-[var(--primary)]">
+        <Link to="/login" className="font-medium text-[var(--primary)]">
           {t("auth.backToLogin")}
         </Link>
       </p>
