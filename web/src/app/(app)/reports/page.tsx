@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -83,7 +81,7 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm">
-            <Link href="/reports/tax"><Percent className="h-3.5 w-3.5" /> {t("reports.taxReport")}</Link>
+            <Link to="/reports/tax"><Percent className="h-3.5 w-3.5" /> {t("reports.taxReport")}</Link>
           </Button>
         </div>
         <div className="flex items-center gap-2 text-sm">
