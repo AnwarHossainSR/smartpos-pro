@@ -1,17 +1,14 @@
-"use client";
-
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import { api, ApiError } from "@/lib/api";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
-function VerifyEmailForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function VerifyEmailPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const email = searchParams.get("email") ?? "";
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +27,7 @@ function VerifyEmailForm() {
         body: { email, code },
       });
       setSuccess(true);
-      setTimeout(() => router.replace("/login?verified=1"), 2000);
+      setTimeout(() => navigate("/login?verified=1", { replace: true }), 2000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Verification failed");
     } finally {
@@ -108,22 +105,10 @@ function VerifyEmailForm() {
         </p>
       </div>
       <p className="mt-4 text-center text-sm text-[var(--muted)]">
-        <Link href="/login" className="font-medium text-[var(--primary)]">
+        <Link to="/login" className="font-medium text-[var(--primary)]">
           Back to sign in
         </Link>
       </p>
     </AuthShell>
-  );
-}
-
-export default function VerifyEmailPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    }>
-      <VerifyEmailForm />
-    </Suspense>
   );
 }

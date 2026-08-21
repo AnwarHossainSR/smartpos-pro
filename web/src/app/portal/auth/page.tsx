@@ -1,19 +1,15 @@
-"use client";
-
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError } from "@/lib/api";
 import { setPortalToken } from "@/lib/portal";
 
-function PortalAuthScreen() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function PortalAuthPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
-  // "No token in the URL" is knowable at render time, so it is derived rather than pushed
-  // into state from an effect — only the verification request's outcome needs state.
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(!!token);
 
@@ -25,7 +21,7 @@ function PortalAuthScreen() {
       .then((res) => {
         if (!active) return;
         setPortalToken(res.token);
-        router.replace("/portal/dashboard");
+        navigate("/portal/dashboard", { replace: true });
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -36,37 +32,27 @@ function PortalAuthScreen() {
     return () => {
       active = false;
     };
-  }, [token, router]);
+  }, [token, navigate]);
 
   const error = token ? verifyError : "No sign-in token was provided.";
 
   return (
-    <div className="w-full max-w-md text-center">
-      <Logo size={44} className="mx-auto mb-4" />
-      {verifying && (
-        <div role="status" aria-live="polite">
-          <Spinner className="mx-auto" />
-          <span className="sr-only">Signing you in</span>
-        </div>
-      )}
-      {error && (
-        <>
-          <h1 className="text-2xl font-semibold">Sign-in failed</h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">{error}</p>
-        </>
-      )}
-    </div>
-  );
-}
-
-// `useSearchParams()` opts a route out of static prerendering unless it sits under a Suspense
-// boundary — same wrapper the other query-string screens (verify-email, reset-password) use.
-export default function PortalAuthPage() {
-  return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg)] p-6">
-      <Suspense fallback={<Spinner className="mx-auto" />}>
-        <PortalAuthScreen />
-      </Suspense>
+      <div className="w-full max-w-md text-center">
+        <Logo size={44} className="mx-auto mb-4" />
+        {verifying && (
+          <div role="status" aria-live="polite">
+            <Spinner className="mx-auto" />
+            <span className="sr-only">Signing you in</span>
+          </div>
+        )}
+        {error && (
+          <>
+            <h1 className="text-2xl font-semibold">Sign-in failed</h1>
+            <p className="mt-2 text-sm text-[var(--muted)]">{error}</p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
