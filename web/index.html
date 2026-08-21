@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" suppressHydrationWarning>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>(function(){try{
+var d=document.documentElement;
+var t="system",p="indigo";
+var rt=localStorage.getItem("smartpos-theme");
+if(rt){var st=JSON.parse(rt).state||{};t=st.theme||t;p=st.palette||p;}
+if(t==="dark")d.classList.add("dark");else if(t==="light")d.classList.add("light");
+d.setAttribute("data-theme",p);
+var locale="en",dir="ltr";
+var rl=localStorage.getItem("smartpos-locale");
+if(rl){var sl=JSON.parse(rl).state||{};locale=sl.locale||locale;}
+if(locale==="ar")dir="rtl";
+d.setAttribute("lang",locale);
+d.setAttribute("dir",dir);
+}catch(e){}})();</script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
