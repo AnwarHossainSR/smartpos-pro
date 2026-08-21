@@ -5,13 +5,9 @@ A multi-tenant POS & retail SaaS. **Backend**: Laravel 13 / PHP 8.4 at the repo 
 [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md). Deeper design:
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Task-driven workflow
+## Dev branch
 
-- Work is broken into numbered tasks in [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md);
-  live status in [`docs/PROGRESS.md`](docs/PROGRESS.md).
-- Run **`/implement-task <id>`** to implement one task, or **`/project-status`** to see
-  what's left.
-- **Dev branch:** `claude/new-github-repo-setup-tb3viy`. Never push to `main`; open a PR.
+`claude/new-github-repo-setup-tb3viy`. Never push to `main`; open a PR.
 
 ## Backend conventions (root)
 
@@ -30,7 +26,7 @@ A multi-tenant POS & retail SaaS. **Backend**: Laravel 13 / PHP 8.4 at the repo 
 
 ### Backend definition of done
 `php artisan test` green · `vendor/bin/pint --test` clean · new endpoints documented in
-`docs/API.md` · `docs/PROGRESS.md` updated.
+`docs/API.md`.
 
 ## Frontend conventions (`web/`)
 
