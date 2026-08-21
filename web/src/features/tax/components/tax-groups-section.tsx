@@ -1,18 +1,16 @@
-"use client";
-
-import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Drawer } from "@/components/ui/drawer";
-import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { useTaxGroupMutations, useTaxGroups } from "@/features/tax/hooks";
+import { Select } from "@/components/ui/select";
 import { TaxGroupForm } from "@/features/tax/components/tax-group-form";
+import { useTaxGroupMutations, useTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
   const list = useTaxGroups();
@@ -66,7 +64,7 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
   return (
     <div className="space-y-3">
       <ListToolbar
-        search={list.search}
+        search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax groups…"
         filters={

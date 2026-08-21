@@ -1,5 +1,3 @@
-"use client";
-
 import { create } from "zustand";
 
 /** Tenant currency, refreshed from `/settings/business` by AppLayout. Not persisted — it's

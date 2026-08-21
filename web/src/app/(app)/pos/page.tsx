@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { QuantityPopover } from "@/features/pos/components/quantity-popover";
 import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
 import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
@@ -22,7 +22,8 @@ import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
 import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
 import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
 import { CategoryTabs } from "@/features/pos/components/category-tabs";
-import { ApprovalPinDialog, approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-pin-dialog";
+import { approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-challenge";
+import { ApprovalPinDialog } from "@/components/approval-pin-dialog";
 import { ViewToggle } from "@/features/pos/components/view-toggle";
 
 /* ---- types ---- */

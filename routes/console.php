@@ -18,13 +18,6 @@ Schedule::call(function () {
     });
 })->dailyAt('07:00')->name('daily-reports')->withoutOverlapping();
 
-// Auto-expire trials: move tenants past trial end to 'suspended'
-Schedule::call(function () {
-    Tenant::where('status', 'trialing')
-        ->where('trial_ends_at', '<', now())
-        ->update(['status' => 'suspended']);
-})->hourly()->name('expire-trials');
-
 // Idempotency keys only need to survive long enough to cover client retries.
 Schedule::call(function () {
     IdempotencyKey::withoutGlobalScopes()->where('created_at', '<', now()->subDay())->delete();

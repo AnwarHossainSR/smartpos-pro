@@ -976,7 +976,6 @@ echo.private(`tenant.${tenantId}`)
 | Schedule | Task |
 | --- | --- |
 | Daily 07:00 UTC | Send `DailyReportMail` to every active tenant's owner |
-| Hourly | Auto-expire trialing tenants whose `trial_ends_at` has passed |
 
 Enable via cron: `* * * * * php /var/www/smartpos/artisan schedule:run >> /dev/null 2>&1`
 

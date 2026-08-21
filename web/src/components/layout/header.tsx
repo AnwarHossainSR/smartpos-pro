@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Clock, LogIn, LogOut as LogOutIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
 import { useClickOutside } from "@/lib/hooks";
@@ -10,7 +10,7 @@ import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { toast } from "@/components/ui/toast";
 import type { NotificationResponse } from "@/lib/notifications";
 import { queryKeys } from "@/lib/query-keys";
@@ -49,8 +49,12 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const swatchRef = useRef<HTMLDivElement>(null);
   const [elapsed, setElapsed] = useState(0);
 
+  // Only `unread_count` is used, so this asks for one row — a different fetch from the
+  // Notifications page's `per_page=50`, and therefore a different cache entry. Sharing one
+  // key meant whichever mounted first won, and opening the page while this copy was fresh
+  // rendered a single notification.
   const { data: notifData } = useQuery<NotificationResponse>({
-    queryKey: ["notifications"],
+    queryKey: queryKeys.notifications.badge(),
     queryFn: () => api<NotificationResponse>("/notifications?per_page=1"),
     staleTime: 60_000,
   });
@@ -76,13 +80,13 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const clockInMutation = useMutation({
     mutationFn: () => api("/shifts/clock-in", { method: "POST", body: {} }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockInSuccess")); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : t("header.clockInError"), "error"),
+    onError: (e: unknown) => toast(errorMessage(e, t("header.clockInError")), "error"),
   });
 
   const clockOutMutation = useMutation({
     mutationFn: () => api("/shifts/clock-out", { method: "POST", body: {} }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockOutSuccess")); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : t("header.clockOutError"), "error"),
+    onError: (e: unknown) => toast(errorMessage(e, t("header.clockOutError")), "error"),
   });
 
   // ⌘K / Ctrl+K

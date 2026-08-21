@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { type PermissionSlug } from "@/lib/permissions";
 import { useAuth } from "@/stores/auth";
 import { useOnboardingState, useRecordOnboardingStep, useCompleteOnboarding } from "./hooks";

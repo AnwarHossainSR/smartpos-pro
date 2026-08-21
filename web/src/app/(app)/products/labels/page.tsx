@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Printer, RotateCw, Trash2, TriangleAlert } from "lucide-react";
 import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { MIN_MODULE_MM } from "@/lib/barcode";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,8 @@ import { Input, Label as FieldLabel } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/stores/auth";
-import { LabelSheet, narrowestModuleMm, paginateLabels, type LabelOptions } from "./label-sheet";
+import { Label as LabelPreview, LabelSheet, type LabelOptions } from "./label-sheet";
+import { narrowestModuleMm, paginateLabels } from "./label-layout";
 import {
   DEFAULT_SHEET_ID,
   LABEL_TEMPLATES,
@@ -31,6 +33,14 @@ const BUSY_LABEL_COUNT = 500;
 const MAX_QUANTITY = 500;
 /** Gap between sheets in the on-screen preview only. */
 const PREVIEW_GAP_MM = 6;
+
+/** CSS reference pixels per millimetre, for sizing the screen-only one-up preview. */
+const PX_PER_MM = 96 / 25.4;
+/** Roughly how wide the single-label preview should render, whatever stock is selected. */
+const ONE_UP_TARGET_PX = 440;
+
+/** The "recently added" chips — a products list like any other, so it shares that namespace. */
+const RECENT_PRODUCTS_PARAMS = { per_page: 6, sort: "-created_at" } as const;
 
 const ZOOMS = [
   { value: "0.5", label: "50%" },
@@ -74,8 +84,11 @@ export default function LabelPrintingPage() {
     isError: recentError,
     refetch: refetchRecent,
   } = useQuery({
-    queryKey: ["label-recent-products"],
-    queryFn: () => api<Paginated<LabelProduct>>("/products?per_page=6&sort=-created_at"),
+    queryKey: queryKeys.products.list(RECENT_PRODUCTS_PARAMS),
+    queryFn: () =>
+      api<Paginated<LabelProduct>>(
+        `/products?per_page=${RECENT_PRODUCTS_PARAMS.per_page}&sort=${RECENT_PRODUCTS_PARAMS.sort}`,
+      ),
     enabled: canView,
     staleTime: 60_000,
   });
@@ -130,6 +143,10 @@ export default function LabelPrintingPage() {
 
   const scale = Number(zoom) || 1;
   const previewHeightMm = sheets.length * (PAGE_HEIGHT_MM + PREVIEW_GAP_MM);
+  // The one-up preview exists to show what a single label actually looks like — the sheet
+  // alone is mostly white space — so it is scaled to a readable size rather than to stock.
+  const oneUpScale = ONE_UP_TARGET_PX / (preset.labelWidthMm * PX_PER_MM);
+  const firstProduct = sheets.flat().find((slot) => slot !== null) ?? null;
 
   return (
     <div className="space-y-5">
@@ -166,7 +183,7 @@ export default function LabelPrintingPage() {
             <FieldLabel>Add a product</FieldLabel>
             <Combobox<LabelProduct>
               endpoint="/products"
-              queryKey="label-products"
+              queryKey={queryKeys.products.options()}
               value={undefined}
               onChange={(_id, option) => addProduct(option)}
               label={(product) => product.name}
@@ -434,7 +451,31 @@ export default function LabelPrintingPage() {
           data-label-preview
           className="overflow-x-auto rounded-[var(--radius)] bg-[var(--surface-2)] p-4"
         >
+          {firstProduct && (
           <div
+            data-print-hide
+            className="mx-auto mb-4 w-fit rounded-[var(--radius)] border border-[var(--border)] bg-white p-4"
+          >
+            <div
+              style={{
+                width: `${preset.labelWidthMm * oneUpScale}mm`,
+                height: `${preset.labelHeightMm * oneUpScale}mm`,
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${oneUpScale})`,
+                  transformOrigin: "top left",
+                  width: `${preset.labelWidthMm}mm`,
+                }}
+              >
+                <LabelPreview product={firstProduct} preset={preset} options={options} />
+              </div>
+            </div>
+          </div>
+          )}
+          <div
+            className="mx-auto"
             style={{
               width: `${PAGE_WIDTH_MM * scale}mm`,
               height: `${previewHeightMm * scale}mm`,

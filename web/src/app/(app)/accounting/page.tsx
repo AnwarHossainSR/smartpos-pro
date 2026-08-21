@@ -5,7 +5,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
+import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -61,7 +62,12 @@ type JournalValues = z.infer<typeof journalSchema>;
 
 function JournalForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
-  const { data: accounts } = useQuery({ queryKey: ["accounts-all"], queryFn: () => api<Paginated<Account>>("/accounts?per_page=200") });
+  // The picker's unpaginated fetch is a different shape from the paged Chart of accounts
+  // table, so it gets its own cache entry rather than clobbering that one.
+  const { data: accounts } = useQuery({
+    queryKey: queryKeys.accounts.options(),
+    queryFn: () => api<Paginated<Account>>("/accounts?per_page=200"),
+  });
 
   const { register, handleSubmit, control, watch } = useForm<JournalValues>({
     resolver: zodResolver(journalSchema),
@@ -79,8 +85,14 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
 
   const mutation = useMutation({
     mutationFn: (data: JournalValues) => api("/journals", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["journals"] }); qc.invalidateQueries({ queryKey: ["accounts"] }); toast("Journal posted"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.journals.all });
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      // A posted journal moves account balances, so the trial balance is stale too.
+      qc.invalidateQueries({ queryKey: queryKeys.trialBalance.all });
+      toast("Journal posted");
+      onSuccess();
+    },
   });
 
   return (
@@ -129,19 +141,19 @@ export default function AccountingPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: accounts, isLoading: accLoading } = useQuery<Paginated<Account>>({
-    queryKey: ["accounts", page],
+    queryKey: queryKeys.accounts.list({ page }),
     queryFn: () => api<Paginated<Account>>(`/accounts?page=${page}&per_page=25`),
     enabled: tab === "accounts",
   });
 
   const { data: journals, isLoading: jrnLoading } = useQuery<Paginated<JournalEntry>>({
-    queryKey: ["journals", page],
+    queryKey: queryKeys.journals.list({ page }),
     queryFn: () => api<Paginated<JournalEntry>>(`/journals?page=${page}&per_page=20`),
     enabled: tab === "journals",
   });
 
   const { data: trialBalance } = useQuery({
-    queryKey: ["trial-balance"],
+    queryKey: queryKeys.trialBalance.all,
     queryFn: () => api<{ data: { accounts: TrialBalanceRow[]; total_debit: number; total_credit: number } }>("/journals/trial-balance"),
     enabled: tab === "trial-balance",
   });

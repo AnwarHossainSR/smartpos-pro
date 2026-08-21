@@ -1,15 +1,13 @@
-"use client";
-
 import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { MailWarning } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 export function VerifyEmailBanner() {
   const t = useTranslation();
@@ -27,7 +25,6 @@ export function VerifyEmailBanner() {
       setShowOtp(true);
       setTimeout(() => inputRef.current?.focus(), 100);
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const verify = useMutation({
@@ -42,9 +39,8 @@ export function VerifyEmailBanner() {
       setCode("");
       window.location.reload();
     },
-    onError: (e: unknown) => {
-      setVerifyError(e instanceof ApiError ? e.message : "Verification failed");
-    },
+    // Reported inline under the code field, so no toast — the dialog is already on screen.
+    onError: (e: unknown) => setVerifyError(errorMessage(e, "Verification failed")),
   });
 
   if (!user || user.email_verified_at || dismissed) return null;

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +47,7 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
   return (
     <div className="space-y-3">
       <ListToolbar
-        search={list.search}
+        search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax rates…"
         filters={

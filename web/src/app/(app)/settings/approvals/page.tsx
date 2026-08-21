@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { api, ApiError } from "@/lib/api";
+import { api, type Envelope } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 
 interface ApprovalPolicy {
@@ -72,7 +73,7 @@ function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: 
 
   const mutation = useMutation({
     mutationFn: () =>
-      api<{ data: ApprovalPolicy }>("/settings/approvals", {
+      api<Envelope<ApprovalPolicy>>("/settings/approvals", {
         method: "PUT",
         body: {
           max_discount_percent: Number(percent || 0),
@@ -82,11 +83,9 @@ function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: 
         },
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["approval-policy"] });
+      qc.invalidateQueries({ queryKey: queryKeys.approvalPolicy });
       toast("Approval limits saved");
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Error", "error"),
   });
 
   const percentNumber = Number(percent);
@@ -175,9 +174,9 @@ export default function ApprovalSettingsPage() {
   const canView = can("settings.view");
   const canManage = can("settings.update");
 
-  const { data, isLoading, isError } = useQuery<{ data: ApprovalPolicy }>({
-    queryKey: ["approval-policy"],
-    queryFn: () => api<{ data: ApprovalPolicy }>("/settings/approvals"),
+  const { data, isLoading, isError, refetch } = useQuery<Envelope<ApprovalPolicy>>({
+    queryKey: queryKeys.approvalPolicy,
+    queryFn: () => api<Envelope<ApprovalPolicy>>("/settings/approvals"),
     enabled: canView,
   });
 
@@ -211,9 +210,16 @@ export default function ApprovalSettingsPage() {
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : isError || !data ? (
-              <p className="py-8 text-center text-sm text-[var(--color-danger)]">
-                Could not load the approval limits.
-              </p>
+              <div className="space-y-2 py-8 text-center text-sm">
+                <p className="text-[var(--color-danger)]">Could not load the approval limits.</p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="text-[var(--primary)] underline underline-offset-4"
+                >
+                  Try again
+                </button>
+              </div>
             ) : (
               <PolicyForm policy={data.data} canManage={canManage} />
             )}

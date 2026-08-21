@@ -1,19 +1,17 @@
-"use client";
-
-import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Drawer } from "@/components/ui/drawer";
-import { Dialog } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { useTaxZoneMutations, useTaxZones } from "@/features/tax/hooks";
+import { Select } from "@/components/ui/select";
 import { TaxZoneForm } from "@/features/tax/components/tax-zone-form";
+import { useTaxZoneMutations, useTaxZones } from "@/features/tax/hooks";
 import type { TaxZone } from "@/features/tax/types";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 function jurisdiction(z: TaxZone): string {
   return [z.country_code, z.state, z.postcode_pattern].filter(Boolean).join(" · ") || "Any";
@@ -54,7 +52,7 @@ export function TaxZonesSection({ canManage }: { canManage: boolean }) {
   return (
     <div className="space-y-3">
       <ListToolbar
-        search={list.search}
+        search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax zones…"
         filters={

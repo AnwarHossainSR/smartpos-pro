@@ -1,35 +1,11 @@
-"use client";
-
-import { useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Delete, ShieldCheck } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { cn, formatCurrency } from "@/lib/utils";
+import type { ApprovalAction, ApprovalChallenge } from "@/components/approval-challenge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-
-export type ApprovalAction = "discount" | "price_override" | "void";
-
-/**
- * What the server said it wants approved. Always taken verbatim from the `403`
- * the API returned — never recomputed here — so the value the manager approves
- * is exactly the value the checkout endpoint will re-derive on the retry.
- */
-export interface ApprovalChallenge {
-  action: ApprovalAction;
-  requested_value: number;
-  limit_value: number | null;
-  sale_id?: string | null;
-  message?: string;
-}
-
-interface ApprovalErrorPayload {
-  code?: string;
-  message?: string;
-  error?: { action?: string; requested_value?: number; limit_value?: number | null };
-}
-
-const ACTIONS: ApprovalAction[] = ["discount", "price_override", "void"];
+import { api, errorMessage } from "@/lib/api";
+import { cn, formatCurrency } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import { Delete, ShieldCheck } from "lucide-react";
+import { useRef, useState } from "react";
 
 const TITLES: Record<ApprovalAction, string> = {
   discount: "Manager approval — discount",
@@ -42,28 +18,6 @@ const BLURBS: Record<ApprovalAction, string> = {
   price_override: "Selling below the catalogue price needs a supervisor.",
   void: "Voiding a completed sale needs a supervisor.",
 };
-
-/**
- * Turns a rejected request into a challenge, when the rejection was a supervisor
- * gate rather than a real failure. Returns null for anything else so the caller
- * falls through to its normal error handling.
- */
-export function approvalChallengeFrom(error: unknown): ApprovalChallenge | null {
-  if (!(error instanceof ApiError) || error.status !== 403) return null;
-
-  const payload = error.payload as ApprovalErrorPayload | null;
-  if (payload?.code !== "approval_required") return null;
-
-  const action = payload.error?.action;
-  if (!action || !ACTIONS.includes(action as ApprovalAction)) return null;
-
-  return {
-    action: action as ApprovalAction,
-    requested_value: payload.error?.requested_value ?? 0,
-    limit_value: payload.error?.limit_value ?? null,
-    message: payload.message,
-  };
-}
 
 interface ApprovalPinDialogProps {
   /** Null keeps the dialog closed; set it to the challenge the API returned to open it. */
@@ -117,13 +71,12 @@ function PinChallengeForm({
       setPin("");
       onApproved(res.data.token);
     },
+    // Reported inline under the keypad, never as a toast — the manager is looking at
+    // the field they just mistyped, not at the corner of the screen.
+    meta: { silent: true },
     onError: (e: unknown) => {
       setPin("");
-      setError(
-        e instanceof ApiError
-          ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message
-          : "Could not verify that PIN",
-      );
+      setError(errorMessage(e, "Could not verify that PIN"));
       inputRef.current?.focus();
     },
   });

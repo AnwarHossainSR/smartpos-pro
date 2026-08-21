@@ -1,5 +1,3 @@
-"use client";
-
 import { Check } from "lucide-react";
 import { LOCALES, LOCALE_LABELS } from "@/i18n/config";
 import { useLocaleStore } from "@/stores/locale";

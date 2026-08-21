@@ -15,6 +15,13 @@ class EnsureTenant
 
     public function handle(Request $request, Closure $next): Response
     {
+        $user = $request->user();
+
+        // Super admins operate across tenants — skip tenant checks entirely.
+        if ($user && ($user->is_super_admin ?? false)) {
+            return $next($request);
+        }
+
         if (! $this->context->has()) {
             abort(response()->json([
                 'message' => 'No active tenant for this request.',

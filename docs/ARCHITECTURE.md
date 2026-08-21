@@ -127,7 +127,7 @@ therefore never double-charges or double-decrements stock.
 ## 6. Registration bootstrap
 
 [`TenantProvisioner::register()`](../app/Services/Auth/TenantProvisioner.php) creates, in
-one transaction: the tenant (with a 14-day trial), its first business, a default branch
+one transaction: the tenant (active on the free plan), its first business, a default branch
 and warehouse, the default role set, and the owner user assigned the `owner` role. This
 is the single entry point shared by the `/auth/register` endpoint and the demo seeder.
 

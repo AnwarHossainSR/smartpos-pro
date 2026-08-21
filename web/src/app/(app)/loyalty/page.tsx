@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, errorMessage, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
+import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
@@ -50,8 +52,7 @@ function CouponForm({ onSuccess }: { onSuccess: () => void }) {
   });
   const mutation = useMutation({
     mutationFn: (d: CouponValues) => api("/coupons", { method: "POST", body: d }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["coupons"] }); toast("Coupon created"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.coupons.all }); toast("Coupon created"); onSuccess(); },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -83,19 +84,21 @@ type Tab = "coupons" | "points";
 export default function LoyaltyPage() {
   const { can } = useAuth();
   const [tab, setTab] = useState<Tab>("coupons");
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { data: coupons, isLoading: couponsLoading } = useQuery<Paginated<Coupon>>({
-    queryKey: ["coupons", debouncedSearch],
-    queryFn: () => api<Paginated<Coupon>>(`/coupons?per_page=20`),
+  // Both tabs read the same `?search=`/`?page=` params, so a term typed on one carries over
+  // to the other — the single shared `search` state these replaced behaved the same way.
+  const coupons = useResourceList<Coupon>({
+    queryKey: queryKeys.coupons.lists(),
+    queryFn: (p) => api<Paginated<Coupon>>(`/coupons?${buildListQuery(p)}`),
     enabled: tab === "coupons",
   });
 
-  const { data: customers, isLoading: customersLoading } = useQuery<Paginated<Customer>>({
-    queryKey: ["customers-loyalty", debouncedSearch],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedSearch)}&per_page=20`),
+  // Same endpoint, same params and now the same key as the Customers screen, so switching
+  // between the two reuses one cache entry instead of refetching under `customers-loyalty`.
+  const customers = useResourceList<Customer>({
+    queryKey: queryKeys.customers.lists(),
+    queryFn: (p) => api<Paginated<Customer>>(`/customers?${buildListQuery(p)}`),
     enabled: tab === "points",
   });
 
@@ -113,18 +116,24 @@ export default function LoyaltyPage() {
         ))}
       </div>
 
-      {tab === "points" && (
-        <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-      )}
+      <div className="relative">
+        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+        {tab === "coupons" ? (
+          <Input className="ps-9" placeholder="Search coupons…" value={coupons.searchInput} onChange={(e) => coupons.setSearch(e.target.value)} />
+        ) : (
+          <Input className="ps-9" placeholder="Search customers…" value={customers.searchInput} onChange={(e) => customers.setSearch(e.target.value)} />
+        )}
+      </div>
 
       {tab === "coupons" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
             <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Type</TableHead><TableHead>Value</TableHead><TableHead>Min order</TableHead><TableHead>Uses</TableHead><TableHead>Valid until</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
             <TableBody>
-              {couponsLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                : coupons?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-8 text-center text-[var(--muted)]">No coupons yet.</TableCell></TableRow>
-                : coupons?.data?.map((c) => (
+              {coupons.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
+                : coupons.isError ? <TableRow><TableCell colSpan={7} className="py-8 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(coupons.error, "Could not load coupons.")}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => coupons.refetch()}>Try again</Button></TableCell></TableRow>
+                : coupons.isEmpty ? <TableRow><TableCell colSpan={7} className="py-8 text-center text-[var(--muted)]">{coupons.isFiltered ? "No coupons match that search." : "No coupons yet."}</TableCell></TableRow>
+                : coupons.data.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                     <TableCell>{c.type}</TableCell>
@@ -137,6 +146,9 @@ export default function LoyaltyPage() {
                 ))}
             </TableBody>
           </Table>
+          {coupons.meta && (
+            <Pagination page={coupons.page} lastPage={coupons.lastPage} onPageChange={coupons.setPage} label={`Page ${coupons.meta.current_page} of ${coupons.meta.last_page}`} />
+          )}
         </div>
       )}
 
@@ -145,9 +157,10 @@ export default function LoyaltyPage() {
           <Table>
             <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-end">Loyalty points</TableHead></TableRow></TableHeader>
             <TableBody>
-              {customersLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 3 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                : customers?.data?.length === 0 ? <TableRow><TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">No customers found.</TableCell></TableRow>
-                : customers?.data?.map((c) => (
+              {customers.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 3 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
+                : customers.isError ? <TableRow><TableCell colSpan={3} className="py-8 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(customers.error, "Could not load customers.")}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => customers.refetch()}>Try again</Button></TableCell></TableRow>
+                : customers.isEmpty ? <TableRow><TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">No customers found.</TableCell></TableRow>
+                : customers.data.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.phone ?? "—"}</TableCell>
@@ -156,6 +169,9 @@ export default function LoyaltyPage() {
                 ))}
             </TableBody>
           </Table>
+          {customers.meta && (
+            <Pagination page={customers.page} lastPage={customers.lastPage} onPageChange={customers.setPage} label={`Page ${customers.meta.current_page} of ${customers.meta.last_page}`} />
+          )}
         </div>
       )}
 

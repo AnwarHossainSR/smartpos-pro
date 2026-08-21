@@ -1,5 +1,3 @@
-"use client";
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";

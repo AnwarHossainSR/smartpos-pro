@@ -1,8 +1,6 @@
-"use client";
-
-import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Delete } from "lucide-react";
+import { useCallback } from "react";
 
 interface NumpadProps {
   onDigit: (digit: string) => void;
@@ -75,9 +73,4 @@ export function Numpad({ onDigit, onBackspace, onConfirm, confirmLabel, classNam
       )}
     </div>
   );
-}
-
-export function useIsTouchDevice() {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(pointer: coarse)").matches;
 }

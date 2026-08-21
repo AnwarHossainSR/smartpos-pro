@@ -1,23 +1,24 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Drawer } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
+import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
+import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 interface Supplier {
   id: string;
@@ -53,8 +54,7 @@ function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaul
   const mutation = useMutation({
     mutationFn: (data: FormValues) =>
       isEdit ? api(`/suppliers/${supplierId}`, { method: "PUT", body: data }) : api("/suppliers", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["suppliers"] }); toast(isEdit ? "Supplier updated" : "Supplier created"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.suppliers.all }); toast(isEdit ? "Supplier updated" : "Supplier created"); onSuccess(); },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -82,57 +82,63 @@ function SupplierForm({ defaultValues, supplierId, isEdit, onSuccess }: { defaul
 export default function SuppliersPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Supplier | null>(null);
   const [deleting, setDeleting] = useState<Supplier | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<Supplier>>({
-    queryKey: ["suppliers", debouncedSearch, page],
-    queryFn: () => api<Paginated<Supplier>>(`/suppliers?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+  const list = useResourceList<Supplier>({
+    queryKey: queryKeys.suppliers.lists(),
+    queryFn: (p) => api<Paginated<Supplier>>(`/suppliers?${buildListQuery(p)}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/suppliers/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["suppliers"] }); toast("Supplier deleted"); setDeleting(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.suppliers.all }); toast("Supplier deleted"); setDeleting(null); },
   });
+
+  const columns: DataTableColumn<Supplier>[] = [
+    {
+      key: "name",
+      header: "Name",
+      className: "font-medium",
+      render: (s) => <>{s.name}{s.email && <span className="block text-xs text-[var(--muted)]">{s.email}</span>}</>,
+    },
+    { key: "company", header: "Company", render: (s) => s.company ?? "—" },
+    { key: "phone", header: "Phone", render: (s) => s.phone ?? "—" },
+    { key: "balance", header: "Balance", align: "right", render: (s) => formatCurrency(s.balance) },
+    { key: "status", header: "Status", render: (s) => <Badge tone={s.is_active ? "success" : "default"}>{s.is_active ? "Active" : "Inactive"}</Badge> },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        {can("suppliers.create") && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />Add supplier</Button>}
-      </div>
-      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        addLabel={can("suppliers.create") ? "Add supplier" : undefined}
+        onAdd={can("suppliers.create") ? () => { setEditing(null); setDrawerOpen(true); } : undefined}
+      />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Company</TableHead><TableHead>Phone</TableHead><TableHead className="text-end">Balance</TableHead><TableHead>Status</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 6 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-              : data?.data?.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-[var(--muted)]">No suppliers yet.</TableCell></TableRow>
-              : data?.data?.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.name}{s.email && <span className="block text-xs text-[var(--muted)]">{s.email}</span>}</TableCell>
-                  <TableCell>{s.company ?? "—"}</TableCell>
-                  <TableCell>{s.phone ?? "—"}</TableCell>
-                  <TableCell className="text-end">{formatCurrency(s.balance)}</TableCell>
-                  <TableCell><Badge tone={s.is_active ? "success" : "default"}>{s.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {can("suppliers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(s); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
-                      {can("suppliers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(s)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(s) => s.id}
+          loading={list.isLoading}
+          loadingRows={6}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No suppliers yet."
+          actions={(s) => (
+            <>
+              {can("suppliers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(s); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {can("suppliers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(s)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+            </>
+          )}
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>

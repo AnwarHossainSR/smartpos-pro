@@ -4,40 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
+import { usePlans } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
-
-interface PlanFeature {
-  key: string;
-  label: string;
-  value: string;
-  included: boolean;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  interval: string;
-  limits: Record<string, number | null>;
-  features: PlanFeature[];
-  is_active: boolean;
-}
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 function CheckoutContent() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get("plan");
 
-  const { data: plansData, isLoading: plansLoading } = useQuery<{ data: Plan[] }>({
-    queryKey: ["subscription-plans"],
-    queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
-  });
+  // Arriving from the plans grid, this is already cached — the page renders without a fetch.
+  const { plans, isLoading: plansLoading } = usePlans();
 
-  const plan = plansData?.data.find((p) => p.id === planId);
+  const plan = plans.find((p) => p.id === planId);
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
@@ -46,12 +29,10 @@ function CheckoutContent() {
         body: { plan_id: planId },
       }),
     onSuccess: () => {
-      toast("Free trial activated! Your 30-day trial has started.");
+      // The plan banner on /subscription is stale the moment this succeeds.
+      qc.invalidateQueries({ queryKey: queryKeys.subscription.current() });
+      toast("Subscription activated. Your plan is live.");
       navigate("/subscription");
-    },
-    onError: (error: Error) => {
-      const message = error instanceof ApiError ? error.message : "Something went wrong. Please try again.";
-      toast(message, "error");
     },
   });
 
@@ -88,7 +69,7 @@ function CheckoutContent() {
         Back to Plans
       </Button>
 
-      <h1 className="text-xl font-semibold">Start Free Trial</h1>
+      <h1 className="text-xl font-semibold">Checkout</h1>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -101,17 +82,17 @@ function CheckoutContent() {
               <Badge>{plan.name}</Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--muted)]">Trial</span>
-              <span className="text-sm">30 days free</span>
+              <span className="text-[var(--muted)]">Billing</span>
+              <span className="text-sm">Monthly</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[var(--muted)]">Then</span>
+              <span className="text-[var(--muted)]">Renews</span>
               <span className="text-sm">{formatCurrency(plan.price)}/month</span>
             </div>
             <div className="border-t border-[var(--border)] pt-4">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Due today</span>
-                <span className="text-xl font-bold text-emerald-500">Free</span>
+                <span className="text-xl font-bold">{formatCurrency(plan.price)}</span>
               </div>
             </div>
           </CardContent>
@@ -146,9 +127,9 @@ function CheckoutContent() {
           <div className="flex flex-col items-center gap-4 text-center">
             <Shield className="h-8 w-8 text-[var(--primary)]" />
             <div>
-              <p className="font-medium">30-Day Free Trial</p>
+              <p className="font-medium">Secure Checkout</p>
               <p className="text-sm text-[var(--muted)]">
-                No credit card required. Cancel anytime during the trial. After 30 days, your plan will continue at {formatCurrency(plan.price)}/month.
+                Your plan activates immediately and renews at {formatCurrency(plan.price)}/month. Upgrade or cancel anytime.
               </p>
             </div>
             <Button
@@ -160,10 +141,10 @@ function CheckoutContent() {
               {checkoutMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Activating...
+                  Processing...
                 </>
               ) : (
-                "Start 30-Day Free Trial"
+                `Pay ${formatCurrency(plan.price)}`
               )}
             </Button>
           </div>

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
-import { api, ApiError, type Paginated } from "@/lib/api";
+import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,24 +33,23 @@ function actionTone(action: string): "success" | "warning" | "danger" | "default
   return "default";
 }
 
+/** Action text and the date range all round-trip through the URL, so a filtered view is shareable. */
+type AuditFilters = { action: string; from: string; to: string };
+
 export default function AuditLogPage() {
   const { can } = useAuth();
-  const [action, setAction] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState<AuditLogRow | null>(null);
 
   const allowed = can("audit.view");
 
-  const { data, isLoading, isError, error } = useQuery<Paginated<AuditLogRow>>({
-    queryKey: ["audit-logs", action, from, to, page],
-    queryFn: () =>
-      api<Paginated<AuditLogRow>>(
-        `/audit-logs?action=${encodeURIComponent(action)}&from=${from}&to=${to}&page=${page}&per_page=20`,
-      ),
+  const list = useResourceList<AuditLogRow, AuditFilters>({
+    queryKey: queryKeys.auditLogs.lists(),
+    queryFn: (p) => api<Paginated<AuditLogRow>>(`/audit-logs?${buildListQuery(p)}`),
+    filterKeys: ["action", "from", "to"] as const,
     enabled: allowed,
   });
+
+  const { action = "", from = "", to = "" } = list.filters;
 
   if (!allowed) {
     return (
@@ -60,8 +60,6 @@ export default function AuditLogPage() {
       </div>
     );
   }
-
-  const lastPage = data?.meta?.last_page ?? 1;
 
   const columns: DataTableColumn<AuditLogRow>[] = [
     {
@@ -94,43 +92,39 @@ export default function AuditLogPage() {
     <div className="space-y-4">
       <ListToolbar
         search={action}
-        onSearchChange={(v) => { setAction(v); setPage(1); }}
+        onSearchChange={(v) => list.setFilter("action", v)}
         searchPlaceholder="Filter by action (e.g. sale.price_override)…"
         filters={
           <div className="flex items-center gap-2">
-            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-auto" />
+            <Input type="date" value={from} onChange={(e) => list.setFilter("from", e.target.value)} className="w-auto" />
             <span className="text-xs text-[var(--muted)]">to</span>
-            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-auto" />
+            <Input type="date" value={to} onChange={(e) => list.setFilter("to", e.target.value)} className="w-auto" />
           </div>
         }
       />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        {isError ? (
-          <div className="p-8 text-center text-sm text-[var(--color-danger)]">
-            {error instanceof ApiError ? error.message : "Failed to load audit log."}
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data?.data ?? []}
-            rowKey={(r) => r.id}
-            loading={isLoading}
-            emptyMessage={action || from || to ? "No matching audit entries." : "No audit activity yet."}
-            actions={(r) => (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewing(r)}>
-                <Eye className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          />
-        )}
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(r) => r.id}
+          loading={list.isLoading}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage={list.isFiltered ? "No matching audit entries." : "No audit activity yet."}
+          actions={(r) => (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewing(r)}>
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        />
 
-        {data?.meta && (
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={lastPage}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page} · ${data.meta.total} entries`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page} · ${list.meta.total} entries`}
           />
         )}
       </div>

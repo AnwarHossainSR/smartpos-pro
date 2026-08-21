@@ -1,22 +1,25 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Eye, Trash2 } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, Trash2 } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { Combobox } from "@/components/ui/combobox";
+import { api, type Envelope, type Paginated } from "@/lib/api";
+import { useWarehouses } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import type { Named } from "@/types/domain";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
@@ -29,13 +32,11 @@ interface Purchase {
   paid_amount: number;
   due_amount: number;
   purchased_at: string;
-  supplier: { id: string; name: string } | null;
+  supplier: Named | null;
   items?: { name: string; quantity: number; unit_cost: number; line_total: number }[];
   payments?: { method: string; amount: number }[];
 }
 
-interface Supplier { id: string; name: string; }
-interface Warehouse { id: string; name: string; is_default: boolean; }
 interface Product { id: string; name: string; sku: string | null; purchase_price: number; }
 
 const purchaseSchema = z.object({
@@ -57,12 +58,22 @@ const purchaseSchema = z.object({
 });
 type PurchaseValues = z.infer<typeof purchaseSchema>;
 
+const statusColor: Record<string, "success" | "warning" | "default"> = {
+  received: "success", ordered: "warning", draft: "default",
+};
+
 function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
   const [itemNames, setItemNames] = useState<Record<string, string>>({});
 
-  const { data: warehouses } = useQuery({ queryKey: ["warehouses-all"], queryFn: () => api<{ data: Warehouse[] }>("/warehouses") });
-  const { data: suppliers } = useQuery<Paginated<Supplier>>({ queryKey: ["suppliers-all"], queryFn: () => api<Paginated<Supplier>>("/suppliers?per_page=200") });
+  const { warehouses } = useWarehouses();
+  // Picker-only supplier list: `options()` keeps it out of the paginated suppliers list
+  // cache, which holds a different (searched, 20-per-page) slice of the same endpoint.
+  const { data: suppliers } = useQuery({
+    queryKey: queryKeys.suppliers.options(),
+    queryFn: () => api<Paginated<Named>>("/suppliers?per_page=200"),
+    staleTime: 5 * 60_000,
+  });
 
   const { register, handleSubmit, control, formState: { errors }, watch } = useForm<PurchaseValues>({
     resolver: zodResolver(purchaseSchema),
@@ -77,8 +88,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
 
   const mutation = useMutation({
     mutationFn: (data: PurchaseValues) => api("/purchases", { method: "POST", idempotencyKey: crypto.randomUUID(), body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["purchases"] }); toast("Purchase created"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.purchases.all }); toast("Purchase created"); onSuccess(); },
   });
 
   return (
@@ -88,7 +98,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
           <Label>Warehouse *</Label>
           <Select {...register("warehouse_id", { setValueAs: (v) => v ? String(v) : undefined })}>
             <option value="">— Select —</option>
-            {warehouses?.data?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </div>
         <div>
@@ -117,7 +127,7 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="mb-2">
           <Combobox<Product>
             endpoint="/products"
-            queryKey="products"
+            queryKey={queryKeys.products.options()}
             value={undefined}
             clearOnSelect
             onChange={(_id, product) => {
@@ -168,7 +178,6 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
-  const statusColor: Record<string, "success" | "warning" | "default"> = { received: "success", ordered: "warning", draft: "default" };
   return (
     <Dialog open title={`Purchase #${purchase.reference_number}`} onClose={onClose}>
       <div className="space-y-4 text-sm">
@@ -195,55 +204,58 @@ function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClos
 
 export default function PurchasesPage() {
   const { can } = useAuth();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detail, setDetail] = useState<Purchase | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<Purchase>>({
-    queryKey: ["purchases", debouncedSearch, page],
-    queryFn: () => api<Paginated<Purchase>>(`/purchases?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+  const list = useResourceList<Purchase>({
+    queryKey: queryKeys.purchases.lists(),
+    queryFn: (p) => api<Paginated<Purchase>>(`/purchases?${buildListQuery(p)}`),
   });
 
-  const { data: purchaseDetail } = useQuery<{ data: Purchase }>({
-    queryKey: ["purchase-detail", detail?.id],
-    queryFn: () => api<{ data: Purchase }>(`/purchases/${detail?.id}`),
+  // The row carries only the list projection; the modal needs items and payments.
+  const { data: purchaseDetail } = useQuery({
+    queryKey: queryKeys.purchases.detail(detail?.id),
+    queryFn: () => api<Envelope<Purchase>>(`/purchases/${detail?.id}`),
     enabled: !!detail?.id,
   });
 
-  const statusColor: Record<string, "success" | "warning" | "default"> = { received: "success", ordered: "warning", draft: "default" };
+  const columns: DataTableColumn<Purchase>[] = [
+    { key: "reference", header: "Reference", className: "font-mono text-xs font-medium", render: (p) => p.reference_number },
+    { key: "supplier", header: "Supplier", render: (p) => p.supplier?.name ?? "—" },
+    { key: "date", header: "Date", className: "text-[var(--muted)]", render: (p) => formatDate(p.purchased_at) },
+    { key: "total", header: "Total", align: "right", render: (p) => formatCurrency(p.total) },
+    { key: "status", header: "Status", render: (p) => <Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge> },
+    { key: "payment", header: "Payment", render: (p) => <Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge> },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        {can("purchases.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4" />New purchase</Button>}
-      </div>
-      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        addLabel={can("purchases.create") ? "New purchase" : undefined}
+        onAdd={can("purchases.create") ? () => setDrawerOpen(true) : undefined}
+      />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Supplier</TableHead><TableHead>Date</TableHead><TableHead className="text-end">Total</TableHead><TableHead>Status</TableHead><TableHead>Payment</TableHead><TableHead className="w-16" /></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-              : data?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">No purchases yet.</TableCell></TableRow>
-              : data?.data?.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-mono text-xs font-medium">{p.reference_number}</TableCell>
-                  <TableCell>{p.supplier?.name ?? "—"}</TableCell>
-                  <TableCell className="text-[var(--muted)]">{formatDate(p.purchased_at)}</TableCell>
-                  <TableCell className="text-end">{formatCurrency(p.total)}</TableCell>
-                  <TableCell><Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge></TableCell>
-                  <TableCell><Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge></TableCell>
-                  <TableCell><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(p)}><Eye className="h-3.5 w-3.5" /></Button></TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(p) => p.id}
+          loading={list.isLoading}
+          loadingRows={6}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No purchases yet."
+          actions={(p) => (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(p)}><Eye className="h-3.5 w-3.5" /></Button>
+          )}
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>

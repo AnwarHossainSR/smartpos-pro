@@ -1,6 +1,6 @@
-"use client";
-
 import { cn } from "@/lib/utils";
+import { errorMessage } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
@@ -19,6 +19,9 @@ interface DataTableProps<T> {
   loading?: boolean;
   loadingRows?: number;
   emptyMessage: React.ReactNode;
+  /** Render an inline error row instead of the empty state when the query failed. */
+  error?: unknown;
+  onRetry?: () => void;
   /** Row actions rendered as the last, unlabeled column (view/edit/delete buttons). */
   actions?: (row: T) => React.ReactNode;
   /** Enables the bulk-select checkbox column. */
@@ -34,6 +37,8 @@ export function DataTable<T>({
   loading,
   loadingRows = 8,
   emptyMessage,
+  error,
+  onRetry,
   actions,
   selectable,
   selectedKeys,
@@ -104,6 +109,17 @@ export function DataTable<T>({
               )}
             </TableRow>
           ))
+        ) : error ? (
+          <TableRow>
+            <TableCell colSpan={colSpan} className="py-12 text-center">
+              <p className="text-sm text-[var(--muted)]">{errorMessage(error, "Could not load this list.")}</p>
+              {onRetry && (
+                <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+                  Try again
+                </Button>
+              )}
+            </TableCell>
+          </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={colSpan} className="py-12 text-center text-[var(--muted)]">

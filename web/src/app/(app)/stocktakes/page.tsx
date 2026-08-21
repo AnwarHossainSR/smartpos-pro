@@ -1,18 +1,22 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, ClipboardList, Play, CheckCircle, XCircle } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { ClipboardList, Play, CheckCircle, XCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, errorMessage, type Envelope, type Paginated } from "@/lib/api";
+import { useBranches, useWarehouses } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -47,9 +51,6 @@ interface StocktakeItem {
   variant: { id: string; name: string } | null;
 }
 
-interface Warehouse { id: string; name: string; is_default: boolean; }
-interface Branch { id: string; name: string; is_default: boolean; }
-
 const stocktakeSchema = z.object({
   branch_id: z.string().min(1, "Select a branch"),
   warehouse_id: z.string().min(1, "Select a warehouse"),
@@ -65,10 +66,12 @@ const statusColors: Record<string, "info" | "warning" | "success" | "danger"> = 
   cancelled: "danger",
 };
 
+const STATUSES = ["draft", "counting", "completed", "cancelled"] as const;
+
 function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
-  const { data: warehouses } = useQuery({ queryKey: ["warehouses-all"], queryFn: () => api<{ data: Warehouse[] }>("/warehouses") });
-  const { data: branches } = useQuery({ queryKey: ["branches-all"], queryFn: () => api<{ data: Branch[] }>("/branches") });
+  const { warehouses } = useWarehouses();
+  const { branches } = useBranches();
 
   const { register, handleSubmit, formState: { errors } } = useForm<StocktakeValues>({
     resolver: zodResolver(stocktakeSchema),
@@ -77,12 +80,9 @@ function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
   const mutation = useMutation({
     mutationFn: (data: StocktakeValues) => api("/stocktakes", { method: "POST", body: data }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stocktakes"] });
+      qc.invalidateQueries({ queryKey: queryKeys.stocktakes.all });
       toast("Stocktake created");
       onSuccess();
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Failed to create stocktake", "error");
     },
   });
 
@@ -98,7 +98,7 @@ function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
         <Label>Branch *</Label>
         <Select {...register("branch_id")}>
           <option value="">— Select —</option>
-          {branches?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </Select>
         {errors.branch_id && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.branch_id.message}</p>}
       </div>
@@ -107,7 +107,7 @@ function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
         <Label>Warehouse *</Label>
         <Select {...register("warehouse_id")}>
           <option value="">— Select —</option>
-          {warehouses?.data?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </Select>
         {errors.warehouse_id && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.warehouse_id.message}</p>}
       </div>
@@ -133,13 +133,10 @@ function CountDrawer({ stocktake }: { stocktake: StocktakeDetail }) {
     mutationFn: ({ itemId, qty }: { itemId: string; qty: number }) =>
       api(`/stocktakes/${stocktake.id}/items/${itemId}/count`, { method: "POST", body: { counted_qty: qty } }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stocktake", stocktake.id] });
+      qc.invalidateQueries({ queryKey: queryKeys.stocktakes.detail(stocktake.id) });
       toast("Count recorded");
       setEditingItem(null);
       setCountValue("");
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Failed to record count", "error");
     },
   });
 
@@ -228,156 +225,144 @@ function CountDrawer({ stocktake }: { stocktake: StocktakeDetail }) {
 export default function StocktakesPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
-  const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailDrawer, setDetailDrawer] = useState<{ id: string } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: "start" | "complete" | "cancel"; id: string } | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<Stocktake>>({
-    queryKey: ["stocktakes", debouncedSearch, page],
-    queryFn: () =>
-      api<Paginated<Stocktake>>(
-        `/stocktakes?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
-      ),
+  const list = useResourceList<Stocktake, { status: string }>({
+    queryKey: queryKeys.stocktakes.lists(),
+    queryFn: (params) => api<Paginated<Stocktake>>(`/stocktakes?${buildListQuery(params)}`),
+    filterKeys: ["status"] as const,
   });
 
-  const { data: detailData, isLoading: detailLoading } = useQuery<StocktakeDetail>({
-    queryKey: ["stocktake", detailDrawer?.id],
-    queryFn: () => api<StocktakeDetail>(`/stocktakes/${detailDrawer!.id}`),
+  const { data: detailData, isLoading: detailLoading } = useQuery({
+    queryKey: queryKeys.stocktakes.detail(detailDrawer?.id),
+    // `/stocktakes/{id}` answers with the standard `{ data }` envelope, unlike the paginated
+    // index — unwrapping it here is what gives `CountDrawer` an actual `items` array.
+    queryFn: () => api<Envelope<StocktakeDetail>>(`/stocktakes/${detailDrawer!.id}`),
     enabled: !!detailDrawer?.id,
   });
+  const detail = detailData?.data;
 
-  const startMutation = useMutation({
-    mutationFn: (id: string) => api(`/stocktakes/${id}/start`, { method: "POST" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stocktakes"] });
-      toast("Stocktake started");
-      setConfirmAction(null);
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Failed to start", "error");
-      setConfirmAction(null);
-    },
-  });
+  /** The three lifecycle actions differ only in endpoint and copy. */
+  function lifecycleMutation(action: "start" | "complete" | "cancel", done: string, failed: string) {
+    return {
+      mutationFn: (id: string) => api(`/stocktakes/${id}/${action}`, { method: "POST" }),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: queryKeys.stocktakes.all });
+        toast(done);
+        setConfirmAction(null);
+      },
+      // Kept (rather than left to the global handler) because the confirm dialog has to
+      // close on failure too, otherwise it sits there over an unchanged row.
+      onError: (e: unknown) => {
+        toast(errorMessage(e, failed), "error");
+        setConfirmAction(null);
+      },
+    };
+  }
 
-  const completeMutation = useMutation({
-    mutationFn: (id: string) => api(`/stocktakes/${id}/complete`, { method: "POST" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stocktakes"] });
-      toast("Stocktake completed");
-      setConfirmAction(null);
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Failed to complete", "error");
-      setConfirmAction(null);
-    },
-  });
+  const startMutation = useMutation(lifecycleMutation("start", "Stocktake started", "Failed to start"));
+  const completeMutation = useMutation(lifecycleMutation("complete", "Stocktake completed", "Failed to complete"));
+  const cancelMutation = useMutation(lifecycleMutation("cancel", "Stocktake cancelled", "Failed to cancel"));
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => api(`/stocktakes/${id}/cancel`, { method: "POST" }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stocktakes"] });
-      toast("Stocktake cancelled");
-      setConfirmAction(null);
+  const columns: DataTableColumn<Stocktake>[] = [
+    {
+      key: "name",
+      header: "Name",
+      render: (s) => (
+        // DataTable has no row-click hook, so the name is the affordance that opens the sheet.
+        <button
+          type="button"
+          className="cursor-pointer text-start font-medium hover:underline"
+          onClick={() => setDetailDrawer({ id: s.id })}
+        >
+          {s.name}
+        </button>
+      ),
     },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Failed to cancel", "error");
-      setConfirmAction(null);
+    { key: "warehouse", header: "Warehouse", render: (s) => s.warehouse.name },
+    {
+      key: "status",
+      header: "Status",
+      render: (s) => <Badge tone={statusColors[s.status] ?? "info"}>{s.status}</Badge>,
     },
-  });
+    { key: "counted_by", header: "Counted by", render: (s) => s.counted_by?.name ?? "—" },
+    { key: "created", header: "Created", render: (s) => formatDate(s.created_at) },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (s) => (
+        <div className="flex items-center justify-end gap-1">
+          {can("stocktakes.update") && s.status === "draft" && (
+            <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "start", id: s.id })}>
+              <Play className="h-3 w-3" />
+            </Button>
+          )}
+          {can("stocktakes.update") && s.status === "counting" && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "complete", id: s.id })}>
+                <CheckCircle className="h-3 w-3" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "cancel", id: s.id })}>
+                <XCircle className="h-3 w-3" />
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div />
-        {can("stocktakes.create") && (
-          <Button size="sm" onClick={() => setDrawerOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New Stocktake
-          </Button>
-        )}
-      </div>
-
-      <div className="relative">
-        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
-        <Input
-          className="ps-9"
-          placeholder="Search stocktakes..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-      </div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        searchPlaceholder="Search stocktakes..."
+        addLabel={can("stocktakes.create") ? "New Stocktake" : undefined}
+        onAdd={can("stocktakes.create") ? () => setDrawerOpen(true) : undefined}
+        filters={
+          <Select
+            className="sm:w-44"
+            value={list.filters.status ?? ""}
+            onChange={(e) => list.setFilter("status", e.target.value || undefined)}
+          >
+            <option value="">All statuses</option>
+            {STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </Select>
+        }
+      />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Warehouse</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Counted by</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-end">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-12 text-center text-[var(--muted)]">
-                  <ClipboardList className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                  {search ? "No stocktakes match your search." : "No stocktakes yet. Create your first stocktake."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((s) => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-[var(--muted)]/5" onClick={() => setDetailDrawer({ id: s.id })}>
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell>{s.warehouse.name}</TableCell>
-                  <TableCell>
-                    <Badge tone={statusColors[s.status] ?? "info"}>{s.status}</Badge>
-                  </TableCell>
-                  <TableCell>{s.counted_by?.name ?? "—"}</TableCell>
-                  <TableCell>{formatDate(s.created_at)}</TableCell>
-                  <TableCell className="text-end" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      {can("stocktakes.update") && s.status === "draft" && (
-                        <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "start", id: s.id })}>
-                          <Play className="h-3 w-3" />
-                        </Button>
-                      )}
-                      {can("stocktakes.update") && s.status === "counting" && (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "complete", id: s.id })}>
-                            <CheckCircle className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "cancel", id: s.id })}>
-                            <XCircle className="h-3 w-3" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(s) => s.id}
+          loading={list.isLoading}
+          loadingRows={5}
+          error={list.isError ? list.error : undefined}
+          onRetry={() => list.refetch()}
+          emptyMessage={
+            <>
+              <ClipboardList className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              {list.isFiltered
+                ? "No stocktakes match your search."
+                : "No stocktakes yet. Create your first stocktake."}
+            </>
+          }
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>
@@ -389,14 +374,14 @@ export default function StocktakesPage() {
       <Drawer
         open={!!detailDrawer}
         onClose={() => setDetailDrawer(null)}
-        title={detailData?.name ?? "Stocktake"}
+        title={detail?.name ?? "Stocktake"}
       >
         {detailLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
           </div>
-        ) : detailData ? (
-          <CountDrawer stocktake={detailData} />
+        ) : detail ? (
+          <CountDrawer stocktake={detail} />
         ) : null}
       </Drawer>
 

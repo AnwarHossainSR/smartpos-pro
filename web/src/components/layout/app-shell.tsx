@@ -7,6 +7,7 @@ import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
+import { queryKeys } from "@/lib/query-keys";
 import { navKeyForPathname } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { RequirePermission } from "@/components/require-permission";
@@ -17,7 +18,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { OnboardingWizard } from "@/features/onboarding";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 function isTenantSuspendedError(error: unknown): boolean {
   if (!(error instanceof ApiError) || error.status !== 403) return false;
@@ -87,7 +88,7 @@ export function AppShell() {
   }
 
   const { data, error } = useQuery({
-    queryKey: ["me"],
+    queryKey: queryKeys.me,
     queryFn: () => api<{ data: AuthUser }>("/auth/me"),
     enabled: !!token,
     retry: (failureCount, err) => !isTenantSuspendedError(err) && failureCount < 3,

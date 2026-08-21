@@ -1,8 +1,7 @@
-"use client";
-
 import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Numpad, useIsTouchDevice } from "@/components/ui/numpad";
+import { Numpad } from "@/components/ui/numpad";
+import { useIsTouchDevice } from "@/components/ui/use-is-touch-device";
 
 interface PaymentNumpadProps {
   value: string;

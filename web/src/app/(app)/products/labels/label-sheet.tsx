@@ -1,15 +1,12 @@
-"use client";
-
-import { useMemo } from "react";
 import {
+  barcodeValueFor,
   encodeBarcode,
   layoutBarcode,
-  barcodeValueFor,
   type EncodedBarcode,
 } from "@/lib/barcode";
 import { formatCurrency } from "@/lib/utils";
+import { useMemo } from "react";
 import {
-  labelsPerSheet,
   sheetContentWidthMm,
   unitLabel,
   type LabelProduct,
@@ -123,6 +120,10 @@ export function Label({ product, preset, options }: LabelProps) {
         display: "flex",
         flexDirection: "column",
         gap: mm(pad * 0.35),
+        justifyContent: "space-between",
+        // The symbol is physically centred by its own quiet zones, so the text is centred
+        // too — left-aligned text beside a centred barcode reads as a misplaced barcode.
+        textAlign: "center",
         color: "#000000",
         background: "#ffffff",
         outline: options.showOutline ? "0.15mm dashed #b0b0b0" : undefined,
@@ -137,7 +138,7 @@ export function Label({ product, preset, options }: LabelProps) {
               style={{
                 fontSize: mm(nameSize),
                 fontWeight: 600,
-                lineHeight: 1.15,
+                lineHeight: 1.3,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
@@ -147,7 +148,15 @@ export function Label({ product, preset, options }: LabelProps) {
               {product.name}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "baseline", gap: mm(pad), flex: "1 1 auto" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "center",
+              gap: mm(pad),
+              flex: "1 1 auto",
+            }}
+          >
             {options.showPrice && (
               <div style={{ fontSize: mm(priceSize), fontWeight: 700, lineHeight: 1 }}>{price}</div>
             )}
@@ -193,12 +202,11 @@ export function Label({ product, preset, options }: LabelProps) {
               style={{
                 fontSize: mm(nameSize),
                 fontWeight: 600,
-                lineHeight: 1.15,
+                lineHeight: 1.3,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
-                flex: "1 1 auto",
               }}
             >
               {product.name}
@@ -291,6 +299,7 @@ export function LabelSheet({ preset, slots, options, pageBreakAfter }: SheetProp
           <div
             key={index}
             aria-hidden
+            data-label-slot
             style={{
               width: mm(preset.labelWidthMm),
               height: mm(preset.labelHeightMm),
@@ -302,47 +311,4 @@ export function LabelSheet({ preset, slots, options, pageBreakAfter }: SheetProp
       )}
     </div>
   );
-}
-
-/** Splits the queued labels into sheets, skipping `startOffset` slots on the first one. */
-export function paginateLabels(
-  labels: LabelProduct[],
-  preset: SheetPreset,
-  startOffset: number,
-): (LabelProduct | null)[][] {
-  const perSheet = labelsPerSheet(preset);
-  const offset = Math.min(Math.max(Math.trunc(startOffset), 0), perSheet - 1);
-  const slots: (LabelProduct | null)[] = [...Array<null>(offset).fill(null), ...labels];
-
-  const sheets: (LabelProduct | null)[][] = [];
-  for (let i = 0; i < slots.length; i += perSheet) {
-    const sheet = slots.slice(i, i + perSheet);
-    while (sheet.length < perSheet) sheet.push(null);
-    sheets.push(sheet);
-  }
-  return sheets;
-}
-
-/**
- * Smallest module width any queued label will print at — under ~0.25 mm scanners start to
- * misread, which is worth telling the user before they burn a sheet of stock.
- */
-export function narrowestModuleMm(
-  labels: LabelProduct[],
-  preset: SheetPreset,
-  template: LabelTemplateId,
-): number | null {
-  const pad = Math.max(1.2, preset.labelHeightMm * 0.055);
-  const inner = preset.labelWidthMm - pad * 2;
-  const heightMm =
-    template === "barcode-only" ? preset.labelHeightMm * 0.72 : Math.max(8, preset.labelHeightMm * 0.3);
-
-  let narrowest: number | null = null;
-  for (const product of labels) {
-    const code = encodeBarcode(barcodeValueFor(product));
-    if (!code) continue;
-    const { moduleMm } = layoutBarcode(code, { widthMm: inner, heightMm });
-    if (narrowest === null || moduleMm < narrowest) narrowest = moduleMm;
-  }
-  return narrowest;
 }

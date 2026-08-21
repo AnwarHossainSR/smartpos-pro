@@ -1,28 +1,17 @@
 import { ActiveBadge, ResourceManager, type ResourceColumn, type ResourceRecord } from "@/components/ui/resource-manager";
-import { api } from "@/lib/api";
+import { useBranches } from "@/lib/lookups";
 import { useAuth } from "@/stores/auth";
-import { useQuery } from "@tanstack/react-query";
+import type { Branch, Warehouse } from "@/types/domain";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router";
 import { useState } from "react";
 
-interface Branch extends ResourceRecord {
-  id: string;
-  name: string;
-  code: string | null;
-  phone: string | null;
-  email: string | null;
-  is_active: boolean;
-  is_default?: boolean;
-}
-
-interface Warehouse extends ResourceRecord {
-  id: string;
-  name: string;
-  code: string | null;
-  is_active: boolean;
-  branch?: { id: string; name: string } | null;
-}
+/**
+ * `ResourceManager` needs an index signature to read arbitrary form fields off a row;
+ * the entity shapes themselves stay in `@/types/domain` rather than being re-declared.
+ */
+type BranchRow = Branch & ResourceRecord;
+type WarehouseRow = Warehouse & ResourceRecord;
 
 const TABS = ["branches", "warehouses"] as const;
 type Tab = (typeof TABS)[number];
@@ -33,28 +22,26 @@ export default function LocationsPage() {
   const { can } = useAuth();
   const [tab, setTab] = useState<Tab>("branches");
 
-  const { data: branches } = useQuery({
-    queryKey: ["branches-options"],
-    queryFn: () => api<{ data: Branch[] }>("/branches?per_page=200"),
-    enabled: can("branches.view"),
-  });
+  // The shared lookup, so the warehouse form's branch select and every other branch
+  // picker in the app share one cache entry and one request.
+  const { branches } = useBranches({ enabled: can("branches.view") });
 
   if (!can("branches.view") && !can("warehouses.view")) {
     return <div className="py-16 text-center text-[var(--muted)]">You do not have access to locations.</div>;
   }
 
-  const branchColumns: ResourceColumn<Branch>[] = [
+  const branchColumns: ResourceColumn<BranchRow>[] = [
     { header: "Name", cell: (row) => row.name },
     { header: "Code", cell: (row) => row.code ?? "—" },
     { header: "Phone", cell: (row) => row.phone ?? "—" },
-    { header: "Status", cell: (row) => <ActiveBadge active={row.is_active} /> },
+    { header: "Status", cell: (row) => <ActiveBadge active={row.is_active ?? false} /> },
   ];
 
-  const warehouseColumns: ResourceColumn<Warehouse>[] = [
+  const warehouseColumns: ResourceColumn<WarehouseRow>[] = [
     { header: "Name", cell: (row) => row.name },
     { header: "Code", cell: (row) => row.code ?? "—" },
     { header: "Branch", cell: (row) => row.branch?.name ?? "—" },
-    { header: "Status", cell: (row) => <ActiveBadge active={row.is_active} /> },
+    { header: "Status", cell: (row) => <ActiveBadge active={row.is_active ?? false} /> },
   ];
 
   return (
@@ -84,7 +71,7 @@ export default function LocationsPage() {
       </div>
 
       {tab === "branches" && (
-        <ResourceManager<Branch>
+        <ResourceManager<BranchRow>
           endpoint="/branches"
           queryKey="branches"
           singular="Branch"
@@ -102,7 +89,7 @@ export default function LocationsPage() {
       )}
 
       {tab === "warehouses" && (
-        <ResourceManager<Warehouse>
+        <ResourceManager<WarehouseRow>
           endpoint="/warehouses"
           queryKey="warehouses"
           singular="Warehouse"
@@ -115,7 +102,7 @@ export default function LocationsPage() {
               name: "branch_id",
               label: "Branch",
               type: "select",
-              options: (branches?.data ?? []).map((b) => ({ value: b.id, label: b.name })),
+              options: branches.map((b) => ({ value: b.id, label: b.name })),
             },
             { name: "address", label: "Address", type: "textarea" },
             { name: "is_active", label: "Active", type: "checkbox" },

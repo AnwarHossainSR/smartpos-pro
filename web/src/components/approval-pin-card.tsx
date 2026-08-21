@@ -1,5 +1,3 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRound, ShieldOff } from "lucide-react";
 import { useState } from "react";
@@ -9,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { api, ApiError } from "@/lib/api";
-import { useAuth, type AuthUser } from "@/stores/auth";
+import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useAuth } from "@/stores/auth";
 
 /**
  * The caller's own supervisor PIN. Setting or clearing it needs their password, and
@@ -18,7 +17,6 @@ import { useAuth, type AuthUser } from "@/stores/auth";
  */
 export function ApprovalPinCard() {
   const user = useAuth((s) => s.user);
-  const setUser = useAuth((s) => s.setUser);
   const can = useAuth((s) => s.can);
   const qc = useQueryClient();
 
@@ -31,11 +29,12 @@ export function ApprovalPinCard() {
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
 
-  async function refetchUser() {
-    const res = await api<{ data: AuthUser }>("/auth/me");
-    if (res.data) setUser(res.data);
-    qc.invalidateQueries({ queryKey: ["me"] });
-  }
+  /**
+   * `has_approval_pin` lives on the profile this card reads from the auth store, so a
+   * refetch of AppShell's `me` query is the whole update — its `setUser` effect writes
+   * the result into the store. Fetching `/auth/me` here as well only asked twice.
+   */
+  const refetchUser = () => qc.refetchQueries({ queryKey: queryKeys.me });
 
   function reset() {
     setPassword("");
@@ -55,8 +54,6 @@ export function ApprovalPinCard() {
       await refetchUser();
       toast("Approval PIN saved");
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Error", "error"),
   });
 
   const clearMutation = useMutation({
@@ -67,8 +64,6 @@ export function ApprovalPinCard() {
       await refetchUser();
       toast("Approval PIN removed");
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Error", "error"),
   });
 
   const pinValid = /^\d{4,8}$/.test(pin) && pin === confirmPin;

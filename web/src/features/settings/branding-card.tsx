@@ -1,9 +1,8 @@
-"use client";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { MediaField } from "@/components/ui/media-field";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, type Envelope } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import { useQuery } from "@tanstack/react-query";
 
@@ -80,24 +79,18 @@ export function BrandingCard() {
   const { can } = useAuth();
   const editable = can("settings.update");
 
-  const { data, isLoading, isError, refetch } = useQuery<{ data: { media: BusinessMedia } }>({
-    queryKey: ["business-settings"],
-    queryFn: () => api<{ data: { media: BusinessMedia } }>("/settings/business"),
+  // Same key and same endpoint as the settings page's own query, so mounting this card
+  // inside that page reads the cache instead of fetching `/settings/business` again.
+  const { data, isLoading, isError, refetch } = useQuery<Envelope<{ media: BusinessMedia }>>({
+    queryKey: queryKeys.businessSettings,
+    queryFn: () => api<Envelope<{ media: BusinessMedia }>>("/settings/business"),
   });
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Branding</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <p className="text-sm text-[var(--muted)]">
-          Images are resized and converted on upload, so you can drop in whatever the designer
-          sent without preparing sizes yourself.
-        </p>
-
+      <CardContent className="space-y-5">
         {isLoading && (
-          <div className="space-y-6">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {SLOTS.map((s) => (
               <div key={s.slot} className="flex items-start gap-3">
                 <Skeleton className="h-24 w-24 rounded-[var(--radius)]" />
@@ -123,20 +116,23 @@ export function BrandingCard() {
           </div>
         )}
 
-        {data &&
-          SLOTS.map((s) => (
-            <MediaField
-              key={s.slot}
-              collection={s.collection}
-              endpoint={`/settings/business/media/${s.slot}`}
-              label={s.label}
-              hint={s.hint}
-              aspect={s.aspect}
-              url={data.data.media?.[s.slot]?.url ?? null}
-              disabled={!editable}
-              invalidate={[["business-settings"], ["me"]]}
-            />
-          ))}
+        {data && (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {SLOTS.map((s) => (
+              <MediaField
+                key={s.slot}
+                collection={s.collection}
+                endpoint={`/settings/business/media/${s.slot}`}
+                label={s.label}
+                hint={s.hint}
+                aspect={s.aspect}
+                url={data.data.media?.[s.slot]?.url ?? null}
+                disabled={!editable}
+                invalidate={[queryKeys.businessSettings, queryKeys.me]}
+              />
+            ))}
+          </div>
+        )}
 
         {!editable && (
           <p className="text-xs text-[var(--muted)]">

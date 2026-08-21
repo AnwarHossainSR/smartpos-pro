@@ -1,10 +1,9 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { ShieldCheck, ShieldOff } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { exportRecoveryCodesAsCsv, exportRecoveryCodesAsPdf } from "@/lib/recovery-code-export";
 import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ import { toast } from "@/components/ui/toast";
 
 export function TwoFactorCard() {
   const user = useAuth((s) => s.user);
-  const setUser = useAuth((s) => s.setUser);
   const qc = useQueryClient();
   const enabled = !!user?.two_factor_enabled;
 
@@ -35,11 +33,13 @@ export function TwoFactorCard() {
     }
   }, [otpauthUrl]);
 
-  async function refetchUser() {
-    const res = await api<{ data: typeof user }>("/auth/me");
-    if (res.data) setUser(res.data);
-    qc.invalidateQueries({ queryKey: ["me"] });
-  }
+  /**
+   * Enabling or disabling 2FA changes `user.two_factor_enabled`, which this card reads
+   * from the auth store. One refetch of AppShell's own `me` query is enough: its
+   * `setUser` effect pushes the fresh profile into the store. Fetching `/auth/me` here
+   * *and* invalidating the query hit the endpoint twice for the same answer.
+   */
+  const refetchUser = () => qc.refetchQueries({ queryKey: queryKeys.me });
 
   const enableMutation = useMutation({
     mutationFn: () => api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", { method: "POST" }),
@@ -48,7 +48,6 @@ export function TwoFactorCard() {
       setOtpauthUrl(res.data.otpauth_url);
       setEnrolling(true);
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const confirmMutation = useMutation({
@@ -60,7 +59,8 @@ export function TwoFactorCard() {
       await refetchUser();
       toast("Two-factor authentication enabled.");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Invalid code", "error"),
+    // "Invalid code" is the useful fallback here; the generic one is not.
+    onError: (e: unknown) => toast(errorMessage(e, "Invalid code"), "error"),
   });
 
   const disableMutation = useMutation({
@@ -71,7 +71,6 @@ export function TwoFactorCard() {
       await refetchUser();
       toast("Two-factor authentication disabled.");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const regenerateMutation = useMutation({
@@ -85,7 +84,6 @@ export function TwoFactorCard() {
       setRegenerating(false);
       setPassword("");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   return (
@@ -133,7 +131,6 @@ export function TwoFactorCard() {
       >
         <div className="space-y-3">
           {qrDataUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={qrDataUrl} alt="Two-factor QR code" className="mx-auto h-48 w-48" />
           )}
           {secret && (

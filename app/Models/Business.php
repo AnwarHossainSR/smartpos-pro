@@ -30,6 +30,7 @@ class Business extends Model
             'price_display' => PriceDisplay::class,
             'settings' => 'array',
             'onboarding_completed' => 'boolean',
+            'auto_post_journals' => 'boolean',
             'onboarding_state' => 'array',
         ];
     }

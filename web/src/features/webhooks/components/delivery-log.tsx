@@ -1,15 +1,12 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
-import { api, ApiError } from "@/lib/api";
+import { useTranslation } from "@/i18n/context";
+import { api, errorMessage, type Envelope } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateTime } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 
@@ -30,9 +27,9 @@ export function DeliveryLog() {
   const qc = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery<{ data: Delivery[] }>({
-    queryKey: queryKeys.webhookDeliveries.all,
-    queryFn: () => api<{ data: Delivery[] }>("/webhook-deliveries?per_page=50"),
+  const { data, isLoading, error, refetch } = useQuery<Envelope<Delivery[]>>({
+    queryKey: queryKeys.webhookDeliveries.lists(),
+    queryFn: () => api<Envelope<Delivery[]>>("/webhook-deliveries?per_page=50"),
   });
 
   const retryMutation = useMutation({
@@ -42,8 +39,7 @@ export function DeliveryLog() {
       qc.invalidateQueries({ queryKey: queryKeys.webhookDeliveries.all });
       toast(t("webhooks.retryQueued"));
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? e.message : t("webhooks.retryFailed"), "error"),
+    onError: (e: unknown) => toast(errorMessage(e, t("webhooks.retryFailed")), "error"),
   });
 
   const columns: DataTableColumn<Delivery>[] = [
@@ -125,47 +121,35 @@ export function DeliveryLog() {
     <div className="space-y-4">
       <h3 className="text-sm font-medium">{t("webhooks.deliveryLog")}</h3>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : deliveries.length === 0 ? (
-        <p className="text-sm text-[var(--muted)] py-4 text-center">{t("webhooks.deliveriesEmpty")}</p>
-      ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={deliveries}
-            rowKey={(row) => row.id}
-            emptyMessage={t("webhooks.deliveriesEmpty")}
-            actions={(row) => <Actions row={row} />}
-          />
+      {/* Loading skeleton, empty state and error-with-retry all come from DataTable. */}
+      <DataTable
+        columns={columns}
+        data={deliveries}
+        rowKey={(row) => row.id}
+        loading={isLoading}
+        emptyMessage={t("webhooks.deliveriesEmpty")}
+        error={error}
+        onRetry={() => refetch()}
+        actions={(row) => <Actions row={row} />}
+      />
 
-          {expandedId && (
-            <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] p-3">
-              <p className="text-xs font-medium text-[var(--muted)] mb-2">{t("webhooks.payload")}</p>
-              <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-60 overflow-y-auto">
-                {JSON.stringify(
-                  deliveries.find((d) => d.id === expandedId)?.payload,
-                  null,
-                  2,
-                )}
+      {expandedId && (
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] p-3">
+          <p className="text-xs font-medium text-[var(--muted)] mb-2">{t("webhooks.payload")}</p>
+          <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-60 overflow-y-auto">
+            {JSON.stringify(deliveries.find((d) => d.id === expandedId)?.payload, null, 2)}
+          </pre>
+          {deliveries.find((d) => d.id === expandedId)?.response_body && (
+            <>
+              <p className="text-xs font-medium text-[var(--muted)] mt-3 mb-1">
+                {t("webhooks.responseBody")}
+              </p>
+              <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-40 overflow-y-auto">
+                {deliveries.find((d) => d.id === expandedId)?.response_body}
               </pre>
-              {deliveries.find((d) => d.id === expandedId)?.response_body && (
-                <>
-                  <p className="text-xs font-medium text-[var(--muted)] mt-3 mb-1">
-                    {t("webhooks.responseBody")}
-                  </p>
-                  <pre className="text-xs font-mono whitespace-pre-wrap break-all max-h-40 overflow-y-auto">
-                    {deliveries.find((d) => d.id === expandedId)?.response_body}
-                  </pre>
-                </>
-              )}
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

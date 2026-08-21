@@ -7,9 +7,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { Link } from "react-router";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,7 @@ interface Summary {
 export default function DashboardPage() {
   const t = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-summary"],
+    queryKey: queryKeys.dashboard.summary(),
     queryFn: () => api<{ data: Summary }>("/dashboard/summary"),
   });
 

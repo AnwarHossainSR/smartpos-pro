@@ -22,7 +22,6 @@ class PrinterProfileController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'business_id' => ['required', Rule::exists('businesses', 'id')],
             'name' => ['required', 'string', 'max:255'],
             'connection_type' => ['required', Rule::in(['usb', 'network', 'serial'])],
             'ip_address' => ['nullable', 'string', 'max:255'],
@@ -32,6 +31,7 @@ class PrinterProfileController extends Controller
             'open_drawer' => ['boolean'],
         ]);
 
+        $data['business_id'] = $request->user()->business_id;
         $data['auto_cut'] = $data['auto_cut'] ?? true;
         $data['open_drawer'] = $data['open_drawer'] ?? false;
 

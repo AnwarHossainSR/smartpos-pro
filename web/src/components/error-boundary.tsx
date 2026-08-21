@@ -1,49 +1,94 @@
-"use client";
-
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { errorMessage } from "@/lib/api";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
+import { Link, isRouteErrorResponse, useRouteError } from "react-router";
 
-interface ErrorBoundaryProps {
-  error: Error & { digest?: string };
-  reset: () => void;
+interface Described {
+  title: string;
+  detail: string;
+  /** Shown small, for a support ticket — only when the server gave us a status to quote. */
+  code?: string;
 }
 
-export function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+/**
+ * Three shapes reach an error element: a `Response` thrown by a loader (`isRouteErrorResponse`),
+ * an `ApiError` from `api()`, and a plain render-time `Error`. Only the first two can say
+ * anything useful about *what* went wrong, so the third gets a deliberately generic line
+ * rather than leaking a minified stack message at the user.
+ */
+function describe(error: unknown): Described {
+  if (isRouteErrorResponse(error)) {
+    if (error.status === 404) {
+      return {
+        title: "Page not found",
+        detail: "The page you asked for does not exist, or has been moved.",
+        code: "404",
+      };
+    }
+    if (error.status === 403) {
+      return {
+        title: "You do not have access to this",
+        detail: "Ask an administrator to grant you the permission this page needs.",
+        code: "403",
+      };
+    }
+    return {
+      title: "Something went wrong",
+      detail: error.statusText || "The server could not complete that request.",
+      code: String(error.status),
+    };
+  }
+
+  if (error instanceof Error) {
+    return { title: "Something went wrong", detail: errorMessage(error) };
+  }
+
+  return { title: "Something went wrong", detail: "An unexpected error occurred." };
+}
+
+/**
+ * The router's `errorElement`. Without one, React Router renders its own developer screen —
+ * a stack trace and "💿 Hey developer 👋" — to whoever is standing at the till.
+ *
+ * "Try again" is a full reload rather than a state reset: a render-time error leaves the
+ * component tree in an unknown state, and unlike a loader error there is nothing to
+ * revalidate. Navigating to the dashboard clears the error too (the router drops it on a
+ * location change), so that link is the cheaper escape when the app itself is still healthy.
+ */
+export function RouteErrorBoundary() {
+  const error = useRouteError();
+  const { title, detail, code } = describe(error);
+
   useEffect(() => {
-    console.error("Application error:", error);
+    console.error("Route error:", error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6 text-center">
-        <div className="flex justify-center">
-          <div className="rounded-full bg-destructive/10 p-4">
-            <AlertTriangle className="h-10 w-10 text-destructive" />
-          </div>
-        </div>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="rounded-full bg-[var(--surface-2)] p-4">
+        <AlertTriangle className="h-9 w-9 text-[var(--color-danger)]" aria-hidden="true" />
+      </div>
 
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Something went wrong
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            An unexpected error occurred. Please try again.
-          </p>
-        </div>
+      <div className="space-y-2">
+        <h1 className="text-lg font-semibold">{title}</h1>
+        <p className="max-w-sm text-sm text-[var(--muted)]">{detail}</p>
+      </div>
 
-        {error.digest && (
-          <p className="text-xs text-muted-foreground">
-            Error ID: {error.digest}
-          </p>
-        )}
+      {code && (
+        <p className="rounded-[var(--radius)] border border-[var(--border)] px-2 py-1 font-mono text-xs text-[var(--muted)]">
+          {code}
+        </p>
+      )}
 
-        <button
-          onClick={reset}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={() => window.location.reload()}>
           <RefreshCw className="h-4 w-4" />
           Try again
-        </button>
+        </Button>
+        <Button asChild>
+          <Link to="/dashboard">Go to dashboard</Link>
+        </Button>
       </div>
     </div>
   );

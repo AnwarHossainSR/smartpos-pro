@@ -47,6 +47,7 @@ class SettingsController extends Controller
             'currency' => ['sometimes', 'string', 'size:3'],
             'base_currency' => ['sometimes', 'string', 'size:3'],
             'timezone' => ['sometimes', 'string', 'max:64'],
+            'auto_post_journals' => ['sometimes', 'boolean'],
             'settings' => ['nullable', 'array'],
         ]);
 
@@ -167,6 +168,7 @@ class SettingsController extends Controller
             'media' => $this->media($business),
             // Kept alongside `media` for the clients that already read it.
             'logo_path' => $business->logo_path,
+            'auto_post_journals' => (bool) $business->auto_post_journals,
             'settings' => $business->settings ?? [],
             'onboarding_completed' => (bool) $business->onboarding_completed,
             'onboarding_state' => $business->onboarding_state ?? null,
