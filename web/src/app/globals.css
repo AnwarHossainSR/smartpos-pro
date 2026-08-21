@@ -287,6 +287,14 @@ body {
     transform: scale(var(--label-scale, 1));
     transform-origin: top left;
   }
+  /* An unfilled sheet is mostly white space, so the die-cut grid is drawn on screen even
+     when "cut outlines" is off — without it a single label reads as floating in a void.
+     Inline styles win when the user does ask for outlines, and print never sees this. */
+  [data-label-slot],
+  [data-label] {
+    outline: 0.15mm dashed var(--border);
+    outline-offset: -0.15mm;
+  }
 }
 
 @media print {

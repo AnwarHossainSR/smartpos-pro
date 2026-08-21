@@ -124,6 +124,9 @@ export function Label({ product, preset, options }: LabelProps) {
         flexDirection: "column",
         gap: mm(pad * 0.35),
         justifyContent: "space-between",
+        // The symbol is physically centred by its own quiet zones, so the text is centred
+        // too — left-aligned text beside a centred barcode reads as a misplaced barcode.
+        textAlign: "center",
         color: "#000000",
         background: "#ffffff",
         outline: options.showOutline ? "0.15mm dashed #b0b0b0" : undefined,
@@ -138,7 +141,7 @@ export function Label({ product, preset, options }: LabelProps) {
               style={{
                 fontSize: mm(nameSize),
                 fontWeight: 600,
-                lineHeight: 1.15,
+                lineHeight: 1.3,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
@@ -148,7 +151,15 @@ export function Label({ product, preset, options }: LabelProps) {
               {product.name}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "baseline", gap: mm(pad), flex: "1 1 auto" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "center",
+              gap: mm(pad),
+              flex: "1 1 auto",
+            }}
+          >
             {options.showPrice && (
               <div style={{ fontSize: mm(priceSize), fontWeight: 700, lineHeight: 1 }}>{price}</div>
             )}
@@ -194,7 +205,7 @@ export function Label({ product, preset, options }: LabelProps) {
               style={{
                 fontSize: mm(nameSize),
                 fontWeight: 600,
-                lineHeight: 1.15,
+                lineHeight: 1.3,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
@@ -291,6 +302,7 @@ export function LabelSheet({ preset, slots, options, pageBreakAfter }: SheetProp
           <div
             key={index}
             aria-hidden
+            data-label-slot
             style={{
               width: mm(preset.labelWidthMm),
               height: mm(preset.labelHeightMm),

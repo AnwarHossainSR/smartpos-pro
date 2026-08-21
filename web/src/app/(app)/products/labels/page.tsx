@@ -11,7 +11,13 @@ import { Input, Label as FieldLabel } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/stores/auth";
-import { LabelSheet, narrowestModuleMm, paginateLabels, type LabelOptions } from "./label-sheet";
+import {
+  Label as LabelPreview,
+  LabelSheet,
+  narrowestModuleMm,
+  paginateLabels,
+  type LabelOptions,
+} from "./label-sheet";
 import {
   DEFAULT_SHEET_ID,
   LABEL_TEMPLATES,
@@ -31,6 +37,11 @@ const BUSY_LABEL_COUNT = 500;
 const MAX_QUANTITY = 500;
 /** Gap between sheets in the on-screen preview only. */
 const PREVIEW_GAP_MM = 6;
+
+/** CSS reference pixels per millimetre, for sizing the screen-only one-up preview. */
+const PX_PER_MM = 96 / 25.4;
+/** Roughly how wide the single-label preview should render, whatever stock is selected. */
+const ONE_UP_TARGET_PX = 440;
 
 const ZOOMS = [
   { value: "0.5", label: "50%" },
@@ -130,6 +141,10 @@ export default function LabelPrintingPage() {
 
   const scale = Number(zoom) || 1;
   const previewHeightMm = sheets.length * (PAGE_HEIGHT_MM + PREVIEW_GAP_MM);
+  // The one-up preview exists to show what a single label actually looks like — the sheet
+  // alone is mostly white space — so it is scaled to a readable size rather than to stock.
+  const oneUpScale = ONE_UP_TARGET_PX / (preset.labelWidthMm * PX_PER_MM);
+  const firstProduct = sheets.flat().find((slot) => slot !== null) ?? null;
 
   return (
     <div className="space-y-5">
@@ -434,7 +449,31 @@ export default function LabelPrintingPage() {
           data-label-preview
           className="overflow-x-auto rounded-[var(--radius)] bg-[var(--surface-2)] p-4"
         >
+          {firstProduct && (
           <div
+            data-print-hide
+            className="mx-auto mb-4 w-fit rounded-[var(--radius)] border border-[var(--border)] bg-white p-4"
+          >
+            <div
+              style={{
+                width: `${preset.labelWidthMm * oneUpScale}mm`,
+                height: `${preset.labelHeightMm * oneUpScale}mm`,
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${oneUpScale})`,
+                  transformOrigin: "top left",
+                  width: `${preset.labelWidthMm}mm`,
+                }}
+              >
+                <LabelPreview product={firstProduct} preset={preset} options={options} />
+              </div>
+            </div>
+          </div>
+          )}
+          <div
+            className="mx-auto"
             style={{
               width: `${PAGE_WIDTH_MM * scale}mm`,
               height: `${previewHeightMm * scale}mm`,
