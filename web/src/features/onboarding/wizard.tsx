@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import {
   Building2,
   Package,
@@ -69,7 +67,7 @@ interface StepContentProps {
 
 function StepContent({ step, onComplete }: StepContentProps) {
   const t = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   switch (step) {
     case "business_profile":
@@ -82,7 +80,7 @@ function StepContent({ step, onComplete }: StepContentProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={() => router.push("/settings")}
+            onClick={() => navigate("/settings")}
             className="w-full"
           >
             {t("onboarding.steps.business_profile.configure")}
@@ -100,7 +98,7 @@ function StepContent({ step, onComplete }: StepContentProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={() => router.push("/products")}
+            onClick={() => navigate("/products")}
             className="w-full"
           >
             {t("onboarding.steps.first_product.configure")}
@@ -118,7 +116,7 @@ function StepContent({ step, onComplete }: StepContentProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={() => router.push("/settings")}
+            onClick={() => navigate("/settings")}
             className="w-full"
           >
             {t("onboarding.steps.tax_setup.configure")}
@@ -136,7 +134,7 @@ function StepContent({ step, onComplete }: StepContentProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={() => router.push("/pos")}
+            onClick={() => navigate("/pos")}
             className="w-full"
           >
             {t("onboarding.steps.register_sale.configure")}
