@@ -13,8 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError, type Paginated } from "@/lib/api";
+import { api, ApiError, errorMessage, type Paginated } from "@/lib/api";
 import { PERMISSION_MATRIX, splitSlug } from "@/lib/permissions";
+import { queryKeys } from "@/lib/query-keys";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAuth } from "@/stores/auth";
 
@@ -193,16 +194,16 @@ function RoleForm({
         : api("/roles", { method: "POST", body });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["roles"] });
-      qc.invalidateQueries({ queryKey: ["roles-list"] });
+      // Covers both the manage table here and the `roles.options()` picker on the Team tab.
+      qc.invalidateQueries({ queryKey: queryKeys.roles.all });
       // The signed-in user may have just changed their own effective grants.
-      qc.invalidateQueries({ queryKey: ["me"] });
+      qc.invalidateQueries({ queryKey: queryKeys.me });
       toast(role ? t("roles.updated") : t("roles.created"));
       onDone();
     },
     onError: (e: unknown) => {
       if (e instanceof ApiError && e.errors) setErrors(e.errors);
-      toast(e instanceof ApiError ? e.message : t("roles.saveFailed"), "error");
+      toast(errorMessage(e, t("roles.saveFailed")), "error");
     },
   });
 
@@ -330,12 +331,12 @@ export function RolesTab() {
   // filtering and paging happen here. Filtering server-side would need query params the
   // endpoint does not declare — and `QueryPipeline` 422s on an undeclared key.
   const { data, isLoading, isError, refetch } = useQuery<Paginated<Role>>({
-    queryKey: ["roles", "manage"],
+    queryKey: queryKeys.roles.lists(),
     queryFn: () => api<Paginated<Role>>("/roles?per_page=100"),
   });
 
   const { data: matrixData } = useQuery<{ data: PermissionMatrix }>({
-    queryKey: ["permissions", "matrix"],
+    queryKey: queryKeys.permissionMatrix,
     queryFn: () => api<{ data: PermissionMatrix }>("/permissions"),
   });
 
@@ -348,12 +349,13 @@ export function RolesTab() {
   const remove = useMutation({
     mutationFn: (role: Role) => api(`/roles/${role.id}`, { method: "DELETE" }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["roles"] });
-      qc.invalidateQueries({ queryKey: ["roles-list"] });
+      qc.invalidateQueries({ queryKey: queryKeys.roles.all });
       toast(t("roles.deleted"));
       setDeleting(null);
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : t("roles.deleteFailed"), "error"),
+    // Kept over the global handler for the translated fallback (roles are often 409'd
+    // because members still hold them, and the generic copy hides that).
+    onError: (e: unknown) => toast(errorMessage(e, t("roles.deleteFailed")), "error"),
   });
 
   const all = useMemo(() => data?.data ?? [], [data]);

@@ -5,8 +5,9 @@ import { Pagination } from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, errorMessage, type Paginated } from "@/lib/api";
+import { useRoles } from "@/lib/lookups";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +20,8 @@ import { useAuth } from "@/stores/auth";
 import { useTranslation } from "@/i18n/context";
 import { queryKeys } from "@/lib/query-keys";
 import { RolesTab } from "@/features/roles/roles-tab";
+import type { Role } from "@/types/domain";
 
-interface Role { id: string; slug: string; name: string; }
 interface TeamUser {
   id: string;
   name: string;
@@ -77,8 +78,7 @@ function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { default
   const mutation = useMutation({
     mutationFn: (data: FormValues) =>
       isEdit ? api(`/users/${userId}`, { method: "PUT", body: data }) : api("/users", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast(isEdit ? "User updated" : "User invited"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast(isEdit ? "User updated" : "User invited"); onSuccess(); },
   });
 
   return (
@@ -227,39 +227,30 @@ export default function TeamPage() {
   const [tab, setTab] = useState<TeamTab>(() =>
     canViewMembers ? "members" : canViewRoles ? "roles" : "shifts",
   );
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
   const [deleting, setDeleting] = useState<TeamUser | null>(null);
   const [revokingPin, setRevokingPin] = useState<TeamUser | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<TeamUser>>({
-    queryKey: ["team", debouncedSearch, page],
-    queryFn: () => api<Paginated<TeamUser>>(`/users?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+  const list = useResourceList<TeamUser>({
+    queryKey: queryKeys.team.lists(),
+    queryFn: (p) => api<Paginated<TeamUser>>(`/users?${buildListQuery(p)}`),
     enabled: canViewMembers,
   });
 
   // `/roles` is guarded by `roles.view` — fetching it unconditionally 403s for anyone who can
   // manage members but not roles, which is exactly the branch-manager case.
-  const { data: rolesData } = useQuery<{ data: Role[] }>({
-    queryKey: ["roles-list"],
-    queryFn: () => api<{ data: Role[] }>("/roles?per_page=50"),
-    enabled: canViewRoles,
-  });
+  const { roles } = useRoles({ enabled: canViewRoles });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/users/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast("User removed"); setDeleting(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast("User removed"); setDeleting(null); },
   });
 
   const revokePinMutation = useMutation({
     mutationFn: (id: string) => api(`/users/${id}/approval-pin`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["team"] }); toast("Approval PIN revoked"); setRevokingPin(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast("Approval PIN revoked"); setRevokingPin(null); },
   });
 
-  const roles = rolesData?.data ?? [];
   const statusColor: Record<string, "success" | "warning" | "default"> = { active: "success", invited: "warning", suspended: "danger" as "default" };
 
   return (
@@ -279,14 +270,15 @@ export default function TeamPage() {
         <RolesTab />
       ) : tab === "members" ? (
         <>
-          <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder={t("team.searchPlaceholder")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+          <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder={t("team.searchPlaceholder")} value={list.searchInput} onChange={(e) => list.setSearch(e.target.value)} /></div>
           <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
             <Table>
               <TableHeader><TableRow><TableHead>{t("team.name")}</TableHead><TableHead>{t("team.email")}</TableHead><TableHead>{t("team.roles")}</TableHead><TableHead>{t("team.status")}</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
               <TableBody>
-                {isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                  : data?.data?.length === 0 ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">{t("team.empty")}</TableCell></TableRow>
-                  : data?.data?.map((u) => (
+                {list.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
+                  : list.isError ? <TableRow><TableCell colSpan={5} className="py-12 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(list.error, t("team.empty"))}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => list.refetch()}>{t("tables.retry")}</Button></TableCell></TableRow>
+                  : list.isEmpty ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">{t("team.empty")}</TableCell></TableRow>
+                  : list.data.map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.name}{u.phone && <span className="block text-xs text-[var(--muted)]">{u.phone}</span>}</TableCell>
                       <TableCell className="text-sm">{u.email}</TableCell>
@@ -303,12 +295,12 @@ export default function TeamPage() {
                   ))}
               </TableBody>
             </Table>
-            {data?.meta && (
+            {list.meta && (
               <Pagination
-                page={page}
-                lastPage={data.meta.last_page}
-                onPageChange={setPage}
-                label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+                page={list.page}
+                lastPage={list.lastPage}
+                onPageChange={list.setPage}
+                label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
               />
             )}
           </div>

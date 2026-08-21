@@ -2,7 +2,8 @@ import { useEffect } from "react";
 
 export interface PosShortcutHandlers {
   focusSearch: () => void;
-  holdSale: () => void;
+  /** F4 — parks the basket as a held sale. */
+  parkSale: () => void;
   openPayment: () => void;
   voidLastLine: () => void;
   closeModal: () => void;
@@ -16,13 +17,27 @@ export interface PosShortcutState {
   showPayment: boolean;
   showReceipt: boolean;
   showHelp: boolean;
+  showHeld: boolean;
 }
 
+/**
+ * The till's keyboard, in one listener.
+ *
+ * There were two competing `keydown` listeners on the POS screen — this hook and a second
+ * effect inside the page — which is why F4 both parked the sale *and* toasted a
+ * "coming soon" placeholder. F9 comes from that second listener and is kept as an alias for
+ * F6 so muscle memory built on either key still opens payment.
+ *
+ * Every shortcut is inert while a modal owns the screen, so a cashier typing into the
+ * payment or held-orders dialog can never park or void the basket behind it.
+ */
 export function usePosShortcuts(
   handlers: PosShortcutHandlers,
   state: PosShortcutState,
 ) {
   useEffect(() => {
+    const modalOpen = state.showPayment || state.showReceipt || state.showHeld;
+
     function onKeyDown(e: KeyboardEvent) {
       const active = document.activeElement;
       const isTyping = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
@@ -35,25 +50,19 @@ export function usePosShortcuts(
 
       if (e.key === "F4") {
         e.preventDefault();
-        if (!state.cartEmpty && !state.showPayment && !state.showReceipt) {
-          handlers.holdSale();
-        }
+        if (!state.cartEmpty && !modalOpen) handlers.parkSale();
         return;
       }
 
-      if (e.key === "F6") {
+      if (e.key === "F6" || e.key === "F9") {
         e.preventDefault();
-        if (!state.cartEmpty && !state.showPayment && !state.showReceipt) {
-          handlers.openPayment();
-        }
+        if (!state.cartEmpty && !state.showPayment && !state.showReceipt) handlers.openPayment();
         return;
       }
 
       if (e.key === "F8") {
         e.preventDefault();
-        if (!state.cartEmpty && !state.showPayment && !state.showReceipt) {
-          handlers.voidLastLine();
-        }
+        if (!state.cartEmpty && !state.showPayment && !state.showReceipt) handlers.voidLastLine();
         return;
       }
 
@@ -61,9 +70,7 @@ export function usePosShortcuts(
         e.preventDefault();
         if (state.showHelp) {
           handlers.toggleHelp();
-        } else if (state.showPayment) {
-          handlers.closeModal();
-        } else if (state.showReceipt) {
+        } else if (state.showPayment || state.showReceipt) {
           handlers.closeModal();
         } else if (!state.cartEmpty) {
           handlers.clearCart();
@@ -73,9 +80,7 @@ export function usePosShortcuts(
 
       if (e.key === "Enter" && e.ctrlKey) {
         e.preventDefault();
-        if (state.showPayment) {
-          handlers.confirmPayment();
-        }
+        if (state.showPayment) handlers.confirmPayment();
         return;
       }
 
@@ -85,7 +90,9 @@ export function usePosShortcuts(
         return;
       }
 
-      if (!isTyping && !state.showPayment && !state.showReceipt && !state.showHelp && /^[a-zA-Z0-9]$/.test(e.key)) {
+      // Typing anywhere on the screen goes to the search box — a scanner fires into
+      // whatever has focus, and at the till that must always be the product search.
+      if (!isTyping && !modalOpen && !state.showHelp && /^[a-zA-Z0-9]$/.test(e.key)) {
         handlers.focusSearch();
       }
     }

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
 import { api, errorMessage, type Envelope } from "@/lib/api";
@@ -48,7 +47,7 @@ export function WebhookList() {
 
   const canManage = can("settings.update");
 
-  const { data, isLoading, isError, refetch } = useQuery<Envelope<WebhookItem[]>>({
+  const { data, isLoading, error, refetch } = useQuery<Envelope<WebhookItem[]>>({
     queryKey: queryKeys.webhooks.lists(),
     queryFn: () => api<Envelope<WebhookItem[]>>("/webhooks"),
   });
@@ -167,22 +166,17 @@ export function WebhookList() {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={webhooks}
-          rowKey={(row) => row.id}
-          emptyMessage={t("webhooks.empty")}
-          error={isError ? errorMessage(error) : undefined}
-          onRetry={() => refetch()}
-          actions={(row) => <Actions row={row} />}
-        />
-      )}
+      {/* Loading skeleton, empty state and error-with-retry all come from DataTable. */}
+      <DataTable
+        columns={columns}
+        data={webhooks}
+        rowKey={(row) => row.id}
+        loading={isLoading}
+        emptyMessage={t("webhooks.empty")}
+        error={error}
+        onRetry={() => refetch()}
+        actions={(row) => <Actions row={row} />}
+      />
 
       {showSecret && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] p-3">
