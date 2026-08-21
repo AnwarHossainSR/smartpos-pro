@@ -1,11 +1,15 @@
+/// <reference lib="webworker" />
 import { precacheAndRoute } from "workbox-precaching";
+
+// `self` is typed as a Window in a plain .ts file; the SW runs in a worker scope.
+declare const self: ServiceWorkerGlobalScope;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
 const CACHE_NAME = "smartpos-v1";
 const SHELL = ["/", "/dashboard", "/pos", "/offline.html"];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       cache.addAll(SHELL).catch(() => {})
@@ -14,7 +18,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -23,7 +27,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", (event: FetchEvent) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
@@ -41,7 +45,14 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => cached || caches.match("/offline.html"));
+        // `caches.match` can miss, and respondWith() rejects on undefined — always
+        // resolve to a real Response so a failed navigation shows the offline page
+        // rather than the browser's own network error.
+        .catch(async () =>
+          cached ??
+          (await caches.match("/offline.html")) ??
+          new Response("Offline", { status: 504, statusText: "Gateway Timeout" }),
+        );
 
       if (request.mode === "navigate") return networkFetch;
 
@@ -50,18 +61,30 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+interface SyncEvent extends ExtendableEvent {
+  readonly tag: string;
+}
+
+interface PendingSale {
+  _id: number;
+  token?: string;
+  idempotencyKey: string;
+  payload: unknown;
+}
+
 const SYNC_TAG = "pos-sale-sync";
 const IDB_DB = "smartpos-offline";
 const IDB_STORE = "pending-sales";
 
-self.addEventListener("sync", (event) => {
+// Background Sync is not in TypeScript's ServiceWorkerGlobalScopeEventMap yet.
+self.addEventListener("sync", ((event: SyncEvent) => {
   if (event.tag === SYNC_TAG) {
     event.waitUntil(syncPendingSales());
   }
-});
+}) as EventListener);
 
-async function openDB() {
-  return new Promise((resolve, reject) => {
+async function openDB(): Promise<IDBDatabase> {
+  return new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(IDB_DB, 1);
     req.onupgradeneeded = () => {
       req.result.createObjectStore(IDB_STORE, { autoIncrement: true, keyPath: "_id" });
@@ -74,10 +97,10 @@ async function openDB() {
 async function syncPendingSales() {
   const db = await openDB();
 
-  const sales = await new Promise((resolve) => {
+  const sales = await new Promise<PendingSale[]>((resolve) => {
     const tx = db.transaction(IDB_STORE, "readonly");
     const req = tx.objectStore(IDB_STORE).getAll();
-    req.onsuccess = () => resolve(req.result || []);
+    req.onsuccess = () => resolve((req.result as PendingSale[]) || []);
     req.onerror = () => resolve([]);
   });
 
