@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Headset, Mail, MessageSquare, BookOpen, ExternalLink, Send, CheckCircle } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
+import { useMutation } from "@tanstack/react-query";
+import { BookOpen, CheckCircle, ExternalLink, Headset, Mail, MessageSquare, Send } from "lucide-react";
+import { useState } from "react";
 
 interface ContactForm {
   subject: string;
@@ -49,7 +49,6 @@ export default function SupportPage() {
       setSubmitted(true);
       setForm({ subject: "", message: "" });
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error sending ticket", "error"),
   });
 
   function handleSubmit(e: React.FormEvent) {
