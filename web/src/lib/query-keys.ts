@@ -54,6 +54,9 @@ export const queryKeys = {
   heldSales: resource("held-sales"),
   purchases: resource("purchases"),
   customers: resource("customers"),
+  /** A sub-resource of one customer — kept under "customers" so `customers.all` clears it too. */
+  customerLoyalty: (customerId: string | undefined) =>
+    ["customers", "loyalty", customerId ?? ""] as const,
   suppliers: resource("suppliers"),
   expenses: resource("expenses"),
   expenseCategories: resource("expense-categories"),

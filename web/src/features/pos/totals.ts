@@ -4,6 +4,9 @@ import type { CartItem } from "@/features/pos/types";
 
 export const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** One row of a basket-level tax breakdown, as produced by `mergeTaxComponents`. */
+export type TaxSummaryRow = { name: string; rate: number; amount: number };
+
 /**
  * Per-line tax, with the full per-component breakdown (e.g. CGST 9% + SGST 9% shown
  * separately) — mirrors the backend's `App\Domain\Tax\TaxCalculator::forLine()`

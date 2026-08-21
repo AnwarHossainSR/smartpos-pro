@@ -86,6 +86,8 @@ export default function LoyaltyPage() {
   const [tab, setTab] = useState<Tab>("coupons");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Both tabs read the same `?search=`/`?page=` params, so a term typed on one carries over
+  // to the other — the single shared `search` state these replaced behaved the same way.
   const coupons = useResourceList<Coupon>({
     queryKey: queryKeys.coupons.lists(),
     queryFn: (p) => api<Paginated<Coupon>>(`/coupons?${buildListQuery(p)}`),

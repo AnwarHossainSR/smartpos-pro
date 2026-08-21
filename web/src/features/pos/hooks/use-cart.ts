@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-import { mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
+import { mergeTaxComponents } from "@/features/tax/calc";
 import type { PriceDisplay } from "@/features/tax/types";
-import { lineTotals, round2 } from "@/features/pos/totals";
+import { lineTotals, round2, type TaxSummaryRow } from "@/features/pos/totals";
 import type { CartItem, Product } from "@/features/pos/types";
 
 export interface Cart {
@@ -12,7 +12,7 @@ export interface Cart {
   subtotal: number;
   total: number;
   /** Per-component totals across the whole basket, e.g. "CGST 9%" and "SGST 9%" separately. */
-  taxComponents: TaxComponentResult[];
+  taxComponents: TaxSummaryRow[];
   add: (product: Product, weight?: number | null) => void;
   setQty: (productId: string, qty: number) => void;
   setUnitPrice: (productId: string, unitPrice: number) => void;
