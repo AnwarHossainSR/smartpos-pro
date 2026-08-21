@@ -1,22 +1,9 @@
-"use client";
-
 import { useEffect, useState } from "react";
 
 export function PwaRegister() {
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      if (process.env.NODE_ENV === "production") {
-        navigator.serviceWorker.register("/sw.js").catch(console.error);
-      } else {
-        navigator.serviceWorker
-          .getRegistrations()
-          .then((regs) => regs.forEach((reg) => reg.unregister()))
-          .catch(console.error);
-      }
-    }
-
     const handleOffline = () => setOffline(true);
     const handleOnline = () => setOffline(false);
     window.addEventListener("offline", handleOffline);
