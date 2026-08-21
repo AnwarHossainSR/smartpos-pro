@@ -63,3 +63,60 @@ export interface Plan extends Named {
   features: PlanFeature[];
   is_active: boolean;
 }
+
+export interface Tenant extends Named {
+  slug: string;
+  status: "active" | "suspended";
+  created_at: string;
+  updated_at: string;
+  users_count?: number;
+  businesses_count?: number;
+}
+
+export interface TenantDetail extends Tenant {
+  subscription: {
+    id: string;
+    status: string;
+    plan: { id: string; name: string; slug: string; price: number } | null;
+    created_at: string;
+  } | null;
+  usage: {
+    sales_count: number;
+    users_count: number;
+  };
+}
+
+export interface PlanDistribution {
+  plan_name: string;
+  slug: string;
+  count: number;
+  mrr: number;
+}
+
+export interface RevenueMetrics {
+  total_mrr: number;
+  active_tenants: number;
+  suspended_tenants: number;
+  new_tenants_last_days: number;
+  plan_distribution: PlanDistribution[];
+  recent_subscriptions: Array<{
+    id: string;
+    status: string;
+    created_at: string;
+    plan: { name: string; slug: string; price: number } | null;
+  }>;
+}
+
+export interface Impersonation {
+  id: string;
+  tenant_id: string;
+  super_admin_id: string;
+  target_user_id: string;
+  reason: string;
+  started_at: string;
+  ended_at: string | null;
+  ended_by: string | null;
+  tenant?: { id: string; name: string };
+  superAdmin?: { id: string; name: string; email: string };
+  targetUser?: { id: string; name: string; email: string };
+}
