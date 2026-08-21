@@ -1,7 +1,10 @@
+import { precacheAndRoute } from "workbox-precaching";
+
+precacheAndRoute(self.__WB_MANIFEST);
+
 const CACHE_NAME = "smartpos-v1";
 const SHELL = ["/", "/dashboard", "/pos", "/offline.html"];
 
-// ----- Install: cache shell -----
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
@@ -11,7 +14,6 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// ----- Activate: prune old caches -----
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -21,14 +23,12 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// ----- Fetch: network-first for API, cache-first for static -----
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  // Always network for API calls
   if (url.pathname.startsWith("/api/")) return;
 
   event.respondWith(
@@ -43,16 +43,13 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached || caches.match("/offline.html"));
 
-      // For navigation, go network first (so we get fresh Next.js pages)
       if (request.mode === "navigate") return networkFetch;
 
-      // For assets, return cached immediately then revalidate
       return cached || networkFetch;
     })
   );
 });
 
-// ----- Background sync: offline POS sales -----
 const SYNC_TAG = "pos-sale-sync";
 const IDB_DB = "smartpos-offline";
 const IDB_STORE = "pending-sales";
