@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { api, ApiError } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";

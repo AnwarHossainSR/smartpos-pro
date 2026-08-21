@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { api, ApiError, type Paginated } from "@/lib/api";
 import { PERMISSION_MATRIX, splitSlug } from "@/lib/permissions";
 import { useDebouncedValue } from "@/lib/use-debounced-value";

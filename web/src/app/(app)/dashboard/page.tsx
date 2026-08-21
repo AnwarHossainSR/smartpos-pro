@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { Link } from "react-router";
 import { api } from "@/lib/api";
 import { StatCard } from "@/components/stat-card";

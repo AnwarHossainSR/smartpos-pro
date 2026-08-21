@@ -1,7 +1,7 @@
 import { Keyboard } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 interface Shortcut {
   key: string;

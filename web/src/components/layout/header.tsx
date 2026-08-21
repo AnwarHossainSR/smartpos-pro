@@ -10,7 +10,7 @@ import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { toast } from "@/components/ui/toast";
 import type { NotificationResponse } from "@/lib/notifications";
 import { queryKeys } from "@/lib/query-keys";

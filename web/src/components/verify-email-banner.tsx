@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 export function VerifyEmailBanner() {
   const t = useTranslation();

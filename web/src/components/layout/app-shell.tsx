@@ -17,7 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { OnboardingWizard } from "@/features/onboarding";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 function isTenantSuspendedError(error: unknown): boolean {
   if (!(error instanceof ApiError) || error.status !== 403) return false;

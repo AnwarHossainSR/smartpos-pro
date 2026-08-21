@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore } from "@/stores/theme";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 
 /**
  * Wait this long after the *last* change before persisting, so a user cycling through the

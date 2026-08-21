@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { hasPermission, useAuth } from "@/stores/auth";
 import type { PermissionSlug } from "@/lib/permissions";
 

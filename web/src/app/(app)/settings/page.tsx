@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/i18n/config";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { api, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";

@@ -1,5 +1,5 @@
 import { Logo } from "@/components/ui/logo";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { NAV_GROUPS, type NavGroup } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { cn } from "@/lib/utils";

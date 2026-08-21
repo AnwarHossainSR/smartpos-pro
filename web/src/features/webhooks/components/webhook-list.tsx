@@ -5,7 +5,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { api, ApiError } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";

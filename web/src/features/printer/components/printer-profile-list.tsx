@@ -5,7 +5,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { api, ApiError } from "@/lib/api";
 import { connectUsbPrinter, getConnectedPrinter, isWebUsbAvailable } from "@/lib/escpos-printer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

@@ -20,7 +20,7 @@ import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
-import { useTranslation } from "@/i18n/provider";
+import { useTranslation } from "@/i18n/context";
 import { useAllTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
 import { ImageUpload } from "@/components/ui/image-upload";
