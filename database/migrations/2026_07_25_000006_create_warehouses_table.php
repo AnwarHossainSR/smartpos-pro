@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('warehouses', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('branch_id')->nullable()->constrained()->nullOnDelete();
@@ -23,6 +22,11 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['tenant_id', 'business_id']);
+
+            // Every list endpoint runs `where tenant_id = ? order by name limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'name']);
         });
     }
 

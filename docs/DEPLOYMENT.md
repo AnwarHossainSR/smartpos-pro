@@ -378,10 +378,6 @@ php artisan backup:list
 
 3. **Restore the database** from the `.sql` dump:
    ```bash
-   # PostgreSQL
-   psql -h 127.0.0.1 -U smartpos -d smartpos < /tmp/restore/db-dumps/pgsql-smartpos.sql
-
-   # MySQL (if applicable)
    mysql -u smartpos -p smartpos < /tmp/restore/db-dumps/mysql-smartpos.sql
    ```
 

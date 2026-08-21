@@ -25,7 +25,6 @@ use App\Services\Sales\QuotationService;
 use App\Services\Sales\SaleReturnService;
 use App\Services\Sales\SaleService;
 use App\Support\Tenancy\TenantContext;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 /**
@@ -39,9 +38,9 @@ use Illuminate\Support\Str;
  *
  * Run after DemoSeeder: php artisan db:seed --class=RichDemoSeeder
  */
-class RichDemoSeeder extends Seeder
+class RichDemoSeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         $context = app(TenantContext::class);
         $returnService = app(SaleReturnService::class);

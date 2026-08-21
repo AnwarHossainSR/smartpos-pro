@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->string('name');
             $table->string('base_currency', 3)->default('USD');
             $table->decimal('fallback_exchange_rate', 12, 6)->default(1.0);

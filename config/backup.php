@@ -37,7 +37,7 @@ return [
             ],
 
             'databases' => [
-                env('DB_CONNECTION', 'pgsql'),
+                env('DB_CONNECTION', 'mysql'),
             ],
         ],
 

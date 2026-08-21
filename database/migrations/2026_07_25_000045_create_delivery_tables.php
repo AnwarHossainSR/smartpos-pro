@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('delivery_zones', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
@@ -24,7 +23,6 @@ return new class extends Migration
 
         Schema::create('deliveries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('sale_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('zone_id')->nullable()->constrained('delivery_zones')->nullOnDelete();

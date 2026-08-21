@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('cash_registers', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('branch_id')->constrained()->cascadeOnDelete();
             $table->string('name');
@@ -22,7 +21,6 @@ return new class extends Migration
 
         Schema::create('cash_register_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('cash_register_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
@@ -42,7 +40,6 @@ return new class extends Migration
 
         Schema::create('cash_register_transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('cash_register_session_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
@@ -51,7 +48,10 @@ return new class extends Migration
             $table->string('reason')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['tenant_id', 'cash_register_session_id']);
+            // Named explicitly: the generated name would be 67 characters, and MySQL
+            // rejects an identifier over 64. Postgres silently truncates instead, so
+            // this only shows up on MySQL.
+            $table->index(['tenant_id', 'cash_register_session_id'], 'cash_reg_txn_tenant_session_idx');
         });
     }
 

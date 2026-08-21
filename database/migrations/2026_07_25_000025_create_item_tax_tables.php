@@ -19,7 +19,6 @@ return new class extends Migration
         $breakdown = function (string $table, string $parentTable, string $parentColumn) {
             Schema::create($table, function (Blueprint $t) use ($parentTable, $parentColumn) {
                 $t->uuid('id')->primary();
-                $t->unique('id');
                 $t->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
                 $t->foreignUuid($parentColumn)->constrained($parentTable)->cascadeOnDelete();
                 // Nullable: the rate may be deleted later, but the invoice must not change.

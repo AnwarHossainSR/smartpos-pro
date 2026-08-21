@@ -47,7 +47,7 @@ The application should feel modern, simple, fast, and professional. It must not 
 
 ### Database and infrastructure
 
-1. PostgreSQL
+1. MySQL 8.4
 2. Redis
 3. S3 compatible object storage
 4. Docker
@@ -952,7 +952,7 @@ Create reusable components for:
 
 ## Database expectations
 
-Create a complete normalized PostgreSQL schema with migrations, indexes, foreign keys, tenant scoping, soft deletes where appropriate, audit fields, and transaction safe inventory logic.
+Create a complete normalized MySQL schema with migrations, indexes, foreign keys, tenant scoping, soft deletes where appropriate, audit fields, and transaction safe inventory logic.
 
 Important entities should include:
 

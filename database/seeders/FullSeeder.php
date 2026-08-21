@@ -4,12 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\Plan;
 use App\Services\Auth\TenantProvisioner;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\App;
 
-class FullSeeder extends Seeder
+class FullSeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         // ── 1. Seed plans (global) ──
         $this->seedPlans();

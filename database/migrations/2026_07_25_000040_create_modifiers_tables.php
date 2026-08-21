@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('modifiers', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->json('options'); // [{label, price_delta}]
@@ -22,7 +21,6 @@ return new class extends Migration
 
         Schema::create('product_modifier', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('modifier_id')->constrained('modifiers')->cascadeOnDelete();

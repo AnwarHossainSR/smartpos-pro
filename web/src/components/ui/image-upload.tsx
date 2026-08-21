@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "./toast";
 
 interface ImageUploadProps {
   onUpload: (file: File) => void;
@@ -28,6 +29,12 @@ export function ImageUpload({
   const handleFile = useCallback(
     (file: File) => {
       if (file.size > maxSizeMb * 1024 * 1024) {
+        // Returning quietly here left the user staring at an unchanged field with
+        // no idea why their file did not take.
+        toast(
+          `Image must be smaller than ${maxSizeMb} MB — that file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`,
+          "error",
+        );
         return;
       }
       const url = URL.createObjectURL(file);

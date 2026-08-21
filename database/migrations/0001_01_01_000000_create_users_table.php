@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unique('id');
             // The tenant/business/branch columns are declared here but their foreign
             // keys are attached by the branches migration: `users` is Laravel's stock
             // first migration and has to run before any of the three targets exist.
@@ -49,6 +48,11 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['tenant_id']);
+
+            // Every list endpoint runs `where tenant_id = ? order by name limit n`.
+            // Without this the whole tenant's rows are read and filesorted to return
+            // one page.
+            $table->index(['tenant_id', 'name']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

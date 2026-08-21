@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Support\Rbac\PermissionCatalog;
 use App\Support\Rbac\RbacProvisioner;
-use Illuminate\Database\Seeder;
 
 /**
  * Brings the global `permissions` table in line with the catalogue.
@@ -14,9 +13,9 @@ use Illuminate\Database\Seeder;
  * slugs without re-registering anyone. Tenant roles are provisioned separately, at
  * registration (see TenantProvisioner).
  */
-class PermissionSeeder extends Seeder
+class PermissionSeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         $written = app(RbacProvisioner::class)->syncPermissions();
 

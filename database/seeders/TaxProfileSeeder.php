@@ -7,7 +7,6 @@ use App\Domain\Enums\RoundingMode;
 use App\Domain\Enums\TaxRoundingScope;
 use App\Domain\Enums\TaxSourcing;
 use App\Models\TaxProfile;
-use Illuminate\Database\Seeder;
 
 /**
  * The country tax profiles a tenant can select.
@@ -19,9 +18,9 @@ use Illuminate\Database\Seeder;
  *
  * Idempotent, so it is safe to re-run when a profile is corrected.
  */
-class TaxProfileSeeder extends Seeder
+class TaxProfileSeeder extends TransactionalSeeder
 {
-    public function run(): void
+    protected function seed(): void
     {
         foreach ($this->profiles() as $profile) {
             TaxProfile::updateOrCreate(['code' => $profile['code']], $profile);
