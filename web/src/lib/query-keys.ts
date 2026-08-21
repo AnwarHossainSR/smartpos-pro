@@ -163,4 +163,13 @@ export const queryKeys = {
     invoice: (id: string | undefined) => ["portal", "invoice", id ?? ""] as const,
   },
   orderStatus: (token: string | undefined) => ["order-status", token ?? ""] as const,
+
+  /* ---- super admin ---- */
+  superAdmin: {
+    all: ["super-admin"] as const,
+    tenants: (params?: ListParams) => ["super-admin", "tenants", params ?? {}] as const,
+    tenantDetail: (id: string | undefined) => ["super-admin", "tenant", id ?? ""] as const,
+    revenueMetrics: (days?: number) => ["super-admin", "revenue", days ?? 30] as const,
+    impersonations: () => ["super-admin", "impersonations"] as const,
+  },
 } as const;
