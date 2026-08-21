@@ -1,5 +1,3 @@
-"use client";
-
 import { ActiveBadge, ResourceManager, type ResourceColumn, type ResourceRecord } from "@/components/ui/resource-manager";
 import { api } from "@/lib/api";
 import { useAuth } from "@/stores/auth";

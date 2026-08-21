@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Grid2x2 } from "lucide-react";

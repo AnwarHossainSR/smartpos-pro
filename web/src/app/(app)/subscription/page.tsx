@@ -1,7 +1,5 @@
-"use client";
-
 import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, TrendingUp, Rocket, Briefcase, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,7 +84,7 @@ function Calendar({ className }: { className?: string }) {
 }
 
 export default function SubscriptionPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
 
   const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery<{ data: Plan[] }>({
@@ -291,7 +289,7 @@ export default function SubscriptionPage() {
                   <Button
                     className={`mt-5 w-full rounded-xl py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${colors.button}`}
                     disabled={isCurrent || isDowngrade}
-                    onClick={() => router.push(`/subscription/checkout?plan=${plan.id}`)}
+                    onClick={() => navigate(`/subscription/checkout?plan=${plan.id}`)}
                   >
                     {isCurrent
                       ? "Current Plan"
