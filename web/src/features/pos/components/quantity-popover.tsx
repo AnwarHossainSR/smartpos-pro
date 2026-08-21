@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Numpad, useIsTouchDevice } from "@/components/ui/numpad";

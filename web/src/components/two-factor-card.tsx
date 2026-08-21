@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
@@ -133,7 +131,6 @@ export function TwoFactorCard() {
       >
         <div className="space-y-3">
           {qrDataUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={qrDataUrl} alt="Two-factor QR code" className="mx-auto h-48 w-48" />
           )}
           {secret && (

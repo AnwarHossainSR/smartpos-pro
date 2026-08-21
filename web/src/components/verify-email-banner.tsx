@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { MailWarning } from "lucide-react";

@@ -1,5 +1,3 @@
-"use client";
-
 import { PALETTES } from "@/lib/palettes";
 import { useThemeStore } from "@/stores/theme";
 import { cn } from "@/lib/utils";

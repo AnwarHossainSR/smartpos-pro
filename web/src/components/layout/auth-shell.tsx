@@ -1,5 +1,3 @@
-"use client";
-
 import { Check } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/provider";

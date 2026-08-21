@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

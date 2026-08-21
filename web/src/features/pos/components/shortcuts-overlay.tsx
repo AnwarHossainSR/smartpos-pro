@@ -1,5 +1,3 @@
-"use client";
-
 import { Keyboard } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

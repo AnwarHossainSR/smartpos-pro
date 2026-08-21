@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useLocaleStore } from "@/stores/locale";
 import { LOCALE_DIR, type Locale } from "@/i18n/config";

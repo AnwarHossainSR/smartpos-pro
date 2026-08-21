@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { MediaField } from "@/components/ui/media-field";
 import { Skeleton } from "@/components/ui/skeleton";

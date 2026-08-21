@@ -1,5 +1,3 @@
-"use client";
-
 /** The actual recharts implementation — kept in its own module so the page can load it via
  *  `next/dynamic(..., { ssr: false })`. recharts is the heaviest dependency in this app;
  *  nothing above this file imports it, so pages that never render a chart don't pay for it. */

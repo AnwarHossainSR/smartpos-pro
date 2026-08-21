@@ -1,5 +1,3 @@
-"use client";
-
 import { api, ApiError, apiUpload } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -204,10 +202,8 @@ export function MediaField({
           )}
         >
           {shown ? (
-            // Not next/image: the src is either a bucket URL on a host the image
-            // optimiser is not configured for, or a local object URL during the
-            // optimistic preview. Neither can be run through the optimiser.
-            // eslint-disable-next-line @next/next/no-img-element
+            // Plain <img>: the src is either a bucket URL or a local object URL
+            // during the optimistic preview.
             <img src={shown} alt={label} className="h-full w-full object-contain p-1" />
           ) : (
             <div className="flex flex-col items-center gap-1 text-[var(--muted)]">
