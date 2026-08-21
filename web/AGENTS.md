@@ -2,7 +2,7 @@
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
+- **Framework:** Vite + React Router 8
 - **React:** 19
 - **Language:** TypeScript (strict)
 - **Styling:** Tailwind CSS v4 with semantic tokens in `src/app/globals.css`
@@ -55,7 +55,6 @@ web/src/
 ## Running Checks
 
 ```bash
-npm run lint      # ESLint
-npm run build     # Next.js build
-npm run dev       # Dev server on http://localhost:3000
+npm run build      # Vite build
+npm run dev        # Dev server on http://localhost:3000
 ```

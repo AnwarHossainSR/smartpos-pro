@@ -16,7 +16,7 @@ The application should feel modern, simple, fast, and professional. It must not 
 
 ### Frontend
 
-1. Next.js 16 with App Router
+1. Vite + React Router 8
 2. React 19
 3. TypeScript
 4. Tailwind CSS

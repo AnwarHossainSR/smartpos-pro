@@ -30,7 +30,7 @@ A multi-tenant POS & retail SaaS. **Backend**: Laravel 13 / PHP 8.4 at the repo 
 
 ## Frontend conventions (`web/`)
 
-- App Router, TypeScript strict, Tailwind v4 tokens in `src/app/globals.css`.
+- Vite + React Router 8, TypeScript strict, Tailwind v4 tokens in `src/app/globals.css`.
 - API calls go through `src/lib/api.ts`; auth token via `src/stores/auth.ts`; server state
   via TanStack Query. UI primitives live in `src/components/ui`.
 - Every list = search + filter + pagination + empty + loading (skeleton) states.
