@@ -1,8 +1,5 @@
-"use client";
-
 import { ArrowLeft, Check, Loader2, Shield, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +28,8 @@ interface Plan {
 }
 
 function CheckoutContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const planId = searchParams.get("plan");
 
   const { data: plansData, isLoading: plansLoading } = useQuery<{ data: Plan[] }>({
@@ -50,7 +47,7 @@ function CheckoutContent() {
       }),
     onSuccess: () => {
       toast("Free trial activated! Your 30-day trial has started.");
-      router.push("/subscription");
+      navigate("/subscription");
     },
     onError: (error: Error) => {
       const message = error instanceof ApiError ? error.message : "Something went wrong. Please try again.";
@@ -76,7 +73,7 @@ function CheckoutContent() {
             No plan selected. Please go back and choose a plan.
           </CardContent>
         </Card>
-        <Button variant="outline" onClick={() => router.push("/subscription")}>
+        <Button variant="outline" onClick={() => navigate("/subscription")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Plans
         </Button>
@@ -86,7 +83,7 @@ function CheckoutContent() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Button variant="ghost" size="sm" onClick={() => router.push("/subscription")}>
+      <Button variant="ghost" size="sm" onClick={() => navigate("/subscription")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Plans
       </Button>
@@ -176,17 +173,4 @@ function CheckoutContent() {
   );
 }
 
-export default function CheckoutPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="mx-auto max-w-2xl space-y-5">
-          <Skeleton className="h-8 w-48 rounded-[var(--radius)]" />
-          <Skeleton className="h-64 rounded-[var(--radius)]" />
-        </div>
-      }
-    >
-      <CheckoutContent />
-    </Suspense>
-  );
-}
+export default CheckoutContent;

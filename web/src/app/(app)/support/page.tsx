@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Headset, Mail, MessageSquare, BookOpen, ExternalLink, Send, CheckCircle } from "lucide-react";
