@@ -1,8 +1,6 @@
-"use client";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,7 +192,7 @@ export default function ApprovalSettingsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
+        <Link to="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-xl font-semibold">Manager approvals</h1>

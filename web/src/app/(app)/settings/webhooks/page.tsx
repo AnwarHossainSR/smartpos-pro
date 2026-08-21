@@ -1,12 +1,10 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeliveryLog } from "@/features/webhooks/components/delivery-log";
 import { WebhookList } from "@/features/webhooks/components/webhook-list";
 import { useTranslation } from "@/i18n/provider";
 import { useAuth } from "@/stores/auth";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router";
 
 export default function WebhooksPage() {
   const { can } = useAuth();
@@ -24,7 +22,7 @@ export default function WebhooksPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Link href="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
+        <Link to="/settings" className="text-[var(--muted)] hover:text-[var(--fg)]">
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </div>
