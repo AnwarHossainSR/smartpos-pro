@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Printer, RotateCw, Trash2, TriangleAlert } from "lucide-react";
 import { api, type Paginated } from "@/lib/api";
@@ -138,7 +136,7 @@ export default function LabelPrintingPage() {
       <div data-print-hide className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href="/products" aria-label="Back to products">
+            <Link to="/products" aria-label="Back to products">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

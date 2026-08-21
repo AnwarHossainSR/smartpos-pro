@@ -1,5 +1,3 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import {
   Area,
@@ -10,7 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import { useTranslation } from "@/i18n/provider";
-import Link from "next/link";
+import { Link } from "react-router";
 import { api } from "@/lib/api";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,7 +191,7 @@ export default function DashboardPage() {
                 {s.recent_sales.map((sale) => (
                   <Link
                     key={sale.id}
-                    href={`/sales?filter=${sale.id}`}
+                    to={`/sales?filter=${sale.id}`}
                     className="flex items-center justify-between rounded-lg p-2 hover:bg-[var(--muted)]/10 transition-colors"
                   >
                     <div className="flex flex-col gap-1">
@@ -231,7 +229,7 @@ export default function DashboardPage() {
             {s.low_stock_items.map((item, idx) => (
               <Link
                 key={idx}
-                href={`/inventory?filter=low-stock`}
+                to={`/inventory?filter=low-stock`}
                 className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30 hover:shadow-sm transition-shadow"
               >
                 <div className="text-sm font-medium truncate">{item.name}</div>
@@ -254,28 +252,28 @@ export default function DashboardPage() {
         <CardContent>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Link
-              href="/pos"
+              to="/pos"
               className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
             >
               <ShoppingCart className="h-6 w-6 text-[var(--primary)]" />
               <span className="text-sm font-medium">{t("dashboard.newSale")}</span>
             </Link>
             <Link
-              href="/products?new=1"
+              to="/products?new=1"
               className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
             >
               <Package className="h-6 w-6 text-[var(--primary)]" />
               <span className="text-sm font-medium">{t("dashboard.addProduct")}</span>
             </Link>
             <Link
-              href="/cash-register"
+              to="/cash-register"
               className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
             >
               <Wallet className="h-6 w-6 text-[var(--primary)]" />
               <span className="text-sm font-medium">{t("dashboard.openRegister")}</span>
             </Link>
             <Link
-              href="/expenses?new=1"
+              to="/expenses?new=1"
               className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
             >
               <Receipt className="h-6 w-6 text-[var(--primary)]" />
