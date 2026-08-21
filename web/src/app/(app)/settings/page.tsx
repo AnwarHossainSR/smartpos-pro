@@ -1,5 +1,3 @@
-"use client";
-
 import { ApprovalPinCard } from "@/components/approval-pin-card";
 import { BrandingCard } from "@/features/settings/branding-card";
 import { TwoFactorCard } from "@/components/two-factor-card";
@@ -19,7 +17,7 @@ import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Building2, ChevronRight, DollarSign, Laptop, Mail, Percent, Printer, Shield, ShieldCheck, Smartphone, Webhook } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -561,7 +559,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/tax"
+                to="/settings/tax"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Percent className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -576,7 +574,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/webhooks"
+                to="/settings/webhooks"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Webhook className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -591,7 +589,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/locations"
+                to="/settings/locations"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Building2 className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -606,7 +604,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/printer"
+                to="/settings/printer"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Printer className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -621,7 +619,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/approvals"
+                to="/settings/approvals"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <ShieldCheck className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -636,7 +634,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/security"
+                to="/settings/security"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Shield className="h-5 w-5 shrink-0 text-[var(--primary)]" />
@@ -651,7 +649,7 @@ export default function SettingsPage() {
           <Card>
             <CardContent className="p-0">
               <Link
-                href="/settings/email-templates"
+                to="/settings/email-templates"
                 className="flex items-center gap-3 p-5 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <Mail className="h-5 w-5 shrink-0 text-[var(--primary)]" />
