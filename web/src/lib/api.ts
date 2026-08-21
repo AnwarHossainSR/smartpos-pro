@@ -2,7 +2,7 @@ import { useAuth } from "@/stores/auth";
 import { toast } from "@/components/ui/toast";
 
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+  import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
 
 export class ApiError extends Error {
   constructor(

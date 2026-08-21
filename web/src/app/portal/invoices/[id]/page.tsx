@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,15 +42,14 @@ function statusBadge(status: string) {
 }
 
 export default function PortalInvoiceDetailPage() {
-  const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const token = usePortalToken();
   const ready = !!token;
 
   useEffect(() => {
-    if (!token) router.replace("/portal");
-  }, [token, router]);
+    if (!token) navigate("/portal", { replace: true });
+  }, [token, navigate]);
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: ["portal", "invoice", id],
@@ -78,7 +75,7 @@ export default function PortalInvoiceDetailPage() {
     <div className="min-h-screen bg-[var(--bg)]">
       <header className="border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/portal/dashboard")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/portal/dashboard")}>
             <ArrowLeft className="mr-1 h-4 w-4" /> Back
           </Button>
           <Logo size={24} />
