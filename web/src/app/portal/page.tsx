@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { useState } from "react";
 
 export default function PortalLoginPage() {
@@ -22,7 +22,7 @@ export default function PortalLoginPage() {
       });
       setSent(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to send magic link");
+      setError(errorMessage(err, "Failed to send magic link"));
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,8 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
+import react from "@vitejs/plugin-react";
 import path from "path";
+import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
@@ -69,8 +69,28 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "src") },
   },
+  build: {
+    // Split the long-lived third-party code out of the app chunk so a normal app deploy
+    // does not invalidate React/router/query in everyone's browser cache. recharts and the
+    // barcode/printing code stay out of this list on purpose — they are already reached
+    // through dynamic import()s and get their own chunks only on the pages that use them.
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return;
+          if (/[\/]node_modules[\/](react|react-dom|react-is|scheduler)[\/]/.test(id)) return "react";
+          if (id.includes("react-router")) return "router";
+          if (id.includes("@tanstack")) return "query";
+          if (/react-hook-form|@hookform|[\/]zod[\/]/.test(id)) return "forms";
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
+    // VITE_API_URL is absolute (a separate Laravel origin), so the app itself does not use
+    // this proxy — it is here for the service worker's offline replay and anything else that
+    // falls back to a same-origin /api path in dev.
     proxy: {
       "/api": "http://localhost:8080",
     },

@@ -1,8 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
-import { api, type Paginated } from "@/lib/api";
+import { useBranches } from "@/lib/lookups";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +15,6 @@ import { useTaxSummaryReport, useTaxReturnReport } from "@/features/tax/hooks";
 import type { TaxReportComponent } from "@/features/tax/types";
 
 const TaxReportChart = lazy(() => import("@/features/tax/components/tax-report-chart"));
-
-interface Branch { id: string; name: string; }
 
 function firstOfMonth(): string {
   const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10);
@@ -68,12 +65,7 @@ function TaxReportBody() {
 
   // Branch filter is optional — only fetch the list if the user can actually see branches;
   // a 403 here shouldn't break the report itself.
-  const { data: branches } = useQuery({
-    queryKey: ["branches-all"],
-    queryFn: () => api<Paginated<Branch>>("/branches?per_page=200"),
-    enabled: canView && can("branches.view"),
-    retry: false,
-  });
+  const { branches } = useBranches({ enabled: canView && can("branches.view") });
 
   const filters = useMemo(
     () => ({ from, to, branch_id: branchId ? branchId : null }),
@@ -105,10 +97,10 @@ function TaxReportBody() {
           <Input type="date" className="h-9 w-36" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Label className="mb-0">To</Label>
           <Input type="date" className="h-9 w-36" value={to} onChange={(e) => setTo(e.target.value)} />
-          {branches?.data && branches.data.length > 0 && (
+          {branches.length > 0 && (
             <Select className="h-9 w-40" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
               <option value="">All branches</option>
-              {branches.data.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>
           )}
         </div>

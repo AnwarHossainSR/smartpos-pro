@@ -1,39 +1,12 @@
-import { api, ApiError, apiUpload } from "@/lib/api";
+import { api, apiUpload, errorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageOff, Loader2, Trash2, Upload } from "lucide-react";
 import { useCallback, useId, useRef, useState } from "react";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
 import { toast } from "./toast";
-
-/** One entry from `GET /media/collections` — the server's own upload limits. */
-interface MediaCollection {
-  key: string;
-  label: string;
-  max_kb: number;
-  mimes: string[];
-  /** Ready-made `accept` attribute, e.g. "image/jpeg,image/png,image/webp". */
-  accept: string;
-  variants: Record<string, { width: number; height: number }>;
-}
-
-/**
- * The limits every upload field is held to, fetched once and shared.
- *
- * Read from the server rather than duplicated in the client so the browser can
- * reject an oversized file before spending the upload, without the two sides ever
- * disagreeing about what is allowed.
- */
-export function useMediaCollections() {
-  return useQuery<{ data: MediaCollection[] }>({
-    queryKey: ["media-collections"],
-    queryFn: () => api<{ data: MediaCollection[] }>("/media/collections"),
-    // Config, not data: it only changes on deploy.
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-}
+import { useMediaCollections } from "./use-media-collections";
 
 interface MediaFieldProps {
   /** Collection key, e.g. `business.logo`. Drives the accept and size limits. */
@@ -44,8 +17,8 @@ interface MediaFieldProps {
   hint?: string;
   /** Current image, or null when the slot is empty. */
   url?: string | null;
-  /** Query keys to invalidate once the slot changes. */
-  invalidate?: readonly unknown[][];
+  /** Query keys to invalidate once the slot changes — pass `queryKeys.*` members. */
+  invalidate?: readonly (readonly unknown[])[];
   /** Square for a logo or avatar; wide for a cover image. */
   aspect?: "square" | "wide";
   disabled?: boolean;
@@ -101,7 +74,7 @@ export function MediaField({
       // The optimistic preview has to go, or the user is left looking at an image
       // that was never stored.
       setPreview(null);
-      toast(e instanceof ApiError ? e.message : `Could not upload ${label.toLowerCase()}.`, "error");
+      toast(errorMessage(e, `Could not upload ${label.toLowerCase()}.`), "error");
     },
   });
 
@@ -115,7 +88,7 @@ export function MediaField({
     },
     onError: (e: unknown) => {
       setConfirmingRemove(false);
-      toast(e instanceof ApiError ? e.message : `Could not remove ${label.toLowerCase()}.`, "error");
+      toast(errorMessage(e, `Could not remove ${label.toLowerCase()}.`), "error");
     },
   });
 

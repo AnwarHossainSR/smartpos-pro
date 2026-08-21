@@ -5,12 +5,14 @@ import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage, type Envelope } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAuth } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, RotateCcw, Send } from "lucide-react";
 import { Link } from "react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface EmailTemplate {
   key: string;
@@ -31,8 +33,8 @@ export default function EmailTemplatesPage() {
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
   const { data, isPending } = useQuery({
-    queryKey: ["email-templates"],
-    queryFn: () => api<{ data: EmailTemplate[] }>("/email-templates"),
+    queryKey: queryKeys.emailTemplates.lists(),
+    queryFn: () => api<Envelope<EmailTemplate[]>>("/email-templates"),
     enabled: can("settings.update"),
   });
 
@@ -91,20 +93,20 @@ function TemplateEditor({ template }: { template: EmailTemplate }) {
   const [subject, setSubject] = useState(template.subject);
   const [body, setBody] = useState(template.body);
   const [testEmail, setTestEmail] = useState("");
-  const [draft, setDraft] = useState({ subject: template.subject, body: template.body });
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDraft({ subject, body }), 400);
-    return () => clearTimeout(timer);
-  }, [subject, body]);
+  // The preview is a POST, and the query key is the draft — so debounce the draft before
+  // it reaches the key, or every keystroke in the editor renders a fresh email server-side.
+  const debouncedSubject = useDebouncedValue(subject, 400);
+  const debouncedBody = useDebouncedValue(body, 400);
+  const draft = { key: template.key, subject: debouncedSubject, body: debouncedBody };
 
   const preview = useQuery({
-    queryKey: ["email-template-preview", template.key, draft.subject, draft.body],
+    queryKey: queryKeys.emailTemplates.preview(draft),
     enabled: !!draft.subject && !!draft.body,
     queryFn: () =>
-      api<{ data: { subject: string; html: string } }>(`/email-templates/${template.key}/preview`, {
+      api<Envelope<{ subject: string; html: string }>>(`/email-templates/${template.key}/preview`, {
         method: "POST",
-        body: draft,
+        body: { subject: draft.subject, body: draft.body },
       }),
   });
 
@@ -112,9 +114,9 @@ function TemplateEditor({ template }: { template: EmailTemplate }) {
     mutationFn: () => api(`/email-templates/${template.key}`, { method: "PUT", body: { subject, body } }),
     onSuccess: () => {
       toast(t("emailTemplates.saved"));
-      qc.invalidateQueries({ queryKey: ["email-templates"] });
+      qc.invalidateQueries({ queryKey: queryKeys.emailTemplates.lists() });
     },
-    onError: (e) => toast(e instanceof ApiError ? e.message : t("emailTemplates.saveFailed"), "error"),
+    onError: (e) => toast(errorMessage(e, t("emailTemplates.saveFailed")), "error"),
   });
 
   const reset = useMutation({
@@ -122,17 +124,17 @@ function TemplateEditor({ template }: { template: EmailTemplate }) {
     onSuccess: () => {
       setSubject(template.default_subject);
       setBody(template.default_body);
-      qc.invalidateQueries({ queryKey: ["email-templates"] });
+      qc.invalidateQueries({ queryKey: queryKeys.emailTemplates.lists() });
       toast(t("emailTemplates.reset"));
     },
-    onError: (e) => toast(e instanceof ApiError ? e.message : t("emailTemplates.saveFailed"), "error"),
+    onError: (e) => toast(errorMessage(e, t("emailTemplates.saveFailed")), "error"),
   });
 
   const sendTest = useMutation({
     mutationFn: () =>
       api(`/email-templates/${template.key}/test`, { method: "POST", body: { email: testEmail } }),
     onSuccess: () => toast(t("emailTemplates.testSent", { email: testEmail })),
-    onError: (e) => toast(e instanceof ApiError ? e.message : t("emailTemplates.testFailed"), "error"),
+    onError: (e) => toast(errorMessage(e, t("emailTemplates.testFailed")), "error"),
   });
 
   return (

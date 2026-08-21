@@ -7,7 +7,8 @@ import { Input, Label } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ShieldCheck, ShieldOff, Lock, KeyRound, Laptop, Smartphone, AlertTriangle } from "lucide-react";
@@ -58,7 +59,6 @@ function PasswordSection() {
   const mutation = useMutation({
     mutationFn: (d: PasswordForm) => api("/auth/change-password", { method: "POST", body: d }),
     onSuccess: () => { toast(t("security.password.success")); reset(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   return (
@@ -98,7 +98,6 @@ function PasswordSection() {
 function TwoFactorSection() {
   const t = useTranslation();
   const user = useAuth((s) => s.user);
-  const setUser = useAuth((s) => s.setUser);
   const qc = useQueryClient();
   const enabled = !!user?.two_factor_enabled;
 
@@ -112,17 +111,19 @@ function TwoFactorSection() {
   const [regenerating, setRegenerating] = useState(false);
 
   const { data: statusData } = useQuery<{ data: TwoFactorStatus }>({
-    queryKey: ["2fa-status"],
+    queryKey: queryKeys.twoFactorStatus,
     queryFn: () => api<{ data: TwoFactorStatus }>("/auth/2fa/status"),
   });
 
   const status = statusData?.data;
 
-  async function refetchUser() {
-    const res = await api<{ data: typeof user }>("/auth/me");
-    if (res.data) setUser(res.data);
-    qc.invalidateQueries({ queryKey: ["me"] });
-  }
+  /**
+   * `two_factor_enabled` comes off the profile this section reads from the auth store,
+   * so refetching AppShell's `me` query is the whole update — its `setUser` effect
+   * writes the result into the store. Calling `/auth/me` here *and* invalidating the
+   * query fetched the same profile twice per toggle.
+   */
+  const refetchUser = () => qc.refetchQueries({ queryKey: queryKeys.me });
 
   const enableMutation = useMutation({
     mutationFn: () => api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", { method: "POST" }),
@@ -133,7 +134,6 @@ function TwoFactorSection() {
         QRCode.default.toDataURL(res.data.otpauth_url, { width: 200 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
       });
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const confirmMutation = useMutation({
@@ -143,10 +143,11 @@ function TwoFactorSection() {
       setEnrolling(false);
       setCode("");
       await refetchUser();
-      qc.invalidateQueries({ queryKey: ["2fa-status"] });
+      qc.invalidateQueries({ queryKey: queryKeys.twoFactorStatus });
       toast(t("security.2fa.enabled"));
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Invalid code", "error"),
+    // "Invalid code" is the useful fallback here; the generic one is not.
+    onError: (e: unknown) => toast(errorMessage(e, "Invalid code"), "error"),
   });
 
   const disableMutation = useMutation({
@@ -155,10 +156,9 @@ function TwoFactorSection() {
       setDisabling(false);
       setPassword("");
       await refetchUser();
-      qc.invalidateQueries({ queryKey: ["2fa-status"] });
+      qc.invalidateQueries({ queryKey: queryKeys.twoFactorStatus });
       toast(t("security.2fa.disabled"));
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const regenerateMutation = useMutation({
@@ -168,7 +168,6 @@ function TwoFactorSection() {
       setRegenerating(false);
       setPassword("");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   return (
@@ -293,20 +292,21 @@ function SessionsSection() {
   const [revokingAll, setRevokingAll] = useState(false);
 
   const { data, isLoading } = useQuery<{ data: Session[] }>({
-    queryKey: ["auth-sessions"],
+    queryKey: queryKeys.authSessions,
     queryFn: () => api<{ data: Session[] }>("/auth/sessions"),
   });
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["auth-sessions"] }); toast(t("security.sessions.revoked")); setRevoking(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.authSessions }); toast(t("security.sessions.revoked")); setRevoking(null); },
+    // Keeps the confirm dialog from sticking open on a failed revoke.
+    onError: (e: unknown) => { setRevoking(null); toast(errorMessage(e), "error"); },
   });
 
   const revokeAllMutation = useMutation({
     mutationFn: () => api("/auth/sessions/revoke-all", { method: "POST" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["auth-sessions"] }); toast(t("security.sessions.revoked_all")); setRevokingAll(false); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.authSessions }); toast(t("security.sessions.revoked_all")); setRevokingAll(false); },
+    onError: (e: unknown) => { setRevokingAll(false); toast(errorMessage(e), "error"); },
   });
 
   const sessions = data?.data ?? [];
@@ -391,7 +391,7 @@ function LockoutSection() {
   const t = useTranslation();
 
   const { data, isLoading } = useQuery<{ data: LockoutStatus }>({
-    queryKey: ["lockout-status"],
+    queryKey: queryKeys.lockoutStatus,
     queryFn: () => api<{ data: LockoutStatus }>("/auth/lockout-status"),
   });
 

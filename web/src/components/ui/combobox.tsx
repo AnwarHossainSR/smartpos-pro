@@ -2,13 +2,20 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { api, type Paginated } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryKey } from "@tanstack/react-query";
 import { Check, ChevronDown, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 interface ComboboxProps<T extends { id: string }> {
   endpoint: string;
-  queryKey: string;
+  /**
+   * A key from `queryKeys` — normally the resource's `options()`, e.g.
+   * `queryKeys.products.options()`. The search term and page size are appended to it, so the
+   * entries stay under that resource's prefix and a mutation invalidating the resource
+   * refreshes them. Taking a bare string here previously built a second key namespace
+   * outside the factory (`"products"` here, `"label-products"` there, for one endpoint).
+   */
+  queryKey: QueryKey;
   value: string | undefined;
   onChange: (id: string | undefined, option: T | undefined) => void;
   label: (option: T) => string;
@@ -44,7 +51,7 @@ export function Combobox<T extends { id: string }>({
   const search = useDebouncedValue(term, 300);
 
   const { data, isFetching } = useQuery({
-    queryKey: [queryKey, "combobox", search, perPage],
+    queryKey: [...queryKey, { search, per_page: perPage }],
     queryFn: () => {
       const params = new URLSearchParams({ per_page: String(perPage) });
       if (search) params.set("search", search);

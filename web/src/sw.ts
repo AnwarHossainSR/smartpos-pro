@@ -72,6 +72,8 @@ interface PendingSale {
   payload: unknown;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api/v1";
+
 const SYNC_TAG = "pos-sale-sync";
 const IDB_DB = "smartpos-offline";
 const IDB_STORE = "pending-sales";
@@ -106,7 +108,10 @@ async function syncPendingSales() {
 
   for (const sale of sales) {
     try {
-      const res = await fetch("/api/v1/sales", {
+      // Same base the app uses. Hardcoding "/api/v1" here only worked because the dev
+      // server proxies it; in production the API is a different origin, so a replayed
+      // offline sale would have POSTed to the static host and silently failed.
+      const res = await fetch(`${API_BASE}/sales`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

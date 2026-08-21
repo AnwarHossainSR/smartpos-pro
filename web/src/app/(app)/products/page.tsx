@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { Barcode, Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, apiUpload, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, apiUpload, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
+import { useBrands, useCategories, useUnits, useWarehouses } from "@/lib/lookups";
 import { formatCurrency, exportToCsv } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -24,13 +26,9 @@ import { useTranslation } from "@/i18n/context";
 import { useAllTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
 import { ImageUpload } from "@/components/ui/image-upload";
+import type { Brand, Category } from "@/types/domain";
 
 /* ---- types ---- */
-interface Category { id: string; name: string; }
-interface Brand { id: string; name: string; }
-interface Unit { id: string; name: string; }
-interface Warehouse { id: string; name: string; is_default: boolean; }
-
 interface Product {
   id: string;
   name: string;
@@ -88,23 +86,11 @@ function ProductForm({
   const t = useTranslation();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageRemoved, setImageRemoved] = useState(false);
-  const { data: cats } = useQuery({
-    queryKey: ["categories-all"],
-    queryFn: () => api<{ data: Category[] }>("/categories?per_page=200"),
-  });
-  const { data: brands } = useQuery({
-    queryKey: ["brands-all"],
-    queryFn: () => api<{ data: Brand[] }>("/brands?per_page=200"),
-  });
-  const { data: units } = useQuery({
-    queryKey: ["units-all"],
-    queryFn: () => api<{ data: Unit[] }>("/units?per_page=200"),
-  });
-  const { data: warehouses } = useQuery({
-    queryKey: ["warehouses-all"],
-    queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
-    enabled: !isEdit,
-  });
+  const { categories } = useCategories();
+  const { brands } = useBrands();
+  const { units } = useUnits();
+  // Only the create form offers an opening-stock warehouse, so editing skips that fetch.
+  const { warehouses } = useWarehouses({ enabled: !isEdit });
   const { data: taxGroups } = useAllTaxGroups();
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
@@ -141,12 +127,10 @@ function ProductForm({
       return result;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["products"] });
+      // The whole namespace: the paged table, the POS grid and the label picker read it too.
+      qc.invalidateQueries({ queryKey: queryKeys.products.all });
       toast(isEdit ? t("products.updateSuccess") : t("products.createSuccess"));
       onSuccess();
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : t("products.somethingWentWrong"), "error");
     },
   });
 
@@ -191,21 +175,21 @@ function ProductForm({
           <Label>{t("products.form.category")}</Label>
           <Select {...register("category_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
-            {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
           <Label>{t("products.form.brand")}</Label>
           <Select {...register("brand_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
-            {brands?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </Select>
         </div>
         <div>
           <Label>{t("products.form.unit")}</Label>
           <Select {...register("unit_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">{t("products.form.none")}</option>
-            {units?.data?.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
       </div>
@@ -269,7 +253,7 @@ function ProductForm({
               <Label>{t("products.form.warehouse")}</Label>
               <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
                 <option value="">{t("products.form.selectWarehouse")}</option>
-                {warehouses?.data?.map((w) => (
+                {warehouses.map((w) => (
                   <option key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</option>
                 ))}
               </Select>
@@ -292,39 +276,28 @@ export default function ProductsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const t = useTranslation();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
-  const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
-  const { data, isLoading } = useQuery<Paginated<Product>>({
-    queryKey: ["products", debouncedSearch, page],
-    queryFn: () =>
-      api<Paginated<Product>>(
-        `/products?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
-      ),
+  const list = useResourceList<Product>({
+    queryKey: queryKeys.products.lists(),
+    queryFn: (params) => api<Paginated<Product>>(`/products?${buildListQuery(params)}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/products/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: queryKeys.products.all });
       toast(t("products.deleteSuccess"));
       setDeleting(null);
-    },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : t("products.deleteFailed"), "error");
     },
   });
 
   const openCreate = () => { setEditing(null); setDrawerOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setDrawerOpen(true); };
   const closeDrawer = () => { setDrawerOpen(false); setEditing(null); };
-
-  const lastPage = data?.meta?.last_page ?? 1;
 
   const columns: DataTableColumn<Product>[] = [
     {
@@ -373,7 +346,7 @@ export default function ProductsPage() {
   ];
 
   function handleExport() {
-    const rows = (data?.data ?? []).map((p) => ({
+    const rows = list.data.map((p) => ({
       name: p.name,
       sku: p.sku ?? "",
       category: p.category?.name ?? "",
@@ -389,8 +362,8 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <ListToolbar
-        search={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
         searchPlaceholder={t("products.searchPlaceholder")}
         exportLabel={t("common.export")}
         onExport={handleExport}
@@ -409,13 +382,15 @@ export default function ProductsPage() {
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={list.data}
           rowKey={(p) => p.id}
-          loading={isLoading}
+          loading={list.isLoading}
+          error={list.isError ? list.error : undefined}
+          onRetry={() => list.refetch()}
           selectable
           selectedKeys={selected}
           onSelectionChange={setSelected}
-          emptyMessage={search ? t("products.emptySearch") : t("products.emptyNoProducts")}
+          emptyMessage={list.isFiltered ? t("products.emptySearch") : t("products.emptyNoProducts")}
           actions={(p) => (
             <>
               {can("products.update") && (
@@ -432,15 +407,15 @@ export default function ProductsPage() {
           )}
         />
 
-        {data?.meta && (
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={lastPage}
-            onPageChange={setPage}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
             label={t("products.paginationSummary", {
-              current: data.meta.current_page,
-              last: data.meta.last_page,
-              total: data.meta.total,
+              current: list.meta.current_page,
+              last: list.meta.last_page,
+              total: list.meta.total,
             })}
           />
         )}

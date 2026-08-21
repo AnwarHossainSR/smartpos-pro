@@ -98,9 +98,19 @@ export const queryKeys = {
   authSessions: ["auth-sessions"] as const,
   lockoutStatus: ["lockout-status"] as const,
   approvalPolicy: ["approval-policy"] as const,
-  emailTemplates: resource("email-templates"),
+  emailTemplates: {
+    ...resource("email-templates"),
+    /**
+     * The server-rendered preview of an *unsaved* draft, so the draft itself is the key.
+     * Feed it a debounced draft — keying on raw editor state fires a POST per keystroke.
+     */
+    preview: (params: { key: string; subject: string; body: string }) =>
+      ["email-templates", "preview", params] as const,
+  },
   team: resource("team"),
   roles: resource("roles"),
+  /** `GET /permissions` — the server's static permission catalog, not a paginated resource. */
+  permissionMatrix: ["permissions", "matrix"] as const,
   auditLogs: resource("audit-logs"),
 
   /**
@@ -136,7 +146,11 @@ export const queryKeys = {
 
   webhooks: resource("webhooks"),
   webhookDeliveries: resource("webhook-deliveries"),
+  printerProfiles: resource("printer-profiles"),
   labels: resource("labels"),
+
+  /** Server-declared upload limits behind every `MediaField`. Config, not data. */
+  mediaCollections: ["media-collections"] as const,
 
   /** Public/portal surfaces — a separate token, so a separate namespace. */
   portal: {

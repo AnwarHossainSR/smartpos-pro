@@ -11,7 +11,7 @@ import {
   unitLabel,
   type LabelProduct,
 } from "./label-templates";
-import { paginateLabels } from "./label-sheet";
+import { paginateLabels } from "./label-layout";
 
 function product(id: string, overrides: Partial<LabelProduct> = {}): LabelProduct {
   return { id, name: `Product ${id}`, sku: `SKU-${id}`, selling_price: 9.99, ...overrides };

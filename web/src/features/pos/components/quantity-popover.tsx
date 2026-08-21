@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { Numpad } from "@/components/ui/numpad";
+import { useIsTouchDevice } from "@/components/ui/use-is-touch-device";
 import { cn } from "@/lib/utils";
-import { Numpad, useIsTouchDevice } from "@/components/ui/numpad";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface QuantityPopoverProps {
   value: number;

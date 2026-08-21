@@ -6,7 +6,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage, type Envelope } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,9 +48,9 @@ export function WebhookList() {
 
   const canManage = can("settings.update");
 
-  const { data, isLoading } = useQuery<{ data: WebhookItem[] }>({
-    queryKey: queryKeys.webhooks.all,
-    queryFn: () => api<{ data: WebhookItem[] }>("/webhooks"),
+  const { data, isLoading, isError, refetch } = useQuery<Envelope<WebhookItem[]>>({
+    queryKey: queryKeys.webhooks.lists(),
+    queryFn: () => api<Envelope<WebhookItem[]>>("/webhooks"),
   });
 
   const createMutation = useMutation({
@@ -63,8 +63,7 @@ export function WebhookList() {
       setCreatedSecret(res.secret);
       setShowSecret(res.data.id);
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? e.message : t("webhooks.createFailed"), "error"),
+    onError: (e: unknown) => toast(errorMessage(e, t("webhooks.createFailed")), "error"),
   });
 
   const deleteMutation = useMutation({
@@ -74,8 +73,8 @@ export function WebhookList() {
       toast(t("webhooks.deleteSuccess"));
       setDeletingId(null);
     },
-    onError: (e: unknown) =>
-      toast(e instanceof ApiError ? e.message : t("webhooks.deleteFailed"), "error"),
+    // Also drops the confirm drawer, which would otherwise stay open over the failure.
+    onError: (e: unknown) => { setDeletingId(null); toast(errorMessage(e, t("webhooks.deleteFailed")), "error"); },
   });
 
   const copySecret = (secret: string) => {
@@ -173,14 +172,14 @@ export function WebhookList() {
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
         </div>
-      ) : webhooks.length === 0 ? (
-        <p className="text-sm text-[var(--muted)] py-4 text-center">{t("webhooks.empty")}</p>
       ) : (
         <DataTable
           columns={columns}
           data={webhooks}
           rowKey={(row) => row.id}
           emptyMessage={t("webhooks.empty")}
+          error={isError ? errorMessage(error) : undefined}
+          onRetry={() => refetch()}
           actions={(row) => <Actions row={row} />}
         />
       )}

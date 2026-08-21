@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/ui/logo";
 import { clearPortalToken, portalFetch, usePortalToken } from "@/lib/portal";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface PortalCustomer {
@@ -45,13 +46,13 @@ export default function PortalDashboardPage() {
   }, [token, navigate]);
 
   const { data: customer, isLoading: loadingCustomer } = useQuery({
-    queryKey: ["portal", "me"],
+    queryKey: queryKeys.portal.me(),
     queryFn: () => portalFetch<{ data: PortalCustomer }>("/portal/me").then((r) => r.data),
     enabled: ready,
   });
 
   const { data: invoices, isLoading: loadingInvoices } = useQuery({
-    queryKey: ["portal", "invoices"],
+    queryKey: queryKeys.portal.invoices(),
     queryFn: () => portalFetch<{ data: PortalInvoice[] }>("/portal/invoices").then((r) => r.data),
     enabled: ready,
   });

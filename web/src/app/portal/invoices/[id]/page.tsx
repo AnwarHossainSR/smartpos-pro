@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/ui/logo";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { toast } from "@/components/ui/toast";
 import { portalFetch, usePortalToken } from "@/lib/portal";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface InvoiceItem {
@@ -52,7 +52,7 @@ export default function PortalInvoiceDetailPage() {
   }, [token, navigate]);
 
   const { data: invoice, isLoading } = useQuery({
-    queryKey: ["portal", "invoice", id],
+    queryKey: queryKeys.portal.invoice(id),
     queryFn: () => portalFetch<{ data: InvoiceDetail }>(`/portal/invoices/${id}`).then((r) => r.data),
     enabled: ready,
   });
@@ -63,9 +63,6 @@ export default function PortalInvoiceDetailPage() {
     }),
     onSuccess: (res) => {
       window.location.href = `https://checkout.stripe.com/pay/${res.session_id}`;
-    },
-    onError: (err: Error) => {
-      toast(err.message, "error");
     },
   });
 

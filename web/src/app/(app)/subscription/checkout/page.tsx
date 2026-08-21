@@ -4,40 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
+import { usePlans } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
-
-interface PlanFeature {
-  key: string;
-  label: string;
-  value: string;
-  included: boolean;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  interval: string;
-  limits: Record<string, number | null>;
-  features: PlanFeature[];
-  is_active: boolean;
-}
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 function CheckoutContent() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get("plan");
 
-  const { data: plansData, isLoading: plansLoading } = useQuery<{ data: Plan[] }>({
-    queryKey: ["subscription-plans"],
-    queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
-  });
+  // Arriving from the plans grid, this is already cached — the page renders without a fetch.
+  const { plans, isLoading: plansLoading } = usePlans();
 
-  const plan = plansData?.data.find((p) => p.id === planId);
+  const plan = plans.find((p) => p.id === planId);
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
@@ -46,12 +29,10 @@ function CheckoutContent() {
         body: { plan_id: planId },
       }),
     onSuccess: () => {
+      // The plan banner on /subscription is stale the moment this succeeds.
+      qc.invalidateQueries({ queryKey: queryKeys.subscription.current() });
       toast("Subscription activated. Your plan is live.");
       navigate("/subscription");
-    },
-    onError: (error: Error) => {
-      const message = error instanceof ApiError ? error.message : "Something went wrong. Please try again.";
-      toast(message, "error");
     },
   });
 

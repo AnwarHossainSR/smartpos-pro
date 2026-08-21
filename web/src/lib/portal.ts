@@ -1,31 +1,31 @@
+import { API_URL, parseResponse } from "@/lib/api";
 import { useSyncExternalStore } from "react";
-import { API_URL } from "@/lib/api";
 
 const PORTAL_TOKEN_KEY = "portal_token";
 
 /**
  * The customer portal authenticates with its own magic-link token in localStorage — separate
- * from the staff bearer token in `src/stores/auth.ts`, and never sent to the staff API.
+ * from the staff bearer token in `src/stores/auth.ts`, and never sent to the staff API. That
+ * token, and sending an expired one back to `/portal` rather than logging the staff session
+ * out, is the *only* thing that differs from `api()`: the response itself is parsed by the
+ * shared `parseResponse()`, so the portal raises the same `ApiError` (with `.status` and
+ * field errors) that every other screen already knows how to render.
  */
-export function portalFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function portalFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = typeof window !== "undefined" ? localStorage.getItem(PORTAL_TOKEN_KEY) : null;
 
-  return fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       Accept: "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
-  }).then(async (res) => {
-    if (res.status === 401) {
-      window.location.href = "/portal";
-      throw new Error("Unauthorized");
-    }
-    const data = res.status === 204 ? null : await res.json().catch(() => null);
-    if (!res.ok) throw new Error((data as { message?: string } | null)?.message ?? "Request failed");
-    return data as T;
   });
+
+  if (res.status === 401) window.location.href = "/portal";
+
+  return (await parseResponse(res)) as T;
 }
 
 export function setPortalToken(token: string) {

@@ -1,33 +1,40 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { formatDateTime } from "@/lib/utils";
-import { notifTitle, notifBody, type NotificationResponse } from "@/lib/notifications";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
+import { notifBody, notifTitle, type NotificationResponse } from "@/lib/notifications";
+import { queryKeys } from "@/lib/query-keys";
+import { formatDateTime } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, CheckCheck } from "lucide-react";
+
+const LIST_PARAMS = { per_page: 50 };
 
 export default function NotificationsPage() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery<NotificationResponse>({
-    queryKey: ["notifications"],
-    queryFn: () => api<NotificationResponse>("/notifications?per_page=50"),
+    queryKey: queryKeys.notifications.list(LIST_PARAMS),
+    queryFn: () => api<NotificationResponse>(`/notifications?per_page=${LIST_PARAMS.per_page}`),
   });
+
+  // Invalidate the whole resource, not just this page: the header's unread badge is a
+  // separate entry under the same prefix and has to drop its count at the same moment.
+  const invalidateNotifications = () =>
+    qc.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
   const markAllMutation = useMutation({
     mutationFn: () => api("/notifications/read-all", { method: "POST" }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["notifications"] });
+      invalidateNotifications();
       toast("All notifications marked as read");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   const markOneMutation = useMutation({
     mutationFn: (id: string) => api(`/notifications/${id}/read`, { method: "POST" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+    onSuccess: invalidateNotifications,
   });
 
   const notifications = data?.data ?? [];

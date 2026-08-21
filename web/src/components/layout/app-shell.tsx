@@ -7,6 +7,7 @@ import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
+import { queryKeys } from "@/lib/query-keys";
 import { navKeyForPathname } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { RequirePermission } from "@/components/require-permission";
@@ -87,7 +88,7 @@ export function AppShell() {
   }
 
   const { data, error } = useQuery({
-    queryKey: ["me"],
+    queryKey: queryKeys.me,
     queryFn: () => api<{ data: AuthUser }>("/auth/me"),
     enabled: !!token,
     retry: (failureCount, err) => !isTenantSuspendedError(err) && failureCount < 3,

@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, UserMinus } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Trash2, UserMinus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 import { useTranslation } from "@/i18n/context";
@@ -51,8 +52,7 @@ function CustomerForm({ defaultValues, customerId, isEdit, onSuccess }: { defaul
   const mutation = useMutation({
     mutationFn: (data: FormValues) =>
       isEdit ? api(`/customers/${customerId}`, { method: "PUT", body: data }) : api("/customers", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast(isEdit ? "Customer updated" : "Customer created"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.customers.all }); toast(isEdit ? "Customer updated" : "Customer created"); onSuccess(); },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -87,66 +87,71 @@ export default function CustomersPage() {
   const { can } = useAuth();
   const t = useTranslation();
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState<Customer | null>(null);
   const [anonymizing, setAnonymizing] = useState<Customer | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<Customer>>({
-    queryKey: ["customers", debouncedSearch, page],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+  const list = useResourceList<Customer>({
+    queryKey: queryKeys.customers.lists(),
+    queryFn: (p) => api<Paginated<Customer>>(`/customers?${buildListQuery(p)}`),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/customers/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast("Customer deleted"); setDeleting(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.customers.all }); toast("Customer deleted"); setDeleting(null); },
   });
 
   const anonymizeMutation = useMutation({
     mutationFn: (id: string) => api(`/customers/${id}/anonymize`, { method: "POST" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["customers"] }); toast("Customer anonymized"); setAnonymizing(null); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.customers.all }); toast("Customer anonymized"); setAnonymizing(null); },
   });
+
+  const columns: DataTableColumn<Customer>[] = [
+    {
+      key: "name",
+      header: "Name",
+      className: "font-medium",
+      render: (c) => <>{c.name}{c.phone && <span className="block text-xs text-[var(--muted)]">{c.phone}</span>}</>,
+    },
+    { key: "phone", header: "Phone", render: (c) => c.phone ?? "—" },
+    { key: "group", header: "Group", render: (c) => (c.customer_group ? <Badge>{c.customer_group}</Badge> : "—") },
+    { key: "balance", header: "Balance", align: "right", render: (c) => formatCurrency(c.balance) },
+    { key: "points", header: "Points", align: "right", render: (c) => c.loyalty_points },
+    { key: "status", header: "Status", render: (c) => <Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge> },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        {can("customers.create") && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />Add customer</Button>}
-      </div>
-      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        addLabel={can("customers.create") ? "Add customer" : undefined}
+        onAdd={can("customers.create") ? () => { setEditing(null); setDrawerOpen(true); } : undefined}
+      />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Group</TableHead><TableHead className="text-end">Balance</TableHead><TableHead className="text-end">Points</TableHead><TableHead>Status</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-              : data?.data?.length === 0 ? <TableRow><TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">No customers yet.</TableCell></TableRow>
-              : data?.data?.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.name}{c.phone && <span className="block text-xs text-[var(--muted)]">{c.phone}</span>}</TableCell>
-                  <TableCell>{c.phone ?? "—"}</TableCell>
-                  <TableCell>{c.customer_group ? <Badge>{c.customer_group}</Badge> : "—"}</TableCell>
-                  <TableCell className="text-end">{formatCurrency(c.balance)}</TableCell>
-                  <TableCell className="text-end">{c.loyalty_points}</TableCell>
-                  <TableCell><Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {can("customers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(c); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
-                      {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(c)}><Trash2 className="h-3.5 w-3.5" /></Button>}
-                      {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-primary)]" onClick={() => setAnonymizing(c)}><UserMinus className="h-3.5 w-3.5" /></Button>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(c) => c.id}
+          loading={list.isLoading}
+          loadingRows={6}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No customers yet."
+          actions={(c) => (
+            <>
+              {can("customers.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(c); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(c)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+              {can("customers.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-primary)]" onClick={() => setAnonymizing(c)}><UserMinus className="h-3.5 w-3.5" /></Button>}
+            </>
+          )}
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>

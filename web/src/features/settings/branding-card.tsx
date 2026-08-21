@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { MediaField } from "@/components/ui/media-field";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, type Envelope } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import { useQuery } from "@tanstack/react-query";
 
@@ -78,9 +79,11 @@ export function BrandingCard() {
   const { can } = useAuth();
   const editable = can("settings.update");
 
-  const { data, isLoading, isError, refetch } = useQuery<{ data: { media: BusinessMedia } }>({
-    queryKey: ["business-settings"],
-    queryFn: () => api<{ data: { media: BusinessMedia } }>("/settings/business"),
+  // Same key and same endpoint as the settings page's own query, so mounting this card
+  // inside that page reads the cache instead of fetching `/settings/business` again.
+  const { data, isLoading, isError, refetch } = useQuery<Envelope<{ media: BusinessMedia }>>({
+    queryKey: queryKeys.businessSettings,
+    queryFn: () => api<Envelope<{ media: BusinessMedia }>>("/settings/business"),
   });
 
   return (
@@ -125,7 +128,7 @@ export function BrandingCard() {
                 aspect={s.aspect}
                 url={data.data.media?.[s.slot]?.url ?? null}
                 disabled={!editable}
-                invalidate={[["business-settings"], ["me"]]}
+                invalidate={[queryKeys.businessSettings, queryKeys.me]}
               />
             ))}
           </div>

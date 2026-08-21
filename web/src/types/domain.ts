@@ -50,6 +50,8 @@ export interface Role extends Named {
 export interface PlanFeature {
   key: string;
   label: string;
+  /** Quantified features carry their limit here ("5 branches"); flag features omit it. */
+  value?: string;
   included: boolean;
 }
 

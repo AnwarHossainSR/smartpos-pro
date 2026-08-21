@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Eye, RotateCcw, FileText, Download, Loader2, Mail } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
-import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, RotateCcw, FileText, Download, Loader2, Mail } from "lucide-react";
+import { api, apiBlob, errorMessage, type Envelope, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { downloadBlob, formatCurrency, formatDate, formatDateTime, openPdfBlob } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
 import { useAuth } from "@/stores/auth";
@@ -39,6 +40,13 @@ interface Sale {
   items?: SaleItem[];
   payments?: { method: string; amount: number }[];
 }
+
+const statusColor: Record<string, "success" | "warning" | "danger" | "info" | "default"> = {
+  completed: "success", held: "warning", draft: "default", quotation: "info",
+};
+const payColor: Record<string, "success" | "warning" | "danger" | "default"> = {
+  paid: "success", partial: "warning", unpaid: "danger",
+};
 
 /** Fetches the invoice PDF with `?download=1` and saves it to disk. `downloadingId` tracks a
  *  single row at a time so each button gets its own spinner without a per-row state map. */
@@ -71,10 +79,10 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
   const emailStatusLink = async () => {
     setEmailingLink(true);
     try {
-      const res = await api<{ data: { sent_to: string } }>(`/sales/${sale.id}/email-status-link`, { method: "POST" });
+      const res = await api<Envelope<{ sent_to: string }>>(`/sales/${sale.id}/email-status-link`, { method: "POST" });
       toast(t("orderStatus.linkSent", { email: res.data.sent_to }));
     } catch (e) {
-      toast(e instanceof ApiError ? e.message : t("orderStatus.linkFailed"), "error");
+      toast(errorMessage(e, t("orderStatus.linkFailed")), "error");
     } finally {
       setEmailingLink(false);
     }
@@ -89,13 +97,6 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
     } finally {
       setLoadingInvoice(false);
     }
-  };
-
-  const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
-    completed: "success", held: "warning", draft: "default", quotation: "info" as "default",
-  };
-  const payColor: Record<string, "success" | "warning" | "danger" | "default"> = {
-    paid: "success", partial: "warning", unpaid: "danger",
   };
 
   return (
@@ -185,13 +186,12 @@ function ReturnModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: queryKeys.sales.all });
       toast("Return processed");
       onClose();
     },
-    onError: (e: unknown) => {
-      toast(e instanceof ApiError ? e.message : "Return failed", "error");
-    },
+    // Kept for the domain-specific fallback wording; owning onError means owning the toast.
+    onError: (e) => toast(errorMessage(e, "Return failed"), "error"),
   });
 
   const hasItems = Object.values(quantities).some((q) => q > 0);
@@ -234,118 +234,82 @@ export default function SalesPage() {
   const { can } = useAuth();
   const t = useTranslation();
   const { downloadingId, downloadInvoice } = useInvoiceDownload();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
-  const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<Sale | null>(null);
   const [returning, setReturning] = useState<Sale | null>(null);
 
-  const { data, isLoading } = useQuery<Paginated<Sale>>({
-    queryKey: ["sales", debouncedSearch, page],
-    queryFn: () =>
-      api<Paginated<Sale>>(
-        `/sales?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`,
-      ),
+  const list = useResourceList<Sale>({
+    queryKey: queryKeys.sales.lists(),
+    queryFn: (p) => api<Paginated<Sale>>(`/sales?${buildListQuery(p)}`),
   });
 
-  const { data: saleDetail } = useQuery<{ data: Sale }>({
-    queryKey: ["sale-detail", detail?.id],
-    queryFn: () => api<{ data: Sale }>(`/sales/${detail?.id}`),
+  // The list projection omits items and payments, which the detail modal and the return
+  // flow both need — so the row click refetches the full record.
+  const { data: saleDetail } = useQuery({
+    queryKey: queryKeys.sales.detail(detail?.id),
+    queryFn: () => api<Envelope<Sale>>(`/sales/${detail?.id}`),
     enabled: !!detail?.id,
   });
 
-  const statusColor: Record<string, "success" | "warning" | "danger" | "default"> = {
-    completed: "success", held: "warning", draft: "default",
-  };
-  const payColor: Record<string, "success" | "warning" | "danger" | "default"> = {
-    paid: "success", partial: "warning", unpaid: "danger",
-  };
+  const columns: DataTableColumn<Sale>[] = [
+    {
+      key: "invoice",
+      header: "Invoice",
+      className: "font-mono text-xs font-medium",
+      render: (s) => s.invoice_number ?? <span className="text-[var(--muted)]">—</span>,
+    },
+    { key: "customer", header: "Customer", render: (s) => s.customer?.name ?? <span className="text-[var(--muted)]">Walk-in</span> },
+    { key: "date", header: "Date", className: "text-[var(--muted)]", render: (s) => formatDate(s.sold_at) },
+    { key: "total", header: "Total", align: "right", className: "font-medium", render: (s) => formatCurrency(s.total) },
+    { key: "status", header: "Status", render: (s) => <Badge tone={statusColor[s.status] ?? "default"}>{s.status}</Badge> },
+    { key: "payment", header: "Payment", render: (s) => <Badge tone={payColor[s.payment_status] ?? "default"}>{s.payment_status}</Badge> },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      </div>
-
-      <div className="relative">
-        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
-        <Input
-          className="ps-9"
-          placeholder="Search by invoice number…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-      </div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        searchPlaceholder="Search by invoice number…"
+      />
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-end">Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead className="w-24" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((__, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : data?.data?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-[var(--muted)]">
-                  No sales yet. Use the POS terminal to make a sale.
-                </TableCell>
-              </TableRow>
-            ) : (
-              data?.data?.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-mono text-xs font-medium">{s.invoice_number ?? <span className="text-[var(--muted)]">—</span>}</TableCell>
-                  <TableCell>{s.customer?.name ?? <span className="text-[var(--muted)]">Walk-in</span>}</TableCell>
-                  <TableCell className="text-[var(--muted)]">{formatDate(s.sold_at)}</TableCell>
-                  <TableCell className="text-end font-medium">{formatCurrency(s.total)}</TableCell>
-                  <TableCell><Badge tone={statusColor[s.status] ?? "default"}>{s.status}</Badge></TableCell>
-                  <TableCell><Badge tone={payColor[s.payment_status] ?? "default"}>{s.payment_status}</Badge></TableCell>
-                  <TableCell>
-                    {can("sales.view") && (
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(s)}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          title={t("actions.downloadInvoice")}
-                          aria-label={t("actions.downloadInvoice")}
-                          disabled={downloadingId === s.id}
-                          onClick={() => downloadInvoice(s)}
-                        >
-                          {downloadingId === s.id
-                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            : <FileText className="h-3.5 w-3.5" />}
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(s) => s.id}
+          loading={list.isLoading}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No sales yet. Use the POS terminal to make a sale."
+          actions={(s) =>
+            can("sales.view") && (
+              <>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(s)}>
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title={t("actions.downloadInvoice")}
+                  aria-label={t("actions.downloadInvoice")}
+                  disabled={downloadingId === s.id}
+                  onClick={() => downloadInvoice(s)}
+                >
+                  {downloadingId === s.id
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <FileText className="h-3.5 w-3.5" />}
+                </Button>
+              </>
+            )
+          }
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>

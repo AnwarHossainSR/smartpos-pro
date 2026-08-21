@@ -1,22 +1,8 @@
-import { type RouteObject, Navigate } from "react-router";
 import { AppShell } from "@/components/layout/app-shell";
 import { RouteMeta } from "@/components/route-meta";
-import type { RouteHandle } from "@/lib/seo";
-
-function RootRedirect() {
-  const hasToken = !!localStorage.getItem("smartpos-auth");
-  return <Navigate to={hasToken ? "/dashboard" : "/login"} replace />;
-}
-
-async function loadPage(factory: () => Promise<{ default: React.ComponentType }>) {
-  const { default: Component } = await factory();
-  return { Component };
-}
-
-/** Title + description for the document head. Everything behind auth is `noIndex`. */
-function seo(title: string, description: string, options?: { indexable?: boolean }): RouteHandle {
-  return { seo: { title, description, noIndex: !options?.indexable } };
-}
+import { loadPage, seo } from "@/routes/helpers";
+import { RootRedirect } from "@/routes/root-redirect";
+import { type RouteObject, Navigate } from "react-router";
 
 export const routes: RouteObject[] = [
   {

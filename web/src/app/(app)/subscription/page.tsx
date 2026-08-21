@@ -6,26 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
+import { usePlans } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-
-interface PlanFeature {
-  key: string;
-  label: string;
-  value: string;
-  included: boolean;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  interval: string;
-  limits: Record<string, number | null>;
-  features: PlanFeature[];
-  is_active: boolean;
-}
+import type { Plan } from "@/types/domain";
 
 interface Subscription {
   id: string;
@@ -76,19 +61,16 @@ export default function SubscriptionPage() {
   const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
 
-  const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery<{ data: Plan[] }>({
-    queryKey: ["subscription-plans"],
-    queryFn: () => api<{ data: Plan[] }>("/subscription/plans"),
-  });
+  // Shared with the checkout screen — one key, so navigating there doesn't refetch the plans.
+  const { plans: allPlans, isLoading: plansLoading, error: plansError } = usePlans();
 
   const { data: subData, isLoading: subLoading, error: subError } = useQuery<{ data: SubscriptionResponse }>({
-    queryKey: ["subscription"],
+    queryKey: queryKeys.subscription.current(),
     queryFn: () => api<{ data: SubscriptionResponse }>("/subscription"),
     retry: (failureCount, err) => !(err instanceof ApiError && err.status === 403) && failureCount < 3,
   });
 
   const sub = subData?.data.subscription;
-  const allPlans = plansData?.data ?? [];
   const paidPlans = allPlans.filter((p) => p.price > 0);
   const freePlan = allPlans.find((p) => p.price === 0);
   // `sub` is undefined while /subscription is still in flight, so gating on it alone

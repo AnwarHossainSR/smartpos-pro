@@ -48,16 +48,15 @@ function authHeader(): Record<string, string> {
 }
 
 /**
- * The one place a response is turned into either data or an ApiError. Every exported
- * helper below funnels through it, so 401 handling, 429 throttle toasts and the
- * `{ message, errors }` Laravel error envelope are handled identically for JSON
- * requests, uploads and blob downloads.
+ * Response → data or `ApiError`, with no session side effects.
+ *
+ * Split out of `handle()` so a caller that authenticates differently can reuse the exact
+ * same 429 toast and `{ message, errors }` Laravel envelope handling while owning its own
+ * 401 policy: the customer portal (`src/lib/portal.ts`) carries a magic-link token and
+ * redirects to `/portal` instead of logging the staff session out. It used to re-implement
+ * all of this and quietly lost `.status` and field-level `.errors` in the process.
  */
-async function handle(res: Response, path: string, expectBlob = false): Promise<unknown> {
-  if (res.status === 401 && !NO_LOGOUT_ON_401.some((p) => path.startsWith(p))) {
-    useAuth.getState().logout();
-  }
-
+export async function parseResponse(res: Response, expectBlob = false): Promise<unknown> {
   if (res.status === 429) {
     const retryAfter = res.headers.get("Retry-After");
     toast(
@@ -83,6 +82,19 @@ async function handle(res: Response, path: string, expectBlob = false): Promise<
   }
 
   return data;
+}
+
+/**
+ * The one place a staff-API response is turned into either data or an ApiError. Every
+ * exported helper below funnels through it, so an expired session logs out identically for
+ * JSON requests, uploads and blob downloads.
+ */
+async function handle(res: Response, path: string, expectBlob = false): Promise<unknown> {
+  if (res.status === 401 && !NO_LOGOUT_ON_401.some((p) => path.startsWith(p))) {
+    useAuth.getState().logout();
+  }
+
+  return parseResponse(res, expectBlob);
 }
 
 /** Thin fetch wrapper: injects the bearer token, JSON-encodes, and normalises errors. */

@@ -1,6 +1,7 @@
-/** The actual recharts implementation — kept in its own module so the page can load it via
- *  `next/dynamic(..., { ssr: false })`. recharts is the heaviest dependency in this app;
- *  nothing above this file imports it, so pages that never render a chart don't pay for it. */
+/** The actual recharts implementation — kept in its own module so the page can pull it in with
+ *  a dynamic `import()`, which Vite splits into its own chunk. recharts is the heaviest
+ *  dependency in this app; nothing above this file imports it statically, so pages that never
+ *  render a chart don't pay for it. */
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import type { TaxReportComponent } from "@/features/tax/types";

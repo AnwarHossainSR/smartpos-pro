@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/i18n/config";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
+import { api, type Envelope } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
@@ -132,8 +133,7 @@ function PreferencesCard({
 
   const save = useMutation({
     mutationFn: (body: Record<string, unknown>) => api("/settings/business", { method: "PUT", body }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["business-settings"] }),
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.businessSettings }),
   });
 
   return (
@@ -240,9 +240,11 @@ export default function SettingsPage() {
   const qc = useQueryClient();
   const t = useTranslation();
 
-  const { data, isLoading } = useQuery<{ data: BusinessSettings }>({
-    queryKey: ["business-settings"],
-    queryFn: () => api<{ data: BusinessSettings }>("/settings/business"),
+  // One key for the whole `/settings/business` document: this form, the preferences
+  // card's toggles and <BrandingCard>'s media slots all read the same fetch.
+  const { data, isLoading } = useQuery<Envelope<BusinessSettings>>({
+    queryKey: queryKeys.businessSettings,
+    queryFn: () => api<Envelope<BusinessSettings>>("/settings/business"),
   });
 
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormValues>({
@@ -263,8 +265,7 @@ export default function SettingsPage() {
 
   const mutation = useMutation({
     mutationFn: (d: FormValues) => api("/settings/business", { method: "PUT", body: d }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["business-settings"] }); toast(t("settings.saved")); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.businessSettings }); toast(t("settings.saved")); },
   });
 
   if (isLoading) {

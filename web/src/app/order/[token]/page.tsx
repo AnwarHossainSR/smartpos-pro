@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/i18n/context";
 import { api, ApiError } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -35,7 +36,7 @@ export default function OrderStatusPage() {
   const t = useTranslation();
 
   const { data, isPending, error } = useQuery({
-    queryKey: ["order-status", token],
+    queryKey: queryKeys.orderStatus(token),
     queryFn: () => api<{ data: OrderStatus }>(`/orders/${token}`),
     retry: false,
   });

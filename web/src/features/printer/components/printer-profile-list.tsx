@@ -6,8 +6,9 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage, type Envelope } from "@/lib/api";
 import { connectUsbPrinter, getConnectedPrinter, isWebUsbAvailable } from "@/lib/escpos-printer";
+import { queryKeys } from "@/lib/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Printer, Plus, Pencil, Trash2, Usb, Wifi, Cable } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -31,19 +32,20 @@ export function PrinterProfileList() {
   const [deleting, setDeleting] = useState<PrinterProfile | null>(null);
   const [testing, setTesting] = useState(false);
 
-  const { data, isLoading } = useQuery<{ data: PrinterProfile[] }>({
-    queryKey: ["printer-profiles"],
-    queryFn: () => api<{ data: PrinterProfile[] }>("/printer-profiles"),
+  const { data, isLoading, isError, refetch } = useQuery<Envelope<PrinterProfile[]>>({
+    queryKey: queryKeys.printerProfiles.lists(),
+    queryFn: () => api<Envelope<PrinterProfile[]>>("/printer-profiles"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/printer-profiles/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
+      qc.invalidateQueries({ queryKey: queryKeys.printerProfiles.all });
       toast(t("common.delete") + "d");
       setDeleting(null);
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    // Leaves the confirm dialog open on failure otherwise.
+    onError: (e: unknown) => { setDeleting(null); toast(errorMessage(e), "error"); },
   });
 
   const handleTestPrint = useCallback(async () => {
@@ -88,6 +90,13 @@ export function PrinterProfileList() {
         <div className="space-y-2">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
+        </div>
+      ) : isError ? (
+        <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-danger)]">Could not load your printers.</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => refetch()}>
+            Try again
+          </Button>
         </div>
       ) : profiles.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center">
@@ -180,12 +189,11 @@ function PrinterProfileForm({
         ? api(`/printer-profiles/${profile.id}`, { method: "PUT", body: d })
         : api("/printer-profiles", { method: "POST", body: d }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["printer-profiles"] });
+      qc.invalidateQueries({ queryKey: queryKeys.printerProfiles.all });
       toast(profile ? t("common.save") + "d" : t("common.add") + "d");
       reset();
       onClose();
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
   });
 
   return (

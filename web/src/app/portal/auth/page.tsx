@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { setPortalToken } from "@/lib/portal";
 
 export default function PortalAuthPage() {
@@ -25,7 +25,7 @@ export default function PortalAuthPage() {
       })
       .catch((err: unknown) => {
         if (!active) return;
-        setVerifyError(err instanceof ApiError ? err.message : "Invalid or expired link.");
+        setVerifyError(errorMessage(err, "Invalid or expired link."));
         setVerifying(false);
       });
 

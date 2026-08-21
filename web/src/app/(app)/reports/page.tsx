@@ -5,7 +5,8 @@ import {
   Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { Download, Percent, Clock } from "lucide-react";
-import { api, apiBlob, type Paginated } from "@/lib/api";
+import { api, apiBlob } from "@/lib/api";
+import { useBranches } from "@/lib/lookups";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -19,8 +20,6 @@ import { useAuth } from "@/stores/auth";
 import { queryKeys } from "@/lib/query-keys";
 
 type ReportType = "sales-summary" | "sales-by-product" | "profit" | "inventory-valuation" | "low-stock" | "dues" | "z-report" | "shifts" | "profit-loss" | "balance-sheet";
-
-interface Branch { id: string; name: string; }
 
 interface ZReportData {
   date: string;
@@ -66,8 +65,12 @@ export default function ReportsPage() {
 
   const params = report === "balance-sheet" ? `?as_of=${asOf}` : `?from=${from}&to=${to}`;
 
+  // `/reports/shifts` is also rendered by the Team screen, so it keeps the shared shifts key;
+  // everything else is one parameterised report endpoint under a single `reports.run` key.
   const { data, isLoading } = useQuery({
-    queryKey: report === "shifts" ? queryKeys.shifts.report({ from, to }) : ["report", report, from, to, asOf],
+    queryKey: report === "shifts"
+      ? queryKeys.shifts.report({ from, to })
+      : queryKeys.reports.run({ report, from, to, asOf }),
     queryFn: () => report === "shifts"
       ? api<{ data: unknown }>(`/reports/shifts?from=${from}&to=${to}&group_by=day`)
       : api<{ data: unknown }>(`/reports/${report}${params}`),
@@ -139,15 +142,11 @@ export default function ReportsPage() {
 function ZReportTab({ date, branchId, setBranchId }: { date: string; branchId: string; setBranchId: (v: string) => void }) {
   const t = useTranslation();
   const { data, isLoading } = useQuery({
-    queryKey: ["z-report", date, branchId],
+    queryKey: queryKeys.reports.zReport({ date, branch_id: branchId || null }),
     queryFn: () => api<{ data: ZReportData }>(`/reports/z-report?date=${date}${branchId ? `&branch_id=${branchId}` : ""}`),
   });
 
-  const { data: branches } = useQuery({
-    queryKey: ["branches-all"],
-    queryFn: () => api<Paginated<Branch>>("/branches?per_page=200"),
-    retry: false,
-  });
+  const { branches } = useBranches();
 
   const report = data?.data;
 
@@ -181,7 +180,7 @@ function ZReportTab({ date, branchId, setBranchId }: { date: string; branchId: s
         <Label className="mb-0">{t("reports.branch")}</Label>
         <Select className="h-9 w-48" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
           <option value="">{t("reports.allBranches")}</option>
-          {branches?.data?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </Select>
         <div className="ml-auto">
           <Button size="sm" variant="outline" onClick={handleDownloadPdf}>

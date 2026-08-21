@@ -1,25 +1,25 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency } from "@/lib/utils";
+import type { Named } from "@/types/domain";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
-interface ExpenseCategory { id: string; name: string; }
 interface Expense {
   id: string;
   reference: string;
@@ -28,7 +28,7 @@ interface Expense {
   status: string;
   note: string | null;
   spent_at: string;
-  category: { id: string; name: string } | null;
+  category: Named | null;
 }
 
 const schema = z.object({
@@ -42,15 +42,20 @@ type FormValues = z.infer<typeof schema>;
 
 function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
-  const { data: cats } = useQuery({ queryKey: ["expense-categories"], queryFn: () => api<{ data: ExpenseCategory[] }>("/expense-categories?per_page=100") });
+  // Category list only fills a picker — cached apart from any paginated expense-category
+  // list and kept fresh for a long while, since categories barely change during a session.
+  const { data: cats } = useQuery({
+    queryKey: queryKeys.expenseCategories.options(),
+    queryFn: () => api<Paginated<Named>>("/expense-categories?per_page=100"),
+    staleTime: 5 * 60_000,
+  });
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { payment_method: "cash", spent_at: new Date().toISOString().slice(0, 10) },
   });
   const mutation = useMutation({
     mutationFn: (data: FormValues) => api("/expenses", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["expenses"] }); toast("Expense added"); onSuccess(); },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Error", "error"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.expenses.all }); toast("Expense added"); onSuccess(); },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -90,49 +95,53 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+const payColor: Record<string, "success" | "warning" | "danger" | "default"> = {
+  approved: "success", pending: "warning", rejected: "danger",
+};
+
 export default function ExpensesPage() {
   const { can } = useAuth();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search); const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { data, isLoading } = useQuery<Paginated<Expense>>({
-    queryKey: ["expenses", debouncedSearch, page],
-    queryFn: () => api<Paginated<Expense>>(`/expenses?search=${encodeURIComponent(debouncedSearch)}&page=${page}&per_page=20`),
+  const list = useResourceList<Expense>({
+    queryKey: queryKeys.expenses.lists(),
+    queryFn: (p) => api<Paginated<Expense>>(`/expenses?${buildListQuery(p)}`),
   });
 
-  const payColor: Record<string, "success" | "warning" | "default"> = { approved: "success", pending: "warning", rejected: "danger" as "default" };
+  const columns: DataTableColumn<Expense>[] = [
+    { key: "reference", header: "Reference", className: "font-mono text-xs", render: (e) => e.reference },
+    { key: "category", header: "Category", render: (e) => e.category?.name ?? "—" },
+    { key: "date", header: "Date", render: (e) => e.spent_at },
+    { key: "method", header: "Method", className: "capitalize", render: (e) => e.payment_method.replace("_", " ") },
+    { key: "amount", header: "Amount", align: "right", className: "font-medium", render: (e) => formatCurrency(e.amount) },
+    { key: "status", header: "Status", render: (e) => <Badge tone={payColor[e.status] ?? "default"}>{e.status}</Badge> },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        {can("expenses.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}><Plus className="h-4 w-4" />Add expense</Button>}
-      </div>
-      <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
+      <ListToolbar
+        search={list.searchInput}
+        onSearchChange={list.setSearch}
+        addLabel={can("expenses.create") ? "Add expense" : undefined}
+        onAdd={can("expenses.create") ? () => setDrawerOpen(true) : undefined}
+      />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead className="text-end">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 6 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-              : data?.data?.length === 0 ? <TableRow><TableCell colSpan={6} className="py-12 text-center text-[var(--muted)]">No expenses yet.</TableCell></TableRow>
-              : data?.data?.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-mono text-xs">{e.reference}</TableCell>
-                  <TableCell>{e.category?.name ?? "—"}</TableCell>
-                  <TableCell>{e.spent_at}</TableCell>
-                  <TableCell className="capitalize">{e.payment_method.replace("_", " ")}</TableCell>
-                  <TableCell className="text-end font-medium">{formatCurrency(e.amount)}</TableCell>
-                  <TableCell><Badge tone={payColor[e.status] ?? "default"}>{e.status}</Badge></TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {data?.meta && (
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(e) => e.id}
+          loading={list.isLoading}
+          loadingRows={6}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No expenses yet."
+        />
+        {list.meta && (
           <Pagination
-            page={page}
-            lastPage={data.meta.last_page}
-            onPageChange={setPage}
-            label={`Page ${data.meta.current_page} of ${data.meta.last_page}`}
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
           />
         )}
       </div>
