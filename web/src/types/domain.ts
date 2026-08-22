@@ -74,16 +74,41 @@ export interface Tenant extends Named {
 }
 
 export interface TenantDetail extends Tenant {
+  plan?: string;
+  base_currency?: string;
+  trial_ends_at?: string;
+  updated_at: string;
+  businesses?: { id: string; name: string; currency: string }[];
+  users?: {
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+    roles: string[];
+    created_at: string;
+  }[];
+  categories_count: number;
+  products_count: number;
+  branches_count: number;
+  warehouses_count: number;
+  total_sales: number;
+  total_revenue: number;
+  recent_sales: {
+    id: string;
+    total: number;
+    payment_status: string;
+    status: string;
+    business_name: string;
+    created_at: string;
+  }[];
   subscription: {
     id: string;
     status: string;
-    plan: { id: string; name: string; slug: string; price: number } | null;
+    trial_ends_at: string | null;
+    current_period_ends_at: string | null;
     created_at: string;
+    plan: { id: string; name: string; slug: string; price: number; interval: string } | null;
   } | null;
-  usage: {
-    sales_count: number;
-    users_count: number;
-  };
 }
 
 export interface PlanDistribution {

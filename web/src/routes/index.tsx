@@ -280,6 +280,12 @@ export const routes: RouteObject[] = [
         ],
       },
 
+      {
+        path: "/impersonate",
+        lazy: () => loadPage(() => import("@/app/(auth)/impersonate/page")),
+        handle: seo("Impersonating…", "Signing you in to the tenant account."),
+      },
+
       // Portal routes
       {
         path: "/portal",

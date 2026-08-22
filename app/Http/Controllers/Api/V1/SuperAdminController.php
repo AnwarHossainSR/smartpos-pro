@@ -8,11 +8,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
+use App\Models\Branch;
+use App\Models\Category;
 use App\Models\Impersonation;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\Audit\AuditLogService;
 use App\Services\SuperAdmin\ImpersonationService;
 use App\Support\Query\AllowedFilter;
@@ -110,17 +114,95 @@ class SuperAdminController extends Controller
             'businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
         ]);
 
-        $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
+        $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
 
-        $usage = [
-            'sales_count' => Sale::withoutTenancy()->where('tenant_id', $tenant->id)->count(),
+        $users = User::withoutTenancy()->where('tenant_id', $tenant->id)
+            ->with(['roles' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)])
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'status' => $u->status?->value ?? $u->status,
+                'roles' => $u->roles->pluck('name'),
+                'created_at' => $u->created_at,
+            ]);
+
+        $businessIds = $tenant->businesses->pluck('id');
+
+        $categoriesCount = Category::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+
+        $productsCount = Product::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+
+        $branchesCount = Branch::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+
+        $warehousesCount = Warehouse::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+
+        $recentSales = Sale::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->with(['business' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)])
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'total' => $s->total,
+                'payment_status' => $s->payment_status,
+                'status' => $s->status,
+                'business_name' => $s->business?->name,
+                'created_at' => $s->created_at,
+            ]);
+
+        $subscription = Subscription::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->with('plan')
+            ->latest()
+            ->first();
+
+        $totalSales = Sale::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->count();
+
+        $totalRevenue = Sale::withoutTenancy()
+            ->where('tenant_id', $tenant->id)
+            ->where('payment_status', 'paid')
+            ->sum('total');
+
+        return $this->success([
+            'id' => $tenant->id,
+            'name' => $tenant->name,
+            'slug' => $tenant->slug,
+            'status' => $tenant->status,
+            'plan' => $tenant->plan,
+            'base_currency' => $tenant->base_currency,
+            'trial_ends_at' => $tenant->trial_ends_at,
+            'created_at' => $tenant->created_at,
+            'updated_at' => $tenant->updated_at,
             'users_count' => $tenant->users_count,
-        ];
-
-        return $this->success(array_merge($tenant->toArray(), [
+            'businesses_count' => $tenant->businesses_count,
+            'businesses' => $tenant->businesses->map(fn ($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'currency' => $b->currency,
+            ]),
+            'users' => $users,
+            'categories_count' => $categoriesCount,
+            'products_count' => $productsCount,
+            'branches_count' => $branchesCount,
+            'warehouses_count' => $warehousesCount,
+            'total_sales' => $totalSales,
+            'total_revenue' => (float) $totalRevenue,
+            'recent_sales' => $recentSales,
             'subscription' => $subscription,
-            'usage' => $usage,
-        ]));
+        ]);
     }
 
     public function suspendTenant(Request $request, Tenant $tenant): JsonResponse
@@ -285,7 +367,11 @@ class SuperAdminController extends Controller
     public function activeImpersonations(): JsonResponse
     {
         $records = Impersonation::whereNull('ended_at')
-            ->with(['tenant:id,name', 'superAdmin:id,name,email', 'targetUser:id,name,email'])
+            ->with([
+                'tenant:id,name',
+                'superAdmin' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+                'targetUser' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+            ])
             ->latest('started_at')
             ->get();
 

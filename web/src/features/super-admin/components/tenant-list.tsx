@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Eye, Ban, Play, Trash2, LogIn } from "lucide-react";
-import { superAdminApi } from "../api";
 import { useTenants, useTenantMutations } from "../hooks";
-import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
-import { Drawer } from "@/components/ui/drawer";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { TenantDetailModal } from "./tenant-detail-modal";
 import type { Tenant } from "../types";
 
 export function TenantList() {
@@ -24,13 +21,6 @@ export function TenantList() {
 
   const list = useTenants();
   const mutations = useTenantMutations();
-
-  const detailQuery = useQuery({
-    queryKey: queryKeys.superAdmin.tenantDetail(viewing?.id),
-    queryFn: () => superAdminApi.tenants.detail(viewing!.id),
-    enabled: !!viewing,
-  });
-  const detail = detailQuery.data?.data;
 
   const columns: DataTableColumn<Tenant>[] = [
     {
@@ -79,7 +69,8 @@ export function TenantList() {
       {
         onSuccess: (res) => {
           const data = res.data;
-          window.open(data.token, "_blank");
+          const appBase = window.location.origin;
+          window.open(`${appBase}/impersonate?token=${encodeURIComponent(data.token)}`, "_blank");
           setImpersonating(null);
           setReason("");
         },
@@ -181,47 +172,10 @@ export function TenantList() {
         )}
       </div>
 
-      <Drawer
-        open={!!viewing}
+      <TenantDetailModal
+        tenantId={viewing?.id ?? null}
         onClose={() => setViewing(null)}
-        title={viewing?.name ?? ""}
-      >
-        {detailQuery.isLoading ? (
-          <p className="text-sm text-[var(--muted)]">Loading…</p>
-        ) : detail ? (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Status</h3>
-              <Badge tone={detail.status === "active" ? "success" : "danger"}>
-                {detail.status}
-              </Badge>
-            </div>
-            {detail.subscription && (
-              <div>
-                <h3 className="text-sm font-medium text-[var(--muted)]">Subscription</h3>
-                <p className="text-sm">
-                  {detail.subscription.plan?.name ?? "No plan"} —{" "}
-                  {detail.subscription.status}
-                </p>
-              </div>
-            )}
-            <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Usage</h3>
-              <p className="text-sm">
-                {detail.usage.sales_count} sales, {detail.usage.users_count} users
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Created</h3>
-              <p className="text-sm">
-                {new Date(detail.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--muted)]">No data available.</p>
-        )}
-      </Drawer>
+      />
 
       <Dialog
         open={!!deleting}
