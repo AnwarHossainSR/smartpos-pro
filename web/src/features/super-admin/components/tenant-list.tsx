@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Eye, Ban, Play, Trash2, LogIn } from "lucide-react";
-import { superAdminApi } from "../api";
 import { useTenants, useTenantMutations } from "../hooks";
-import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
-import { Drawer } from "@/components/ui/drawer";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { TenantDetailModal } from "./tenant-detail-modal";
 import type { Tenant } from "../types";
 
 export function TenantList() {
@@ -24,13 +21,6 @@ export function TenantList() {
 
   const list = useTenants();
   const mutations = useTenantMutations();
-
-  const detailQuery = useQuery({
-    queryKey: queryKeys.superAdmin.tenantDetail(viewing?.id),
-    queryFn: () => superAdminApi.tenants.detail(viewing!.id),
-    enabled: !!viewing,
-  });
-  const detail = detailQuery.data?.data;
 
   const columns: DataTableColumn<Tenant>[] = [
     {
@@ -181,122 +171,10 @@ export function TenantList() {
         )}
       </div>
 
-      <Drawer
-        open={!!viewing}
+      <TenantDetailModal
+        tenantId={viewing?.id ?? null}
         onClose={() => setViewing(null)}
-        title={viewing?.name ?? ""}
-      >
-        {detailQuery.isLoading ? (
-          <div className="space-y-3">
-            <div className="h-4 w-24 animate-pulse rounded bg-[var(--muted)]/20" />
-            <div className="h-4 w-32 animate-pulse rounded bg-[var(--muted)]/20" />
-            <div className="h-4 w-20 animate-pulse rounded bg-[var(--muted)]/20" />
-          </div>
-        ) : detail ? (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Badge tone={detail.status === "active" ? "success" : "danger"}>
-                {detail.status}
-              </Badge>
-              <span className="text-xs text-[var(--muted)]">
-                ID: {detail.id}
-              </span>
-            </div>
-
-            <div>
-              <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                Slug
-              </h3>
-              <p className="font-mono text-sm">{detail.slug}</p>
-            </div>
-
-            {detail.businesses && detail.businesses.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                  Businesses ({detail.businesses.length})
-                </h3>
-                <div className="space-y-2">
-                  {detail.businesses.map((b) => (
-                    <div
-                      key={b.id}
-                      className="rounded-[var(--radius)] border border-[var(--border)] p-3"
-                    >
-                      <p className="text-sm font-medium">{b.name}</p>
-                      <p className="text-xs text-[var(--muted)]">
-                        Currency: {b.currency}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {detail.subscription && (
-              <div>
-                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                  Subscription
-                </h3>
-                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
-                      {detail.subscription.plan?.name ?? "No plan"}
-                    </p>
-                    <Badge
-                      tone={
-                        detail.subscription.status === "active"
-                          ? "success"
-                          : "danger"
-                      }
-                    >
-                      {detail.subscription.status}
-                    </Badge>
-                  </div>
-                  {detail.subscription.plan && (
-                    <p className="mt-1 text-xs text-[var(--muted)]">
-                      ${detail.subscription.plan.price}/mo
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                Usage
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3 text-center">
-                  <p className="text-lg font-semibold">
-                    {detail.usage.sales_count}
-                  </p>
-                  <p className="text-xs text-[var(--muted)]">Sales</p>
-                </div>
-                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3 text-center">
-                  <p className="text-lg font-semibold">
-                    {detail.usage.users_count}
-                  </p>
-                  <p className="text-xs text-[var(--muted)]">Users</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                Created
-              </h3>
-              <p className="text-sm">
-                {new Date(detail.created_at).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--muted)]">No data available.</p>
-        )}
-      </Drawer>
+      />
 
       <Dialog
         open={!!deleting}
