@@ -8,6 +8,7 @@ use App\Notifications\VerifyEmail;
 use App\Support\Concerns\Auditable;
 use App\Support\Concerns\BelongsToTenant;
 use App\Support\Rbac\PermissionCatalog;
+use App\Support\Scopes\TenantScope;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -80,7 +81,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
      */
     public function roles(): BelongsToMany
     {
-        return $this->spatieRoles()->withPivot('branch_id');
+        return $this->spatieRoles()->withoutGlobalScope(TenantScope::class)->withPivot('branch_id');
     }
 
     /**

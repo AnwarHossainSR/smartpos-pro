@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, LogOut } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
@@ -61,6 +61,31 @@ function ProfileUnavailableScreen() {
           Log out
         </Button>
       </div>
+    </div>
+  );
+}
+
+function ImpersonationBanner() {
+  const stopImpersonation = useAuth((s) => s.stopImpersonation);
+  const user = useAuth((s) => s.user);
+
+  // Only show when the impersonate cookie is active (i.e. this tab is impersonating)
+  if (typeof document === "undefined") return null;
+  const hasImpersonateCookie = document.cookie.includes("smartpos_impersonate_token=");
+  if (!hasImpersonateCookie) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-purple-500/30 bg-purple-500/10 px-4 py-2 text-sm text-purple-700 dark:text-purple-300 md:px-6">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="h-4 w-4 shrink-0" />
+        <span>
+          Impersonating <strong>{user?.name ?? "a user"}</strong> ({user?.email})
+        </span>
+      </div>
+      <Button variant="ghost" size="sm" onClick={stopImpersonation}>
+        <LogOut className="mr-1.5 h-3.5 w-3.5" />
+        Stop impersonation
+      </Button>
     </div>
   );
 }
@@ -131,6 +156,7 @@ export function AppShell() {
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
           <VerifyEmailBanner />
+          <ImpersonationBanner />
           <main key={`${locale}:${currency}`} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
             <RequirePermission any={permissionsForPathname(pathname)}>
               <Outlet />

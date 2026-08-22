@@ -367,7 +367,11 @@ class SuperAdminController extends Controller
     public function activeImpersonations(): JsonResponse
     {
         $records = Impersonation::whereNull('ended_at')
-            ->with(['tenant:id,name', 'superAdmin:id,name,email', 'targetUser:id,name,email'])
+            ->with([
+                'tenant:id,name',
+                'superAdmin' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+                'targetUser' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+            ])
             ->latest('started_at')
             ->get();
 

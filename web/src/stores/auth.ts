@@ -26,9 +26,13 @@ interface AuthState {
   /** False until the token cookie has been read into memory. */
   hydrated: boolean;
   setAuth: (token: string, user: AuthUser) => void;
+  /** Store an impersonation token in a separate cookie, preserving the original session. */
+  setImpersonateAuth: (token: string, user: AuthUser) => void;
   setUser: (user: AuthUser) => void;
   setHydrated: () => void;
   logout: () => void;
+  /** Clear the impersonate cookie and reload — the original token cookie is still intact. */
+  stopImpersonation: () => void;
   can: (permission: PermissionSlug) => boolean;
   /** True when the user holds at least one of `permissions`; `[]` means "no grant required". */
   canAny: (permissions: readonly PermissionSlug[]) => boolean;
@@ -64,6 +68,7 @@ export function hasPermission(user: AuthUser | null, permission: string): boolea
 }
 
 const TOKEN_COOKIE = "smartpos_token";
+const IMPERSONATE_COOKIE = "smartpos_impersonate_token";
 const TOKEN_COOKIE_MAX_AGE = 60 * 60 * 24 * 14; // 14 days — matches config/sanctum.php default
 
 /**
@@ -73,9 +78,18 @@ const TOKEN_COOKIE_MAX_AGE = 60 * 60 * 24 * 14; // 14 days — matches config/sa
  * isn't httpOnly (the SPA has to read it back into memory itself, and it's on a
  * different origin than the API so the browser never attaches it to API requests
  * automatically), but Secure + SameSite=Strict still block it being sent cross-site.
+ *
+ * Impersonation uses a *separate* cookie (`smartpos_impersonate_token`) so the super
+ * admin's original session is never overwritten.  `readTokenCookie` prefers the
+ * impersonate cookie when present — an impersonated tab should use the impersonation
+ * token, while the super-admin tab (which never writes the impersonate cookie) keeps
+ * using its own token.
  */
 function readTokenCookie(): string | null {
   if (typeof document === "undefined") return null;
+  // Prefer impersonation token when present (only set in impersonated tabs)
+  const impersonateMatch = document.cookie.match(new RegExp(`(?:^|; )${IMPERSONATE_COOKIE}=([^;]*)`));
+  if (impersonateMatch) return decodeURIComponent(impersonateMatch[1]);
   const match = document.cookie.match(new RegExp(`(?:^|; )${TOKEN_COOKIE}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
@@ -90,6 +104,16 @@ function writeTokenCookie(token: string | null) {
   }
 }
 
+function writeImpersonateCookie(token: string | null) {
+  if (typeof document === "undefined") return;
+  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+  if (token) {
+    document.cookie = `${IMPERSONATE_COOKIE}=${encodeURIComponent(token)}; Path=/; SameSite=Strict; Max-Age=${TOKEN_COOKIE_MAX_AGE}${secure}`;
+  } else {
+    document.cookie = `${IMPERSONATE_COOKIE}=; Path=/; SameSite=Strict; Max-Age=0${secure}`;
+  }
+}
+
 export const useAuth = create<AuthState>()((set, get): AuthState => ({
   token: null,
   user: null,
@@ -98,11 +122,22 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
     writeTokenCookie(token);
     set({ token, user });
   },
+  setImpersonateAuth: (token, user) => {
+    writeImpersonateCookie(token);
+    set({ token, user });
+  },
   setUser: (user) => set({ user }),
   setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
   logout: () => {
     writeTokenCookie(null);
+    writeImpersonateCookie(null);
     set({ token: null, user: null });
+  },
+  stopImpersonation: () => {
+    writeImpersonateCookie(null);
+    // The original super-admin token in `smartpos_token` is still intact.
+    // Reload so the store re-hydrates from the original cookie.
+    window.location.reload();
   },
   can: (permission) => hasPermission(get().user, permission),
   canAny: (permissions) =>

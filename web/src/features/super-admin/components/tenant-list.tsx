@@ -69,7 +69,8 @@ export function TenantList() {
       {
         onSuccess: (res) => {
           const data = res.data;
-          window.open(data.token, "_blank");
+          const appBase = window.location.origin;
+          window.open(`${appBase}/impersonate?token=${encodeURIComponent(data.token)}`, "_blank");
           setImpersonating(null);
           setReason("");
         },
