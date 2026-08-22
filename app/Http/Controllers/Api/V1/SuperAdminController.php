@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
+use App\Models\Business;
 use App\Models\Impersonation;
 use App\Models\Sale;
 use App\Models\Subscription;
@@ -42,7 +43,7 @@ class SuperAdminController extends Controller
 
     public function tenants(Request $request): JsonResponse
     {
-        $tenants = QueryPipeline::for(Tenant::withCount(['users', 'businesses']), $request)
+        $tenants = QueryPipeline::for(Tenant::withoutTenancy()->withCount(['users', 'businesses']), $request)
             ->search(['name', 'slug'])
             ->allow(AllowedFilter::enum('status', TenantStatus::class))
             ->sortable(['id', 'name', 'created_at'], default: '-id')
@@ -53,7 +54,10 @@ class SuperAdminController extends Controller
 
     public function indexTenants(Request $request): AnonymousResourceCollection
     {
-        $tenants = QueryPipeline::for(Tenant::withCount('users')->with('businesses'), $request)
+        $tenants = QueryPipeline::for(
+            Tenant::withoutTenancy()->withCount('users')->with('businesses'),
+            $request,
+        )
             ->search(['name', 'slug'])
             ->sortable(['name', 'created_at'], default: 'name')
             ->paginate();
@@ -65,7 +69,7 @@ class SuperAdminController extends Controller
     {
         return response()->json(['data' => [
             'total_tenants' => Tenant::count(),
-            'total_users' => User::count(),
+            'total_users' => User::withoutTenancy()->count(),
             'tenants_by_status' => Tenant::query()
                 ->select('status', \DB::raw('count(*) as count'))
                 ->groupBy('status')
@@ -91,13 +95,14 @@ class SuperAdminController extends Controller
 
     public function showTenant(Tenant $tenant): JsonResponse
     {
-        $tenant->loadCount(['users', 'businesses']);
+        $tenant->users_count = User::withoutTenancy()->where('tenant_id', $tenant->id)->count();
+        $tenant->businesses_count = Business::withoutTenancy()->where('tenant_id', $tenant->id)->count();
 
         $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
 
         $usage = [
             'sales_count' => Sale::withoutTenancy()->where('tenant_id', $tenant->id)->count(),
-            'users_count' => User::withoutTenancy()->where('tenant_id', $tenant->id)->count(),
+            'users_count' => $tenant->users_count,
         ];
 
         return response()->json(['data' => array_merge($tenant->toArray(), [
