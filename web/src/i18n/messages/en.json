@@ -48,7 +48,11 @@
     "reorderSuggestions": "Reorder Suggestions",
     "primary": "Main navigation",
     "security": "Security",
-    "tables": "Tables"
+    "tables": "Tables",
+    "tenants": "Tenants",
+    "revenue": "Revenue",
+    "impersonations": "Impersonations",
+    "superAdminDashboard": "Platform Dashboard"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",
@@ -62,7 +66,8 @@
     "people": "People",
     "finance": "Finance",
     "insights": "Insights",
-    "account": "Account"
+    "account": "Account",
+    "superAdmin": "Super Admin"
   },
   "header": {
     "searchPlaceholder": "Search…",

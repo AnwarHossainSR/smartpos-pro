@@ -254,6 +254,26 @@ export const routes: RouteObject[] = [
                 lazy: () => loadPage(() => import("@/app/(app)/test-data/page")),
                 handle: seo("Test Data", "Generate sample data for trying out the app."),
               },
+              {
+                path: "super-admin",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/dashboard/page")),
+                handle: seo("Platform Dashboard", "Platform-wide metrics, tenants and revenue at a glance."),
+              },
+              {
+                path: "super-admin/tenants",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/tenants/page")),
+                handle: seo("Tenants", "Manage platform tenants, subscriptions and access."),
+              },
+              {
+                path: "super-admin/revenue",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/revenue/page")),
+                handle: seo("Revenue", "MRR, plan distribution and subscription revenue metrics."),
+              },
+              {
+                path: "super-admin/impersonations",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
+                handle: seo("Impersonations", "Active and recent impersonation sessions across the platform."),
+              },
 
             ],
           },
