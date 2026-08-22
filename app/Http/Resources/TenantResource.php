@@ -13,11 +13,11 @@ class TenantResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'status' => $this->status,
-            'business' => [
-                'id' => $this->business?->id,
-                'name' => $this->business?->name,
-                'currency' => $this->business?->currency,
-            ],
+            'businesses' => $this->businesses->map(fn ($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'currency' => $b->currency,
+            ]),
             'users_count' => $this->whenCounted('users'),
             'created_at' => $this->created_at,
         ];

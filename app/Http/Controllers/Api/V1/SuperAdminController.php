@@ -47,8 +47,8 @@ class SuperAdminController extends Controller
     {
         $tenants = QueryPipeline::for(
             Tenant::withCount([
-                'users' => fn ($q) => $q->withoutTenancy(),
-                'businesses' => fn ($q) => $q->withoutTenancy(),
+                'users' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
+                'businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
             ]),
             $request,
         )
@@ -64,8 +64,8 @@ class SuperAdminController extends Controller
     {
         $tenants = QueryPipeline::for(
             Tenant::withCount([
-                'users' => fn ($q) => $q->withoutTenancy(),
-            ])->with(['businesses' => fn ($q) => $q->withoutTenancy()]),
+                'users' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
+            ])->with(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]),
             $request,
         )
             ->search(['name', 'slug'])
@@ -106,8 +106,8 @@ class SuperAdminController extends Controller
     public function showTenant(Tenant $tenant): JsonResponse
     {
         $tenant->loadCount([
-            'users' => fn ($q) => $q->withoutTenancy(),
-            'businesses' => fn ($q) => $q->withoutTenancy(),
+            'users' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
+            'businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
         ]);
 
         $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
