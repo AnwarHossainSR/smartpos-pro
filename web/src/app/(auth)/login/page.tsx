@@ -56,10 +56,8 @@ export default function LoginPage() {
         setAuth(res.token, res.user);
         if (res.user.is_super_admin) {
           navigate("/super-admin", { replace: true });
-        } else if (res.user.email_verified_at) {
-          navigate("/dashboard", { replace: true });
         } else {
-          navigate(`/verify-email?email=${encodeURIComponent(res.user.email)}`, { replace: true });
+          navigate("/dashboard", { replace: true });
         }
       }
     } catch (err) {
