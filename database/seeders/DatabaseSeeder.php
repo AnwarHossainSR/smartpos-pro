@@ -12,9 +12,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             PlanSeeder::class,
             TaxProfileSeeder::class,
-            SuperAdminSeeder::class,
-            DemoSeeder::class,
-            RichDemoSeeder::class,
+            FullDemoSeeder::class,
         ]);
     }
 }

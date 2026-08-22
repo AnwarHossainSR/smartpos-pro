@@ -40,17 +40,16 @@ export default function VerifyEmailPage() {
     setResendMessage(null);
     setError(null);
     try {
+      // Read token directly from cookie — we may not be in the Zustand store yet
       const token = document.cookie
         .split("; ")
         .find((c) => c.startsWith("smartpos_token="))
         ?.split("=")[1];
-      if (token) {
-        await api<{ message: string }>("/auth/email/resend", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setResendMessage("A new verification code has been sent to your email.");
-      }
+      await api<{ message: string }>("/auth/email/resend", {
+        method: "POST",
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      });
+      setResendMessage("A new verification code has been sent to your email.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to resend code");
     } finally {

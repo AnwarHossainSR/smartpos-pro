@@ -2,7 +2,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { RouteMeta } from "@/components/route-meta";
 import { RouteErrorBoundary } from "@/components/error-boundary";
 import { loadPage, seo } from "@/routes/helpers";
-import { RootRedirect } from "@/routes/root-redirect";
 import { type RouteObject, Navigate } from "react-router";
 
 export const routes: RouteObject[] = [
@@ -16,7 +15,7 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: "/",
-        element: <RootRedirect />,
+        lazy: () => loadPage(() => import("@/app/(app)/home/page")),
         handle: seo(
           "SmartPOS Pro",
           "Run your shop end to end: point of sale, inventory, purchasing, customers and accounting in a single platform.",
@@ -256,32 +255,6 @@ export const routes: RouteObject[] = [
                 handle: seo("Test Data", "Generate sample data for trying out the app."),
               },
 
-              // Super admin routes
-              {
-                path: "super-admin",
-                children: [
-                  {
-                    index: true,
-                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/tenants/page")),
-                    handle: seo("Super Admin", "Platform administration"),
-                  },
-                  {
-                    path: "tenants",
-                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/tenants/page")),
-                    handle: seo("Tenants", "Manage platform tenants"),
-                  },
-                  {
-                    path: "revenue",
-                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/revenue/page")),
-                    handle: seo("Revenue", "Revenue metrics and analytics"),
-                  },
-                  {
-                    path: "impersonations",
-                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
-                    handle: seo("Impersonations", "Active impersonation sessions"),
-                  },
-                ],
-              },
             ],
           },
         ],
