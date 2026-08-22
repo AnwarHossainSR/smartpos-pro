@@ -145,7 +145,7 @@ class SuperAdminController extends Controller
 
         $planDistribution = Subscription::withoutTenancy()->where('status', SubscriptionStatus::Active)
             ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
-            ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price_monthly) as mrr')
+            ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price) as mrr')
             ->groupBy('plans.id', 'plans.name', 'plans.slug')
             ->get();
 
