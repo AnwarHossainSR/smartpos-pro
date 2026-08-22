@@ -6,6 +6,7 @@ use App\Domain\Sales\Data\CollectPaymentData;
 use App\Domain\Sales\Data\CreateSaleData;
 use App\Domain\Sales\Data\CreateSaleReturnData;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
@@ -37,7 +38,6 @@ use App\Services\Sales\SaleReturnService;
 use App\Services\Sales\SaleService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class FullDemoSeeder extends TransactionalSeeder
@@ -95,6 +95,7 @@ class FullDemoSeeder extends TransactionalSeeder
     protected function seed(): void
     {
         $this->seedPlans();
+        $this->createSuperAdmin();
         $this->seedAllTenants();
         $this->seedMainTenant();
     }
@@ -137,6 +138,30 @@ class FullDemoSeeder extends TransactionalSeeder
         foreach ($plans as $plan) {
             Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Super admin (platform owner)
+    // ------------------------------------------------------------------
+    private function createSuperAdmin(): void
+    {
+        $provisioner = app(TenantProvisioner::class);
+
+        $superAdmin = $provisioner->register([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@smartpos.com',
+            'password' => bcrypt('password'),
+            'business_name' => 'SmartPOS Platform',
+            'business_type' => 'retail',
+            'currency' => 'BDT',
+        ]);
+
+        $superAdmin->forceFill([
+            'email_verified_at' => now(),
+            'is_super_admin' => true,
+        ])->save();
+
+        $this->command?->info('Super Admin created: superadmin@smartpos.com / password');
     }
 
     // ------------------------------------------------------------------
@@ -241,7 +266,7 @@ class FullDemoSeeder extends TransactionalSeeder
         $returnService = app(SaleReturnService::class);
 
         // 1. Second branch + warehouse
-        $branch2 = \App\Models\Branch::create([
+        $branch2 = Branch::create([
             'tenant_id' => $this->tenantId,
             'business_id' => $this->businessId,
             'name' => 'SmartPOS Downtown',
@@ -272,7 +297,7 @@ class FullDemoSeeder extends TransactionalSeeder
         $cashier2->assignRole('cashier');
 
         // 2. Sale returns on ~20% of branch 1 sales
-        $branch1Id = \App\Models\Branch::where('business_id', $this->businessId)
+        $branch1Id = Branch::where('business_id', $this->businessId)
             ->where('code', '!=', 'DT')
             ->value('id');
 
@@ -310,7 +335,7 @@ class FullDemoSeeder extends TransactionalSeeder
                 ['slug' => Str::slug($n)],
             ));
 
-        $branch1 = \App\Models\Branch::find($branch1Id);
+        $branch1 = Branch::find($branch1Id);
         foreach (range(1, 12) as $i) {
             Expense::create([
                 'tenant_id' => $this->tenantId,

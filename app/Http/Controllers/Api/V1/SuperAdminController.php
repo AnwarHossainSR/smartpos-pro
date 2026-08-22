@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Enums\SubscriptionStatus;
 use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
 use App\Models\Impersonation;
@@ -13,12 +14,14 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use App\Services\SuperAdmin\ImpersonationService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -28,7 +31,10 @@ use Laravel\Sanctum\PersonalAccessToken;
  */
 class SuperAdminController extends Controller
 {
-    public function __construct(protected AuditLogService $audit) {}
+    public function __construct(
+        protected AuditLogService $audit,
+        protected ImpersonationService $impersonationService,
+    ) {}
 
     // ------------------------------------------------------------------
     // T31 — Tenant management
@@ -43,6 +49,44 @@ class SuperAdminController extends Controller
             ->paginate();
 
         return response()->json($tenants);
+    }
+
+    public function indexTenants(Request $request): AnonymousResourceCollection
+    {
+        $tenants = QueryPipeline::for(Tenant::withCount('users')->with('businesses'), $request)
+            ->search(['name', 'slug'])
+            ->sortable(['name', 'created_at'], default: 'name')
+            ->paginate();
+
+        return TenantResource::collection($tenants);
+    }
+
+    public function metrics(): JsonResponse
+    {
+        return response()->json(['data' => [
+            'total_tenants' => Tenant::count(),
+            'total_users' => User::count(),
+            'tenants_by_status' => Tenant::query()
+                ->select('status', \DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status'),
+        ]]);
+    }
+
+    public function startImpersonation(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $targetUser = User::findOrFail($data['user_id']);
+        $token = $this->impersonationService->start($request->user(), $targetUser->id);
+
+        return response()->json(['data' => [
+            'token' => $token,
+            'user' => $targetUser->only('id', 'name', 'email'),
+            'expires_at' => now()->addMinutes(60)->toISOString(),
+        ]]);
     }
 
     public function showTenant(Tenant $tenant): JsonResponse
@@ -101,7 +145,7 @@ class SuperAdminController extends Controller
 
         $planDistribution = Subscription::withoutTenancy()->where('status', SubscriptionStatus::Active)
             ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
-            ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price_monthly) as mrr')
+            ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price) as mrr')
             ->groupBy('plans.id', 'plans.name', 'plans.slug')
             ->get();
 
@@ -197,6 +241,14 @@ class SuperAdminController extends Controller
     /** Called from inside the impersonated session to end it early. */
     public function stopImpersonation(Request $request): JsonResponse
     {
+        $token = $request->input('token');
+
+        if ($token) {
+            $this->impersonationService->stop($token);
+
+            return response()->json(['message' => 'Impersonation ended.']);
+        }
+
         $tokenId = $request->user()->currentAccessToken()->id;
 
         $this->endImpersonation($tokenId, $request->user());

@@ -8,7 +8,7 @@ import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
 import { queryKeys } from "@/lib/query-keys";
-import { navKeyForPathname, SUPER_ADMIN_NAV_GROUPS, superAdminNavKeyForPathname } from "@/lib/nav";
+import { navKeyForPathname, NAV_GROUPS, SUPER_ADMIN_NAV_GROUPS } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { RequirePermission } from "@/components/require-permission";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -98,7 +98,7 @@ export function AppShell() {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
 
-  useSyncBusinessCurrency(!!token && !user?.is_super_admin);
+  useSyncBusinessCurrency(!!token);
 
   if (!hydrated || !token) {
     return (
@@ -116,12 +116,10 @@ export function AppShell() {
     return <ProfileUnavailableScreen />;
   }
 
-  const isSuperAdmin = user?.is_super_admin ?? false;
-  const navGroups = isSuperAdmin ? SUPER_ADMIN_NAV_GROUPS : undefined;
+  const showSuperAdminNav = user?.is_super_admin ?? false;
+  const navGroups = showSuperAdminNav ? [...NAV_GROUPS, ...SUPER_ADMIN_NAV_GROUPS] : NAV_GROUPS;
 
-  const navKey = isSuperAdmin
-    ? superAdminNavKeyForPathname(pathname)
-    : navKeyForPathname(pathname);
+  const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
   return (
