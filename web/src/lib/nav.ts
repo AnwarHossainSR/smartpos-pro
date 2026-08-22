@@ -105,11 +105,6 @@ export const NAV_GROUPS: NavGroup[] = [
 /** Flattened route list, derived from NAV_GROUPS so both stay in sync. */
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
-/** Looks up the `nav.*` i18n key for the route a pathname belongs to. */
-export function navKeyForPathname(pathname: string): string | undefined {
-  return NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.key;
-}
-
 export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     key: "superAdmin",
@@ -124,6 +119,14 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
 ];
 
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = SUPER_ADMIN_NAV_GROUPS.flatMap((g) => g.items);
+
+/** Combined nav items for title lookup — includes super-admin items. */
+export const ALL_NAV_ITEMS: NavItem[] = [...NAV_ITEMS, ...SUPER_ADMIN_NAV_ITEMS];
+
+/** Looks up the `nav.*` i18n key for the route a pathname belongs to. */
+export function navKeyForPathname(pathname: string): string | undefined {
+  return ALL_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.key;
+}
 
 export function superAdminNavKeyForPathname(pathname: string): string | undefined {
   return SUPER_ADMIN_NAV_ITEMS.find(
