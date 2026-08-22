@@ -19,7 +19,7 @@ class ResolveTenant
     {
         $user = $request->user();
 
-        if ($user && $user->tenant_id && ! ($user->is_super_admin ?? false)) {
+        if ($user && $user->tenant_id) {
             $this->context->set($user->tenant_id);
         }
 

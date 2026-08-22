@@ -61,7 +61,7 @@ class AuthController extends Controller
 
         // Bind the tenant as soon as we know it, so every subsequent query in this request
         // (relation loads, token issuance, etc.) is naturally and correctly scoped.
-        if ($user && ! ($user->is_super_admin ?? false)) {
+        if ($user && $user->tenant_id) {
             $this->context->set($user->tenant_id);
         }
 
