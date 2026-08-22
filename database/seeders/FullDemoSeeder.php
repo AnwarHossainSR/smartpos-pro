@@ -2,12 +2,19 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Sales\Data\CollectPaymentData;
+use App\Domain\Sales\Data\CreateSaleData;
+use App\Domain\Sales\Data\CreateSaleReturnData;
+use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\JournalEntry;
+use App\Models\JournalLine;
+use App\Models\LoyaltyTransaction;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -15,12 +22,19 @@ use App\Models\PurchaseItem;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
+use App\Models\StockBatch;
+use App\Models\StockSerial;
 use App\Models\Supplier;
 use App\Models\TaxGroup;
 use App\Models\TaxRate;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\Auth\TenantProvisioner;
+use App\Services\Inventory\StockTransferService;
+use App\Services\Sales\QuotationService;
+use App\Services\Sales\SaleReturnService;
+use App\Services\Sales\SaleService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -80,22 +94,9 @@ class FullDemoSeeder extends TransactionalSeeder
 
     protected function seed(): void
     {
-        $this->createSuperAdmin();
         $this->seedPlans();
         $this->seedAllTenants();
-    }
-
-    private function createSuperAdmin(): void
-    {
-        User::unguard(true);
-        $admin = User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@smartpos.com',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-        ]);
-        $admin->forceFill(['is_super_admin' => true])->save();
-        User::unguard(false);
+        $this->seedMainTenant();
     }
 
     private function seedPlans(): void
@@ -103,22 +104,44 @@ class FullDemoSeeder extends TransactionalSeeder
         $plans = [
             ['name' => 'Free', 'slug' => 'free', 'price' => 0, 'interval' => 'month',
                 'limits' => ['branches' => 1, 'warehouses' => 1, 'users' => 2, 'products' => 50, 'monthly_sales' => 200],
-                'features' => [['key' => 'pos', 'label' => 'POS', 'value' => '', 'included' => true]], 'is_active' => true],
+                'features' => [
+                    ['key' => 'products', 'label' => 'Product limit', 'value' => '50', 'included' => true],
+                    ['key' => 'pos', 'label' => 'POS Service', 'value' => '', 'included' => true],
+                    ['key' => 'reports', 'label' => 'Report Service', 'value' => 'Basic', 'included' => true],
+                ], 'is_active' => true],
             ['name' => 'Starter', 'slug' => 'starter', 'price' => 499, 'interval' => 'month',
                 'limits' => ['branches' => 1, 'warehouses' => 1, 'users' => 5, 'products' => 500, 'monthly_sales' => 1000],
-                'features' => [['key' => 'pos', 'label' => 'POS', 'value' => '', 'included' => true]], 'is_active' => true],
+                'features' => [
+                    ['key' => 'products', 'label' => 'Product limit', 'value' => '500', 'included' => true],
+                    ['key' => 'pos', 'label' => 'POS Service', 'value' => '', 'included' => true],
+                    ['key' => 'coupons', 'label' => 'Coupon Service', 'value' => '', 'included' => true],
+                    ['key' => 'reports', 'label' => 'Report Service', 'value' => 'Advanced', 'included' => true],
+                ], 'is_active' => true],
             ['name' => 'Professional', 'slug' => 'professional', 'price' => 999, 'interval' => 'month',
                 'limits' => ['branches' => 3, 'warehouses' => 3, 'users' => 20, 'products' => 5000, 'monthly_sales' => 10000],
-                'features' => [['key' => 'pos', 'label' => 'POS', 'value' => '', 'included' => true]], 'is_active' => true],
+                'features' => [
+                    ['key' => 'products', 'label' => 'Product limit', 'value' => '5,000', 'included' => true],
+                    ['key' => 'pos', 'label' => 'POS Service', 'value' => '', 'included' => true],
+                    ['key' => 'coupons', 'label' => 'Coupon Service', 'value' => '', 'included' => true],
+                    ['key' => 'reports', 'label' => 'Report Service', 'value' => 'Full + Analytics', 'included' => true],
+                ], 'is_active' => true],
             ['name' => 'Enterprise', 'slug' => 'enterprise', 'price' => 2999, 'interval' => 'month',
                 'limits' => ['branches' => 10, 'warehouses' => 10, 'users' => 100, 'products' => 50000, 'monthly_sales' => 100000],
-                'features' => [['key' => 'pos', 'label' => 'POS', 'value' => '', 'included' => true]], 'is_active' => true],
+                'features' => [
+                    ['key' => 'products', 'label' => 'Product limit', 'value' => '50,000', 'included' => true],
+                    ['key' => 'pos', 'label' => 'POS Service', 'value' => '', 'included' => true],
+                    ['key' => 'coupons', 'label' => 'Coupon Service', 'value' => '', 'included' => true],
+                    ['key' => 'reports', 'label' => 'Report Service', 'value' => 'Full + Analytics', 'included' => true],
+                ], 'is_active' => true],
         ];
         foreach ($plans as $plan) {
             Plan::updateOrCreate(['slug' => $plan['slug']], $plan);
         }
     }
 
+    // ------------------------------------------------------------------
+    // Seed all secondary tenants (randomised data)
+    // ------------------------------------------------------------------
     private function seedAllTenants(): void
     {
         foreach ($this->storeNames as $storeName) {
@@ -126,6 +149,54 @@ class FullDemoSeeder extends TransactionalSeeder
         }
     }
 
+    // ------------------------------------------------------------------
+    // Seed the main demo tenant (admin@demostore.com) — full rich data
+    // ------------------------------------------------------------------
+    private function seedMainTenant(): void
+    {
+        $provisioner = app(TenantProvisioner::class);
+        $owner = $provisioner->register([
+            'name' => 'Admin User',
+            'email' => 'admin@demostore.com',
+            'password' => bcrypt('password123'),
+            'business_name' => 'Demo Store BD',
+            'business_type' => 'retail',
+            'currency' => 'BDT',
+        ]);
+
+        if (! $owner->hasVerifiedEmail()) {
+            $owner->forceFill(['email_verified_at' => now()])->save();
+        }
+
+        $this->tenantId = $owner->tenant_id;
+        $this->businessId = $owner->business_id;
+        $this->branchId = $owner->branch_id;
+        $this->warehouseId = $owner->business->warehouses->first()?->id ?? '';
+        $this->ownerId = $owner->id;
+
+        app(TenantContext::class)->set($this->tenantId);
+
+        $this->command?->info('Tenant: Demo Store BD | Login: admin@demostore.com / password123');
+
+        $categories = $this->seedCatalog();
+        $customers = $this->seedCustomers();
+        $suppliers = $this->seedSuppliers();
+        $products = $this->seedProducts($categories);
+        $this->seedTax();
+        $this->seedExpenseCategories();
+        $this->seedCoupons();
+        $this->seedSales($customers, $products);
+        $this->seedPurchases($suppliers, $products);
+        $this->seedExpenses();
+
+        app(AccountSeeder::class)->run();
+
+        $this->seedRichDemo();
+    }
+
+    // ------------------------------------------------------------------
+    // Generic tenant seeder (secondary stores)
+    // ------------------------------------------------------------------
     private function seedTenant(string $storeName): void
     {
         $provisioner = app(TenantProvisioner::class);
@@ -162,12 +233,288 @@ class FullDemoSeeder extends TransactionalSeeder
         $this->seedExpenses();
     }
 
+    // ------------------------------------------------------------------
+    // Rich demo data (branches, returns, journals, coupons, loyalty, etc.)
+    // ------------------------------------------------------------------
+    private function seedRichDemo(): void
+    {
+        $returnService = app(SaleReturnService::class);
+
+        // 1. Second branch + warehouse
+        $branch2 = \App\Models\Branch::create([
+            'tenant_id' => $this->tenantId,
+            'business_id' => $this->businessId,
+            'name' => 'SmartPOS Downtown',
+            'code' => 'DT',
+            'address' => '100 Main St, Downtown',
+            'is_active' => true,
+        ]);
+
+        $wh2 = Warehouse::create([
+            'tenant_id' => $this->tenantId,
+            'business_id' => $this->businessId,
+            'branch_id' => $branch2->id,
+            'name' => 'Downtown Stockroom',
+            'code' => 'DT-WH',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $cashier2 = User::create([
+            'tenant_id' => $this->tenantId,
+            'business_id' => $this->businessId,
+            'branch_id' => $branch2->id,
+            'name' => 'Downtown Cashier',
+            'email' => 'cashier2@smartpos.test',
+            'password' => 'password123',
+            'status' => 'active',
+        ]);
+        $cashier2->assignRole('cashier');
+
+        // 2. Sale returns on ~20% of branch 1 sales
+        $branch1Id = \App\Models\Branch::where('business_id', $this->businessId)
+            ->where('code', '!=', 'DT')
+            ->value('id');
+
+        $completedSales = Sale::where('branch_id', $branch1Id)
+            ->where('payment_status', 'paid')
+            ->with('items')
+            ->limit(10)
+            ->get();
+
+        foreach ($completedSales->take(3) as $sale) {
+            $firstItem = $sale->items->first();
+            if (! $firstItem || $firstItem->quantity < 1) {
+                continue;
+            }
+            try {
+                $returnService->create(
+                    $sale,
+                    CreateSaleReturnData::fromArray([
+                        'warehouse_id' => $sale->warehouse_id,
+                        'refund_method' => 'cash',
+                        'note' => 'Customer returned — wrong size',
+                        'items' => [['sale_item_id' => $firstItem->id, 'quantity' => 1]],
+                    ]),
+                    User::find($this->ownerId),
+                );
+            } catch (\Throwable) {
+                // Skip if already returned or out of stock
+            }
+        }
+
+        // 3. Expense categories + records
+        $expCats = collect(['Rent', 'Utilities', 'Salary', 'Marketing', 'Miscellaneous'])
+            ->map(fn ($n) => ExpenseCategory::firstOrCreate(
+                ['name' => $n, 'tenant_id' => $this->tenantId],
+                ['slug' => Str::slug($n)],
+            ));
+
+        $branch1 = \App\Models\Branch::find($branch1Id);
+        foreach (range(1, 12) as $i) {
+            Expense::create([
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $branch1->id,
+                'expense_category_id' => $expCats->random()->id,
+                'user_id' => $this->ownerId,
+                'amount' => fake()->randomFloat(2, 50, 2000),
+                'note' => fake()->sentence(4),
+                'payment_method' => fake()->randomElement(['cash', 'bank', 'card']),
+                'spent_at' => now()->subDays(fake()->numberBetween(1, 30)),
+            ]);
+        }
+
+        // 4. Chart of accounts + manual journals
+        $accounts = [
+            ['name' => 'Cash', 'type' => 'asset', 'account_number' => '1000', 'normal_side' => 'debit'],
+            ['name' => 'Bank', 'type' => 'asset', 'account_number' => '1001', 'normal_side' => 'debit'],
+            ['name' => 'Accounts Rec.', 'type' => 'asset', 'account_number' => '1100', 'normal_side' => 'debit'],
+            ['name' => 'Inventory', 'type' => 'asset', 'account_number' => '1200', 'normal_side' => 'debit'],
+            ['name' => 'Accounts Pay.', 'type' => 'liability', 'account_number' => '2000', 'normal_side' => 'credit'],
+            ['name' => 'Owner Equity', 'type' => 'equity', 'account_number' => '3000', 'normal_side' => 'credit'],
+            ['name' => 'Sales Revenue', 'type' => 'income', 'account_number' => '4000', 'normal_side' => 'credit'],
+            ['name' => 'Rent Expense', 'type' => 'expense', 'account_number' => '5000', 'normal_side' => 'debit'],
+            ['name' => 'Salary Expense', 'type' => 'expense', 'account_number' => '5001', 'normal_side' => 'debit'],
+            ['name' => 'Utility Exp.', 'type' => 'expense', 'account_number' => '5002', 'normal_side' => 'debit'],
+        ];
+
+        $acctMap = [];
+        foreach ($accounts as $a) {
+            $acct = Account::firstOrCreate(
+                ['account_number' => $a['account_number'], 'tenant_id' => $this->tenantId],
+                array_merge($a, ['tenant_id' => $this->tenantId, 'is_active' => true]),
+            );
+            $acctMap[$a['account_number']] = $acct->id;
+        }
+
+        // Monthly rent journal
+        foreach (range(1, 3) as $m) {
+            $amount = 2000.00;
+            $entry = JournalEntry::create([
+                'tenant_id' => $this->tenantId,
+                'user_id' => $this->ownerId,
+                'reference' => 'JNL-RENT-'.str_pad((string) $m, 3, '0', STR_PAD_LEFT),
+                'entry_date' => now()->subMonths($m - 1)->startOfMonth(),
+                'description' => 'Monthly rent — '.now()->subMonths($m - 1)->format('F Y'),
+                'total_debit' => $amount,
+                'total_credit' => $amount,
+            ]);
+            JournalLine::insert([
+                ['id' => (string) Str::uuid(), 'tenant_id' => $this->tenantId, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['5000'], 'debit' => $amount, 'credit' => 0, 'description' => 'Rent expense'],
+                ['id' => (string) Str::uuid(), 'tenant_id' => $this->tenantId, 'journal_entry_id' => $entry->id, 'account_id' => $acctMap['1001'], 'debit' => 0, 'credit' => $amount, 'description' => 'Paid from bank'],
+            ]);
+        }
+
+        // Salary journal
+        $salary = 5000.00;
+        $salEntry = JournalEntry::create([
+            'tenant_id' => $this->tenantId,
+            'user_id' => $this->ownerId,
+            'reference' => 'JNL-SAL-001',
+            'entry_date' => now()->subDays(15),
+            'description' => 'Staff salary — '.now()->subDays(15)->format('M Y'),
+            'total_debit' => $salary,
+            'total_credit' => $salary,
+        ]);
+        JournalLine::insert([
+            ['id' => (string) Str::uuid(), 'tenant_id' => $this->tenantId, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['5001'], 'debit' => $salary, 'credit' => 0, 'description' => 'Salary'],
+            ['id' => (string) Str::uuid(), 'tenant_id' => $this->tenantId, 'journal_entry_id' => $salEntry->id, 'account_id' => $acctMap['1000'], 'debit' => 0, 'credit' => $salary, 'description' => 'Cash payment'],
+        ]);
+
+        // 5. Loyalty points for customers with purchases
+        if (class_exists(LoyaltyTransaction::class)) {
+            $customersWithSales = Sale::where('branch_id', $branch1Id)
+                ->whereNotNull('customer_id')
+                ->distinct()
+                ->limit(5)
+                ->pluck('customer_id');
+
+            foreach ($customersWithSales as $customerId) {
+                $pts = fake()->numberBetween(100, 500);
+                LoyaltyTransaction::create([
+                    'tenant_id' => $this->tenantId,
+                    'customer_id' => $customerId,
+                    'user_id' => $this->ownerId,
+                    'type' => 'earn',
+                    'points' => $pts,
+                    'balance_after' => $pts,
+                    'note' => 'Seeded opening loyalty balance',
+                ]);
+            }
+        }
+
+        // 6. Stock transfer from branch 1 to Downtown
+        $wh1 = Warehouse::where('business_id', $this->businessId)->where('id', '!=', $wh2->id)->first();
+        $transferQty = 10;
+        $transferProduct = $wh1 ? $this->stockedProduct($wh1->id, $transferQty) : null;
+
+        if ($transferProduct && $wh1) {
+            $transfers = app(StockTransferService::class);
+            $transfer = $transfers->request([
+                'from_warehouse_id' => $wh1->id,
+                'to_warehouse_id' => $wh2->id,
+                'note' => 'Restocking the Downtown branch',
+                'items' => [['product_id' => $transferProduct->id, 'quantity' => $transferQty]],
+            ], User::find($this->ownerId));
+            $transfer = $transfers->approve($transfer, User::find($this->ownerId));
+            $transfers->receive($transfer, [
+                'items' => $transfer->items->map(fn ($item) => [
+                    'transfer_item_id' => $item->id,
+                    'quantity_received' => (float) $item->quantity_requested,
+                ])->all(),
+            ], User::find($this->ownerId));
+        }
+
+        // 7. Product variants, stock batch, serial numbers
+        $variantProduct = Product::where('tenant_id', $this->tenantId)->inRandomOrder()->first();
+        if ($variantProduct) {
+            foreach (['Small', 'Medium', 'Large'] as $size) {
+                $variantProduct->variants()->create([
+                    'name' => "{$variantProduct->name} - {$size}",
+                    'sku' => $variantProduct->sku.'-'.strtoupper(substr($size, 0, 1)),
+                    'attributes' => ['size' => $size],
+                    'selling_price' => $variantProduct->selling_price,
+                ]);
+            }
+        }
+
+        $batchProduct = Product::where('tenant_id', $this->tenantId)->inRandomOrder()->first();
+        if ($batchProduct && $wh1) {
+            StockBatch::create([
+                'product_id' => $batchProduct->id,
+                'warehouse_id' => $wh1->id,
+                'batch_number' => 'BATCH-'.now()->format('Ym').'-001',
+                'quantity' => 40,
+                'unit_cost' => $batchProduct->purchase_price,
+                'manufactured_at' => now()->subMonths(2),
+                'expires_at' => now()->addMonths(4),
+            ]);
+        }
+
+        $serialProduct = Product::where('tenant_id', $this->tenantId)->inRandomOrder()->first();
+        if ($serialProduct && $wh1) {
+            foreach (range(1, 3) as $n) {
+                StockSerial::create([
+                    'product_id' => $serialProduct->id,
+                    'warehouse_id' => $wh1->id,
+                    'serial_number' => 'SN-'.strtoupper(Str::random(8)),
+                    'status' => 'in_stock',
+                ]);
+            }
+        }
+
+        // 8. Quotation converted to sale
+        $quoteProduct = $wh1 ? $this->stockedProduct($wh1->id, 5) : null;
+        if ($quoteProduct && $wh1) {
+            $quotations = app(QuotationService::class);
+            $quotation = $quotations->create([
+                'branch_id' => $branch1Id,
+                'note' => 'Bulk order quote for a walk-in customer',
+                'items' => [['product_id' => $quoteProduct->id, 'quantity' => 5]],
+            ], User::find($this->ownerId));
+
+            $quotations->convertToSale($quotation, [
+                'warehouse_id' => $wh1->id,
+                'payments' => [['method' => 'cash', 'amount' => (float) $quotation->total]],
+            ], User::find($this->ownerId));
+        }
+
+        // 9. Partially-settled credit sale
+        $creditCustomer = Customer::where('tenant_id', $this->tenantId)->inRandomOrder()->first();
+        $creditProduct = $wh1 ? $this->stockedProduct($wh1->id, 4) : null;
+
+        if ($creditCustomer && $creditProduct && $wh1) {
+            $sales = app(SaleService::class);
+            $creditSale = $sales->create(CreateSaleData::fromArray([
+                'branch_id' => $branch1Id,
+                'warehouse_id' => $wh1->id,
+                'customer_id' => $creditCustomer->id,
+                'items' => [['product_id' => $creditProduct->id, 'quantity' => 4]],
+                'payments' => [['method' => 'cash', 'amount' => round((float) $creditProduct->selling_price * 4 * 0.4, 2)]],
+            ]), User::find($this->ownerId));
+
+            if ((float) $creditSale->due_amount > 0) {
+                $sales->collectPayment($creditSale, CollectPaymentData::fromArray([
+                    'method' => 'bank',
+                    'amount' => round((float) $creditSale->due_amount / 2, 2),
+                ]));
+            }
+        }
+
+        $this->command?->info('Rich demo data seeded: branch 2, returns, journals, expenses, coupons, loyalty,');
+        $this->command?->info('stock transfer, variants/batch/serial, a converted quotation, and a partially-paid credit sale.');
+        $this->command?->info('Branch 2 cashier: cashier2@smartpos.test / password123');
+    }
+
+    // ------------------------------------------------------------------
+    // Catalog helpers
+    // ------------------------------------------------------------------
     private function seedCatalog(): array
     {
         $allCategoryNames = array_values(array_keys($this->categoryMap));
         $selectedCount = rand(3, 5);
         $selectedCategoryNames = array_rand($allCategoryNames, $selectedCount);
-        if (!is_array($selectedCategoryNames)) {
+        if (! is_array($selectedCategoryNames)) {
             $selectedCategoryNames = [$selectedCategoryNames];
         }
 
@@ -205,7 +552,7 @@ class FullDemoSeeder extends TransactionalSeeder
     {
         $selectedCount = rand(10, 15);
         $selectedKeys = array_rand($this->customerNames, $selectedCount);
-        if (!is_array($selectedKeys)) {
+        if (! is_array($selectedKeys)) {
             $selectedKeys = [$selectedKeys];
         }
 
@@ -232,7 +579,7 @@ class FullDemoSeeder extends TransactionalSeeder
     {
         $selectedCount = rand(4, 6);
         $selectedKeys = array_rand($this->supplierNames, $selectedCount);
-        if (!is_array($selectedKeys)) {
+        if (! is_array($selectedKeys)) {
             $selectedKeys = [$selectedKeys];
         }
 
@@ -264,8 +611,8 @@ class FullDemoSeeder extends TransactionalSeeder
 
         foreach ($categories as $catName => $category) {
             $catBrands = $this->categoryMap[$catName] ?? [];
-            $unit = $catName === 'Groceries' ? 'kg' : ($catName === 'Clothing' ? 'piece' : 'piece');
-            if (!in_array($unit, $units)) {
+            $unit = $catName === 'Groceries' ? 'kg' : 'piece';
+            if (! in_array($unit, $units)) {
                 $unit = $units[0];
             }
 
@@ -338,6 +685,8 @@ class FullDemoSeeder extends TransactionalSeeder
             ['code' => 'FLAT200', 'type' => 'fixed', 'value' => 200, 'min_purchase' => 2000, 'usage_limit' => 50, 'expires_at' => '2026-12-31'],
             ['code' => 'EID15', 'type' => 'percentage', 'value' => 15, 'min_purchase' => 1000, 'usage_limit' => 200, 'expires_at' => '2026-10-31'],
             ['code' => 'NEWYEAR', 'type' => 'fixed', 'value' => 500, 'min_purchase' => 5000, 'usage_limit' => 30, 'expires_at' => '2027-01-31'],
+            ['code' => 'SAVE20', 'type' => 'fixed', 'value' => 20, 'min_purchase' => 100, 'usage_limit' => 50, 'expires_at' => '2026-12-31'],
+            ['code' => 'SUMMER50', 'type' => 'percentage', 'value' => 50, 'min_purchase' => 200, 'usage_limit' => 20, 'expires_at' => '2026-08-31'],
         ];
         foreach ($coupons as $c) {
             Coupon::updateOrCreate(['tenant_id' => $this->tenantId, 'code' => $c['code']], [
@@ -472,5 +821,14 @@ class FullDemoSeeder extends TransactionalSeeder
                 ]);
             }
         }
+    }
+
+    private function stockedProduct(string $warehouseId, float $quantity): ?Product
+    {
+        return Product::whereHas('inventoryBalances', fn ($q) => $q
+            ->where('warehouse_id', $warehouseId)
+            ->where('quantity', '>=', $quantity))
+            ->inRandomOrder()
+            ->first();
     }
 }
