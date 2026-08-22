@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Outlet } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldAlert } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { useAuth, hasPermission, type AuthUser } from "@/stores/auth";
+import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
@@ -116,7 +116,7 @@ export function AppShell() {
     return <ProfileUnavailableScreen />;
   }
 
-  const showSuperAdminNav = user ? hasPermission(user, "super-admin.tenants.view") : false;
+  const showSuperAdminNav = user?.is_super_admin ?? false;
   const navGroups = showSuperAdminNav ? [...NAV_GROUPS, ...SUPER_ADMIN_NAV_GROUPS] : NAV_GROUPS;
 
   const navKey = navKeyForPathname(pathname);

@@ -13,7 +13,17 @@ class CheckPermission
     {
         $user = $request->user();
 
-        if (! $user || ! $user->hasPermission($permission)) {
+        if (! $user) {
+            abort(response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401));
+        }
+
+        if ($user->is_super_admin) {
+            return $next($request);
+        }
+
+        if (! $user->hasPermission($permission)) {
             abort(response()->json([
                 'message' => "Missing required permission: {$permission}.",
             ], 403));
