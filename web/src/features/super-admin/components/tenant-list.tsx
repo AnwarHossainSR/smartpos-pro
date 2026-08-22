@@ -12,8 +12,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
-import { toast } from "@/components/ui/toast";
-import type { Tenant, TenantDetail } from "../types";
+import type { Tenant } from "../types";
 
 export function TenantList() {
   const [viewing, setViewing] = useState<Tenant | null>(null);

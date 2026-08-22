@@ -98,7 +98,7 @@ export function AppShell() {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
 
-  useSyncBusinessCurrency(!!token);
+  useSyncBusinessCurrency(!!token && !user?.is_super_admin);
 
   if (!hydrated || !token) {
     return (

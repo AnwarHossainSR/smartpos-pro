@@ -144,7 +144,12 @@ class AuthController extends Controller
     protected function completeLogin(User $user, Request $request): array
     {
         $user->forceFill(['last_login_at' => now(), 'failed_login_attempts' => 0, 'locked_until' => null])->save();
-        $user->load(['roles', 'business']);
+
+        if ($user->is_super_admin ?? false) {
+            $user->setRelation('roles', collect());
+        } else {
+            $user->load(['roles', 'business']);
+        }
 
         $this->audit->log('auth.login', $user, null, null, $user, $user->tenant_id);
 
@@ -293,7 +298,16 @@ class AuthController extends Controller
 
     public function me(Request $request): UserResource
     {
-        return new UserResource($request->user()->load('roles', 'business', 'branch'));
+        $user = $request->user();
+
+        if ($user->is_super_admin ?? false) {
+            $user->setRelation('roles', collect());
+            $user->load('business');
+        } else {
+            $user->load('roles', 'business', 'branch');
+        }
+
+        return new UserResource($user);
     }
 
     /**
@@ -312,7 +326,14 @@ class AuthController extends Controller
 
         $user->fill(['theme' => $request->validated('theme')])->saveQuietly();
 
-        return new UserResource($user->load('roles', 'business', 'branch'));
+        if ($user->is_super_admin ?? false) {
+            $user->setRelation('roles', collect());
+            $user->load('business');
+        } else {
+            $user->load('roles', 'business', 'branch');
+        }
+
+        return new UserResource($user);
     }
 
     public function logout(Request $request): JsonResponse
