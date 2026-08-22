@@ -74,6 +74,7 @@ export interface Tenant extends Named {
 }
 
 export interface TenantDetail extends Tenant {
+  businesses?: { id: string; name: string; currency: string }[];
   subscription: {
     id: string;
     status: string;

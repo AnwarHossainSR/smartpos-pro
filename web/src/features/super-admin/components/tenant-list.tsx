@@ -187,34 +187,109 @@ export function TenantList() {
         title={viewing?.name ?? ""}
       >
         {detailQuery.isLoading ? (
-          <p className="text-sm text-[var(--muted)]">Loading…</p>
+          <div className="space-y-3">
+            <div className="h-4 w-24 animate-pulse rounded bg-[var(--muted)]/20" />
+            <div className="h-4 w-32 animate-pulse rounded bg-[var(--muted)]/20" />
+            <div className="h-4 w-20 animate-pulse rounded bg-[var(--muted)]/20" />
+          </div>
         ) : detail ? (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Status</h3>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
               <Badge tone={detail.status === "active" ? "success" : "danger"}>
                 {detail.status}
               </Badge>
+              <span className="text-xs text-[var(--muted)]">
+                ID: {detail.id}
+              </span>
             </div>
-            {detail.subscription && (
+
+            <div>
+              <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                Slug
+              </h3>
+              <p className="font-mono text-sm">{detail.slug}</p>
+            </div>
+
+            {detail.businesses && detail.businesses.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-[var(--muted)]">Subscription</h3>
-                <p className="text-sm">
-                  {detail.subscription.plan?.name ?? "No plan"} —{" "}
-                  {detail.subscription.status}
-                </p>
+                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Businesses ({detail.businesses.length})
+                </h3>
+                <div className="space-y-2">
+                  {detail.businesses.map((b) => (
+                    <div
+                      key={b.id}
+                      className="rounded-[var(--radius)] border border-[var(--border)] p-3"
+                    >
+                      <p className="text-sm font-medium">{b.name}</p>
+                      <p className="text-xs text-[var(--muted)]">
+                        Currency: {b.currency}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+
+            {detail.subscription && (
+              <div>
+                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Subscription
+                </h3>
+                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">
+                      {detail.subscription.plan?.name ?? "No plan"}
+                    </p>
+                    <Badge
+                      tone={
+                        detail.subscription.status === "active"
+                          ? "success"
+                          : "danger"
+                      }
+                    >
+                      {detail.subscription.status}
+                    </Badge>
+                  </div>
+                  {detail.subscription.plan && (
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      ${detail.subscription.plan.price}/mo
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Usage</h3>
-              <p className="text-sm">
-                {detail.usage.sales_count} sales, {detail.usage.users_count} users
-              </p>
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                Usage
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3 text-center">
+                  <p className="text-lg font-semibold">
+                    {detail.usage.sales_count}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">Sales</p>
+                </div>
+                <div className="rounded-[var(--radius)] border border-[var(--border)] p-3 text-center">
+                  <p className="text-lg font-semibold">
+                    {detail.usage.users_count}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">Users</p>
+                </div>
+              </div>
             </div>
+
             <div>
-              <h3 className="text-sm font-medium text-[var(--muted)]">Created</h3>
+              <h3 className="mb-1 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                Created
+              </h3>
               <p className="text-sm">
-                {new Date(detail.created_at).toLocaleDateString()}
+                {new Date(detail.created_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </p>
             </div>
           </div>

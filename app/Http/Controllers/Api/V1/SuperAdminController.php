@@ -110,6 +110,8 @@ class SuperAdminController extends Controller
             'businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class),
         ]);
 
+        $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
+
         $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
 
         $usage = [
@@ -117,10 +119,23 @@ class SuperAdminController extends Controller
             'users_count' => $tenant->users_count,
         ];
 
-        return $this->success(array_merge($tenant->toArray(), [
+        return $this->success([
+            'id' => $tenant->id,
+            'name' => $tenant->name,
+            'slug' => $tenant->slug,
+            'status' => $tenant->status,
+            'created_at' => $tenant->created_at,
+            'updated_at' => $tenant->updated_at,
+            'users_count' => $tenant->users_count,
+            'businesses_count' => $tenant->businesses_count,
+            'businesses' => $tenant->businesses->map(fn ($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'currency' => $b->currency,
+            ]),
             'subscription' => $subscription,
             'usage' => $usage,
-        ]));
+        ]);
     }
 
     public function suspendTenant(Request $request, Tenant $tenant): JsonResponse
