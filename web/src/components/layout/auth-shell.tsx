@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Check } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/context";
@@ -20,10 +21,10 @@ export function AuthShell({
         <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[var(--primary)]/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-[var(--primary)]/20 blur-3xl" />
 
-        <div className="relative flex items-center gap-2">
+        <Link to="/" className="relative flex items-center gap-2">
           <Logo size={36} />
           <span className="text-lg font-semibold">SmartPOS</span>
-        </div>
+        </Link>
 
         <div className="relative space-y-5">
           <h2 className="max-w-sm text-3xl font-semibold leading-tight">{t("auth.marketingTitle")}</h2>

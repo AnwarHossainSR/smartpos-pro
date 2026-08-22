@@ -32,12 +32,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (hydrated && token) {
-      const currentUser = useAuth.getState().user;
-      if (currentUser?.is_super_admin) {
-        navigate("/super-admin", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     }
   }, [hydrated, token, navigate]);
 
@@ -54,11 +49,7 @@ export default function LoginPage() {
         setChallengeToken(res.challenge_token);
       } else if (res.token && res.user) {
         setAuth(res.token, res.user);
-        if (res.user.is_super_admin) {
-          navigate("/super-admin", { replace: true });
-        } else {
-          navigate("/dashboard", { replace: true });
-        }
+        navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
@@ -79,11 +70,7 @@ export default function LoginPage() {
           : { challenge_token: challengeToken, code },
       });
       setAuth(res.token, res.user);
-      if (res.user.is_super_admin) {
-        navigate("/super-admin", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code");
     } finally {
