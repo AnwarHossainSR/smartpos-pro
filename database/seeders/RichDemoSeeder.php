@@ -25,6 +25,7 @@ use App\Services\Sales\QuotationService;
 use App\Services\Sales\SaleReturnService;
 use App\Services\Sales\SaleService;
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -49,6 +50,20 @@ class RichDemoSeeder extends TransactionalSeeder
         // is bound yet at this point — that is what the next line is for.
         $owner = User::withoutTenancy()->where('email', 'admin@demostore.com')->firstOrFail();
         $context->set($owner->tenant_id);
+
+        // ------------------------------------------------------------------
+        // 0. Platform super-admin
+        // ------------------------------------------------------------------
+        User::withoutTenancy(function () {
+            User::updateOrCreate(
+                ['email' => 'superadmin@smartpos.com'],
+                [
+                    'name' => 'Super Admin',
+                    'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
+                ]
+            )->forceFill(['is_super_admin' => true])->save();
+        });
 
         // ------------------------------------------------------------------
         // 1. Second branch
