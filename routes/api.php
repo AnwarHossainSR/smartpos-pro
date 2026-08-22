@@ -494,4 +494,15 @@ Route::prefix('v1')->group(function () {
         Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
         Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
     });
+
+    // Super-admin permission-based routes
+    Route::prefix('super')->middleware(['auth:sanctum', 'permission:super-admin.tenants.view'])->group(function () {
+        Route::get('tenants', [SuperAdminController::class, 'indexTenants']);
+        Route::get('metrics', [SuperAdminController::class, 'metrics']);
+
+        Route::middleware('permission:super-admin.impersonate')->group(function () {
+            Route::post('impersonate', [SuperAdminController::class, 'startImpersonation']);
+            Route::delete('impersonate', [SuperAdminController::class, 'stopImpersonation']);
+        });
+    });
 });
