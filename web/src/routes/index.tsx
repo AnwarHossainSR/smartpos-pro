@@ -255,6 +255,33 @@ export const routes: RouteObject[] = [
                 lazy: () => loadPage(() => import("@/app/(app)/test-data/page")),
                 handle: seo("Test Data", "Generate sample data for trying out the app."),
               },
+
+              // Super admin routes
+              {
+                path: "super-admin",
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/tenants/page")),
+                    handle: seo("Super Admin", "Platform administration"),
+                  },
+                  {
+                    path: "tenants",
+                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/tenants/page")),
+                    handle: seo("Tenants", "Manage platform tenants"),
+                  },
+                  {
+                    path: "revenue",
+                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/revenue/page")),
+                    handle: seo("Revenue", "Revenue metrics and analytics"),
+                  },
+                  {
+                    path: "impersonations",
+                    lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
+                    handle: seo("Impersonations", "Active impersonation sessions"),
+                  },
+                ],
+              },
             ],
           },
         ],

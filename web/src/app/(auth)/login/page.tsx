@@ -31,7 +31,14 @@ export default function LoginPage() {
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   useEffect(() => {
-    if (hydrated && token) navigate("/dashboard", { replace: true });
+    if (hydrated && token) {
+      const currentUser = useAuth.getState().user;
+      if (currentUser?.is_super_admin) {
+        navigate("/super-admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
   }, [hydrated, token, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -47,7 +54,9 @@ export default function LoginPage() {
         setChallengeToken(res.challenge_token);
       } else if (res.token && res.user) {
         setAuth(res.token, res.user);
-        if (res.user.email_verified_at) {
+        if (res.user.is_super_admin) {
+          navigate("/super-admin", { replace: true });
+        } else if (res.user.email_verified_at) {
           navigate("/dashboard", { replace: true });
         } else {
           navigate(`/verify-email?email=${encodeURIComponent(res.user.email)}`, { replace: true });
@@ -72,7 +81,11 @@ export default function LoginPage() {
           : { challenge_token: challengeToken, code },
       });
       setAuth(res.token, res.user);
-      navigate("/dashboard", { replace: true });
+      if (res.user.is_super_admin) {
+        navigate("/super-admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code");
     } finally {

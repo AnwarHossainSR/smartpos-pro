@@ -2,7 +2,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText, Percent,
   LayoutGrid, Tag, TruckIcon, UsersRound, Landmark, PieChart, CircleUserRound, FlaskConical, Layers, Building2,
-  Barcode, ClipboardList, AlertTriangle, Shield,
+  Barcode, ClipboardList, AlertTriangle, Shield, DollarSign,
 } from "lucide-react";
 
 export interface NavItem {
@@ -108,4 +108,24 @@ export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 /** Looks up the `nav.*` i18n key for the route a pathname belongs to. */
 export function navKeyForPathname(pathname: string): string | undefined {
   return NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.key;
+}
+
+export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    key: "superAdmin",
+    groupIcon: Shield,
+    items: [
+      { href: "/super-admin/tenants", key: "tenants", icon: Building2 },
+      { href: "/super-admin/revenue", key: "revenue", icon: DollarSign },
+      { href: "/super-admin/impersonations", key: "impersonations", icon: Users },
+    ],
+  },
+];
+
+export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = SUPER_ADMIN_NAV_GROUPS.flatMap((g) => g.items);
+
+export function superAdminNavKeyForPathname(pathname: string): string | undefined {
+  return SUPER_ADMIN_NAV_ITEMS.find(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  )?.key;
 }

@@ -8,7 +8,7 @@ import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
 import { queryKeys } from "@/lib/query-keys";
-import { navKeyForPathname } from "@/lib/nav";
+import { navKeyForPathname, SUPER_ADMIN_NAV_GROUPS, superAdminNavKeyForPathname } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { RequirePermission } from "@/components/require-permission";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -116,7 +116,12 @@ export function AppShell() {
     return <ProfileUnavailableScreen />;
   }
 
-  const navKey = navKeyForPathname(pathname);
+  const isSuperAdmin = user?.is_super_admin ?? false;
+  const navGroups = isSuperAdmin ? SUPER_ADMIN_NAV_GROUPS : undefined;
+
+  const navKey = isSuperAdmin
+    ? superAdminNavKeyForPathname(pathname)
+    : navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
   return (
@@ -124,7 +129,7 @@ export function AppShell() {
       <ThemeSync />
       <OnboardingWizard />
       <div className="flex h-dvh overflow-hidden">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navGroups={navGroups} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
           <VerifyEmailBanner />

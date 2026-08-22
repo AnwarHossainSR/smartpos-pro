@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { ServerTheme } from "@/stores/theme";
 import { splitSlug, type PermissionSlug } from "@/lib/permissions";
 
@@ -24,7 +23,7 @@ export interface AuthUser {
 interface AuthState {
   token: string | null;
   user: AuthUser | null;
-  /** False until persisted state has been read back from localStorage / the token cookie. */
+  /** False until the token cookie has been read into memory. */
   hydrated: boolean;
   setAuth: (token: string, user: AuthUser) => void;
   setUser: (user: AuthUser) => void;
@@ -91,39 +90,24 @@ function writeTokenCookie(token: string | null) {
   }
 }
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set, get): AuthState => ({
-      token: null,
-      user: null,
-      hydrated: false,
-      setAuth: (token, user) => {
-        writeTokenCookie(token);
-        set({ token, user });
-      },
-      setUser: (user) => set({ user }),
-      setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
-      logout: () => {
-        writeTokenCookie(null);
-        set({ token: null, user: null });
-      },
-      can: (permission) => hasPermission(get().user, permission),
-      canAny: (permissions) =>
-        permissions.length === 0 ||
-        permissions.some((permission) => hasPermission(get().user, permission)),
-      canAll: (permissions) =>
-        permissions.every((permission) => hasPermission(get().user, permission)),
-    }),
-    {
-      name: "smartpos-auth",
-      // The token never touches localStorage — only `user` (for a flash-free reload);
-      // it's re-read from the cookie in setHydrated() once rehydration finishes.
-      partialize: (state: AuthState) => ({ user: state.user }),
-      // Runs after rehydration finishes, including when nothing was stored.
-      // `state` is undefined if rehydration threw, so fall back to the live
-      // store — otherwise guarded routes would spin forever.
-      onRehydrateStorage: () => (state) =>
-        (state ?? useAuth.getState()).setHydrated(),
-    },
-  ),
-);
+export const useAuth = create<AuthState>()((set, get): AuthState => ({
+  token: null,
+  user: null,
+  hydrated: false,
+  setAuth: (token, user) => {
+    writeTokenCookie(token);
+    set({ token, user });
+  },
+  setUser: (user) => set({ user }),
+  setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
+  logout: () => {
+    writeTokenCookie(null);
+    set({ token: null, user: null });
+  },
+  can: (permission) => hasPermission(get().user, permission),
+  canAny: (permissions) =>
+    permissions.length === 0 ||
+    permissions.some((permission) => hasPermission(get().user, permission)),
+  canAll: (permissions) =>
+    permissions.every((permission) => hasPermission(get().user, permission)),
+}));
