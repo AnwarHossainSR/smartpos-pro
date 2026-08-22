@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
-use App\Models\Business;
 use App\Models\Impersonation;
 use App\Models\Sale;
 use App\Models\Subscription;
@@ -43,7 +42,13 @@ class SuperAdminController extends Controller
 
     public function tenants(Request $request): JsonResponse
     {
-        $tenants = QueryPipeline::for(Tenant::withoutTenancy()->withCount(['users', 'businesses']), $request)
+        $tenants = QueryPipeline::for(
+            Tenant::withCount([
+                'users' => fn ($q) => $q->withoutTenancy(),
+                'businesses' => fn ($q) => $q->withoutTenancy(),
+            ]),
+            $request,
+        )
             ->search(['name', 'slug'])
             ->allow(AllowedFilter::enum('status', TenantStatus::class))
             ->sortable(['id', 'name', 'created_at'], default: '-id')
@@ -55,7 +60,9 @@ class SuperAdminController extends Controller
     public function indexTenants(Request $request): AnonymousResourceCollection
     {
         $tenants = QueryPipeline::for(
-            Tenant::withoutTenancy()->withCount('users')->with('businesses'),
+            Tenant::withCount([
+                'users' => fn ($q) => $q->withoutTenancy(),
+            ])->with(['businesses' => fn ($q) => $q->withoutTenancy()]),
             $request,
         )
             ->search(['name', 'slug'])
@@ -95,8 +102,10 @@ class SuperAdminController extends Controller
 
     public function showTenant(Tenant $tenant): JsonResponse
     {
-        $tenant->users_count = User::withoutTenancy()->where('tenant_id', $tenant->id)->count();
-        $tenant->businesses_count = Business::withoutTenancy()->where('tenant_id', $tenant->id)->count();
+        $tenant->loadCount([
+            'users' => fn ($q) => $q->withoutTenancy(),
+            'businesses' => fn ($q) => $q->withoutTenancy(),
+        ]);
 
         $subscription = Subscription::withoutTenancy()->where('tenant_id', $tenant->id)->with('plan')->latest()->first();
 
