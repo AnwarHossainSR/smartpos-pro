@@ -19,6 +19,7 @@ use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
 use App\Support\Tenancy\TenantContext;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -31,6 +32,8 @@ use Laravel\Sanctum\PersonalAccessToken;
  */
 class SuperAdminController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected AuditLogService $audit,
         protected ImpersonationService $impersonationService,
@@ -54,7 +57,7 @@ class SuperAdminController extends Controller
             ->sortable(['id', 'name', 'created_at'], default: '-id')
             ->paginate();
 
-        return response()->json($tenants);
+        return $this->success($tenants);
     }
 
     public function indexTenants(Request $request): AnonymousResourceCollection
@@ -74,14 +77,14 @@ class SuperAdminController extends Controller
 
     public function metrics(): JsonResponse
     {
-        return response()->json(['data' => [
+        return $this->success([
             'total_tenants' => Tenant::count(),
             'total_users' => User::withoutTenancy()->count(),
             'tenants_by_status' => Tenant::query()
                 ->select('status', \DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->pluck('count', 'status'),
-        ]]);
+        ]);
     }
 
     public function startImpersonation(Request $request): JsonResponse
@@ -93,11 +96,11 @@ class SuperAdminController extends Controller
         $targetUser = User::findOrFail($data['user_id']);
         $token = $this->impersonationService->start($request->user(), $targetUser->id);
 
-        return response()->json(['data' => [
+        return $this->created([
             'token' => $token,
             'user' => $targetUser->only('id', 'name', 'email'),
             'expires_at' => now()->addMinutes(60)->toISOString(),
-        ]]);
+        ]);
     }
 
     public function showTenant(Tenant $tenant): JsonResponse
@@ -114,10 +117,10 @@ class SuperAdminController extends Controller
             'users_count' => $tenant->users_count,
         ];
 
-        return response()->json(['data' => array_merge($tenant->toArray(), [
+        return $this->success(array_merge($tenant->toArray(), [
             'subscription' => $subscription,
             'usage' => $usage,
-        ])]);
+        ]));
     }
 
     public function suspendTenant(Request $request, Tenant $tenant): JsonResponse
@@ -129,7 +132,7 @@ class SuperAdminController extends Controller
 
         $this->audit->log('tenant.suspended', $tenant, null, ['tenant_id' => $tenant->id], $request->user(), $tenant->id);
 
-        return response()->json(['data' => $tenant]);
+        return $this->success($tenant, 'Tenant suspended.');
     }
 
     public function activateTenant(Request $request, Tenant $tenant): JsonResponse
@@ -138,14 +141,14 @@ class SuperAdminController extends Controller
 
         $this->audit->log('tenant.activated', $tenant, null, ['tenant_id' => $tenant->id], $request->user(), $tenant->id);
 
-        return response()->json(['data' => $tenant]);
+        return $this->success($tenant, 'Tenant activated.');
     }
 
     public function deleteTenant(Tenant $tenant): JsonResponse
     {
         $tenant->delete();
 
-        return response()->json(null, 204);
+        return $this->noContent();
     }
 
     // ------------------------------------------------------------------
@@ -175,14 +178,14 @@ class SuperAdminController extends Controller
             ->limit(20)
             ->get();
 
-        return response()->json(['data' => [
+        return $this->success([
             'total_mrr' => $totalMrr,
             'active_tenants' => $activeTenants,
             'suspended_tenants' => $suspendedTenants,
             'new_tenants_last_days' => $newTenants,
             'plan_distribution' => $planDistribution,
             'recent_subscriptions' => $recentSubscriptions,
-        ]]);
+        ]);
     }
 
     // ------------------------------------------------------------------
@@ -241,14 +244,12 @@ class SuperAdminController extends Controller
 
         Mail::to($owner)->queue(new ImpersonationStartedMail($owner, $data['reason'], $admin->name));
 
-        return response()->json([
-            'data' => [
-                'impersonation_id' => $impersonation->id,
-                'token' => $token->plainTextToken,
-                'tenant' => $tenant->only('id', 'name', 'slug'),
-                'user' => $owner->only('id', 'name', 'email'),
-                'expires_at' => $expiresAt->toISOString(),
-            ],
+        return $this->created([
+            'impersonation_id' => $impersonation->id,
+            'token' => $token->plainTextToken,
+            'tenant' => $tenant->only('id', 'name', 'slug'),
+            'user' => $owner->only('id', 'name', 'email'),
+            'expires_at' => $expiresAt->toISOString(),
         ]);
     }
 
@@ -260,14 +261,14 @@ class SuperAdminController extends Controller
         if ($token) {
             $this->impersonationService->stop($token);
 
-            return response()->json(['message' => 'Impersonation ended.']);
+            return $this->success(null, 'Impersonation ended.');
         }
 
         $tokenId = $request->user()->currentAccessToken()->id;
 
         $this->endImpersonation($tokenId, $request->user());
 
-        return response()->json(['message' => 'Impersonation ended.']);
+        return $this->success(null, 'Impersonation ended.');
     }
 
     /** Called from the super-admin's own session to revoke a live impersonation remotely. */
@@ -277,7 +278,7 @@ class SuperAdminController extends Controller
 
         $this->endImpersonation($record->personal_access_token_id, $request->user(), $record);
 
-        return response()->json(['message' => 'Impersonation revoked.']);
+        return $this->success(null, 'Impersonation revoked.');
     }
 
     /** Every impersonation currently in progress (not yet ended). */
@@ -288,7 +289,7 @@ class SuperAdminController extends Controller
             ->latest('started_at')
             ->get();
 
-        return response()->json(['data' => $records]);
+        return $this->success($records);
     }
 
     protected function endImpersonation(?string $tokenId, User $endedBy, ?Impersonation $record = null): void
