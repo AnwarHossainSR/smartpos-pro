@@ -34,6 +34,7 @@ export const PERMISSION_MATRIX = {
   stocktakes: ["view", "create", "update"],
   "reorder-suggestions": ["view", "create"],
   audit: ["view"],
+  "super-admin": ["tenants.view", "tenants.manage", "impersonate"],
   // `routes/api.php` guards /v1/tables with `permission:tables.*`, but the module is not in
   // PermissionCatalog yet, so no `tables.*` permission row exists and only owner/super-admin
   // pass the middleware. Listed here so the route guard and nav can express the intent.
@@ -83,10 +84,10 @@ interface RoutePermission {
 }
 
 const ROUTE_TABLE: RoutePermission[] = [
-  { prefix: "/super-admin/tenants", any: [] },
-  { prefix: "/super-admin/revenue", any: [] },
-  { prefix: "/super-admin/impersonations", any: [] },
-  { prefix: "/super-admin", any: [] },
+  { prefix: "/super-admin/tenants", any: ["super-admin.tenants.view"] },
+  { prefix: "/super-admin/revenue", any: ["super-admin.tenants.view"] },
+  { prefix: "/super-admin/impersonations", any: ["super-admin.impersonate"] },
+  { prefix: "/super-admin", any: ["super-admin.tenants.view"] },
   { prefix: "/dashboard", any: ["dashboard.view"] },
   { prefix: "/pos", any: ["pos.view"] },
   { prefix: "/sales", any: ["sales.view"] },
