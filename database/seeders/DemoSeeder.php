@@ -33,6 +33,11 @@ class DemoSeeder extends TransactionalSeeder
             'currency' => 'BDT',
         ]);
 
+        // Verify the demo user's email so they don't get stuck on the verification screen
+        if (! $owner->hasVerifiedEmail()) {
+            $owner->forceFill(['email_verified_at' => now()])->save();
+        }
+
         $tenantId = $owner->tenant_id;
         app(TenantContext::class)->set($tenantId);
 
