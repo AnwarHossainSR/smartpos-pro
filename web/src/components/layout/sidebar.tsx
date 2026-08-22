@@ -34,6 +34,7 @@ function useVisibleNavGroups(): NavGroup[] {
 interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
+  navGroups?: NavGroup[];
 }
 
 const ACTIVE_TINT = "color-mix(in oklab, var(--sidebar-active) 16%, transparent)";
@@ -230,14 +231,15 @@ function SidebarGroup({
   );
 }
 
-function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapsed: boolean }) {
+function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => void; collapsed: boolean; navGroups?: NavGroup[] }) {
   const { pathname } = useLocation();
   const t = useTranslation();
   const toggle = useSidebarStore((s) => s.toggle);
   const expandedGroup = useSidebarStore((s) => s.expandedGroup);
   const setExpandedGroup = useSidebarStore((s) => s.setExpandedGroup);
   const user = useAuth((s) => s.user);
-  const groups = useVisibleNavGroups();
+  const defaultGroups = useVisibleNavGroups();
+  const groups = navGroups ?? defaultGroups;
 
   const collapseLabel = t(collapsed ? "sidebar.expand" : "sidebar.collapse");
 
@@ -354,7 +356,7 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
   );
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, navGroups }: SidebarProps) {
   const collapsed = useSidebarStore((s) => s.collapsed);
 
   return (
@@ -365,14 +367,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           collapsed ? "w-[76px]" : "w-64",
         )}
       >
-        <SidebarContent collapsed={collapsed} />
+        <SidebarContent collapsed={collapsed} navGroups={navGroups} />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={onClose} />
           <aside className="relative h-full w-72 bg-[var(--sidebar-bg)] shadow-2xl">
-            <SidebarContent onClose={onClose} collapsed={false} />
+            <SidebarContent onClose={onClose} collapsed={false} navGroups={navGroups} />
           </aside>
         </div>
       )}
