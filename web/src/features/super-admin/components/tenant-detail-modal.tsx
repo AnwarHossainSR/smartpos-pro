@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, X } from "lucide-react";
 import { superAdminApi } from "../api";
 import { queryKeys } from "@/lib/query-keys";
+import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { TenantDetail } from "../types";
+import { EditTenantDialog, type EditTenantFormData } from "./edit-tenant-dialog";
 
 const TABS = ["Overview", "Businesses", "Users", "Products", "Sales", "Subscription"] as const;
 type Tab = (typeof TABS)[number];
@@ -32,7 +34,7 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function Overview({ d }: { d: TenantDetail }) {
+function Overview({ d, onEdit }: { d: TenantDetail; onEdit?: () => void }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -54,7 +56,17 @@ function Overview({ d }: { d: TenantDetail }) {
           label="Status"
           value={<Badge tone={d.status === "active" ? "success" : "danger"}>{d.status}</Badge>}
         />
-        <Row label="Plan" value={d.plan ?? "\u2014"} />
+        <Row
+          label="Plan"
+          value={
+            <span className="flex items-center gap-2">
+              {d.plan ?? "\u2014"}
+              <Button variant="ghost" size="icon" onClick={onEdit}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </span>
+          }
+        />
         <Row label="Currency" value={d.base_currency ?? "\u2014"} />
         <Row
           label="Created"
@@ -215,7 +227,7 @@ function Subscription({ d }: { d: TenantDetail }) {
   );
 }
 
-const TAB_COMPONENTS: Record<Tab, React.FC<{ d: TenantDetail }>> = {
+const TAB_COMPONENTS: Record<Tab, React.FC<{ d: TenantDetail; onEdit?: () => void }>> = {
   Overview,
   Businesses,
   Users,
@@ -231,11 +243,23 @@ interface Props {
 
 export function TenantDetailModal({ tenantId, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("Overview");
+  const [editing, setEditing] = useState(false);
+  const qc = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.superAdmin.tenantDetail(tenantId ?? undefined),
     queryFn: () => superAdminApi.tenants.detail(tenantId!),
     enabled: !!tenantId,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: EditTenantFormData) =>
+      superAdminApi.tenants.update(tenantId!, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.tenantDetail(tenantId ?? undefined) });
+      toast("Tenant updated", "success");
+      setEditing(false);
+    },
   });
 
   if (!tenantId) return null;
@@ -287,12 +311,19 @@ export function TenantDetailModal({ tenantId, onClose }: Props) {
           ) : query.isError ? (
             <p className="text-sm text-[var(--color-danger)]">Failed to load tenant details.</p>
           ) : detail ? (
-            <TabContent d={detail} />
+            <TabContent d={detail} onEdit={tab === "Overview" ? () => setEditing(true) : undefined} />
           ) : (
             <p className="text-sm text-[var(--muted)]">No data.</p>
           )}
         </div>
       </div>
+      <EditTenantDialog
+        key={detail?.id}
+        tenant={editing ? detail ?? null : null}
+        onClose={() => setEditing(false)}
+        onSubmit={(data) => updateMutation.mutate(data)}
+        loading={updateMutation.isPending}
+      />
     </div>
   );
 }

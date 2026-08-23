@@ -28,6 +28,11 @@ export const superAdminApi = {
       api<{ data: Tenant }>(`/super/tenants/${id}/suspend`, { method: "POST" }),
     activate: (id: string) =>
       api<{ data: Tenant }>(`/super/tenants/${id}/activate`, { method: "POST" }),
+    update: (id: string, data: { name?: string; plan?: string; trial_ends_at?: string | null; base_currency?: string }) =>
+      api<{ data: Tenant }>(`/super/tenants/${id}`, {
+        method: "PUT",
+        body: data,
+      }),
     remove: (id: string) =>
       api<void>(`/super/tenants/${id}`, { method: "DELETE" }),
     impersonate: (id: string, reason: string) =>
