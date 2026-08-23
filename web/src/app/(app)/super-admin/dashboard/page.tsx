@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Activity, CreditCard } from "lucide-react";
 import { queryKeys } from "@/lib/query-keys";
 import { superAdminApi } from "@/features/super-admin";
-import { useTenants, useUsers, useTenantMutations } from "@/features/super-admin/hooks";
+import { useUsers, useTenantMutations } from "@/features/super-admin/hooks";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,12 +37,6 @@ export default function SuperAdminDashboardPage() {
     queryFn: () => superAdminApi.revenue.metrics(),
   });
 
-  const { data: impersonationsData, isLoading: impersonationsLoading } = useQuery({
-    queryKey: queryKeys.superAdmin.impersonations(),
-    queryFn: () => superAdminApi.impersonations.list(),
-  });
-
-  const tenantList = useTenants();
   const userList = useUsers();
 
   const { data: auditData, isLoading: auditLoading } = useQuery({
@@ -53,12 +47,11 @@ export default function SuperAdminDashboardPage() {
   const m = metricsData?.data;
   const totalTenants = (m?.active_tenants ?? 0) + (m?.suspended_tenants ?? 0);
   const totalUsers = userList.meta?.total ?? 0;
-  const activeImpersonations = impersonationsData?.data?.filter((i) => !i.ended_at).length ?? 0;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Tenants" value={formatNumber(totalTenants)} loading={metricsLoading || tenantList.isLoading} />
+        <StatCard label="Total Tenants" value={formatNumber(totalTenants)} loading={metricsLoading} />
         <StatCard label="Active Tenants" value={formatNumber(m?.active_tenants ?? 0)} loading={metricsLoading} tone="success" />
         <StatCard label="Total Users" value={formatNumber(totalUsers)} loading={userList.isLoading} />
         <StatCard label="MRR" value={formatCurrency(m?.total_mrr ?? 0)} loading={metricsLoading} tone="success" />
