@@ -85,13 +85,22 @@ class SuperAdminController extends Controller
             'currency' => $data['base_currency'] ?? 'USD',
         ]);
 
-        return $this->created(new TenantResource($owner->tenant));
+        $tenant = $owner->tenant;
+        $this->audit->log('tenant.created', $tenant, null, [
+            'name' => $tenant->name,
+            'slug' => $tenant->slug,
+        ], $request->user(), $tenant->id);
+
+        return $this->created(new TenantResource($tenant));
     }
 
     public function update(UpdateTenantRequest $request, Tenant $tenant): JsonResponse
     {
         $data = $request->validated();
+        $oldValues = $tenant->only(array_keys($data));
         $tenant->update($data);
+
+        $this->audit->log('tenant.updated', $tenant, $oldValues, $tenant->only(array_keys($data)), $request->user(), $tenant->id);
 
         $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
 
@@ -133,6 +142,10 @@ class SuperAdminController extends Controller
 
         $targetUser = User::findOrFail($data['user_id']);
         $token = $this->impersonationService->start($request->user(), $targetUser->id);
+
+        $this->audit->log('impersonation.started', null, null, [
+            'target_user_id' => $targetUser->id,
+        ], $request->user(), $targetUser->tenant_id);
 
         return $this->created([
             'token' => $token,
@@ -547,13 +560,22 @@ class SuperAdminController extends Controller
 
         $plan = Plan::create($data);
 
+        $this->audit->log('plan.created', $plan, null, [
+            'name' => $plan->name,
+            'slug' => $plan->slug,
+            'price' => $plan->price,
+        ]);
+
         return $this->created($plan);
     }
 
     public function updatePlan(CreatePlanRequest $request, string $id): JsonResponse
     {
         $plan = Plan::findOrFail($id);
+        $oldValues = $plan->only(array_keys($request->validated()));
         $plan->update($request->validated());
+
+        $this->audit->log('plan.updated', $plan, $oldValues, $plan->fresh()->only(array_keys($request->validated())));
 
         return $this->success($plan->fresh());
     }
@@ -561,7 +583,10 @@ class SuperAdminController extends Controller
     public function destroyPlan(string $id): JsonResponse
     {
         $plan = Plan::findOrFail($id);
+        $planData = $plan->only('id', 'name', 'slug', 'price');
         $plan->delete();
+
+        $this->audit->log('plan.deleted', $plan, $planData, null);
 
         return $this->noContent();
     }
@@ -581,12 +606,14 @@ class SuperAdminController extends Controller
             ->first();
 
         if ($subscription) {
+            $oldPlanId = $subscription->plan_id;
             $subscription->update([
                 'plan_id' => $data['plan_id'],
                 'status' => 'active',
                 'current_period_ends_at' => $data['plan_expires_at'] ?? $subscription->current_period_ends_at,
             ]);
         } else {
+            $oldPlanId = null;
             Subscription::withoutTenancy()->create([
                 'tenant_id' => $tenantId,
                 'plan_id' => $data['plan_id'],
@@ -597,6 +624,11 @@ class SuperAdminController extends Controller
 
         $plan = Plan::find($data['plan_id']);
         $tenant->update(['plan' => $plan->slug]);
+
+        $this->audit->log('plan.assigned', $tenant, ['plan_id' => $oldPlanId], [
+            'plan_id' => $data['plan_id'],
+            'plan_slug' => $plan->slug,
+        ], $request->user(), $tenantId);
 
         return $this->success([
             'tenant_id' => $tenantId,
