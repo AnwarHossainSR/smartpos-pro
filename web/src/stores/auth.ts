@@ -130,10 +130,12 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
   setUser: (user) => set({ user }),
   setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
   logout: () => {
-    // Clear all cookies
+    // Clear app cookies only
     document.cookie.split(";").forEach((c) => {
       const name = c.split("=")[0].trim();
-      document.cookie = `${name}=; Path=/; Max-Age=0`;
+      if (name.startsWith("smartpos_")) {
+        document.cookie = `${name}=; Path=/; Max-Age=0`;
+      }
     });
     // Clear browser storage
     localStorage.clear();
