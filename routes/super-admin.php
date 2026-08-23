@@ -9,6 +9,7 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::get('tenants/{tenant}', [SuperAdminController::class, 'showTenant']);
         Route::get('metrics', [SuperAdminController::class, 'metrics']);
         Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
+        Route::get('health', [SuperAdminController::class, 'health']);
         Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
     });
 
@@ -26,6 +27,10 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::post('impersonate', [SuperAdminController::class, 'startImpersonation']);
         Route::delete('impersonate', [SuperAdminController::class, 'stopImpersonation']);
         Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
+    });
+
+    Route::middleware('permission:super-admin.audit.view')->group(function () {
+        Route::get('audit-logs', [SuperAdminController::class, 'auditLogs']);
     });
 
     Route::middleware('permission:super-admin.users.manage')->group(function () {

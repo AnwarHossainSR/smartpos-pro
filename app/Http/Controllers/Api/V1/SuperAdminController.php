@@ -7,10 +7,12 @@ use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SuperAdmin\CreateTenantRequest;
 use App\Http\Requests\SuperAdmin\UpdateTenantRequest;
+use App\Http\Resources\AuditLogResource;
 use App\Http\Resources\TenantResource;
 use App\Http\Resources\UserResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
+use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Impersonation;
@@ -425,6 +427,103 @@ class SuperAdminController extends Controller
                 'target_user_id' => $record->target_user_id,
             ], $endedBy, $record->tenant_id);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // T10 — Audit log viewer
+    // ------------------------------------------------------------------
+
+    public function auditLogs(Request $request): JsonResponse
+    {
+        $query = AuditLog::withoutTenancy()
+            ->with('user:id,name,email')
+            ->with('tenant:id,name');
+
+        if ($action = $request->input('action')) {
+            $query->where('action', $action);
+        }
+
+        if ($userId = $request->input('user_id')) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($tenantId = $request->input('tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        if ($from = $request->input('from')) {
+            $query->where('created_at', '>=', $from);
+        }
+
+        if ($to = $request->input('to')) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 30));
+
+        return $this->success(AuditLogResource::collection($logs));
+    }
+
+    // ------------------------------------------------------------------
+    // T12 — System health
+    // ------------------------------------------------------------------
+
+    public function health(): JsonResponse
+    {
+        $dbSize = 0;
+        try {
+            $result = \DB::select('SELECT pg_database_size(current_database()) as size');
+            $dbSize = $result[0]->size ?? 0;
+        } catch (\Throwable) {
+            try {
+                $path = \DB::getDatabasePath();
+                $dbSize = file_exists($path) ? filesize($path) : 0;
+            } catch (\Throwable) {
+            }
+        }
+
+        $pendingJobs = 0;
+        $failedJobs = 0;
+        try {
+            $pendingJobs = \DB::table('jobs')->count();
+            $failedJobs = \DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+        }
+
+        $cacheDriver = config('cache.default');
+        $cacheWorking = true;
+        try {
+            cache()->put('__health_check', true);
+            $cacheWorking = cache()->get('__health_check') === true;
+        } catch (\Throwable) {
+            $cacheWorking = false;
+        }
+
+        $diskTotal = @disk_total_space('/') ?: 0;
+        $diskFree = @disk_free_space('/') ?: 0;
+
+        return $this->success([
+            'php_version' => PHP_VERSION,
+            'laravel_version' => app()->version(),
+            'database' => [
+                'connected' => \DB::getPdo() !== null,
+                'size_mb' => round($dbSize / 1024 / 1024, 2),
+            ],
+            'queue' => [
+                'connection' => config('queue.default'),
+                'pending' => $pendingJobs,
+                'failed' => $failedJobs,
+            ],
+            'cache' => [
+                'driver' => $cacheDriver,
+                'working' => $cacheWorking,
+            ],
+            'storage' => [
+                'total_mb' => round($diskTotal / 1024 / 1024, 0),
+                'free_mb' => round($diskFree / 1024 / 1024, 0),
+            ],
+        ]);
     }
 
     // ------------------------------------------------------------------
