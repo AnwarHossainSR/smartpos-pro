@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\CacheController;
 use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController;
 use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController;
 use App\Http\Controllers\Api\V1\SuperAdmin\PlanController;
+use App\Http\Controllers\Api\V1\SuperAdmin\SupportController;
 use App\Http\Controllers\Api\V1\SuperAdmin\TenantController;
 use App\Http\Controllers\Api\V1\SuperAdmin\UserController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
@@ -40,6 +41,20 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::put('plans/{id}', [PlanController::class, 'updatePlan']);
         Route::delete('plans/{id}', [PlanController::class, 'destroyPlan']);
         Route::post('tenants/{tenantId}/assign-plan', [PlanController::class, 'assignPlan']);
+    });
+
+    Route::middleware('permission:super-admin.support.view')->group(function () {
+        Route::get('support/tickets', [SupportController::class, 'index']);
+        Route::get('support/tickets/metrics', [SupportController::class, 'metrics']);
+        Route::get('support/agents', [SupportController::class, 'agents']);
+        Route::get('support/tickets/{id}', [SupportController::class, 'show']);
+    });
+
+    Route::middleware('permission:super-admin.support.manage')->group(function () {
+        Route::put('support/tickets/{id}/status', [SupportController::class, 'updateStatus']);
+        Route::put('support/tickets/{id}/assign', [SupportController::class, 'assign']);
+        Route::put('support/tickets/{id}/unassign', [SupportController::class, 'unassign']);
+        Route::post('support/tickets/{id}/notes', [SupportController::class, 'addInternalNote']);
     });
 
     Route::middleware('permission:super-admin.audit.view')->group(function () {
