@@ -8,6 +8,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { SupportTicketDetailModal } from "./support-ticket-detail-modal";
 import type { SupportTicket, TicketMetrics } from "../types";
 
 type TicketFilters = { status: string; priority: string };
@@ -84,8 +85,7 @@ function MetricsCards({ metrics }: { metrics: TicketMetrics | undefined }) {
 }
 
 export function SupportTicketList() {
-  // TODO: Task 8 will implement the detail modal
-  const [_viewingId, setViewingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
@@ -264,6 +264,10 @@ export function SupportTicketList() {
           />
         )}
       </div>
+      <SupportTicketDetailModal
+        ticketId={viewingId}
+        onClose={() => setViewingId(null)}
+      />
     </div>
   );
 }

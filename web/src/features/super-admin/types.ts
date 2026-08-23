@@ -37,6 +37,7 @@ export interface SupportTicket {
   last_reply_at: string | null;
   user?: SupportTicketUser;
   assigned_to?: SupportTicketAssignedTo;
+  replies?: TicketReply[];
   replies_count: number;
   created_at: string;
   updated_at: string;
