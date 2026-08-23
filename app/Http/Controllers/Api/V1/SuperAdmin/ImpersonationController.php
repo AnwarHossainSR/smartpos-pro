@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
 use App\Models\Impersonation;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
 use App\Services\SuperAdmin\ImpersonationService;
@@ -55,9 +56,11 @@ class ImpersonationController extends Controller
         ]);
 
         $admin = $request->user();
+        $tenantId = is_string($tenant) ? $tenant : $tenant->id;
+        $tenantModel = is_string($tenant) ? Tenant::findOrFail($tenant) : $tenant;
 
-        $owner = app(TenantContext::class)->runAs($tenant->id, fn () => User::withoutTenancy()
-            ->where('tenant_id', $tenant->id)
+        $owner = app(TenantContext::class)->runAs($tenantId, fn () => User::withoutGlobalScope(TenantScope::class)
+            ->where('tenant_id', $tenantId)
             ->whereHas('roles', fn ($q) => $q->withoutGlobalScope(TenantScope::class)->where('name', 'owner'))
             ->firstOrFail());
 
@@ -69,7 +72,7 @@ class ImpersonationController extends Controller
         );
 
         $impersonation = Impersonation::create([
-            'tenant_id' => $tenant->id,
+            'tenant_id' => $tenantId,
             'super_admin_id' => $admin->id,
             'target_user_id' => $owner->id,
             'personal_access_token_id' => $token->accessToken->id,
@@ -78,13 +81,13 @@ class ImpersonationController extends Controller
         ]);
 
         $this->audit->log('impersonation.started', $impersonation, null, [
-            'tenant_id' => $tenant->id,
+            'tenant_id' => $tenantId,
             'target_user_id' => $owner->id,
             'reason' => $data['reason'],
-        ], $admin, $tenant->id);
+        ], $admin, $tenantId);
 
         AppNotification::create([
-            'tenant_id' => $tenant->id,
+            'tenant_id' => $tenantId,
             'user_id' => $owner->id,
             'type' => 'impersonation.started',
             'title' => 'Support accessed your account',
@@ -97,7 +100,7 @@ class ImpersonationController extends Controller
         return $this->created([
             'impersonation_id' => $impersonation->id,
             'token' => $token->plainTextToken,
-            'tenant' => $tenant->only('id', 'name', 'slug'),
+            'tenant' => $tenantModel->only('id', 'name', 'slug'),
             'user' => $owner->only('id', 'name', 'email'),
             'expires_at' => $expiresAt->toISOString(),
         ]);

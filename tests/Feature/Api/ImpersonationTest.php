@@ -49,7 +49,7 @@ class ImpersonationTest extends TestCase
 
         $response = $this->postJson("/api/v1/super/tenants/{$owner->tenant_id}/impersonate", [
             'reason' => 'Investigating a billing discrepancy ticket #482',
-        ])->assertOk();
+        ])->assertCreated();
 
         $plainToken = $response->json('data.token');
         $tokenId = explode('|', $plainToken)[0];
