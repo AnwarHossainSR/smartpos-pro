@@ -64,6 +64,30 @@ Skip for now — use the enum in `support_tickets.category`.
 | POST | `/v1/super/support/tickets/{id}/notes` | `super-admin.support.manage` | Add internal note (not visible to tenant) |
 | POST | `/v1/super/support/tickets/{id}/assign` | `super-admin.support.manage` | Assign to self or another admin |
 
+## Super Admin Controller Architecture
+
+The current `SuperAdminController` (~700 lines) is too large. Split it into domain-specific controllers inside `app/Http/Controllers/Api/V1/SuperAdmin/`:
+
+| Controller | Methods | Responsibility |
+|-----------|---------|----------------|
+| `SuperAdminController.php` (keep) | `dashboard`, `health` | Stats & system health |
+| `TenantController.php` | `index`, `store`, `update`, `suspend`, `activate` | Tenant CRUD & lifecycle |
+| `UserController.php` | `indexUsers`, `showUser`, `updateUserStatus`, `forceLogoutUser` | Cross-tenant user management |
+| `ImpersonationController.php` | `startImpersonation`, `stopImpersonation` | Impersonation flow |
+| `PlanController.php` | `listPlans`, `storePlan`, `updatePlan`, `destroyPlan`, `assignPlan` | Plan CRUD & assignment |
+| `AuditLogController.php` | `auditLogs` | Audit log viewer |
+| `SupportTicketController.php` | `index`, `show`, `update`, `reply`, `addNote`, `assign` | Support ticket management |
+
+Route file stays as `routes/super-admin.php` — controllers are just reorganized under a namespace. Update the `use` imports in the route file.
+
+### Migration path
+
+1. Create `app/Http/Controllers/Api/V1/SuperAdmin/` directory
+2. Move each method body to its new controller
+3. Update `routes/super-admin.php` to reference new controllers
+4. Keep the old `SuperAdminController` as a thin shell until all methods are migrated, then delete it
+5. Run `php artisan test --filter=SuperAdmin` after each controller move to catch regressions
+
 ## SLA Logic
 
 Priority → response time SLA:
