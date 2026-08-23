@@ -1,24 +1,25 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CacheController;
+use App\Http\Controllers\Api\V1\SuperAdmin\TenantController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 
 Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
     Route::middleware('permission:super-admin.tenants.view')->group(function () {
-        Route::get('tenants', [SuperAdminController::class, 'indexTenants']);
-        Route::get('tenants/{tenant}', [SuperAdminController::class, 'showTenant']);
-        Route::get('metrics', [SuperAdminController::class, 'metrics']);
+        Route::get('tenants', [TenantController::class, 'index']);
+        Route::get('tenants/{tenant}', [TenantController::class, 'show']);
+        Route::get('metrics', [TenantController::class, 'metrics']);
         Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
         Route::get('health', [SuperAdminController::class, 'health']);
         Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
     });
 
     Route::middleware('permission:super-admin.tenants.manage')->group(function () {
-        Route::post('tenants', [SuperAdminController::class, 'store']);
-        Route::put('tenants/{tenant}', [SuperAdminController::class, 'update']);
-        Route::post('tenants/{tenant}/suspend', [SuperAdminController::class, 'suspendTenant']);
-        Route::post('tenants/{tenant}/activate', [SuperAdminController::class, 'activateTenant']);
-        Route::delete('tenants/{tenant}', [SuperAdminController::class, 'deleteTenant']);
+        Route::post('tenants', [TenantController::class, 'store']);
+        Route::put('tenants/{tenant}', [TenantController::class, 'update']);
+        Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend']);
+        Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate']);
+        Route::delete('tenants/{tenant}', [TenantController::class, 'destroy']);
     });
 
     Route::middleware('permission:super-admin.impersonate')->group(function () {
