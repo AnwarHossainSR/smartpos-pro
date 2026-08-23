@@ -1,6 +1,17 @@
 import { api, type Paginated } from "@/lib/api";
 import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
-import type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlatformUser, AuditLog, SystemHealth, SuperAdminPlan } from "./types";
+import type {
+  Tenant,
+  TenantDetail,
+  RevenueMetrics,
+  Impersonation,
+  PlatformUser,
+  AuditLog,
+  SystemHealth,
+  SuperAdminPlan,
+  SupportTicket,
+  TicketMetrics,
+} from "./types";
 
 export type TenantFilters = { status: string };
 
@@ -103,3 +114,57 @@ export const superAdminApi = {
       api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
   },
 };
+
+// Support Ticket API
+export async function getSupportTickets(params?: Record<string, string | number | undefined>) {
+  const searchParams = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") {
+        searchParams.set(key, String(value));
+      }
+    });
+  }
+  const qs = searchParams.toString();
+  return api<Paginated<SupportTicket>>(`/super-admin/support/tickets${qs ? `?${qs}` : ""}`);
+}
+
+export async function getSupportTicket(id: string) {
+  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}`);
+}
+
+export async function updateTicketStatus(id: string, status: string) {
+  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/status`, {
+    method: "PUT",
+    body: { status },
+  });
+}
+
+export async function assignTicket(id: string, assignedTo: string) {
+  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/assign`, {
+    method: "PUT",
+    body: { assigned_to: assignedTo },
+  });
+}
+
+export async function unassignTicket(id: string) {
+  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/unassign`, {
+    method: "PUT",
+  });
+}
+
+export async function addInternalNote(id: string, message: string) {
+  return api<{ data: import("./types").TicketReply }>(`/super-admin/support/tickets/${id}/notes`, {
+    method: "POST",
+    body: { message },
+  });
+}
+
+export async function getTicketMetrics(tenantId?: string) {
+  const qs = tenantId ? `?tenant_id=${tenantId}` : "";
+  return api<{ data: TicketMetrics }>(`/super-admin/support/tickets/metrics${qs}`);
+}
+
+export async function getSupportAgents() {
+  return api<{ data: Array<{ id: string; name: string }> }>("/super-admin/support/agents");
+}

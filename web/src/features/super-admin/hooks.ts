@@ -2,7 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/toast";
 import { useResourceList } from "@/lib/use-resource-list";
 import { queryKeys } from "@/lib/query-keys";
-import { superAdminApi } from "./api";
+import {
+  superAdminApi,
+  getSupportTickets,
+  getSupportTicket,
+  updateTicketStatus,
+  assignTicket,
+  unassignTicket,
+  addInternalNote,
+  getTicketMetrics,
+  getSupportAgents,
+} from "./api";
 
 export function useTenants() {
   return useResourceList({
@@ -157,4 +167,79 @@ export function usePlanMutations() {
   });
 
   return { create, update, remove };
+}
+
+// Support Ticket hooks
+export function useSupportTickets(params?: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: ["super-admin", "support-tickets", params],
+    queryFn: () => getSupportTickets(params),
+  });
+}
+
+export function useSupportTicket(id: string | null) {
+  return useQuery({
+    queryKey: ["super-admin", "support-ticket", id],
+    queryFn: () => getSupportTicket(id!),
+    enabled: !!id,
+  });
+}
+
+export function useTicketMetrics(tenantId?: string) {
+  return useQuery({
+    queryKey: ["super-admin", "ticket-metrics", tenantId],
+    queryFn: () => getTicketMetrics(tenantId),
+  });
+}
+
+export function useSupportAgents() {
+  return useQuery({
+    queryKey: ["super-admin", "support-agents"],
+    queryFn: () => getSupportAgents(),
+  });
+}
+
+export function useUpdateTicketStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateTicketStatus(id, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
+      qc.invalidateQueries({ queryKey: ["super-admin", "ticket-metrics"] });
+      toast("Ticket status updated", "success");
+    },
+  });
+}
+
+export function useAssignTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) => assignTicket(id, assignedTo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
+      toast("Ticket assigned", "success");
+    },
+  });
+}
+
+export function useUnassignTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unassignTicket(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
+      toast("Ticket unassigned", "success");
+    },
+  });
+}
+
+export function useAddInternalNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, message }: { id: string; message: string }) => addInternalNote(id, message),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
+      toast("Internal note added", "success");
+    },
+  });
 }
