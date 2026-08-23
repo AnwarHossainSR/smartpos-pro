@@ -27,6 +27,13 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::delete('impersonate', [SuperAdminController::class, 'stopImpersonation']);
         Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
     });
+
+    Route::middleware('permission:super-admin.users.manage')->group(function () {
+        Route::get('users', [SuperAdminController::class, 'indexUsers']);
+        Route::get('users/{user}', [SuperAdminController::class, 'showUser']);
+        Route::put('users/{user}/status', [SuperAdminController::class, 'updateUserStatus']);
+        Route::post('users/{user}/force-logout', [SuperAdminController::class, 'forceLogoutUser']);
+    });
 });
 
 Route::get('cache/flush', [CacheController::class, 'flush'])

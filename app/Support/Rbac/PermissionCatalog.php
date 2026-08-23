@@ -41,7 +41,7 @@ class PermissionCatalog
         'stocktakes' => ['view', 'create', 'update'],
         'reorder-suggestions' => ['view', 'create'],
         'audit' => ['view'],
-        'super-admin' => ['tenants.view', 'tenants.manage', 'tenants.create', 'impersonate'],
+        'super-admin' => ['tenants.view', 'tenants.manage', 'tenants.create', 'users.manage', 'impersonate'],
     ];
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SuperAdmin\CreateTenantRequest;
 use App\Http\Requests\SuperAdmin\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
+use App\Http\Resources\UserResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
 use App\Models\Branch;
@@ -424,5 +425,60 @@ class SuperAdminController extends Controller
                 'target_user_id' => $record->target_user_id,
             ], $endedBy, $record->tenant_id);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // T8 — Cross-tenant user management
+    // ------------------------------------------------------------------
+
+    public function indexUsers(Request $request): JsonResponse
+    {
+        $query = User::withoutTenancy()
+            ->with('tenant:id,name')
+            ->with('roles:id,name');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $users = $query->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
+            ->paginate($request->input('per_page', 20));
+
+        return $this->success(UserResource::collection($users));
+    }
+
+    public function showUser(string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->with('tenant:id,name', 'roles:id,name')->findOrFail($id);
+
+        return $this->success(new UserResource($user));
+    }
+
+    public function updateUserStatus(Request $request, string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:active,invited,suspended'],
+        ]);
+
+        $user->update(['status' => $validated['status']]);
+
+        return $this->success(new UserResource($user->fresh()));
+    }
+
+    public function forceLogoutUser(string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->findOrFail($id);
+        $user->tokens()->delete();
+
+        return $this->success(null, 'User logged out from all devices.');
     }
 }
