@@ -9,7 +9,7 @@ use App\Http\Resources\SupportTicketResource;
 use App\Http\Resources\TicketReplyResource;
 use App\Models\SupportTicket;
 use App\Models\TicketReply;
-use App\Scopes\TenantScope;
+use App\Support\Scopes\TenantScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
