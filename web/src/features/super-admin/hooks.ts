@@ -13,6 +13,7 @@ import {
   getTicketMetrics,
   getSupportAgents,
 } from "./api";
+import type { TicketMetrics } from "./types";
 
 export function useTenants() {
   return useResourceList({
@@ -186,7 +187,7 @@ export function useSupportTicket(id: string | null) {
 }
 
 export function useTicketMetrics(tenantId?: string) {
-  return useQuery({
+  return useQuery<{ data: TicketMetrics }>({
     queryKey: ["super-admin", "ticket-metrics", tenantId],
     queryFn: () => getTicketMetrics(tenantId),
   });

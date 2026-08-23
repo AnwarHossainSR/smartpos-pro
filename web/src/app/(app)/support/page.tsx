@@ -162,7 +162,7 @@ function TicketList({
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
