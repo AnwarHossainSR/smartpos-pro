@@ -42,7 +42,7 @@ class SupportTicketController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')
             ->paginate($request->input('per_page', 20));
 
-        return $this->success(SupportTicketResource::collection($tickets));
+        return SupportTicketResource::collection($tickets);
     }
 
     public function store(CreateTicketRequest $request): JsonResponse
@@ -82,7 +82,7 @@ class SupportTicketController extends Controller
             ->orderBy('created_at', 'asc')
             ->paginate($request->input('per_page', 50));
 
-        return $this->success(TicketReplyResource::collection($replies));
+        return TicketReplyResource::collection($replies);
     }
 
     public function reply(ReplyTicketRequest $request, string $id): JsonResponse

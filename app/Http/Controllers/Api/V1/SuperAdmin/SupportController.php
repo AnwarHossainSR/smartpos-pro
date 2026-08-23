@@ -59,7 +59,7 @@ class SupportController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')
             ->paginate($request->input('per_page', 20));
 
-        return $this->success(SupportTicketResource::collection($tickets));
+        return SupportTicketResource::collection($tickets);
     }
 
     public function show(string $id)
