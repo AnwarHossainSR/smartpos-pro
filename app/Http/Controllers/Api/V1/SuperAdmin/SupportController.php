@@ -21,7 +21,7 @@ class SupportController extends Controller
     {
         return SupportTicket::withoutTenancy()
             ->with([
-                'user:id,name,email',
+                'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
                 'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
             ])
             ->withCount('replies')
@@ -32,7 +32,7 @@ class SupportController extends Controller
     {
         $query = SupportTicket::withoutTenancy()
             ->with([
-                'user:id,name,email',
+                'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
                 'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
             ])
             ->withCount('replies');
@@ -124,10 +124,9 @@ class SupportController extends Controller
     {
         $agents = User::withoutTenancy()
             ->select('id', 'name', 'email')
-            ->where('role', 'admin')
             ->get();
 
-        return $this->success($agents);
+        return $agents;
     }
 
     public function metrics(Request $request)
