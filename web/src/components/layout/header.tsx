@@ -41,6 +41,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const t = useTranslation();
   const qc = useQueryClient();
   const logout = useAuth((s) => s.logout);
+  const user = useAuth((s) => s.user);
   const { theme, setTheme, palette } = useThemeStore();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -124,34 +125,36 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
-          {/* Clock in/out pill */}
-          <button
-            onClick={() => isClockedIn ? clockOutMutation.mutate() : clockInMutation.mutate()}
-            disabled={clockInMutation.isPending || clockOutMutation.isPending}
-            className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
-              isClockedIn
-                ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
-                : "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
-            }`}
-            title={isClockedIn ? t("header.clockOut") : t("header.clockIn")}
-          >
-            {isClockedIn ? (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-                </span>
-                <Clock className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{formatElapsed(elapsed)}</span>
-                <LogOutIcon className="h-3.5 w-3.5 sm:hidden" />
-              </>
-            ) : (
-              <>
-                <LogIn className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{t("header.clockIn")}</span>
-              </>
-            )}
-          </button>
+          {/* Clock in/out pill — hidden for super admin */}
+          {!user?.is_super_admin && (
+            <button
+              onClick={() => isClockedIn ? clockOutMutation.mutate() : clockInMutation.mutate()}
+              disabled={clockInMutation.isPending || clockOutMutation.isPending}
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                isClockedIn
+                  ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
+                  : "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              }`}
+              title={isClockedIn ? t("header.clockOut") : t("header.clockIn")}
+            >
+              {isClockedIn ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                  </span>
+                  <Clock className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{formatElapsed(elapsed)}</span>
+                  <LogOutIcon className="h-3.5 w-3.5 sm:hidden" />
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t("header.clockIn")}</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Search / command palette */}
           <button

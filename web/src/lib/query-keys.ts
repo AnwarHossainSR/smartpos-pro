@@ -164,6 +164,13 @@ export const queryKeys = {
   },
   orderStatus: (token: string | undefined) => ["order-status", token ?? ""] as const,
 
+  /* ---- support (tenant-scoped) ---- */
+  support: {
+    all: ["support"] as const,
+    tickets: (params?: ListParams) => ["support", "tickets", params ?? {}] as const,
+    ticket: (id: string | undefined) => ["support", "ticket", id ?? ""] as const,
+  },
+
   /* ---- super admin ---- */
   superAdmin: {
     all: ["super-admin"] as const,
