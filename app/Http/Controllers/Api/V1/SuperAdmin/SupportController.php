@@ -91,7 +91,9 @@ class SupportController extends Controller
 
         $ticket->update(['last_reply_at' => now()]);
 
-        return $this->success(new TicketReplyResource($reply->load('user:id,name')), 'Reply sent', 201);
+        $reply->load(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
+
+        return $this->success(new TicketReplyResource($reply), 'Reply sent', 201);
     }
 
     public function addInternalNote(Request $request, string $id): JsonResponse
@@ -112,7 +114,9 @@ class SupportController extends Controller
 
         $ticket->update(['last_reply_at' => now()]);
 
-        return $this->success(new TicketReplyResource($reply->load('user:id,name')), 'Note added', 201);
+        $reply->load(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
+
+        return $this->success(new TicketReplyResource($reply), 'Note added', 201);
     }
 
     public function metrics(Request $request)
