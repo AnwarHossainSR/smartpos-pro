@@ -19,7 +19,7 @@ class CheckPermission
             ], 401));
         }
 
-        if ($user->is_super_admin) {
+        if ($user->is_super_admin ?? false) {
             return $next($request);
         }
 
