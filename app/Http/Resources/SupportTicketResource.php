@@ -27,6 +27,16 @@ class SupportTicketResource extends JsonResource
                 'id' => $this->assignedTo->id,
                 'name' => $this->assignedTo->name,
             ]),
+            'replies' => $this->whenLoaded('replies', fn () => $this->replies->map(fn ($r) => [
+                'id' => $r->id,
+                'message' => $r->message,
+                'is_internal' => $r->is_internal,
+                'user' => $r->relationLoaded('user') ? [
+                    'id' => $r->user->id,
+                    'name' => $r->user->name,
+                ] : null,
+                'created_at' => $r->created_at,
+            ])),
             'replies_count' => $this->whenCounted('replies'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
