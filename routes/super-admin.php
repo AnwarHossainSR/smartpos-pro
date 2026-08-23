@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CacheController;
+use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController;
+use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController;
+use App\Http\Controllers\Api\V1\SuperAdmin\PlanController;
 use App\Http\Controllers\Api\V1\SuperAdmin\TenantController;
+use App\Http\Controllers\Api\V1\SuperAdmin\UserController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 
 Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
@@ -11,7 +15,7 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::get('metrics', [TenantController::class, 'metrics']);
         Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
         Route::get('health', [SuperAdminController::class, 'health']);
-        Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
+        Route::get('impersonations', [ImpersonationController::class, 'activeImpersonations']);
     });
 
     Route::middleware('permission:super-admin.tenants.manage')->group(function () {
@@ -23,30 +27,30 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::middleware('permission:super-admin.impersonate')->group(function () {
-        Route::post('tenants/{tenant}/impersonate', [SuperAdminController::class, 'impersonate']);
-        Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
-        Route::post('impersonate', [SuperAdminController::class, 'startImpersonation']);
-        Route::delete('impersonate', [SuperAdminController::class, 'stopImpersonation']);
-        Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
+        Route::post('tenants/{tenant}/impersonate', [ImpersonationController::class, 'impersonate']);
+        Route::post('impersonation/{impersonation}/revoke', [ImpersonationController::class, 'revokeImpersonation']);
+        Route::post('impersonate', [ImpersonationController::class, 'startImpersonation']);
+        Route::delete('impersonate', [ImpersonationController::class, 'stopImpersonation']);
+        Route::post('impersonation/stop', [ImpersonationController::class, 'stopImpersonation']);
     });
 
     Route::middleware('permission:super-admin.plans.manage')->group(function () {
-        Route::get('plans', [SuperAdminController::class, 'listPlans']);
-        Route::post('plans', [SuperAdminController::class, 'storePlan']);
-        Route::put('plans/{id}', [SuperAdminController::class, 'updatePlan']);
-        Route::delete('plans/{id}', [SuperAdminController::class, 'destroyPlan']);
-        Route::post('tenants/{tenantId}/assign-plan', [SuperAdminController::class, 'assignPlan']);
+        Route::get('plans', [PlanController::class, 'listPlans']);
+        Route::post('plans', [PlanController::class, 'storePlan']);
+        Route::put('plans/{id}', [PlanController::class, 'updatePlan']);
+        Route::delete('plans/{id}', [PlanController::class, 'destroyPlan']);
+        Route::post('tenants/{tenantId}/assign-plan', [PlanController::class, 'assignPlan']);
     });
 
     Route::middleware('permission:super-admin.audit.view')->group(function () {
-        Route::get('audit-logs', [SuperAdminController::class, 'auditLogs']);
+        Route::get('audit-logs', [AuditLogController::class, 'auditLogs']);
     });
 
     Route::middleware('permission:super-admin.users.manage')->group(function () {
-        Route::get('users', [SuperAdminController::class, 'indexUsers']);
-        Route::get('users/{user}', [SuperAdminController::class, 'showUser']);
-        Route::put('users/{user}/status', [SuperAdminController::class, 'updateUserStatus']);
-        Route::post('users/{user}/force-logout', [SuperAdminController::class, 'forceLogoutUser']);
+        Route::get('users', [UserController::class, 'indexUsers']);
+        Route::get('users/{user}', [UserController::class, 'showUser']);
+        Route::put('users/{user}/status', [UserController::class, 'updateUserStatus']);
+        Route::post('users/{user}/force-logout', [UserController::class, 'forceLogoutUser']);
     });
 });
 
