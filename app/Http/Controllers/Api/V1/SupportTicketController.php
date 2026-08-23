@@ -68,7 +68,7 @@ class SupportTicketController extends Controller
         $ticket = SupportTicket::where('user_id', $request->user()->id)
             ->with([
                 'user:id,name,email',
-                'replies' => fn ($q) => $q->orderBy('created_at', 'asc')->with(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]),
+                'replies' => fn ($q) => $q->where('is_internal', false)->orderBy('created_at', 'asc')->with(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]),
             ])
             ->withCount('replies')
             ->findOrFail($id);

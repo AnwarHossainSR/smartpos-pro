@@ -509,7 +509,7 @@ function TicketDetail({
     );
   }
 
-  const replies = ticket.replies ?? [];
+  const replies = (ticket.replies ?? []).filter((r) => !r.is_internal);
   const isOpen = ticket.status !== "closed" && ticket.status !== "resolved";
 
   return (
@@ -575,9 +575,7 @@ function TicketDetail({
               <span className="text-sm font-medium">
                 {reply.user?.name ?? "Support"}
               </span>
-              {!reply.is_internal && (
-                <Badge tone="info">Support</Badge>
-              )}
+              <Badge tone="info">Support</Badge>
               <span className="text-xs text-[var(--muted)]">
                 {formatDate(reply.created_at)}
               </span>
