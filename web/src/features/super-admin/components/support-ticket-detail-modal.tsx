@@ -5,9 +5,8 @@ import {
   ChevronUp,
   Clock,
   Send,
-  UserMinus,
 } from "lucide-react";
-import { useSupportTicket, useSupportAgents, useUpdateTicketStatus, useAssignTicket, useUnassignTicket, useAddInternalNote } from "../hooks";
+import { useSupportTicket, useUpdateTicketStatus, useReplyToTicket, useAddInternalNote } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -115,64 +114,40 @@ interface Props {
 }
 
 export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
+  const [replyText, setReplyText] = useState("");
   const [noteText, setNoteText] = useState("");
   const [showInternalNotes, setShowInternalNotes] = useState(false);
 
   const ticketQuery = useSupportTicket(ticketId);
-  const agentsQuery = useSupportAgents();
   const updateStatus = useUpdateTicketStatus();
-  const assignTicket = useAssignTicket();
-  const unassignTicket = useUnassignTicket();
+  const replyMutation = useReplyToTicket();
   const addNote = useAddInternalNote();
 
   if (!ticketId) return null;
 
   const ticket = ticketQuery.data?.data;
-  const agents = agentsQuery.data?.data ?? [];
 
   const handleStatusChange = (newStatus: string) => {
     if (!ticket) return;
     updateStatus.mutate(
       { id: ticket.id, status: newStatus },
-      {
-        onSuccess: () => {
-          ticketQuery.refetch();
-        },
-      },
+      { onSuccess: () => ticketQuery.refetch() },
     );
   };
 
-  const handleAssign = (agentId: string) => {
-    if (!ticket || !agentId) return;
-    assignTicket.mutate(
-      { id: ticket.id, assignedTo: agentId },
-      {
-        onSuccess: () => {
-          ticketQuery.refetch();
-        },
-      },
+  const handleReply = () => {
+    if (!ticket || !replyText.trim()) return;
+    replyMutation.mutate(
+      { id: ticket.id, message: replyText.trim() },
+      { onSuccess: () => { setReplyText(""); ticketQuery.refetch(); } },
     );
-  };
-
-  const handleUnassign = () => {
-    if (!ticket) return;
-    unassignTicket.mutate(ticket.id, {
-      onSuccess: () => {
-        ticketQuery.refetch();
-      },
-    });
   };
 
   const handleAddNote = () => {
     if (!ticket || !noteText.trim()) return;
     addNote.mutate(
       { id: ticket.id, message: noteText.trim() },
-      {
-        onSuccess: () => {
-          setNoteText("");
-          ticketQuery.refetch();
-        },
-      },
+      { onSuccess: () => { setNoteText(""); ticketQuery.refetch(); } },
     );
   };
 
@@ -226,11 +201,11 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                 ))}
               </div>
             </div>
-          ) : ticketQuery.isError ? (
+          ) : ticketQuery.isError || !ticket ? (
             <div className="flex flex-1 items-center justify-center p-6">
               <p className="text-sm text-[var(--color-danger)]">Failed to load ticket details.</p>
             </div>
-          ) : ticket ? (
+          ) : (
             <>
               {/* Left Panel — Details */}
               <div className="w-72 shrink-0 overflow-y-auto border-r border-[var(--border)] p-4">
@@ -280,38 +255,6 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                     }
                   />
                   <Row
-                    label="Assigned To"
-                    value={
-                      ticket.assigned_to ? (
-                        <div className="flex items-center gap-1">
-                          <span>{ticket.assigned_to.name}</span>
-                          <button
-                            onClick={handleUnassign}
-                            disabled={unassignTicket.isPending}
-                            className="ml-1 text-[var(--muted)] hover:text-[var(--color-danger)]"
-                            title="Unassign"
-                          >
-                            <UserMinus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <Select
-                          className="w-36"
-                          value=""
-                          onChange={(e) => handleAssign(e.target.value)}
-                          disabled={assignTicket.isPending}
-                        >
-                          <option value="">Assign…</option>
-                          {agents.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.name}
-                            </option>
-                          ))}
-                        </Select>
-                      )
-                    }
-                  />
-                  <Row
                     label="SLA Due"
                     value={
                       ticket.sla_due_at ? (
@@ -324,10 +267,7 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                       )
                     }
                   />
-                  <Row
-                    label="Created"
-                    value={formatDate(ticket.created_at)}
-                  />
+                  <Row label="Created" value={formatDate(ticket.created_at)} />
                   <Row
                     label="Last Reply"
                     value={
@@ -366,9 +306,9 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                         >
                           <div className="mb-2 flex items-center gap-2">
                             <span className="text-sm font-medium">
-                              {reply.user?.name ?? "Agent"}
+                              {reply.user?.name ?? "Support"}
                             </span>
-                            <Badge tone="info">Agent</Badge>
+                            <Badge tone="info">Support</Badge>
                             <span className="text-xs text-[var(--muted)]">
                               {formatDate(reply.created_at)}
                             </span>
@@ -402,7 +342,7 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                             >
                               <div className="mb-2 flex items-center gap-2">
                                 <span className="text-sm font-medium">
-                                  {note.user?.name ?? "Agent"}
+                                  {note.user?.name ?? "Support"}
                                 </span>
                                 <Badge tone="warning">Internal</Badge>
                                 <span className="text-xs text-[var(--muted)]">
@@ -424,19 +364,23 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                   )}
                 </div>
 
-                {/* Reply / Note Form */}
+                {/* Reply Form */}
                 <div className="border-t border-[var(--border)] p-4">
                   <Textarea
-                    placeholder="Write a reply or internal note…"
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Write a reply to the customer…"
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
                     rows={3}
                   />
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs text-[var(--muted)]">
-                      Replies are visible to the customer. Use &quot;Add Note&quot; for internal-only comments.
-                    </p>
                     <div className="flex gap-2">
+                      <Textarea
+                        placeholder="Or add an internal note…"
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        rows={1}
+                        className="w-64"
+                      />
                       <Button
                         variant="outline"
                         size="sm"
@@ -445,23 +389,19 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                       >
                         Add Note
                       </Button>
-                      <Button
-                        size="sm"
-                        disabled={!noteText.trim() || addNote.isPending}
-                        onClick={handleAddNote}
-                      >
-                        <Send className="mr-1 h-3.5 w-3.5" />
-                        Reply
-                      </Button>
                     </div>
+                    <Button
+                      size="sm"
+                      disabled={!replyText.trim() || replyMutation.isPending}
+                      onClick={handleReply}
+                    >
+                      <Send className="mr-1 h-3.5 w-3.5" />
+                      Reply
+                    </Button>
                   </div>
                 </div>
               </div>
             </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center p-6">
-              <p className="text-sm text-[var(--muted)]">No data.</p>
-            </div>
           )}
         </div>
       </div>

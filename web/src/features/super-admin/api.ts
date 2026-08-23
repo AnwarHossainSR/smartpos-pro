@@ -140,16 +140,10 @@ export async function updateTicketStatus(id: string, status: string) {
   });
 }
 
-export async function assignTicket(id: string, assignedTo: string) {
-  return api<{ data: SupportTicket }>(`/super/support/tickets/${id}/assign`, {
-    method: "PUT",
-    body: { assigned_to: assignedTo },
-  });
-}
-
-export async function unassignTicket(id: string) {
-  return api<{ data: SupportTicket }>(`/super/support/tickets/${id}/unassign`, {
-    method: "PUT",
+export async function replyToTicket(id: string, message: string) {
+  return api<{ data: import("./types").TicketReply }>(`/super/support/tickets/${id}/reply`, {
+    method: "POST",
+    body: { message },
   });
 }
 
@@ -163,8 +157,4 @@ export async function addInternalNote(id: string, message: string) {
 export async function getTicketMetrics(tenantId?: string) {
   const qs = tenantId ? `?tenant_id=${tenantId}` : "";
   return api<{ data: TicketMetrics }>(`/super/support/tickets/metrics${qs}`);
-}
-
-export async function getSupportAgents() {
-  return api<{ data: Array<{ id: string; name: string }> }>("/super/support/agents");
 }

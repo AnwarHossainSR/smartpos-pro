@@ -86,42 +86,6 @@ class SuperAdminSupportTest extends TestCase
         $response->assertJsonPath('data.status', 'in_progress');
     }
 
-    public function test_super_admin_can_assign_ticket(): void
-    {
-        Sanctum::actingAs($this->superAdmin);
-
-        $ticket = SupportTicket::create([
-            'tenant_id' => $this->tenantUser->tenant_id,
-            'user_id' => $this->tenantUser->id,
-            'subject' => 'Assign Ticket',
-            'message' => 'Assign message',
-        ]);
-
-        $response = $this->putJson("/api/v1/super/support/tickets/{$ticket->id}/assign", [
-            'assigned_to' => $this->superAdmin->id,
-        ]);
-
-        $response->assertOk();
-        $response->assertJsonPath('data.assigned_to.id', $this->superAdmin->id);
-    }
-
-    public function test_super_admin_can_unassign_ticket(): void
-    {
-        Sanctum::actingAs($this->superAdmin);
-
-        $ticket = SupportTicket::create([
-            'tenant_id' => $this->tenantUser->tenant_id,
-            'user_id' => $this->tenantUser->id,
-            'subject' => 'Unassign Ticket',
-            'message' => 'Unassign message',
-            'assigned_to' => $this->superAdmin->id,
-        ]);
-
-        $response = $this->putJson("/api/v1/super/support/tickets/{$ticket->id}/unassign");
-
-        $response->assertOk();
-    }
-
     public function test_super_admin_can_add_internal_note(): void
     {
         Sanctum::actingAs($this->superAdmin);
@@ -159,15 +123,6 @@ class SuperAdminSupportTest extends TestCase
                 'sla_breached',
             ],
         ]);
-    }
-
-    public function test_super_admin_can_get_agents(): void
-    {
-        Sanctum::actingAs($this->superAdmin);
-
-        $response = $this->getJson('/api/v1/super/support/agents');
-
-        $response->assertOk();
     }
 
     public function test_non_super_admin_cannot_list_tickets(): void

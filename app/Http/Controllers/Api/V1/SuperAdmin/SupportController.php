@@ -7,7 +7,6 @@ use App\Http\Resources\SupportTicketResource;
 use App\Http\Resources\TicketReplyResource;
 use App\Models\SupportTicket;
 use App\Models\TicketReply;
-use App\Models\User;
 use App\Support\Scopes\TenantScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +21,6 @@ class SupportController extends Controller
         return SupportTicket::withoutTenancy()
             ->with([
                 'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
-                'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
             ])
             ->withCount('replies')
             ->findOrFail($id);
@@ -33,7 +31,6 @@ class SupportController extends Controller
         $query = SupportTicket::withoutTenancy()
             ->with([
                 'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
-                'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
             ])
             ->withCount('replies');
 
@@ -45,9 +42,6 @@ class SupportController extends Controller
         }
         if ($tenantId = $request->input('tenant_id')) {
             $query->where('tenant_id', $tenantId);
-        }
-        if ($assignedTo = $request->input('assigned_to')) {
-            $query->where('assigned_to', $assignedTo);
         }
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -79,24 +73,25 @@ class SupportController extends Controller
         return $this->success(new SupportTicketResource($this->reloadTicket($id)));
     }
 
-    public function assign(Request $request, string $id): JsonResponse
+    public function addReply(Request $request, string $id): JsonResponse
     {
         $request->validate([
-            'assigned_to' => 'required|string|exists:users,id',
+            'message' => 'required|string',
         ]);
 
         $ticket = SupportTicket::withoutTenancy()->findOrFail($id);
-        $ticket->update(['assigned_to' => $request->input('assigned_to')]);
+        $user = $request->user();
 
-        return $this->success(new SupportTicketResource($this->reloadTicket($id)));
-    }
+        $reply = TicketReply::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'message' => $request->input('message'),
+            'is_internal' => false,
+        ]);
 
-    public function unassign(string $id): JsonResponse
-    {
-        $ticket = SupportTicket::withoutTenancy()->findOrFail($id);
-        $ticket->update(['assigned_to' => null]);
+        $ticket->update(['last_reply_at' => now()]);
 
-        return $this->success(new SupportTicketResource($this->reloadTicket($id)));
+        return $this->success(new TicketReplyResource($reply->load('user:id,name')), 'Reply sent', 201);
     }
 
     public function addInternalNote(Request $request, string $id): JsonResponse
@@ -118,15 +113,6 @@ class SupportController extends Controller
         $ticket->update(['last_reply_at' => now()]);
 
         return $this->success(new TicketReplyResource($reply->load('user:id,name')), 'Note added', 201);
-    }
-
-    public function agents()
-    {
-        $agents = User::withoutTenancy()
-            ->select('id', 'name', 'email')
-            ->get();
-
-        return $agents;
     }
 
     public function metrics(Request $request)

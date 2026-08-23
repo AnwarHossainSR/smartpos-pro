@@ -46,14 +46,12 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
     Route::middleware('permission:super-admin.support.view')->group(function () {
         Route::get('support/tickets', [SupportController::class, 'index']);
         Route::get('support/tickets/metrics', [SupportController::class, 'metrics']);
-        Route::get('support/agents', [SupportController::class, 'agents']);
         Route::get('support/tickets/{id}', [SupportController::class, 'show']);
     });
 
     Route::middleware('permission:super-admin.support.manage')->group(function () {
         Route::put('support/tickets/{id}/status', [SupportController::class, 'updateStatus']);
-        Route::put('support/tickets/{id}/assign', [SupportController::class, 'assign']);
-        Route::put('support/tickets/{id}/unassign', [SupportController::class, 'unassign']);
+        Route::post('support/tickets/{id}/reply', [SupportController::class, 'addReply']);
         Route::post('support/tickets/{id}/notes', [SupportController::class, 'addInternalNote']);
     });
 

@@ -159,13 +159,6 @@ export function SupportTicketList() {
       ),
     },
     {
-      key: "assigned_to",
-      header: "Assigned",
-      render: (t) => t.assigned_to?.name ?? (
-        <span className="text-[var(--muted)]">Unassigned</span>
-      ),
-    },
-    {
       key: "last_reply_at",
       header: "Last Reply",
       render: (t) => (
