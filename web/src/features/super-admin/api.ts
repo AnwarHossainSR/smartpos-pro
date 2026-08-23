@@ -10,6 +10,20 @@ export const superAdminApi = {
       api<Paginated<Tenant>>(`/super/tenants?${buildListQuery(params)}`),
     detail: (id: string) =>
       api<{ data: TenantDetail }>(`/super/tenants/${id}`),
+    create: (data: {
+      tenant_name: string;
+      slug: string;
+      business_name: string;
+      owner_name: string;
+      owner_email: string;
+      owner_password: string;
+      owner_password_confirmation: string;
+      base_currency?: string;
+    }) =>
+      api<{ data: Tenant }>("/super/tenants", {
+        method: "POST",
+        body: data,
+      }),
     suspend: (id: string) =>
       api<{ data: Tenant }>(`/super/tenants/${id}/suspend`, { method: "POST" }),
     activate: (id: string) =>

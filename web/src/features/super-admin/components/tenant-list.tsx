@@ -10,6 +10,7 @@ import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { TenantDetailModal } from "./tenant-detail-modal";
+import { CreateTenantDialog } from "./create-tenant-dialog";
 import type { Tenant } from "../types";
 
 export function TenantList() {
@@ -18,6 +19,7 @@ export function TenantList() {
   const [impersonating, setImpersonating] = useState<Tenant | null>(null);
   const [suspending, setSuspending] = useState<Tenant | null>(null);
   const [activating, setActivating] = useState<Tenant | null>(null);
+  const [creating, setCreating] = useState(false);
   const [reason, setReason] = useState("");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- super-admin slugs not in permission union yet
@@ -104,6 +106,7 @@ export function TenantList() {
             <option value="suspended">Suspended</option>
           </Select>
         }
+        {...(canManage ? { addLabel: "Create Tenant", onAdd: () => setCreating(true) } : {})}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable
@@ -262,6 +265,17 @@ export function TenantList() {
           )}
         </div>
       </Dialog>
+
+      <CreateTenantDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSubmit={(data) =>
+          mutations.create.mutate(data, {
+            onSuccess: () => setCreating(false),
+          })
+        }
+        loading={mutations.create.isPending}
+      />
     </div>
   );
 }

@@ -55,7 +55,15 @@ export function useTenantMutations() {
     },
   });
 
-  return { suspend, activate, remove, impersonate };
+  const create = useMutation({
+    mutationFn: superAdminApi.tenants.create,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.all });
+      toast("Tenant created", "success");
+    },
+  });
+
+  return { create, suspend, activate, remove, impersonate };
 }
 
 export function useImpersonationMutations() {
