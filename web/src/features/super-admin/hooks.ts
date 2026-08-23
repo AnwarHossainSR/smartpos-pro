@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/toast";
 import { useResourceList } from "@/lib/use-resource-list";
 import { queryKeys } from "@/lib/query-keys";
@@ -14,7 +14,10 @@ export function useTenants() {
 }
 
 export function useRevenueMetrics(days = 30) {
-  return queryKeys.superAdmin.revenueMetrics(days);
+  return useQuery({
+    queryKey: queryKeys.superAdmin.revenueMetrics(days),
+    queryFn: () => superAdminApi.revenue.metrics(days),
+  });
 }
 
 export function useTenantMutations() {
