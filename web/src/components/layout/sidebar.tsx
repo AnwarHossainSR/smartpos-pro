@@ -301,7 +301,7 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
         ))}
       </nav>
 
-      {!collapsed && (
+      {!collapsed && !user?.is_super_admin && (
         <div className="mx-3">
           <div className="rounded-xl bg-gradient-to-l from-[var(--sidebar-active)]/20 via-[var(--sidebar-active)]/10 to-transparent p-[1px]">
             <div className="rounded-[11px] bg-[var(--sidebar-bg)] px-3 py-3">
@@ -320,7 +320,7 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
         </div>
       )}
 
-      {collapsed && (
+      {collapsed && !user?.is_super_admin && (
         <div className="mx-3 mb-3">
           <Link
             to="/support"
