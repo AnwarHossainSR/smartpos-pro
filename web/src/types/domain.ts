@@ -145,3 +145,18 @@ export interface Impersonation {
   superAdmin?: { id: string; name: string; email: string };
   targetUser?: { id: string; name: string; email: string };
 }
+
+export interface PlatformUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  status: string;
+  is_super_admin: boolean;
+  email_verified_at?: string;
+  last_login_at?: string;
+  tenant_id?: string;
+  tenant_name?: string;
+  roles?: string[];
+  created_at: string;
+}

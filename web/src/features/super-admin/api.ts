@@ -1,8 +1,10 @@
 import { api, type Paginated } from "@/lib/api";
 import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
-import type { Tenant, TenantDetail, RevenueMetrics, Impersonation } from "./types";
+import type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlatformUser } from "./types";
 
 export type TenantFilters = { status: string };
+
+export type UserFilters = { status: string };
 
 export const superAdminApi = {
   tenants: {
@@ -50,5 +52,15 @@ export const superAdminApi = {
       api<{ data: Impersonation[] }>("/super/impersonations"),
     revoke: (id: string) =>
       api<{ message: string }>(`/super/impersonation/${id}/revoke`, { method: "POST" }),
+  },
+  users: {
+    list: (params: ResourceListParams<UserFilters>) =>
+      api<Paginated<PlatformUser>>(`/super/users?${buildListQuery(params)}`),
+    detail: (id: string) =>
+      api<{ data: PlatformUser }>(`/super/users/${id}`),
+    toggleStatus: (id: string, status: string) =>
+      api<{ data: PlatformUser }>(`/super/users/${id}/status`, { method: "PUT", body: { status } }),
+    forceLogout: (id: string) =>
+      api<{ message: string }>(`/super/users/${id}/force-logout`, { method: "POST" }),
   },
 };

@@ -112,6 +112,7 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/super-admin", key: "superAdminDashboard", icon: LayoutDashboard },
       { href: "/super-admin/tenants", key: "tenants", icon: Building2 },
+      { href: "/super-admin/users", key: "users", icon: UserCog },
       { href: "/super-admin/revenue", key: "revenue", icon: DollarSign },
       { href: "/super-admin/impersonations", key: "impersonations", icon: Users },
     ],

@@ -13,6 +13,15 @@ export function useTenants() {
   });
 }
 
+export function useUsers() {
+  return useResourceList({
+    queryKey: queryKeys.superAdmin.users(),
+    queryFn: superAdminApi.users.list,
+    defaultSort: "-created_at",
+    filterKeys: ["status"] as const,
+  });
+}
+
 export function useRevenueMetrics(days = 30) {
   return useQuery({
     queryKey: queryKeys.superAdmin.revenueMetrics(days),
@@ -64,6 +73,28 @@ export function useTenantMutations() {
   });
 
   return { create, suspend, activate, remove, impersonate };
+}
+
+export function useUserMutations() {
+  const qc = useQueryClient();
+
+  const toggleStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      superAdminApi.users.toggleStatus(id, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.users() });
+      toast("User status updated", "success");
+    },
+  });
+
+  const forceLogout = useMutation({
+    mutationFn: superAdminApi.users.forceLogout,
+    onSuccess: () => {
+      toast("User logged out", "success");
+    },
+  });
+
+  return { toggleStatus, forceLogout };
 }
 
 export function useImpersonationMutations() {

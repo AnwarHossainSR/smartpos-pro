@@ -265,6 +265,11 @@ export const routes: RouteObject[] = [
                 handle: seo("Tenants", "Manage platform tenants, subscriptions and access."),
               },
               {
+                path: "super-admin/users",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/users/page")),
+                handle: seo("Users", "Manage users across all tenants on the platform."),
+              },
+              {
                 path: "super-admin/revenue",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/revenue/page")),
                 handle: seo("Revenue", "MRR, plan distribution and subscription revenue metrics."),

@@ -1,1 +1,1 @@
-export type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlanDistribution } from "@/types/domain";
+export type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlanDistribution, PlatformUser } from "@/types/domain";
