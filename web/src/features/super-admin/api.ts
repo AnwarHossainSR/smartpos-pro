@@ -126,35 +126,29 @@ export async function getSupportTickets(params?: Record<string, string | number 
     });
   }
   const qs = searchParams.toString();
-  return api<Paginated<SupportTicket>>(`/super-admin/support/tickets${qs ? `?${qs}` : ""}`);
+  return api<Paginated<SupportTicket>>(`/super/support/tickets${qs ? `?${qs}` : ""}`);
 }
 
 export async function getSupportTicket(id: string) {
-  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}`);
+  return api<{ data: SupportTicket }>(`/super/support/tickets/${id}`);
 }
 
 export async function updateTicketStatus(id: string, status: string) {
-  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/status`, {
+  return api<{ data: SupportTicket }>(`/super/support/tickets/${id}/status`, {
     method: "PUT",
     body: { status },
   });
 }
 
-export async function assignTicket(id: string, assignedTo: string) {
-  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/assign`, {
-    method: "PUT",
-    body: { assigned_to: assignedTo },
-  });
-}
-
-export async function unassignTicket(id: string) {
-  return api<{ data: SupportTicket }>(`/super-admin/support/tickets/${id}/unassign`, {
-    method: "PUT",
+export async function replyToTicket(id: string, message: string) {
+  return api<{ data: import("./types").TicketReply }>(`/super/support/tickets/${id}/reply`, {
+    method: "POST",
+    body: { message },
   });
 }
 
 export async function addInternalNote(id: string, message: string) {
-  return api<{ data: import("./types").TicketReply }>(`/super-admin/support/tickets/${id}/notes`, {
+  return api<{ data: import("./types").TicketReply }>(`/super/support/tickets/${id}/notes`, {
     method: "POST",
     body: { message },
   });
@@ -162,9 +156,5 @@ export async function addInternalNote(id: string, message: string) {
 
 export async function getTicketMetrics(tenantId?: string) {
   const qs = tenantId ? `?tenant_id=${tenantId}` : "";
-  return api<{ data: TicketMetrics }>(`/super-admin/support/tickets/metrics${qs}`);
-}
-
-export async function getSupportAgents() {
-  return api<{ data: Array<{ id: string; name: string }> }>("/super-admin/support/agents");
+  return api<{ data: TicketMetrics }>(`/super/support/tickets/metrics${qs}`);
 }

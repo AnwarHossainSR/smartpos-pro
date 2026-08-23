@@ -7,12 +7,11 @@ import {
   getSupportTickets,
   getSupportTicket,
   updateTicketStatus,
-  assignTicket,
-  unassignTicket,
+  replyToTicket,
   addInternalNote,
   getTicketMetrics,
-  getSupportAgents,
 } from "./api";
+import type { TicketMetrics } from "./types";
 
 export function useTenants() {
   return useResourceList({
@@ -186,16 +185,9 @@ export function useSupportTicket(id: string | null) {
 }
 
 export function useTicketMetrics(tenantId?: string) {
-  return useQuery({
+  return useQuery<{ data: TicketMetrics }>({
     queryKey: ["super-admin", "ticket-metrics", tenantId],
     queryFn: () => getTicketMetrics(tenantId),
-  });
-}
-
-export function useSupportAgents() {
-  return useQuery({
-    queryKey: ["super-admin", "support-agents"],
-    queryFn: () => getSupportAgents(),
   });
 }
 
@@ -211,24 +203,13 @@ export function useUpdateTicketStatus() {
   });
 }
 
-export function useAssignTicket() {
+export function useReplyToTicket() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) => assignTicket(id, assignedTo),
+    mutationFn: ({ id, message }: { id: string; message: string }) => replyToTicket(id, message),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
-      toast("Ticket assigned", "success");
-    },
-  });
-}
-
-export function useUnassignTicket() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => unassignTicket(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
-      toast("Ticket unassigned", "success");
+      toast("Reply sent", "success");
     },
   });
 }

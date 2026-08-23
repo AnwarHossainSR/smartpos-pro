@@ -7,7 +7,6 @@ use App\Http\Resources\SupportTicketResource;
 use App\Http\Resources\TicketReplyResource;
 use App\Models\SupportTicket;
 use App\Models\TicketReply;
-use App\Models\User;
 use App\Support\Scopes\TenantScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -21,8 +20,11 @@ class SupportController extends Controller
     {
         return SupportTicket::withoutTenancy()
             ->with([
-                'user:id,name,email',
-                'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
+                'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+                'replies' => function ($q) {
+                    $q->orderBy('created_at', 'asc');
+                    $q->with(['user' => fn ($uq) => $uq->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
+                },
             ])
             ->withCount('replies')
             ->findOrFail($id);
@@ -32,8 +34,7 @@ class SupportController extends Controller
     {
         $query = SupportTicket::withoutTenancy()
             ->with([
-                'user:id,name,email',
-                'assignedTo' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name'),
+                'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
             ])
             ->withCount('replies');
 
@@ -45,9 +46,6 @@ class SupportController extends Controller
         }
         if ($tenantId = $request->input('tenant_id')) {
             $query->where('tenant_id', $tenantId);
-        }
-        if ($assignedTo = $request->input('assigned_to')) {
-            $query->where('assigned_to', $assignedTo);
         }
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -79,24 +77,27 @@ class SupportController extends Controller
         return $this->success(new SupportTicketResource($this->reloadTicket($id)));
     }
 
-    public function assign(Request $request, string $id): JsonResponse
+    public function addReply(Request $request, string $id): JsonResponse
     {
         $request->validate([
-            'assigned_to' => 'required|string|exists:users,id',
+            'message' => 'required|string',
         ]);
 
         $ticket = SupportTicket::withoutTenancy()->findOrFail($id);
-        $ticket->update(['assigned_to' => $request->input('assigned_to')]);
+        $user = $request->user();
 
-        return $this->success(new SupportTicketResource($this->reloadTicket($id)));
-    }
+        $reply = TicketReply::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'message' => $request->input('message'),
+            'is_internal' => false,
+        ]);
 
-    public function unassign(string $id): JsonResponse
-    {
-        $ticket = SupportTicket::withoutTenancy()->findOrFail($id);
-        $ticket->update(['assigned_to' => null]);
+        $ticket->update(['last_reply_at' => now()]);
 
-        return $this->success(new SupportTicketResource($this->reloadTicket($id)));
+        $reply->load(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
+
+        return $this->success(new TicketReplyResource($reply), 'Reply sent', 201);
     }
 
     public function addInternalNote(Request $request, string $id): JsonResponse
@@ -117,17 +118,9 @@ class SupportController extends Controller
 
         $ticket->update(['last_reply_at' => now()]);
 
-        return $this->success(new TicketReplyResource($reply->load('user:id,name')), 'Note added', 201);
-    }
+        $reply->load(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
 
-    public function agents()
-    {
-        $agents = User::withoutTenancy()
-            ->select('id', 'name', 'email')
-            ->where('role', 'admin')
-            ->get();
-
-        return $this->success($agents);
+        return $this->success(new TicketReplyResource($reply), 'Note added', 201);
     }
 
     public function metrics(Request $request)

@@ -130,6 +130,26 @@ export default function LoginPage() {
           {loading && <Spinner />} {loading ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
       </form>
+      <div className="mt-4 flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="flex-1"
+          onClick={() => { setEmail("admin@demostore.com"); setPassword("password123"); }}
+        >
+          Tenant Admin
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="flex-1"
+          onClick={() => { setEmail("superadmin@smartpos.com"); setPassword("password"); }}
+        >
+          Super Admin
+        </Button>
+      </div>
       <p className="mt-6 text-center text-sm text-[var(--muted)]">
         {t("auth.newBusiness")}{" "}
         <Link to="/register" className="font-medium text-[var(--primary)]">

@@ -91,7 +91,7 @@ export function SupportTicketList() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<TicketFilters>({ status: "", priority: "" });
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
@@ -110,7 +110,8 @@ export function SupportTicketList() {
   };
 
   const { data, isLoading, error, refetch } = useSupportTickets(params);
-  const { data: metrics } = useTicketMetrics();
+  const { data: metricsResponse } = useTicketMetrics();
+  const metrics = metricsResponse?.data;
 
   const tickets = data?.data ?? [];
   const meta = data?.meta;
@@ -155,13 +156,6 @@ export function SupportTicketList() {
         <Badge tone={STATUS_TONES[t.status] ?? "default"}>
           {STATUS_LABELS[t.status] ?? t.status}
         </Badge>
-      ),
-    },
-    {
-      key: "assigned_to",
-      header: "Assigned",
-      render: (t) => t.assigned_to?.name ?? (
-        <span className="text-[var(--muted)]">Unassigned</span>
       ),
     },
     {

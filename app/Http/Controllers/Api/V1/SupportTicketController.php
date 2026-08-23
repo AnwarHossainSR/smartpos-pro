@@ -9,6 +9,7 @@ use App\Http\Resources\SupportTicketResource;
 use App\Http\Resources\TicketReplyResource;
 use App\Models\SupportTicket;
 use App\Models\TicketReply;
+use App\Support\Scopes\TenantScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -65,7 +66,10 @@ class SupportTicketController extends Controller
     public function show(Request $request, string $id)
     {
         $ticket = SupportTicket::where('user_id', $request->user()->id)
-            ->with(['user:id,name,email', 'assignedTo:id,name'])
+            ->with([
+                'user:id,name,email',
+                'replies' => fn ($q) => $q->where('is_internal', false)->orderBy('created_at', 'asc')->with(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')]),
+            ])
             ->withCount('replies')
             ->findOrFail($id);
 
@@ -78,7 +82,7 @@ class SupportTicketController extends Controller
 
         $replies = TicketReply::where('ticket_id', $ticket->id)
             ->where('is_internal', false)
-            ->with('user:id,name')
+            ->with(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name')])
             ->orderBy('created_at', 'asc')
             ->paginate($request->input('per_page', 50));
 
