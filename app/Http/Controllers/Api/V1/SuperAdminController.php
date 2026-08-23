@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Enums\SubscriptionStatus;
 use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SuperAdmin\CreatePlanRequest;
+use App\Http\Requests\SuperAdmin\CreateTenantRequest;
+use App\Http\Requests\SuperAdmin\UpdateTenantRequest;
+use App\Http\Resources\AuditLogResource;
 use App\Http\Resources\TenantResource;
+use App\Http\Resources\UserResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
+use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Impersonation;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Subscription;
@@ -18,6 +25,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\Audit\AuditLogService;
+use App\Services\Auth\TenantProvisioner;
 use App\Services\SuperAdmin\ImpersonationService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
@@ -28,6 +36,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
@@ -62,6 +71,40 @@ class SuperAdminController extends Controller
             ->paginate();
 
         return $this->success($tenants);
+    }
+
+    public function store(CreateTenantRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $owner = app(TenantProvisioner::class)->register([
+            'business_name' => $data['business_name'],
+            'name' => $data['owner_name'],
+            'email' => $data['owner_email'],
+            'password' => $data['owner_password'],
+            'currency' => $data['base_currency'] ?? 'USD',
+        ]);
+
+        $tenant = $owner->tenant;
+        $this->audit->log('tenant.created', $tenant, null, [
+            'name' => $tenant->name,
+            'slug' => $tenant->slug,
+        ], $request->user(), $tenant->id);
+
+        return $this->created(new TenantResource($tenant));
+    }
+
+    public function update(UpdateTenantRequest $request, Tenant $tenant): JsonResponse
+    {
+        $data = $request->validated();
+        $oldValues = $tenant->only(array_keys($data));
+        $tenant->update($data);
+
+        $this->audit->log('tenant.updated', $tenant, $oldValues, $tenant->only(array_keys($data)), $request->user(), $tenant->id);
+
+        $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
+
+        return $this->success(new TenantResource($tenant));
     }
 
     public function indexTenants(Request $request): AnonymousResourceCollection
@@ -99,6 +142,10 @@ class SuperAdminController extends Controller
 
         $targetUser = User::findOrFail($data['user_id']);
         $token = $this->impersonationService->start($request->user(), $targetUser->id);
+
+        $this->audit->log('impersonation.started', null, null, [
+            'target_user_id' => $targetUser->id,
+        ], $request->user(), $targetUser->tenant_id);
 
         return $this->created([
             'token' => $token,
@@ -396,5 +443,252 @@ class SuperAdminController extends Controller
                 'target_user_id' => $record->target_user_id,
             ], $endedBy, $record->tenant_id);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // T10 — Audit log viewer
+    // ------------------------------------------------------------------
+
+    public function auditLogs(Request $request): JsonResponse
+    {
+        $query = AuditLog::withoutTenancy()
+            ->with('user:id,name,email')
+            ->with('tenant:id,name');
+
+        if ($action = $request->input('action')) {
+            $query->where('action', $action);
+        }
+
+        if ($userId = $request->input('user_id')) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($tenantId = $request->input('tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        if ($from = $request->input('from')) {
+            $query->where('created_at', '>=', $from);
+        }
+
+        if ($to = $request->input('to')) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 30));
+
+        return $this->success(AuditLogResource::collection($logs));
+    }
+
+    // ------------------------------------------------------------------
+    // T12 — System health
+    // ------------------------------------------------------------------
+
+    public function health(): JsonResponse
+    {
+        $dbSize = 0;
+        try {
+            $result = \DB::select('SELECT pg_database_size(current_database()) as size');
+            $dbSize = $result[0]->size ?? 0;
+        } catch (\Throwable) {
+            try {
+                $path = \DB::getDatabasePath();
+                $dbSize = file_exists($path) ? filesize($path) : 0;
+            } catch (\Throwable) {
+            }
+        }
+
+        $pendingJobs = 0;
+        $failedJobs = 0;
+        try {
+            $pendingJobs = \DB::table('jobs')->count();
+            $failedJobs = \DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+        }
+
+        $cacheDriver = config('cache.default');
+        $cacheWorking = true;
+        try {
+            cache()->put('__health_check', true);
+            $cacheWorking = cache()->get('__health_check') === true;
+        } catch (\Throwable) {
+            $cacheWorking = false;
+        }
+
+        $diskTotal = @disk_total_space('/') ?: 0;
+        $diskFree = @disk_free_space('/') ?: 0;
+
+        return $this->success([
+            'php_version' => PHP_VERSION,
+            'laravel_version' => app()->version(),
+            'database' => [
+                'connected' => \DB::getPdo() !== null,
+                'size_mb' => round($dbSize / 1024 / 1024, 2),
+            ],
+            'queue' => [
+                'connection' => config('queue.default'),
+                'pending' => $pendingJobs,
+                'failed' => $failedJobs,
+            ],
+            'cache' => [
+                'driver' => $cacheDriver,
+                'working' => $cacheWorking,
+            ],
+            'storage' => [
+                'total_mb' => round($diskTotal / 1024 / 1024, 0),
+                'free_mb' => round($diskFree / 1024 / 1024, 0),
+            ],
+        ]);
+    }
+
+    // ------------------------------------------------------------------
+    // T14 — Plan CRUD & subscription assignment
+    // ------------------------------------------------------------------
+
+    public function listPlans(): JsonResponse
+    {
+        $plans = Plan::orderBy('created_at', 'desc')->paginate();
+
+        return $this->success($plans);
+    }
+
+    public function storePlan(CreatePlanRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
+
+        $plan = Plan::create($data);
+
+        $this->audit->log('plan.created', $plan, null, [
+            'name' => $plan->name,
+            'slug' => $plan->slug,
+            'price' => $plan->price,
+        ]);
+
+        return $this->created($plan);
+    }
+
+    public function updatePlan(CreatePlanRequest $request, string $id): JsonResponse
+    {
+        $plan = Plan::findOrFail($id);
+        $oldValues = $plan->only(array_keys($request->validated()));
+        $plan->update($request->validated());
+
+        $this->audit->log('plan.updated', $plan, $oldValues, $plan->fresh()->only(array_keys($request->validated())));
+
+        return $this->success($plan->fresh());
+    }
+
+    public function destroyPlan(string $id): JsonResponse
+    {
+        $plan = Plan::findOrFail($id);
+        $planData = $plan->only('id', 'name', 'slug', 'price');
+        $plan->delete();
+
+        $this->audit->log('plan.deleted', $plan, $planData, null);
+
+        return $this->noContent();
+    }
+
+    public function assignPlan(Request $request, string $tenantId): JsonResponse
+    {
+        $data = $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+            'plan_expires_at' => 'nullable|date|after:now',
+        ]);
+
+        $tenant = Tenant::findOrFail($tenantId);
+
+        $subscription = Subscription::withoutTenancy()
+            ->where('tenant_id', $tenantId)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+
+        if ($subscription) {
+            $oldPlanId = $subscription->plan_id;
+            $subscription->update([
+                'plan_id' => $data['plan_id'],
+                'status' => 'active',
+                'current_period_ends_at' => $data['plan_expires_at'] ?? $subscription->current_period_ends_at,
+            ]);
+        } else {
+            $oldPlanId = null;
+            Subscription::withoutTenancy()->create([
+                'tenant_id' => $tenantId,
+                'plan_id' => $data['plan_id'],
+                'status' => 'active',
+                'current_period_ends_at' => $data['plan_expires_at'] ?? now()->addMonth(),
+            ]);
+        }
+
+        $plan = Plan::find($data['plan_id']);
+        $tenant->update(['plan' => $plan->slug]);
+
+        $this->audit->log('plan.assigned', $tenant, ['plan_id' => $oldPlanId], [
+            'plan_id' => $data['plan_id'],
+            'plan_slug' => $plan->slug,
+        ], $request->user(), $tenantId);
+
+        return $this->success([
+            'tenant_id' => $tenantId,
+            'plan_id' => $data['plan_id'],
+            'plan' => $plan->only('id', 'name', 'slug', 'price'),
+        ], 'Plan assigned to tenant.');
+    }
+
+    // ------------------------------------------------------------------
+    // T8 — Cross-tenant user management
+    // ------------------------------------------------------------------
+
+    public function indexUsers(Request $request): JsonResponse
+    {
+        $query = User::withoutTenancy()
+            ->with('tenant:id,name')
+            ->with('roles:id,name');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $users = $query->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
+            ->paginate($request->input('per_page', 20));
+
+        return $this->success(UserResource::collection($users));
+    }
+
+    public function showUser(string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->with('tenant:id,name', 'roles:id,name')->findOrFail($id);
+
+        return $this->success(new UserResource($user));
+    }
+
+    public function updateUserStatus(Request $request, string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:active,invited,suspended'],
+        ]);
+
+        $user->update(['status' => $validated['status']]);
+
+        return $this->success(new UserResource($user->fresh()));
+    }
+
+    public function forceLogoutUser(string $id): JsonResponse
+    {
+        $user = User::withoutTenancy()->findOrFail($id);
+        $user->tokens()->delete();
+
+        return $this->success(null, 'User logged out from all devices.');
     }
 }

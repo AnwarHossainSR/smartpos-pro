@@ -2,45 +2,27 @@
 
 namespace App\Http\Resources;
 
-use App\Services\Media\MediaService;
-use Illuminate\Http\Request;
+use App\Domain\Enums\UserStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'status' => $this->status,
-            'avatar_path' => $this->avatar_path,
-            'avatar_url' => app(MediaService::class)->url($this->avatar_path, 'sm'),
+            'status' => $this->status instanceof UserStatus
+                ? $this->status->value
+                : $this->status,
+            'is_super_admin' => $this->is_super_admin,
             'email_verified_at' => $this->email_verified_at,
-            'two_factor_enabled' => $this->hasEnabledTwoFactor(),
-            // Whether a PIN exists — never the PIN or its hash.
-            'has_approval_pin' => $this->hasApprovalPin(),
-            'can_approve' => $this->when(
-                $this->relationLoaded('roles'),
-                fn () => $this->hasPermission('pos.approve'),
-            ),
-            'requires_two_factor_setup' => $this->whenLoaded('business', fn () => (
-                (bool) data_get($this->business?->settings, 'require_2fa') && ! $this->hasEnabledTwoFactor()
-            )),
-            'is_super_admin' => (bool) $this->is_super_admin,
+            'last_login_at' => $this->last_login_at,
             'tenant_id' => $this->tenant_id,
-            'business_id' => $this->business_id,
-            'branch_id' => $this->branch_id,
-            // Per-user UI preference: {"mode": "...", "palette": "..."}, or null when never set.
-            'theme' => $this->theme,
-            // `roles.name` is the slug (`cashier`) — see RoleResource for the naming split.
+            'tenant_name' => $this->whenLoaded('tenant', fn () => $this->tenant->name),
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
-            'permissions' => $this->when(
-                $this->relationLoaded('roles'),
-                fn () => $this->permissionSlugs()
-            ),
             'created_at' => $this->created_at,
         ];
     }

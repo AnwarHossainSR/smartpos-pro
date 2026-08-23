@@ -171,5 +171,10 @@ export const queryKeys = {
     tenantDetail: (id: string | undefined) => ["super-admin", "tenant", id ?? ""] as const,
     revenueMetrics: (days?: number) => ["super-admin", "revenue", days ?? 30] as const,
     impersonations: () => ["super-admin", "impersonations"] as const,
+    users: (params?: ListParams) => ["super-admin", "users", params ?? {}] as const,
+    userDetail: (id: string | undefined) => ["super-admin", "user", id ?? ""] as const,
+    audit: (params?: ListParams) => ["super-admin", "audit", params ?? {}] as const,
+    health: () => ["super-admin", "health"] as const,
+    plans: (params?: ListParams) => ["super-admin", "plans", params ?? {}] as const,
   },
 } as const;

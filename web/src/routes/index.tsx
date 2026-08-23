@@ -265,6 +265,16 @@ export const routes: RouteObject[] = [
                 handle: seo("Tenants", "Manage platform tenants, subscriptions and access."),
               },
               {
+                path: "super-admin/plans",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/plans/page")),
+                handle: seo("Plans", "Manage subscription plans and pricing on the platform."),
+              },
+              {
+                path: "super-admin/users",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/users/page")),
+                handle: seo("Users", "Manage users across all tenants on the platform."),
+              },
+              {
                 path: "super-admin/revenue",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/revenue/page")),
                 handle: seo("Revenue", "MRR, plan distribution and subscription revenue metrics."),
@@ -273,6 +283,16 @@ export const routes: RouteObject[] = [
                 path: "super-admin/impersonations",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
                 handle: seo("Impersonations", "Active and recent impersonation sessions across the platform."),
+              },
+              {
+                path: "super-admin/audit",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/audit/page")),
+                handle: seo("Audit Logs", "Platform-wide audit trail of admin actions."),
+              },
+              {
+                path: "super-admin/health",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/health/page")),
+                handle: seo("System Health", "PHP version, Laravel version, database, queue, cache and disk storage status."),
               },
 
             ],

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, Ban, Play, Trash2, LogIn } from "lucide-react";
 import { useTenants, useTenantMutations } from "../hooks";
+import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
@@ -9,6 +10,7 @@ import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { TenantDetailModal } from "./tenant-detail-modal";
+import { CreateTenantDialog } from "./create-tenant-dialog";
 import type { Tenant } from "../types";
 
 export function TenantList() {
@@ -17,7 +19,11 @@ export function TenantList() {
   const [impersonating, setImpersonating] = useState<Tenant | null>(null);
   const [suspending, setSuspending] = useState<Tenant | null>(null);
   const [activating, setActivating] = useState<Tenant | null>(null);
+  const [creating, setCreating] = useState(false);
   const [reason, setReason] = useState("");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- super-admin slugs not in permission union yet
+  const canManage = useAuth((s) => s.can("super-admin.tenants.manage" as any));
 
   const list = useTenants();
   const mutations = useTenantMutations();
@@ -100,6 +106,7 @@ export function TenantList() {
             <option value="suspended">Suspended</option>
           </Select>
         }
+        {...(canManage ? { addLabel: "Create Tenant", onAdd: () => setCreating(true) } : {})}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable
@@ -121,44 +128,48 @@ export function TenantList() {
               >
                 <Eye className="h-3.5 w-3.5" />
               </Button>
-              {t.status === "active" ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-[var(--color-warning)]"
-                  onClick={() => setSuspending(t)}
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-[var(--color-success)]"
-                  onClick={() => setActivating(t)}
-                >
-                  <Play className="h-3.5 w-3.5" />
-                </Button>
+              {canManage && (
+                <>
+                  {t.status === "active" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-warning)]"
+                      onClick={() => setSuspending(t)}
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-success)]"
+                      onClick={() => setActivating(t)}
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[var(--color-primary)]"
+                    onClick={() => {
+                      setImpersonating(t);
+                      setReason("");
+                    }}
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[var(--color-danger)]"
+                    onClick={() => setDeleting(t)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[var(--color-primary)]"
-                onClick={() => {
-                  setImpersonating(t);
-                  setReason("");
-                }}
-              >
-                <LogIn className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[var(--color-danger)]"
-                onClick={() => setDeleting(t)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
             </>
           )}
         />
@@ -254,6 +265,17 @@ export function TenantList() {
           )}
         </div>
       </Dialog>
+
+      <CreateTenantDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSubmit={(data) =>
+          mutations.create.mutate(data, {
+            onSuccess: () => setCreating(false),
+          })
+        }
+        loading={mutations.create.isPending}
+      />
     </div>
   );
 }
