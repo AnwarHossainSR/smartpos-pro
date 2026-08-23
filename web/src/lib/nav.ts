@@ -2,7 +2,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell, ScrollText, Percent,
   LayoutGrid, Tag, TruckIcon, UsersRound, Landmark, PieChart, CircleUserRound, FlaskConical, Layers, Building2,
-  Barcode, ClipboardList, AlertTriangle, Shield, DollarSign,
+  Barcode, ClipboardList, AlertTriangle, Shield, DollarSign, Activity,
 } from "lucide-react";
 
 export interface NavItem {
@@ -115,6 +115,8 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/super-admin/users", key: "users", icon: UserCog },
       { href: "/super-admin/revenue", key: "revenue", icon: DollarSign },
       { href: "/super-admin/impersonations", key: "impersonations", icon: Users },
+      { href: "/super-admin/audit", key: "auditLogs", icon: ScrollText },
+      { href: "/super-admin/health", key: "health", icon: Activity },
     ],
   },
 ];

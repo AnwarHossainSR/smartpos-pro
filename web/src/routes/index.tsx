@@ -279,6 +279,16 @@ export const routes: RouteObject[] = [
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
                 handle: seo("Impersonations", "Active and recent impersonation sessions across the platform."),
               },
+              {
+                path: "super-admin/audit",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/audit/page")),
+                handle: seo("Audit Logs", "Platform-wide audit trail of admin actions."),
+              },
+              {
+                path: "super-admin/health",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/health/page")),
+                handle: seo("System Health", "PHP version, Laravel version, database, queue, cache and disk storage status."),
+              },
 
             ],
           },

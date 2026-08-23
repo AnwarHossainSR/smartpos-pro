@@ -173,5 +173,7 @@ export const queryKeys = {
     impersonations: () => ["super-admin", "impersonations"] as const,
     users: (params?: ListParams) => ["super-admin", "users", params ?? {}] as const,
     userDetail: (id: string | undefined) => ["super-admin", "user", id ?? ""] as const,
+    audit: (params?: ListParams) => ["super-admin", "audit", params ?? {}] as const,
+    health: () => ["super-admin", "health"] as const,
   },
 } as const;
