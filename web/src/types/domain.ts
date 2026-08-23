@@ -160,3 +160,16 @@ export interface PlatformUser {
   roles?: string[];
   created_at: string;
 }
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  user?: { id: string; name: string; email: string };
+  tenant?: { id: string; name: string };
+  auditable_type: string;
+  auditable_id: string;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+}
