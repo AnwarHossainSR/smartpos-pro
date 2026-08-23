@@ -294,6 +294,11 @@ export const routes: RouteObject[] = [
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/health/page")),
                 handle: seo("System Health", "PHP version, Laravel version, database, queue, cache and disk storage status."),
               },
+              {
+                path: "super-admin/support-tickets",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/support-tickets/page")),
+                handle: seo("Support Tickets", "View and manage customer support tickets across all tenants."),
+              },
 
             ],
           },
