@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ServerTheme } from "@/stores/theme";
 import { splitSlug, type PermissionSlug } from "@/lib/permissions";
+import { queryClient } from "@/lib/query-client";
 
 export interface AuthUser {
   id: string;
@@ -129,8 +130,17 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
   setUser: (user) => set({ user }),
   setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
   logout: () => {
-    writeTokenCookie(null);
-    writeImpersonateCookie(null);
+    // Clear all cookies
+    document.cookie.split(";").forEach((c) => {
+      const name = c.split("=")[0].trim();
+      document.cookie = `${name}=; Path=/; Max-Age=0`;
+    });
+    // Clear browser storage
+    localStorage.clear();
+    sessionStorage.clear();
+    // Clear all cached server state
+    queryClient.clear();
+    // Reset auth state
     set({ token: null, user: null });
   },
   stopImpersonation: () => {
