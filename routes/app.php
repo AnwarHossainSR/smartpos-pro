@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\V1\StripeController;
 use App\Http\Controllers\Api\V1\StripeWebhookController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\SupportTicketController;
 use App\Http\Controllers\Api\V1\TableController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
@@ -351,4 +352,14 @@ Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->middleware('permission:sales.update');
     Route::delete('quotations/{quotation}', [QuotationController::class, 'destroy'])->middleware('permission:sales.delete');
     Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convert'])->middleware('permission:pos.create');
+
+    Route::prefix('support')->group(function () {
+        Route::get('tickets', [SupportTicketController::class, 'index']);
+        Route::post('tickets', [SupportTicketController::class, 'store']);
+        Route::get('tickets/{id}', [SupportTicketController::class, 'show']);
+        Route::get('tickets/{id}/replies', [SupportTicketController::class, 'replies']);
+        Route::post('tickets/{id}/replies', [SupportTicketController::class, 'reply']);
+        Route::put('tickets/{id}/close', [SupportTicketController::class, 'close']);
+        Route::put('tickets/{id}/reopen', [SupportTicketController::class, 'reopen']);
+    });
 });
