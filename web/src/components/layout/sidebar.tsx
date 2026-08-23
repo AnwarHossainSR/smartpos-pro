@@ -348,7 +348,7 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
         {!collapsed && (
           <div className="min-w-0 flex-1 leading-tight">
             <div className="truncate text-sm font-semibold">{user?.name}</div>
-            <div className="truncate text-xs text-[var(--sidebar-muted)]">{user?.roles?.[0] ?? "member"}</div>
+            <div className="truncate text-xs text-[var(--sidebar-muted)]">{user?.is_super_admin ? "Super Admin" : (user?.roles?.[0] ?? "member")}</div>
           </div>
         )}
       </div>
