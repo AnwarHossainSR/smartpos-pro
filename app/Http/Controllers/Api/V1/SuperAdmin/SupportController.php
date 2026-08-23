@@ -21,6 +21,10 @@ class SupportController extends Controller
         return SupportTicket::withoutTenancy()
             ->with([
                 'user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),
+                'replies' => function ($q) {
+                    $q->orderBy('created_at', 'asc');
+                    $q->with(['user' => fn ($uq) => $uq->withoutGlobalScope(TenantScope::class)->select('id', 'name')]);
+                },
             ])
             ->withCount('replies')
             ->findOrFail($id);

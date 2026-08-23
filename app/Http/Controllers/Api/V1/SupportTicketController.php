@@ -65,7 +65,10 @@ class SupportTicketController extends Controller
     public function show(Request $request, string $id)
     {
         $ticket = SupportTicket::where('user_id', $request->user()->id)
-            ->with(['user:id,name,email', 'assignedTo:id,name'])
+            ->with([
+                'user:id,name,email',
+                'replies' => fn ($q) => $q->orderBy('created_at', 'asc')->with('user:id,name'),
+            ])
             ->withCount('replies')
             ->findOrFail($id);
 
