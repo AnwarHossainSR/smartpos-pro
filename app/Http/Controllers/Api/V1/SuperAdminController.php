@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Enums\SubscriptionStatus;
 use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SuperAdmin\CreateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
@@ -18,6 +19,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\Audit\AuditLogService;
+use App\Services\Auth\TenantProvisioner;
 use App\Services\SuperAdmin\ImpersonationService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
@@ -62,6 +64,21 @@ class SuperAdminController extends Controller
             ->paginate();
 
         return $this->success($tenants);
+    }
+
+    public function store(CreateTenantRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $owner = app(TenantProvisioner::class)->register([
+            'business_name' => $data['business_name'],
+            'name' => $data['owner_name'],
+            'email' => $data['owner_email'],
+            'password' => $data['owner_password'],
+            'currency' => $data['base_currency'] ?? 'USD',
+        ]);
+
+        return $this->created(new TenantResource($owner->tenant));
     }
 
     public function indexTenants(Request $request): AnonymousResourceCollection

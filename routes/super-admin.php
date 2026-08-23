@@ -13,6 +13,7 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::middleware('permission:super-admin.tenants.manage')->group(function () {
+        Route::post('tenants', [SuperAdminController::class, 'store']);
         Route::post('tenants/{tenant}/suspend', [SuperAdminController::class, 'suspendTenant']);
         Route::post('tenants/{tenant}/activate', [SuperAdminController::class, 'activateTenant']);
         Route::delete('tenants/{tenant}', [SuperAdminController::class, 'deleteTenant']);
