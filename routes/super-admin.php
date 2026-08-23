@@ -3,9 +3,6 @@
 use App\Http\Controllers\Api\V1\CacheController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 
-Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
-    ->middleware(['auth:sanctum']);
-
 Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
     Route::middleware('permission:super-admin.tenants.view')->group(function () {
         Route::get('tenants', [SuperAdminController::class, 'indexTenants']);
@@ -26,6 +23,7 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
         Route::post('impersonate', [SuperAdminController::class, 'startImpersonation']);
         Route::delete('impersonate', [SuperAdminController::class, 'stopImpersonation']);
+        Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
     });
 });
 
