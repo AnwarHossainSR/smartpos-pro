@@ -6,6 +6,7 @@ use App\Domain\Enums\SubscriptionStatus;
 use App\Domain\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SuperAdmin\CreateTenantRequest;
+use App\Http\Requests\SuperAdmin\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Mail\ImpersonationStartedMail;
 use App\Models\AppNotification;
@@ -79,6 +80,16 @@ class SuperAdminController extends Controller
         ]);
 
         return $this->created(new TenantResource($owner->tenant));
+    }
+
+    public function update(UpdateTenantRequest $request, Tenant $tenant): JsonResponse
+    {
+        $data = $request->validated();
+        $tenant->update($data);
+
+        $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
+
+        return $this->success(new TenantResource($tenant));
     }
 
     public function indexTenants(Request $request): AnonymousResourceCollection
