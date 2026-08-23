@@ -29,6 +29,14 @@ Route::prefix('super')->middleware(['auth:sanctum'])->group(function () {
         Route::post('impersonation/stop', [SuperAdminController::class, 'stopImpersonation']);
     });
 
+    Route::middleware('permission:super-admin.plans.manage')->group(function () {
+        Route::get('plans', [SuperAdminController::class, 'listPlans']);
+        Route::post('plans', [SuperAdminController::class, 'storePlan']);
+        Route::put('plans/{id}', [SuperAdminController::class, 'updatePlan']);
+        Route::delete('plans/{id}', [SuperAdminController::class, 'destroyPlan']);
+        Route::post('tenants/{tenantId}/assign-plan', [SuperAdminController::class, 'assignPlan']);
+    });
+
     Route::middleware('permission:super-admin.audit.view')->group(function () {
         Route::get('audit-logs', [SuperAdminController::class, 'auditLogs']);
     });
