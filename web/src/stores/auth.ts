@@ -137,9 +137,14 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
         document.cookie = `${name}=; Path=/; Max-Age=0`;
       }
     });
-    // Clear browser storage
-    localStorage.clear();
-    sessionStorage.clear();
+    // Clear only app-specific localStorage keys
+    [
+      "smartpos-locale",
+      "smartpos-theme",
+      "pos-view-mode",
+      "pos-favorites",
+      "smartpos-portal-token",
+    ].forEach((k) => localStorage.removeItem(k));
     // Clear all cached server state
     queryClient.clear();
     // Reset auth state
