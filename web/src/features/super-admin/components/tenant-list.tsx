@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, Ban, Play, Trash2, LogIn } from "lucide-react";
 import { useTenants, useTenantMutations } from "../hooks";
+import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
@@ -18,6 +19,9 @@ export function TenantList() {
   const [suspending, setSuspending] = useState<Tenant | null>(null);
   const [activating, setActivating] = useState<Tenant | null>(null);
   const [reason, setReason] = useState("");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- super-admin slugs not in permission union yet
+  const canManage = useAuth((s) => s.can("super-admin.tenants.manage" as any));
 
   const list = useTenants();
   const mutations = useTenantMutations();
@@ -121,44 +125,48 @@ export function TenantList() {
               >
                 <Eye className="h-3.5 w-3.5" />
               </Button>
-              {t.status === "active" ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-[var(--color-warning)]"
-                  onClick={() => setSuspending(t)}
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-[var(--color-success)]"
-                  onClick={() => setActivating(t)}
-                >
-                  <Play className="h-3.5 w-3.5" />
-                </Button>
+              {canManage && (
+                <>
+                  {t.status === "active" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-warning)]"
+                      onClick={() => setSuspending(t)}
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-success)]"
+                      onClick={() => setActivating(t)}
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[var(--color-primary)]"
+                    onClick={() => {
+                      setImpersonating(t);
+                      setReason("");
+                    }}
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[var(--color-danger)]"
+                    onClick={() => setDeleting(t)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[var(--color-primary)]"
-                onClick={() => {
-                  setImpersonating(t);
-                  setReason("");
-                }}
-              >
-                <LogIn className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[var(--color-danger)]"
-                onClick={() => setDeleting(t)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
             </>
           )}
         />
