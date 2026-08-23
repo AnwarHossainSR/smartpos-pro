@@ -1,6 +1,6 @@
 import { api, type Paginated } from "@/lib/api";
 import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
-import type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlatformUser, AuditLog, SystemHealth } from "./types";
+import type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlatformUser, AuditLog, SystemHealth, SuperAdminPlan } from "./types";
 
 export type TenantFilters = { status: string };
 
@@ -70,5 +70,36 @@ export const superAdminApi = {
   health: {
     get: () =>
       api<{ data: SystemHealth }>("/super/health"),
+  },
+  plans: {
+    list: (params: ResourceListParams<Record<string, string>>) =>
+      api<Paginated<SuperAdminPlan>>(`/super/plans?${buildListQuery(params)}`),
+    store: (data: {
+      name: string;
+      slug: string;
+      price: number;
+      currency: string;
+      trial_days?: number;
+      limits?: Record<string, unknown>;
+      features?: string[];
+      is_active?: boolean;
+    }) =>
+      api<{ data: SuperAdminPlan }>("/super/plans", { method: "POST", body: data }),
+    update: (
+      id: string,
+      data: {
+        name: string;
+        slug: string;
+        price: number;
+        currency: string;
+        trial_days?: number;
+        limits?: Record<string, unknown>;
+        features?: string[];
+        is_active?: boolean;
+      },
+    ) =>
+      api<{ data: SuperAdminPlan }>(`/super/plans/${id}`, { method: "PUT", body: data }),
+    delete: (id: string) =>
+      api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
   },
 };

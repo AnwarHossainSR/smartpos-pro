@@ -97,6 +97,15 @@ export function useUserMutations() {
   return { toggleStatus, forceLogout };
 }
 
+export function useAuditLogs() {
+  return useResourceList({
+    queryKey: queryKeys.superAdmin.audit(),
+    queryFn: superAdminApi.audit.list,
+    defaultSort: "-created_at",
+    filterKeys: ["action"] as const,
+  });
+}
+
 export function useImpersonationMutations() {
   const qc = useQueryClient();
 
@@ -109,4 +118,43 @@ export function useImpersonationMutations() {
   });
 
   return { revoke };
+}
+
+export function usePlans() {
+  return useResourceList({
+    queryKey: queryKeys.superAdmin.plans(),
+    queryFn: superAdminApi.plans.list,
+    defaultSort: "-created_at",
+  });
+}
+
+export function usePlanMutations() {
+  const qc = useQueryClient();
+
+  const create = useMutation({
+    mutationFn: superAdminApi.plans.store,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.plans() });
+      toast("Plan created", "success");
+    },
+  });
+
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof superAdminApi.plans.update>[1] }) =>
+      superAdminApi.plans.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.plans() });
+      toast("Plan updated", "success");
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: superAdminApi.plans.delete,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.plans() });
+      toast("Plan deleted", "success");
+    },
+  });
+
+  return { create, update, remove };
 }

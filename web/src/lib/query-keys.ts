@@ -175,5 +175,6 @@ export const queryKeys = {
     userDetail: (id: string | undefined) => ["super-admin", "user", id ?? ""] as const,
     audit: (params?: ListParams) => ["super-admin", "audit", params ?? {}] as const,
     health: () => ["super-admin", "health"] as const,
+    plans: (params?: ListParams) => ["super-admin", "plans", params ?? {}] as const,
   },
 } as const;

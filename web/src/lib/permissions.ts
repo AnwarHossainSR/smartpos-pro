@@ -85,6 +85,7 @@ interface RoutePermission {
 
 const ROUTE_TABLE: RoutePermission[] = [
   { prefix: "/super-admin/tenants", any: ["super-admin.tenants.view"] },
+  { prefix: "/super-admin/plans", any: ["super-admin.tenants.manage"] },
   { prefix: "/super-admin/users", any: ["super-admin.tenants.manage"] },
   { prefix: "/super-admin/revenue", any: ["super-admin.tenants.view"] },
   { prefix: "/super-admin/impersonations", any: ["super-admin.impersonate"] },
