@@ -39,7 +39,7 @@ export function PlanList() {
       key: "price",
       header: "Price",
       align: "right",
-      render: (p) => `${p.currency} ${p.price.toFixed(2)}`,
+      render: (p) => `${p.currency} ${Number(p.price).toFixed(2)}`,
     },
     {
       key: "trial_days",

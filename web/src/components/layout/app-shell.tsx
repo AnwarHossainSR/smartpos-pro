@@ -142,7 +142,12 @@ export function AppShell() {
   }
 
   const showSuperAdminNav = user?.is_super_admin ?? false;
-  const navGroups = showSuperAdminNav ? [...NAV_GROUPS, ...SUPER_ADMIN_NAV_GROUPS] : NAV_GROUPS;
+  const isSuperAdminRoute = pathname.startsWith("/super-admin");
+  const navGroups = showSuperAdminNav && isSuperAdminRoute
+    ? SUPER_ADMIN_NAV_GROUPS
+    : showSuperAdminNav
+      ? [...NAV_GROUPS, ...SUPER_ADMIN_NAV_GROUPS]
+      : NAV_GROUPS;
 
   const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";

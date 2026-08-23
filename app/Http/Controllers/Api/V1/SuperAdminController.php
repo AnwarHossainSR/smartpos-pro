@@ -452,7 +452,7 @@ class SuperAdminController extends Controller
     public function auditLogs(Request $request): JsonResponse
     {
         $query = AuditLog::withoutTenancy()
-            ->with('user:id,name,email')
+            ->with(['user' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email')])
             ->with('tenant:id,name');
 
         if ($action = $request->input('action')) {
@@ -658,7 +658,16 @@ class SuperAdminController extends Controller
             $query->where('status', $status);
         }
 
-        $users = $query->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
+        if (str_starts_with($sort, '-')) {
+            $sort = substr($sort, 1);
+            $direction = 'desc';
+        }
+        $allowed = ['created_at', 'name', 'email', 'status'];
+        $sort = in_array($sort, $allowed) ? $sort : 'created_at';
+
+        $users = $query->orderBy($sort, $direction)
             ->paginate($request->input('per_page', 20));
 
         return $this->success(UserResource::collection($users));
