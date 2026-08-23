@@ -50,8 +50,12 @@
     "security": "Security",
     "tables": "Tables",
     "tenants": "Tenants",
+    "plans": "Plans",
+    "users": "Users",
     "revenue": "Revenue",
     "impersonations": "Impersonations",
+    "auditLogs": "Audit Logs",
+    "health": "Health",
     "superAdminDashboard": "Platform Dashboard"
   },
   "sidebar": {

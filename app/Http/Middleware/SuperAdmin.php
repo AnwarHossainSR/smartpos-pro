@@ -12,7 +12,7 @@ class SuperAdmin
     {
         $user = $request->user();
 
-        if (! $user || ! $user->is_super_admin) {
+        if (! $user || ! ($user->is_super_admin ?? false)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
