@@ -106,20 +106,14 @@ export const NAV_GROUPS: NavGroup[] = [
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
-  {
-    key: "superAdmin",
-    groupIcon: Shield,
-    items: [
-      { href: "/super-admin", key: "superAdminDashboard", icon: LayoutDashboard },
-      { href: "/super-admin/tenants", key: "tenants", icon: Building2 },
-      { href: "/super-admin/plans", key: "plans", icon: CreditCard },
-      { href: "/super-admin/users", key: "users", icon: UserCog },
-      { href: "/super-admin/revenue", key: "revenue", icon: DollarSign },
-      { href: "/super-admin/impersonations", key: "impersonations", icon: Users },
-      { href: "/super-admin/audit", key: "auditLogs", icon: ScrollText },
-      { href: "/super-admin/health", key: "health", icon: Activity },
-    ],
-  },
+  { key: "superAdminDashboard", groupIcon: Shield, items: [{ href: "/super-admin", key: "superAdminDashboard", icon: LayoutDashboard }] },
+  { key: "superAdminTenants", groupIcon: Shield, items: [{ href: "/super-admin/tenants", key: "tenants", icon: Building2 }] },
+  { key: "superAdminPlans", groupIcon: Shield, items: [{ href: "/super-admin/plans", key: "plans", icon: CreditCard }] },
+  { key: "superAdminUsers", groupIcon: Shield, items: [{ href: "/super-admin/users", key: "users", icon: UserCog }] },
+  { key: "superAdminRevenue", groupIcon: Shield, items: [{ href: "/super-admin/revenue", key: "revenue", icon: DollarSign }] },
+  { key: "superAdminImpersonations", groupIcon: Shield, items: [{ href: "/super-admin/impersonations", key: "impersonations", icon: Users }] },
+  { key: "superAdminAudit", groupIcon: Shield, items: [{ href: "/super-admin/audit", key: "auditLogs", icon: ScrollText }] },
+  { key: "superAdminHealth", groupIcon: Shield, items: [{ href: "/super-admin/health", key: "health", icon: Activity }] },
 ];
 
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = SUPER_ADMIN_NAV_GROUPS.flatMap((g) => g.items);

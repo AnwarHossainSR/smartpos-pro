@@ -152,12 +152,34 @@ export function AppShell() {
   const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
+  const authLoaded = !!user;
+
   return (
     <>
       <ThemeSync />
       <OnboardingWizard />
       <div className="flex h-dvh overflow-hidden">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navGroups={navGroups} />
+        {authLoaded ? (
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navGroups={navGroups} />
+        ) : (
+          <aside className="hidden h-full w-64 shrink-0 bg-[var(--sidebar-bg)] md:block">
+            <div className="flex h-full flex-col px-3 py-4">
+              <div className="flex h-[72px] items-center gap-3 px-1">
+                <div className="h-[34px] w-[34px] animate-pulse rounded-lg bg-white/10" />
+                <div className="h-5 w-24 animate-pulse rounded bg-white/10" />
+              </div>
+              <div className="mx-4 border-b border-white/10" />
+              <div className="space-y-1 px-0 py-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+                    <div className="h-[18px] w-[18px] animate-pulse rounded bg-white/10" />
+                    <div className="h-4 flex-1 animate-pulse rounded bg-white/10" style={{ maxWidth: `${60 + (i % 3) * 15}%` }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} />
           <VerifyEmailBanner />
