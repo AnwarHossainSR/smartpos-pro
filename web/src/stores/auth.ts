@@ -130,24 +130,14 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
   setUser: (user) => set({ user }),
   setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
   logout: () => {
-    // Clear app cookies only
-    document.cookie.split(";").forEach((c) => {
-      const name = c.split("=")[0].trim();
-      if (name.startsWith("smartpos_")) {
-        document.cookie = `${name}=; Path=/; Max-Age=0`;
-      }
-    });
-    // Clear only app-specific localStorage keys
-    [
-      "smartpos-locale",
-      "smartpos-theme",
-      "pos-view-mode",
-      "pos-favorites",
-      "smartpos-portal-token",
-    ].forEach((k) => localStorage.removeItem(k));
-    // Clear all cached server state
+    writeTokenCookie(null);
+    writeImpersonateCookie(null);
+    localStorage.removeItem("smartpos-locale");
+    localStorage.removeItem("smartpos-theme");
+    localStorage.removeItem("pos-view-mode");
+    localStorage.removeItem("pos-favorites");
+    localStorage.removeItem("smartpos-portal-token");
     queryClient.clear();
-    // Reset auth state
     set({ token: null, user: null });
   },
   stopImpersonation: () => {
