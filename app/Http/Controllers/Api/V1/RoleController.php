@@ -89,7 +89,7 @@ class RoleController extends Controller
     /** The full permission catalog, grouped by module — for building role editors. */
     public function permissions(): JsonResponse
     {
-        return response()->json(['data' => PermissionCatalog::MATRIX]);
+        return $this->success(PermissionCatalog::MATRIX);
     }
 
     /**

@@ -29,16 +29,14 @@ class EmailTemplateController extends Controller
             ->map(fn (array $default, string $key) => $this->present($key, $default, $overrides->get($key)))
             ->values();
 
-        return response()->json(['data' => $templates]);
+        return $this->success($templates);
     }
 
     public function show(string $key): JsonResponse
     {
         $default = $this->defaultOrFail($key);
 
-        return response()->json([
-            'data' => $this->present($key, $default, $this->renderer->overrideFor($key)),
-        ]);
+        return $this->success($this->present($key, $default, $this->renderer->overrideFor($key)));
     }
 
     public function update(UpdateEmailTemplateRequest $request, string $key): JsonResponse
@@ -50,7 +48,7 @@ class EmailTemplateController extends Controller
             $request->validated(),
         );
 
-        return response()->json(['data' => $this->present($key, $default, $template)]);
+        return $this->success($this->present($key, $default, $template));
     }
 
     /** Drops the override, so the packaged default is used again. */
@@ -60,7 +58,7 @@ class EmailTemplateController extends Controller
 
         EmailTemplate::where('key', $key)->delete();
 
-        return response()->json(['data' => $this->present($key, $default, null)]);
+        return $this->success($this->present($key, $default, null));
     }
 
     /**
@@ -80,7 +78,7 @@ class EmailTemplateController extends Controller
             override: $override,
         );
 
-        return response()->json(['data' => $rendered]);
+        return $this->success($rendered);
     }
 
     /** Sends the previewed template to one address, so a tenant can check it in a real client. */
@@ -94,7 +92,7 @@ class EmailTemplateController extends Controller
 
         Mail::to($validated['email'])->queue(new PreviewMail($rendered['subject'], $rendered['markdown']));
 
-        return response()->json(['data' => ['sent_to' => $validated['email']]]);
+        return $this->success(['sent_to' => $validated['email']]);
     }
 
     /** @return array{name: string, description: string, variables: array<string, string>, subject: string, body: string} */

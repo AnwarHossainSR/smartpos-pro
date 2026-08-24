@@ -26,7 +26,7 @@ class WebhookController extends Controller
             ->sortable(['id', 'url', 'is_active', 'created_at'], default: '-created_at')
             ->paginate();
 
-        return response()->json($webhooks);
+        return $this->success($webhooks);
     }
 
     public function store(StoreWebhookRequest $request): JsonResponse
@@ -44,21 +44,21 @@ class WebhookController extends Controller
 
     public function show(Request $request, Webhook $webhook): JsonResponse
     {
-        return response()->json(['data' => new WebhookResource($webhook)]);
+        return $this->success(new WebhookResource($webhook));
     }
 
     public function update(StoreWebhookRequest $request, Webhook $webhook): JsonResponse
     {
         $webhook->update($request->validated());
 
-        return response()->json(['data' => new WebhookResource($webhook->fresh())]);
+        return $this->success(new WebhookResource($webhook->fresh()));
     }
 
     public function destroy(Webhook $webhook): JsonResponse
     {
         $webhook->delete();
 
-        return response()->json(status: 204);
+        return $this->noContent();
     }
 
     public function deliveries(Request $request): JsonResponse
@@ -70,7 +70,7 @@ class WebhookController extends Controller
             ->sortable(['id', 'event', 'response_code', 'delivered_at', 'attempts', 'created_at'], default: '-created_at')
             ->paginate();
 
-        return response()->json($deliveries);
+        return $this->success($deliveries);
     }
 
     public function retryDelivery(WebhookDelivery $delivery): JsonResponse
@@ -78,7 +78,7 @@ class WebhookController extends Controller
         $webhook = $delivery->webhook;
 
         if (! $webhook || ! $webhook->is_active) {
-            return response()->json(['message' => 'Webhook is inactive or deleted.'], 422);
+            return $this->error('Webhook is inactive or deleted.', 422);
         }
 
         $newDelivery = WebhookDelivery::create([
@@ -92,6 +92,6 @@ class WebhookController extends Controller
         DeliverWebhookJob::dispatch($newDelivery->id, $webhook->id)
             ->onQueue('webhooks');
 
-        return response()->json(['data' => new WebhookDeliveryResource($newDelivery)], 201);
+        return $this->created(new WebhookDeliveryResource($newDelivery));
     }
 }

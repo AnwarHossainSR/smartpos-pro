@@ -39,18 +39,16 @@ class PosApprovalController extends Controller
         $approval = $result['approval'];
         $approval->load('approver:id,name');
 
-        return response()->json([
-            'data' => [
-                'id' => $approval->id,
-                // Handed over once. It is stored only as a SHA-256 digest, so this is
-                // the sole moment the plaintext exists outside the terminal.
-                'token' => $result['token'],
-                'action' => $approval->action->value,
-                'approved_by' => ['id' => $approval->approver_id, 'name' => $approval->approver?->name],
-                'requested_value' => (float) $approval->requested_value,
-                'limit_value' => $approval->limit_value === null ? null : (float) $approval->limit_value,
-                'expires_at' => $approval->expires_at,
-            ],
-        ], 201);
+        return $this->created([
+            'id' => $approval->id,
+            // Handed over once. It is stored only as a SHA-256 digest, so this is
+            // the sole moment the plaintext exists outside the terminal.
+            'token' => $result['token'],
+            'action' => $approval->action->value,
+            'approved_by' => ['id' => $approval->approver_id, 'name' => $approval->approver?->name],
+            'requested_value' => (float) $approval->requested_value,
+            'limit_value' => $approval->limit_value === null ? null : (float) $approval->limit_value,
+            'expires_at' => $approval->expires_at,
+        ]);
     }
 }

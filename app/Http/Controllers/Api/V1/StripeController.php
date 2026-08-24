@@ -26,13 +26,13 @@ class StripeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
+            return $this->error($validator->errors()->first(), 422, $validator->errors()->toArray());
         }
 
         $sale = Sale::with('customer')->find($request->sale_id);
         $sessionId = $this->stripe->createCheckoutSession($sale);
 
-        return response()->json(['session_id' => $sessionId]);
+        return $this->success(['session_id' => $sessionId]);
     }
 
     public function createSubscriptionSession(Request $request)
@@ -43,12 +43,12 @@ class StripeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
+            return $this->error($validator->errors()->first(), 422, $validator->errors()->toArray());
         }
 
         $sessionId = $this->stripe->createSubscriptionCheckout($request->price_id, $request->return_url);
 
-        return response()->json(['session_id' => $sessionId]);
+        return $this->success(['session_id' => $sessionId]);
     }
 
     public function paymentStatus(Request $request, $token)
@@ -56,17 +56,16 @@ class StripeController extends Controller
         $sale = Sale::where('public_token', $token)->first();
 
         if (! $sale) {
-            return response()->json(['error' => 'Sale not found'], 404);
+            return $this->notFound('Sale not found');
         }
 
-        return response()->json([
+        return $this->success([
             'sale_id' => $sale->id,
             'invoice_number' => $sale->invoice_number,
             'due_amount' => $sale->due_amount,
             'payment_status' => $sale->payment_status,
             'total' => $sale->total,
             'paid_amount' => $sale->paid_amount,
-            'due_amount' => $sale->due_amount,
         ]);
     }
 }

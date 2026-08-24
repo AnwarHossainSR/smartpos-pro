@@ -81,11 +81,9 @@ class CustomerController extends Controller
 
         $customer->save();
 
-        return response()->json([
-            'data' => [
-                'anonymized_at' => now(),
-                'hashed_fields' => $hashedFields,
-            ],
+        return $this->success([
+            'anonymized_at' => now(),
+            'hashed_fields' => $hashedFields,
         ]);
     }
 }

@@ -216,7 +216,7 @@ class AuthController extends Controller
         // control the query of) on this public, pre-tenant-binding route.
         $this->context->runUnscoped(fn () => Password::sendResetLink($request->only('email')));
 
-        return response()->json(['message' => 'If that email is registered, a reset link has been sent.']);
+        return $this->success(null, 'If that email is registered, a reset link has been sent.');
     }
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
@@ -239,7 +239,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'Password reset. All existing sessions have been signed out.']);
+        return $this->success(null, 'Password reset. All existing sessions have been signed out.');
     }
 
     /** Public, signed link — clicked directly from the verification email, no bearer token available. */
@@ -272,7 +272,7 @@ class AuthController extends Controller
         abort_if(! $user, 422, 'Invalid verification code.');
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.']);
+            return $this->success(null, 'Email already verified.');
         }
 
         if (! $user->verifyEmailWithOtp($request->code)) {
@@ -283,7 +283,7 @@ class AuthController extends Controller
 
         $this->audit->log('auth.email_verified', $user, null, null, $user, $user->tenant_id);
 
-        return response()->json(['message' => 'Email verified successfully.']);
+        return $this->success(null, 'Email verified successfully.');
     }
 
     public function resendVerification(Request $request): JsonResponse
@@ -291,12 +291,12 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.']);
+            return $this->success(null, 'Email already verified.');
         }
 
         $user->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Verification code sent.']);
+        return $this->success(null, 'Verification code sent.');
     }
 
     public function me(Request $request): UserResource
@@ -343,7 +343,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out.']);
+        return $this->success(null, 'Logged out.');
     }
 
     public function changePassword(Request $request): JsonResponse
@@ -366,30 +366,30 @@ class AuthController extends Controller
 
         $this->audit->log('auth.password_changed', $user, null, null, $user, $user->tenant_id);
 
-        return response()->json(['message' => 'Password updated. Other sessions have been signed out.']);
+        return $this->success(null, 'Password updated. Other sessions have been signed out.');
     }
 
     public function twoFactorStatus(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        return response()->json(['data' => [
+        return $this->success([
             'enabled' => $user->hasEnabledTwoFactor(),
             'recovery_codes_remaining' => $user->hasEnabledTwoFactor()
                 ? count($user->two_factor_recovery_codes ?? [])
                 : 0,
-        ]]);
+        ]);
     }
 
     public function lockoutStatus(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        return response()->json(['data' => [
+        return $this->success([
             'is_locked' => $user->isLocked(),
             'locked_until' => $user->locked_until?->toIso8601String(),
             'failed_attempts' => $user->failed_login_attempts ?? 0,
-        ]]);
+        ]);
     }
 
     /** Active devices/sessions (personal access tokens) for the current user. */
@@ -410,7 +410,7 @@ class AuthController extends Controller
                 'current' => $current && $token->id === $current->id,
             ]);
 
-        return response()->json(['data' => $sessions]);
+        return $this->success($sessions);
     }
 
     /** Revoke a single device/session — must belong to the current user. */
@@ -420,7 +420,7 @@ class AuthController extends Controller
 
         abort_if($deleted === 0, 404, 'Session not found.');
 
-        return response()->json(['message' => 'Session revoked.']);
+        return $this->success(null, 'Session revoked.');
     }
 
     /** Revoke every session except the one making this request. */
@@ -432,7 +432,7 @@ class AuthController extends Controller
             ->when($current, fn ($q) => $q->whereKeyNot($current->id))
             ->delete();
 
-        return response()->json(['message' => 'All other sessions revoked.']);
+        return $this->success(null, 'All other sessions revoked.');
     }
 
     protected function issueToken(User $user, Request $request): string

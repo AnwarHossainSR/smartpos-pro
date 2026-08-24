@@ -38,25 +38,23 @@ class PosController extends Controller
         $register = CashRegister::where('branch_id', $branch->id)->where('is_active', true)->first();
         $session = $register?->openSession();
 
-        return response()->json([
-            'data' => [
-                'branch' => ['id' => $branch->id, 'name' => $branch->name],
-                'warehouse' => $warehouse ? ['id' => $warehouse->id, 'name' => $warehouse->name] : null,
-                'cash_register' => $register ? ['id' => $register->id, 'name' => $register->name] : null,
-                'session' => $session ? new CashRegisterSessionResource($session) : null,
-                'tax_profile' => new TaxProfileResource($business->effectiveTaxProfile()),
-                'price_display' => $business->price_display,
-                // The terminal uses these to pre-empt the round trip and open the PIN
-                // dialog itself — but the same limits are re-checked on POST /sales,
-                // so a client that ignores them gains nothing.
-                'approval_policy' => ApprovalPolicy::fromBusiness($business)->toArray(),
-                'can_approve' => $user->hasPermission('pos.approve'),
-                'currency' => $business->currency ?? config('pos.currency'),
-                'payment_methods' => array_map(
-                    static fn (PaymentMethod $m) => ['value' => $m->value, 'label' => $m->label()],
-                    PaymentMethod::cases(),
-                ),
-            ],
+        return $this->success([
+            'branch' => ['id' => $branch->id, 'name' => $branch->name],
+            'warehouse' => $warehouse ? ['id' => $warehouse->id, 'name' => $warehouse->name] : null,
+            'cash_register' => $register ? ['id' => $register->id, 'name' => $register->name] : null,
+            'session' => $session ? new CashRegisterSessionResource($session) : null,
+            'tax_profile' => new TaxProfileResource($business->effectiveTaxProfile()),
+            'price_display' => $business->price_display,
+            // The terminal uses these to pre-empt the round trip and open the PIN
+            // dialog itself — but the same limits are re-checked on POST /sales,
+            // so a client that ignores them gains nothing.
+            'approval_policy' => ApprovalPolicy::fromBusiness($business)->toArray(),
+            'can_approve' => $user->hasPermission('pos.approve'),
+            'currency' => $business->currency ?? config('pos.currency'),
+            'payment_methods' => array_map(
+                static fn (PaymentMethod $m) => ['value' => $m->value, 'label' => $m->label()],
+                PaymentMethod::cases(),
+            ),
         ]);
     }
 }

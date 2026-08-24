@@ -30,6 +30,6 @@ class StripeWebhookController extends Controller
         // In production, you would dispatch events to update sales, customers, etc.
         Log::info('Stripe webhook received', ['event' => $result['type'], 'sale_id' => $result['sale_id']]);
 
-        return response()->json(['status' => 'received']);
+        return $this->success(['status' => 'received']);
     }
 }

@@ -115,32 +115,30 @@ class DashboardController extends Controller
             ? round((($thisWeekRevenue - $lastWeekRevenue) / $lastWeekRevenue) * 100, 2)
             : 0;
 
-        return response()->json([
-            'data' => [
-                'todays_sales' => round((float) ($salesInRange->revenue ?? 0), 2),
-                'todays_transactions' => (int) ($salesInRange->transactions ?? 0),
-                'total_due' => round((float) Sale::where('payment_status', '!=', 'paid')->sum('due_amount'), 2),
-                'customer_dues' => round((float) Customer::where('balance', '>', 0)->sum('balance'), 2),
-                'total_products' => Product::count(),
-                'total_customers' => Customer::count(),
-                // A join, not a correlated subquery: the latter re-ran a lookup on
-                // `products` for every balance row in the tenant.
-                'low_stock_count' => InventoryBalance::query()
-                    ->join('products', 'products.id', '=', 'inventory_balances.product_id')
-                    ->whereColumn('inventory_balances.quantity', '<=', 'products.min_stock_level')
-                    ->count(),
-                'sales_trend' => $trend->map(fn ($row) => [
-                    'day' => $row->day,
-                    'total' => round((float) $row->total, 2),
-                ]),
-                'top_products' => $topProducts,
-                'recent_sales' => $recentSales,
-                'low_stock_items' => $lowStockItems,
-                'week_comparison' => [
-                    'this_week' => round($thisWeekRevenue, 2),
-                    'last_week' => round($lastWeekRevenue, 2),
-                    'change_pct' => $changePct,
-                ],
+        return $this->success([
+            'todays_sales' => round((float) ($salesInRange->revenue ?? 0), 2),
+            'todays_transactions' => (int) ($salesInRange->transactions ?? 0),
+            'total_due' => round((float) Sale::where('payment_status', '!=', 'paid')->sum('due_amount'), 2),
+            'customer_dues' => round((float) Customer::where('balance', '>', 0)->sum('balance'), 2),
+            'total_products' => Product::count(),
+            'total_customers' => Customer::count(),
+            // A join, not a correlated subquery: the latter re-ran a lookup on
+            // `products` for every balance row in the tenant.
+            'low_stock_count' => InventoryBalance::query()
+                ->join('products', 'products.id', '=', 'inventory_balances.product_id')
+                ->whereColumn('inventory_balances.quantity', '<=', 'products.min_stock_level')
+                ->count(),
+            'sales_trend' => $trend->map(fn ($row) => [
+                'day' => $row->day,
+                'total' => round((float) $row->total, 2),
+            ]),
+            'top_products' => $topProducts,
+            'recent_sales' => $recentSales,
+            'low_stock_items' => $lowStockItems,
+            'week_comparison' => [
+                'this_week' => round($thisWeekRevenue, 2),
+                'last_week' => round($lastWeekRevenue, 2),
+                'change_pct' => $changePct,
             ],
         ]);
     }

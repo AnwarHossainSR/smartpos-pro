@@ -22,12 +22,10 @@ class LoyaltyController extends Controller
         $history = LoyaltyTransaction::where('customer_id', $customer->id)
             ->latest('id')->limit(50)->get(['type', 'points', 'balance_after', 'note', 'sale_id', 'created_at']);
 
-        return response()->json([
-            'data' => [
-                'customer_id' => $customer->id,
-                'points' => (int) $customer->loyalty_points,
-                'history' => $history,
-            ],
+        return $this->success([
+            'customer_id' => $customer->id,
+            'points' => (int) $customer->loyalty_points,
+            'history' => $history,
         ]);
     }
 
@@ -40,7 +38,7 @@ class LoyaltyController extends Controller
 
         $txn = $this->loyalty->redeem($customer, (int) $data['points'], $request->user()->id, $data['note'] ?? null);
 
-        return response()->json(['data' => ['points' => (int) $txn->points, 'balance' => (int) $txn->balance_after]]);
+        return $this->success(['points' => (int) $txn->points, 'balance' => (int) $txn->balance_after]);
     }
 
     public function adjust(Request $request, Customer $customer): JsonResponse
@@ -52,6 +50,6 @@ class LoyaltyController extends Controller
 
         $txn = $this->loyalty->adjust($customer, (int) $data['points'], $request->user()->id, $data['note'] ?? null);
 
-        return response()->json(['data' => ['points' => (int) $txn->points, 'balance' => (int) $txn->balance_after]]);
+        return $this->success(['points' => (int) $txn->points, 'balance' => (int) $txn->balance_after]);
     }
 }

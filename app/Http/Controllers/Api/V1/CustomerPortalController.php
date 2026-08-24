@@ -38,7 +38,7 @@ class CustomerPortalController extends Controller
             Mail::to($customer->email)->send(new CustomerPortalMagicLinkMail($customer, $url));
         }
 
-        return response()->json(['message' => 'If that email is registered, a magic link has been sent.']);
+        return $this->success(null, 'If that email is registered, a magic link has been sent.');
     }
 
     public function verify(Request $request, string $token): JsonResponse

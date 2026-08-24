@@ -42,6 +42,6 @@ class ForecastController extends Controller
             $ids,
         );
 
-        return response()->json(['data' => $forecasts]);
+        return $this->success($forecasts);
     }
 }

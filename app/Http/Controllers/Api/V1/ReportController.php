@@ -48,18 +48,16 @@ class ReportController extends Controller
             ->toBase()
             ->first();
 
-        return response()->json([
-            'data' => [
-                'from' => $from->toDateString(),
-                'to' => $to->toDateString(),
-                'invoices' => (int) ($totals->invoices ?? 0),
-                'gross_sales' => round((float) ($totals->gross_sales ?? 0), 2),
-                'discounts' => round((float) ($totals->discounts ?? 0), 2),
-                'tax' => round((float) ($totals->tax ?? 0), 2),
-                'net_sales' => round((float) ($totals->net_sales ?? 0), 2),
-                'amount_paid' => round((float) ($totals->amount_paid ?? 0), 2),
-                'amount_due' => round((float) ($totals->amount_due ?? 0), 2),
-            ],
+        return $this->success([
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'invoices' => (int) ($totals->invoices ?? 0),
+            'gross_sales' => round((float) ($totals->gross_sales ?? 0), 2),
+            'discounts' => round((float) ($totals->discounts ?? 0), 2),
+            'tax' => round((float) ($totals->tax ?? 0), 2),
+            'net_sales' => round((float) ($totals->net_sales ?? 0), 2),
+            'amount_paid' => round((float) ($totals->amount_paid ?? 0), 2),
+            'amount_due' => round((float) ($totals->amount_due ?? 0), 2),
         ]);
     }
 
@@ -89,7 +87,7 @@ class ReportController extends Controller
                 'profit' => round((float) $r->revenue - (float) $r->cost, 2),
             ]);
 
-        return response()->json(['data' => $rows]);
+        return $this->success($rows);
     }
 
     /** Gross profit = revenue - cost of goods sold, over the period. */
@@ -109,13 +107,11 @@ class ReportController extends Controller
         $revenue = round((float) ($row->revenue ?? 0), 2);
         $cost = round((float) ($row->cost ?? 0), 2);
 
-        return response()->json([
-            'data' => [
-                'revenue' => $revenue,
-                'cost_of_goods_sold' => $cost,
-                'gross_profit' => round($revenue - $cost, 2),
-                'margin_percent' => $revenue > 0 ? round((($revenue - $cost) / $revenue) * 100, 2) : 0,
-            ],
+        return $this->success([
+            'revenue' => $revenue,
+            'cost_of_goods_sold' => $cost,
+            'gross_profit' => round($revenue - $cost, 2),
+            'margin_percent' => $revenue > 0 ? round((($revenue - $cost) / $revenue) * 100, 2) : 0,
         ]);
     }
 
@@ -137,11 +133,9 @@ class ReportController extends Controller
                 'value' => round((float) $r->value, 2),
             ]);
 
-        return response()->json([
-            'data' => [
-                'total_value' => round((float) $rows->sum('value'), 2),
-                'by_warehouse' => $rows,
-            ],
+        return $this->success([
+            'total_value' => round((float) $rows->sum('value'), 2),
+            'by_warehouse' => $rows,
         ]);
     }
 
@@ -164,23 +158,21 @@ class ReportController extends Controller
                 'reorder_quantity' => (float) $p->reorder_quantity,
             ]);
 
-        return response()->json(['data' => $rows]);
+        return $this->success($rows);
     }
 
     /** Outstanding receivables (customers) and payables (suppliers). */
     public function dues(Request $request): JsonResponse
     {
-        return response()->json([
-            'data' => [
-                'customer_receivables' => round((float) Customer::where('balance', '>', 0)->sum('balance'), 2),
-                'supplier_payables' => round((float) Supplier::where('balance', '>', 0)->sum('balance'), 2),
-                'top_customer_dues' => Customer::where('balance', '>', 0)
-                    ->orderByDesc('balance')->limit(10)->get(['id', 'name', 'balance'])
-                    ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'balance' => (float) $c->balance]),
-                'top_supplier_dues' => Supplier::where('balance', '>', 0)
-                    ->orderByDesc('balance')->limit(10)->get(['id', 'name', 'balance'])
-                    ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'balance' => (float) $s->balance]),
-            ],
+        return $this->success([
+            'customer_receivables' => round((float) Customer::where('balance', '>', 0)->sum('balance'), 2),
+            'supplier_payables' => round((float) Supplier::where('balance', '>', 0)->sum('balance'), 2),
+            'top_customer_dues' => Customer::where('balance', '>', 0)
+                ->orderByDesc('balance')->limit(10)->get(['id', 'name', 'balance'])
+                ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'balance' => (float) $c->balance]),
+            'top_supplier_dues' => Supplier::where('balance', '>', 0)
+                ->orderByDesc('balance')->limit(10)->get(['id', 'name', 'balance'])
+                ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'balance' => (float) $s->balance]),
         ]);
     }
 
@@ -236,12 +228,10 @@ class ReportController extends Controller
 
         usort($aging, fn ($a, $b) => ($a['outstanding'] ?? 0) <=> ($b['outstanding'] ?? 0));
 
-        return response()->json([
-            'data' => [
-                'from' => $from->toDateString(),
-                'to' => $to->toDateString(),
-                'aging' => $aging,
-            ],
+        return $this->success([
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'aging' => $aging,
         ]);
     }
 
@@ -253,7 +243,7 @@ class ReportController extends Controller
         $service = app(FinancialStatementService::class);
         $data = $service->profitLoss($from->toDateString(), $to->toDateString());
 
-        return response()->json(['data' => $data]);
+        return $this->success($data);
     }
 
     public function balanceSheet(Request $request): JsonResponse
@@ -267,7 +257,7 @@ class ReportController extends Controller
         $service = app(FinancialStatementService::class);
         $data = $service->balanceSheet($asOf);
 
-        return response()->json(['data' => $data]);
+        return $this->success($data);
     }
 
     /**

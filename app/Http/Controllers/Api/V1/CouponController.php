@@ -23,7 +23,7 @@ class CouponController extends Controller
             ->sortable(['id', 'code', 'expires_at'], default: '-id')
             ->paginate();
 
-        return response()->json($coupons);
+        return $this->success($coupons);
     }
 
     public function store(StoreCouponRequest $request): JsonResponse
@@ -33,21 +33,21 @@ class CouponController extends Controller
 
         $coupon = Coupon::create($data);
 
-        return response()->json(['data' => $coupon], 201);
+        return $this->created($coupon);
     }
 
     public function update(StoreCouponRequest $request, Coupon $coupon): JsonResponse
     {
         $coupon->update($request->validated());
 
-        return response()->json(['data' => $coupon]);
+        return $this->success($coupon);
     }
 
     public function destroy(Coupon $coupon): JsonResponse
     {
         $coupon->delete();
 
-        return response()->json(status: 204);
+        return $this->noContent();
     }
 
     /** Validate a coupon code against a cart total and return the computed discount. */

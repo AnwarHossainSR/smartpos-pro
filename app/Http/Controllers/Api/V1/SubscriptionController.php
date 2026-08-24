@@ -39,17 +39,15 @@ class SubscriptionController extends Controller
             ->latest('id')
             ->first();
 
-        return response()->json([
-            'data' => [
-                'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
-                'usage' => $this->limits->usage(),
-            ],
+        return $this->success([
+            'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
+            'usage' => $this->limits->usage(),
         ]);
     }
 
     public function usage(): JsonResponse
     {
-        return response()->json(['data' => $this->limits->usage()]);
+        return $this->success($this->limits->usage());
     }
 
     public function checkout(StoreSubscriptionRequest $request): JsonResponse

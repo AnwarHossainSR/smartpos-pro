@@ -26,7 +26,7 @@ class ProductVariantController extends Controller
 
     public function variants(Product $product): JsonResponse
     {
-        return response()->json(['data' => $product->variants]);
+        return $this->success($product->variants);
     }
 
     // ---------- Batches ----------
@@ -45,7 +45,7 @@ class ProductVariantController extends Controller
             ->sortable(['expires_at', 'quantity'], default: 'expires_at')
             ->paginate(50);
 
-        return response()->json($batches);
+        return $this->success($batches);
     }
 
     public function storeBatch(StoreStockBatchRequest $request): JsonResponse
@@ -54,7 +54,7 @@ class ProductVariantController extends Controller
             'tenant_id' => $request->user()->tenant_id,
         ]));
 
-        return response()->json(['data' => $batch], 201);
+        return $this->created($batch);
     }
 
     // ---------- Serials ----------
@@ -71,7 +71,7 @@ class ProductVariantController extends Controller
             ->sortable(['id', 'serial_number'], default: '-id')
             ->paginate(50);
 
-        return response()->json($serials);
+        return $this->success($serials);
     }
 
     public function storeSerial(StoreStockSerialRequest $request): JsonResponse
@@ -81,6 +81,6 @@ class ProductVariantController extends Controller
             'status' => SerialStatus::InStock,
         ]));
 
-        return response()->json(['data' => $serial], 201);
+        return $this->created($serial);
     }
 }

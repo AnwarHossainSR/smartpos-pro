@@ -15,6 +15,6 @@ class CacheController
         Cache::forget('pos:bootstrap:catalog:*');
         Cache::forget('tax:profiles:*');
 
-        return response()->json(['status' => 'cache flushed']);
+        return $this->success(['status' => 'cache flushed']);
     }
 }

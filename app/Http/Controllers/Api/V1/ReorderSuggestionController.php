@@ -25,9 +25,7 @@ class ReorderSuggestionController extends Controller
 
     public function index()
     {
-        return response()->json([
-            'data' => $this->suggestions->getSuggestions(),
-        ]);
+        return $this->success($this->suggestions->getSuggestions());
     }
 
     public function createDraftPo(Request $request): JsonResponse

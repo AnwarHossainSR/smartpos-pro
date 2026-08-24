@@ -21,17 +21,15 @@ class SettingsController extends Controller
     {
         $business = Business::findOrFail($request->user()->business_id);
 
-        return response()->json(['data' => $this->present($business)]);
+        return $this->success($this->present($business));
     }
 
     public function retention(Request $request): JsonResponse
     {
         $business = Business::findOrFail($request->user()->business_id);
 
-        return response()->json([
-            'data' => [
-                'retention_days' => $business->audit_retention_days ?? 180,
-            ],
+        return $this->success([
+            'retention_days' => $business->audit_retention_days ?? 180,
         ]);
     }
 
@@ -63,7 +61,7 @@ class SettingsController extends Controller
             $business->tenant->update(['base_currency' => $baseCurrency]);
         }
 
-        return response()->json(['data' => $this->present($business->fresh())]);
+        return $this->success($this->present($business->fresh()));
     }
 
     /**
@@ -75,7 +73,7 @@ class SettingsController extends Controller
     {
         $business = Business::findOrFail($request->user()->business_id);
 
-        return response()->json(['data' => ApprovalPolicy::fromBusiness($business)->toArray()]);
+        return $this->success(ApprovalPolicy::fromBusiness($business)->toArray());
     }
 
     public function updateApprovals(UpdateApprovalSettingsRequest $request): JsonResponse
@@ -87,7 +85,7 @@ class SettingsController extends Controller
             'settings' => array_merge($business->settings ?? [], [ApprovalPolicy::KEY => $policy->toArray()]),
         ]);
 
-        return response()->json(['data' => $policy->toArray()]);
+        return $this->success($policy->toArray());
     }
 
     public function completeOnboarding(Request $request): JsonResponse
@@ -98,7 +96,7 @@ class SettingsController extends Controller
             'onboarding_state' => array_merge($business->onboarding_state ?? [], ['dismissed' => true]),
         ]);
 
-        return response()->json(['data' => ['onboarding_completed' => true]]);
+        return $this->success(['onboarding_completed' => true]);
     }
 
     public function recordOnboardingStep(Request $request): JsonResponse
@@ -124,7 +122,7 @@ class SettingsController extends Controller
 
         $business->update(['onboarding_state' => $state]);
 
-        return response()->json(['data' => ['onboarding_state' => $state]]);
+        return $this->success(['onboarding_state' => $state]);
     }
 
     /**

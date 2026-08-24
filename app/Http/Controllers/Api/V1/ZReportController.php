@@ -23,9 +23,7 @@ class ZReportController extends Controller
 
     public function show(ZReportRequest $request): JsonResponse
     {
-        return response()->json([
-            'data' => $this->reports->generate($this->business($request), $request->reportDate(), $request->branchId()),
-        ]);
+        return $this->success($this->reports->generate($this->business($request), $request->reportDate(), $request->branchId()));
     }
 
     /** Streams the Z-report inline by default; `?download=1` forces a download. */

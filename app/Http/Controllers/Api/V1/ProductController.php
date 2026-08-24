@@ -134,12 +134,10 @@ class ProductController extends Controller
 
         $product->update(['image_path' => $path]);
 
-        return response()->json([
-            'data' => [
-                'path' => $path,
-                'url' => $this->media->url($path),
-                'urls' => $this->media->urls($path, $request->collection()),
-            ],
+        return $this->success([
+            'path' => $path,
+            'url' => $this->media->url($path),
+            'urls' => $this->media->urls($path, $request->collection()),
         ]);
     }
 
@@ -148,7 +146,7 @@ class ProductController extends Controller
         $this->media->delete($product->image_path);
         $product->update(['image_path' => null]);
 
-        return response()->json(['data' => ['path' => null, 'url' => null, 'urls' => null]]);
+        return $this->success(['path' => null, 'url' => null, 'urls' => null]);
     }
 
     public function import(Request $request): JsonResponse
@@ -185,12 +183,10 @@ class ProductController extends Controller
             ];
         }
 
-        return response()->json([
-            'data' => [
-                'rows_valid' => $rowsValid,
-                'rows_invalid' => count($errors),
-                'errors' => $errors,
-            ],
+        return $this->success([
+            'rows_valid' => $rowsValid,
+            'rows_invalid' => count($errors),
+            'errors' => $errors,
         ]);
     }
 
@@ -213,17 +209,10 @@ class ProductController extends Controller
                 }
             });
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Import completed with errors',
-                'data' => [
-                    'errors' => $import->errors,
-                ],
-            ], 422);
+            return $this->error('Import completed with errors', 422, ['errors' => $import->errors]);
         }
 
-        return response()->json([
-            'message' => 'Products imported successfully',
-        ]);
+        return $this->success(null, 'Products imported successfully');
     }
 
     public function template()

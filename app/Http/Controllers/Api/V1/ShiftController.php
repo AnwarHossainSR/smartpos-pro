@@ -32,7 +32,7 @@ class ShiftController extends Controller
     {
         $shift = $this->service->currentShift(request()->user());
 
-        return response()->json(['data' => $shift ? new ShiftResource($shift) : null]);
+        return $this->success($shift ? new ShiftResource($shift) : null);
     }
 
     public function clockIn(ClockInRequest $request): JsonResponse
@@ -87,15 +87,13 @@ class ShiftController extends Controller
             $userId = $request->user()->id;
         }
 
-        return response()->json([
-            'data' => $this->service->hoursReport(
-                $from,
-                $to,
-                $request->validated('group_by') ?? 'day',
-                $userId,
-                $request->validated('branch_id'),
-            ),
-        ]);
+        return $this->success($this->service->hoursReport(
+            $from,
+            $to,
+            $request->validated('group_by') ?? 'day',
+            $userId,
+            $request->validated('branch_id'),
+        ));
     }
 
     /** @return array{0: Carbon, 1: Carbon} */

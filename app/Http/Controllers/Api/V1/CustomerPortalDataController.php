@@ -18,13 +18,11 @@ class CustomerPortalDataController extends Controller
     {
         $customer = $request->user();
 
-        return response()->json([
-            'data' => [
-                'id' => $customer->id,
-                'name' => $customer->name,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
-            ],
+        return $this->success([
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'email' => $customer->email,
+            'phone' => $customer->phone,
         ]);
     }
 
@@ -47,7 +45,7 @@ class CustomerPortalDataController extends Controller
                 'sold_at' => $sale->sold_at,
             ]);
 
-        return response()->json(['data' => $sales]);
+        return $this->success($sales);
     }
 
     public function invoiceDetail(Request $request, string $sale): JsonResponse
@@ -62,25 +60,23 @@ class CustomerPortalDataController extends Controller
 
         $saleModel->load('items');
 
-        return response()->json([
-            'data' => [
-                'id' => $saleModel->id,
-                'invoice_number' => $saleModel->invoice_number,
-                'total' => (float) $saleModel->total,
-                'paid_amount' => (float) $saleModel->paid_amount,
-                'due_amount' => (float) $saleModel->due_amount,
-                'payment_status' => $saleModel->payment_status->value,
-                'sold_at' => $saleModel->sold_at,
-                'items' => $saleModel->items->map(fn ($item) => [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'quantity' => (float) $item->quantity,
-                    'unit_price' => (float) $item->unit_price,
-                    'discount_amount' => (float) $item->discount_amount,
-                    'tax_amount' => (float) $item->tax_amount,
-                    'line_total' => (float) $item->line_total,
-                ]),
-            ],
+        return $this->success([
+            'id' => $saleModel->id,
+            'invoice_number' => $saleModel->invoice_number,
+            'total' => (float) $saleModel->total,
+            'paid_amount' => (float) $saleModel->paid_amount,
+            'due_amount' => (float) $saleModel->due_amount,
+            'payment_status' => $saleModel->payment_status->value,
+            'sold_at' => $saleModel->sold_at,
+            'items' => $saleModel->items->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'quantity' => (float) $item->quantity,
+                'unit_price' => (float) $item->unit_price,
+                'discount_amount' => (float) $item->discount_amount,
+                'tax_amount' => (float) $item->tax_amount,
+                'line_total' => (float) $item->line_total,
+            ]),
         ]);
     }
 
