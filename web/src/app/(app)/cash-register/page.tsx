@@ -46,7 +46,7 @@ interface Movement {
 export default function CashRegisterPage() {
   const qc = useQueryClient();
   const t = useTranslation();
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const [openingAmount, setOpeningAmount] = useState("0");
   const [closeAmount, setCloseAmount] = useState("0");
   const [movementAmount, setMovementAmount] = useState("");
