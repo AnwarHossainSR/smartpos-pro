@@ -30,7 +30,7 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = $this->provisioner->register($request->validated());
-        $result = $this->auth->completeLogin($user, $request->input('device_name', 'web'));
+        $result = $this->auth->completeLogin($user, $request->input('device_name', 'web'), $request->ip());
 
         return response()->json([
             'user' => new UserResource($result['user']),
@@ -43,7 +43,8 @@ class AuthController extends Controller
         $result = $this->auth->login(
             $request->email,
             $request->password,
-            $request->input('device_name', 'web')
+            $request->input('device_name', 'web'),
+            $request->ip()
         );
 
         if (isset($result['requires_2fa'])) {
@@ -62,7 +63,8 @@ class AuthController extends Controller
             $request->challenge_token,
             $request->input('code'),
             $request->input('recovery_code'),
-            $request->input('device_name', 'web')
+            $request->input('device_name', 'web'),
+            $request->ip()
         );
 
         return response()->json([

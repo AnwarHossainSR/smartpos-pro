@@ -29,7 +29,7 @@ class AuthService
         private TenantContext $context,
     ) {}
 
-    public function login(string $email, string $password, ?string $deviceName = 'web'): array
+    public function login(string $email, string $password, ?string $deviceName = 'web', ?string $ipAddress = null): array
     {
         $user = User::withoutTenancy()->where('email', $email)->first();
 
@@ -72,10 +72,10 @@ class AuthService
             ];
         }
 
-        return $this->completeLogin($user, $deviceName);
+        return $this->completeLogin($user, $deviceName, $ipAddress);
     }
 
-    public function twoFactorChallenge(string $challengeToken, ?string $code, ?string $recoveryCode, ?string $deviceName = 'web'): array
+    public function twoFactorChallenge(string $challengeToken, ?string $code, ?string $recoveryCode, ?string $deviceName = 'web', ?string $ipAddress = null): array
     {
         $userId = Cache::get("2fa_challenge:{$challengeToken}");
         abort_if(! $userId, 422, 'This login challenge has expired. Please sign in again.');
@@ -104,7 +104,7 @@ class AuthService
 
         Cache::forget("2fa_challenge:{$challengeToken}");
 
-        return $this->completeLogin($user, $deviceName);
+        return $this->completeLogin($user, $deviceName, $ipAddress);
     }
 
     public function changePassword(User $user, string $current, string $new): void
@@ -167,7 +167,7 @@ class AuthService
         $this->audit->log('auth.email_verified', $user, null, null, $user, $user->tenant_id);
     }
 
-    public function completeLogin(User $user, ?string $deviceName = 'web'): array
+    public function completeLogin(User $user, ?string $deviceName = 'web', ?string $ipAddress = null): array
     {
         $user->forceFill(['last_login_at' => now(), 'failed_login_attempts' => 0, 'locked_until' => null])->save();
 
@@ -181,7 +181,7 @@ class AuthService
 
         return [
             'user' => $user,
-            'token' => $this->issueToken($user, $deviceName),
+            'token' => $this->issueToken($user, $deviceName, $ipAddress),
         ];
     }
 
@@ -226,13 +226,17 @@ class AuthService
         return false;
     }
 
-    private function issueToken(User $user, ?string $deviceName = 'web'): string
+    private function issueToken(User $user, ?string $deviceName = 'web', ?string $ipAddress = null): string
     {
         $abilities = (($user->is_super_admin ?? false) || $user->hasRole('owner'))
             ? ['*']
             : $user->permissionSlugs();
 
         $newToken = $user->createToken($deviceName ?? 'web', $abilities);
+
+        if ($ipAddress) {
+            $newToken->accessToken->forceFill(['ip_address' => $ipAddress])->save();
+        }
 
         return $newToken->plainTextToken;
     }
