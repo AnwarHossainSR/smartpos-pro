@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ServerTheme } from "@/stores/theme";
 import { splitSlug, type PermissionSlug } from "@/lib/permissions";
+import { queryClient } from "@/lib/query-client";
 
 export interface AuthUser {
   id: string;
@@ -131,6 +132,12 @@ export const useAuth = create<AuthState>()((set, get): AuthState => ({
   logout: () => {
     writeTokenCookie(null);
     writeImpersonateCookie(null);
+    localStorage.removeItem("smartpos-locale");
+    localStorage.removeItem("smartpos-theme");
+    localStorage.removeItem("pos-view-mode");
+    localStorage.removeItem("pos-favorites");
+    localStorage.removeItem("smartpos-portal-token");
+    queryClient.clear();
     set({ token: null, user: null });
   },
   stopImpersonation: () => {
