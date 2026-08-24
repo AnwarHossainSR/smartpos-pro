@@ -43,7 +43,6 @@ use App\Http\Controllers\Api\V1\StripeWebhookController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\SupportTicketController;
-use App\Http\Controllers\Api\V1\TableController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
 use App\Http\Controllers\Api\V1\TaxRateController;
@@ -161,15 +160,9 @@ Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])
     Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
     Route::post('sales/{sale}/email-status-link', [SaleController::class, 'emailStatusLink'])->middleware(['permission:sales.view', 'throttle:reports']);
     Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
-    Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
+        Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
 
-    Route::get('tables', [TableController::class, 'index'])->middleware('permission:tables.view');
-    Route::post('tables', [TableController::class, 'store'])->middleware('permission:tables.create');
-    Route::get('tables/{table}', [TableController::class, 'show'])->middleware('permission:tables.view');
-    Route::put('tables/{table}', [TableController::class, 'update'])->middleware('permission:tables.update');
-    Route::delete('tables/{table}', [TableController::class, 'destroy'])->middleware('permission:tables.delete');
-
-    Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
+        Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
     Route::get('deliveries', [DeliveryController::class, 'index'])->middleware('permission:deliveries.view');
     Route::get('deliveries/{delivery}', [DeliveryController::class, 'show'])->middleware('permission:deliveries.view');
     Route::put('deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus'])->middleware('permission:deliveries.update');

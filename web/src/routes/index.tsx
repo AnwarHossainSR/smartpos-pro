@@ -167,11 +167,6 @@ export const routes: RouteObject[] = [
                 handle: seo("Loyalty", "Loyalty programme, points balances and rewards."),
               },
               {
-                path: "tables",
-                lazy: () => loadPage(() => import("@/app/(app)/tables/page")),
-                handle: seo("Tables", "Floor plan, table status and open orders."),
-              },
-              {
                 path: "team",
                 lazy: () => loadPage(() => import("@/app/(app)/team/page")),
                 handle: seo("Team", "Staff accounts, roles and permissions."),

@@ -34,7 +34,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/pos", key: "pos", icon: ShoppingCart },
       { href: "/sales", key: "sales", icon: Receipt },
-      { href: "/tables", key: "tables", icon: LayoutGrid },
       { href: "/cash-register", key: "cashRegister", icon: CreditCard },
     ],
   },

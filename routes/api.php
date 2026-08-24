@@ -30,6 +30,12 @@ use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
+use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController as SuperAuditLogController;
+use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController as SuperImpersonationController;
+use App\Http\Controllers\Api\V1\SuperAdmin\PlanController as SuperPlanController;
+use App\Http\Controllers\Api\V1\SuperAdmin\SupportController as SuperSupportController;
+use App\Http\Controllers\Api\V1\SuperAdmin\TenantController as SuperTenantController;
+use App\Http\Controllers\Api\V1\SuperAdmin\UserController as SuperUserController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
@@ -61,6 +67,8 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/sessions', [AuthController::class, 'sessions']);
         Route::delete('auth/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
         Route::post('auth/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
+
+        Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
 
         Route::post('auth/2fa/enable', [TwoFactorController::class, 'enable']);
         Route::post('auth/2fa/confirm', [TwoFactorController::class, 'confirm']);
@@ -302,23 +310,49 @@ Route::prefix('v1')->group(function () {
 
     // Called from *inside* an impersonated session (the tenant owner's own token, not a
     // super-admin token) — deliberately outside the super_admin-gated group below.
-    Route::post('super/impersonation/stop', [SuperAdminController::class, 'stopImpersonation'])
+    Route::post('super/impersonation/stop', [SuperImpersonationController::class, 'stopImpersonation'])
         ->middleware(['auth:sanctum']);
 
     // T31-T33 — Super-admin (separate guard, no tenant scope)
     Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
-        Route::get('tenants', [SuperAdminController::class, 'tenants']);
-        Route::get('tenants/{tenant}', [SuperAdminController::class, 'showTenant']);
-        Route::post('tenants/{tenant}/suspend', [SuperAdminController::class, 'suspendTenant']);
-        Route::post('tenants/{tenant}/activate', [SuperAdminController::class, 'activateTenant']);
-        Route::delete('tenants/{tenant}', [SuperAdminController::class, 'deleteTenant']);
+        Route::get('tenants', [SuperTenantController::class, 'index']);
+        Route::get('tenants/{tenant}', [SuperTenantController::class, 'show']);
+        Route::post('tenants/{tenant}/suspend', [SuperTenantController::class, 'suspend']);
+        Route::post('tenants/{tenant}/activate', [SuperTenantController::class, 'activate']);
+        Route::delete('tenants/{tenant}', [SuperTenantController::class, 'destroy']);
 
         // T32
         Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
 
         // T33
-        Route::post('tenants/{tenant}/impersonate', [SuperAdminController::class, 'impersonate']);
-        Route::post('impersonation/{impersonation}/revoke', [SuperAdminController::class, 'revokeImpersonation']);
-        Route::get('impersonations', [SuperAdminController::class, 'activeImpersonations']);
+        Route::post('tenants/{tenant}/impersonate', [SuperImpersonationController::class, 'impersonate']);
+        Route::post('impersonation/{impersonation}/revoke', [SuperImpersonationController::class, 'revokeImpersonation']);
+        Route::get('impersonations', [SuperImpersonationController::class, 'activeImpersonations']);
+
+        // System health
+        Route::get('health', [SuperAdminController::class, 'health']);
+
+        // Super-admin user management
+        Route::get('users', [SuperUserController::class, 'indexUsers']);
+        Route::get('users/{id}', [SuperUserController::class, 'showUser']);
+        Route::put('users/{id}/status', [SuperUserController::class, 'updateUserStatus']);
+        Route::post('users/{id}/force-logout', [SuperUserController::class, 'forceLogoutUser']);
+
+        // Super-admin audit logs
+        Route::get('audit-logs', [SuperAuditLogController::class, 'auditLogs']);
+
+        // Super-admin plan management
+        Route::get('plans', [SuperPlanController::class, 'listPlans']);
+        Route::post('plans', [SuperPlanController::class, 'storePlan']);
+        Route::put('plans/{id}', [SuperPlanController::class, 'updatePlan']);
+        Route::delete('plans/{id}', [SuperPlanController::class, 'destroyPlan']);
+
+        // Super-admin support tickets
+        Route::get('support/tickets', [SuperSupportController::class, 'index']);
+        Route::get('support/tickets/metrics', [SuperSupportController::class, 'metrics']);
+        Route::get('support/tickets/{id}', [SuperSupportController::class, 'show']);
+        Route::put('support/tickets/{id}/status', [SuperSupportController::class, 'updateStatus']);
+        Route::post('support/tickets/{id}/reply', [SuperSupportController::class, 'addReply']);
+        Route::post('support/tickets/{id}/notes', [SuperSupportController::class, 'addInternalNote']);
     });
 });

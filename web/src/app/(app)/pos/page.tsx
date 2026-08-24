@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star, Grid2x2 as TableIcon } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
 import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
@@ -66,15 +66,6 @@ interface Warehouse {
   id: string;
   name: string;
   is_default: boolean;
-}
-
-interface Table {
-  id: string;
-  name: string;
-  seats: number;
-  status: "available" | "occupied" | "reserved";
-  x: number;
-  y: number;
 }
 
 interface CartItem {
@@ -380,14 +371,12 @@ export default function POSPage() {
   const { user, can } = useAuth();
   const canOverridePrice = can("pos.price_override");
   const canDiscount = can("pos.discount");
-  const canViewTables = can("tables.view");
   const t = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [tableId, setTableId] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search);
   const debouncedCustomerSearch = useDebouncedValue(customerSearch);
   const [showPayment, setShowPayment] = useState(false);
@@ -464,13 +453,6 @@ export default function POSPage() {
     queryFn: () => api<{ data: Warehouse[] }>("/warehouses"),
   });
 
-  // `api()` already targets /api/v1 — a "/v1/…" path here would resolve to /api/v1/v1/….
-  const { data: tablesData } = useQuery<{ data: Table[] }>({
-    queryKey: ["dining-tables-all"],
-    queryFn: () => api<{ data: Table[] }>("/tables"),
-    enabled: !!user && canViewTables,
-  });
-
   // Same query key as Settings → Business and the app shell's currency sync, so this is a
   // cache hit in practice rather than an extra request just for the POS screen.
   const { data: businessSettings } = useQuery({
@@ -484,8 +466,6 @@ export default function POSPage() {
     queryFn: () => api<Paginated<{ id: string }>>("/sales?status=held&per_page=20&sort=-sold_at"),
   });
   const heldCount = heldData?.data?.length ?? 0;
-
-  const tables = useMemo(() => tablesData?.data ?? [], [tablesData]);
 
   const defaultWarehouse = useMemo(
     () => warehousesData?.data?.find((w) => w.is_default) ?? warehousesData?.data?.[0],
@@ -661,7 +641,6 @@ export default function POSPage() {
           branch_id: user?.branch_id,
           warehouse_id: defaultWarehouse?.id,
           customer_id: customerId,
-          table_id: tableId,
           items: cart.map((i) => ({
             product_id: i.product.id,
             quantity: i.qty,
@@ -719,7 +698,6 @@ export default function POSPage() {
           branch_id: user?.branch_id,
           warehouse_id: defaultWarehouse?.id,
           customer_id: customerId,
-          table_id: tableId,
           status: "held",
           items: cart.map((i) => ({
             product_id: i.product.id,
@@ -955,32 +933,6 @@ export default function POSPage() {
             </button>
           )}
         </div>
-
-        {/* Table selector — only for tenants that actually have a floor plan. */}
-        {tables.length > 0 && (
-          <div className="border-b border-[var(--border)] bg-[var(--surface)] p-3">
-            <div className="flex items-center gap-2">
-              <TableIcon className="h-4 w-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
-              <Label htmlFor="pos-table" className="mb-0 font-medium">
-                {t("pos.table_selector")}
-              </Label>
-              <Select
-                id="pos-table"
-                className="w-40"
-                value={tableId ?? ""}
-                onChange={(e) => setTableId(e.target.value || null)}
-              >
-                <option value="">{t("pos.tableNone")}</option>
-                {tables.map((table) => (
-                  <option key={table.id} value={table.id} disabled={table.status !== "available"}>
-                    {table.name} · {t("tables.seatsCount", { count: table.seats })} ·{" "}
-                    {t(`tables.${table.status}`)}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
-        )}
 
         {/* Customer selector */}
         <div className="border-b border-[var(--border)] p-3">

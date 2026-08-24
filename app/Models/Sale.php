@@ -22,7 +22,7 @@ class Sale extends Model
         'tenant_id', 'business_id', 'branch_id', 'warehouse_id', 'customer_id', 'user_id',
         'coupon_id', 'invoice_number', 'public_token', 'status', 'payment_status', 'subtotal', 'discount_amount',
         'coupon_discount', 'tax_amount', 'shipping_amount', 'total', 'paid_amount', 'change_amount',
-        'due_amount', 'note', 'sold_at', 'tender_currency', 'tender_amount', 'fx_rate', 'table_id',
+        'due_amount', 'note', 'sold_at', 'tender_currency', 'tender_amount', 'fx_rate',
     ];
 
     protected function casts(): array
@@ -91,11 +91,6 @@ class Sale extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function table(): BelongsTo
-    {
-        return $this->belongsTo(Table::class, 'table_id');
     }
 
     public function delivery(): HasOne
