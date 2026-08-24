@@ -90,6 +90,7 @@ export function TenantList() {
         search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tenants…"
+        onRefresh={list.refetch}
         filters={
           <Select
             className="w-40"

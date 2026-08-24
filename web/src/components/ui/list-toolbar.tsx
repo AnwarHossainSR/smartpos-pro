@@ -1,6 +1,7 @@
-import { Search, Download, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Download, Plus, RotateCw, Search } from "lucide-react";
+import { useState } from "react";
 
 interface ListToolbarProps {
   search: string;
@@ -12,6 +13,7 @@ interface ListToolbarProps {
   exportLabel?: string;
   addLabel?: string;
   onAdd?: () => void;
+  onRefresh?: () => void;
 }
 
 export function ListToolbar({
@@ -23,7 +25,17 @@ export function ListToolbar({
   exportLabel = "Export",
   addLabel,
   onAdd,
+  onRefresh,
 }: ListToolbarProps) {
+  const [spinning, setSpinning] = useState(false);
+
+  const handleRefresh = () => {
+    if (!onRefresh) return;
+    setSpinning(true);
+    onRefresh();
+    setTimeout(() => setSpinning(false), 600);
+  };
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
@@ -39,6 +51,11 @@ export function ListToolbar({
         {filters}
       </div>
       <div className="flex items-center gap-2">
+        {onRefresh && (
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RotateCw className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
+          </Button>
+        )}
         {onExport && (
           <Button variant="outline" size="sm" onClick={onExport}>
             <Download className="h-4 w-4" />

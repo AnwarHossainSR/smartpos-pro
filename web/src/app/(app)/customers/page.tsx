@@ -127,6 +127,7 @@ export default function CustomersPage() {
         onSearchChange={list.setSearch}
         addLabel={can("customers.create") ? "Add customer" : undefined}
         onAdd={can("customers.create") ? () => { setEditing(null); setDrawerOpen(true); } : undefined}
+        onRefresh={list.refetch}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable

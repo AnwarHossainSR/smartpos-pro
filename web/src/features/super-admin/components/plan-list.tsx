@@ -69,6 +69,7 @@ export function PlanList() {
         search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search plans…"
+        onRefresh={list.refetch}
         {...(canManage ? { addLabel: "Create Plan", onAdd: () => setCreating(true) } : {})}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">

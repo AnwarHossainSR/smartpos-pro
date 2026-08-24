@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
   Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
   Layers, Building2, Mail, Percent, Webhook, ScrollText, LifeBuoy, Barcode, ShieldCheck,
-  Grid2x2, ClipboardList, AlertTriangle,
+  ClipboardList, AlertTriangle,
 } from "lucide-react";
 
 interface NavItem {
@@ -41,7 +41,6 @@ const items: NavItem[] = [
   { label: "Approval limits", href: "/settings/approvals", icon: ShieldCheck, keywords: "manager pin supervisor discount limit override void approval" },
   { label: "Tax settings", href: "/settings/tax", icon: Percent, keywords: "vat gst tax rate group" },
   { label: "Webhooks", href: "/settings/webhooks", icon: Webhook, keywords: "integration events" },
-  { label: "Dining tables", href: "/tables", icon: Grid2x2, keywords: "floor plan restaurant seats table" },
   { label: "Stocktakes", href: "/stocktakes", icon: ClipboardList, keywords: "count cycle count stock take variance" },
   { label: "Reorder suggestions", href: "/reorder-suggestions", icon: AlertTriangle, keywords: "restock low stock replenish purchase" },
   { label: "Audit log", href: "/audit-log", icon: ScrollText, keywords: "history changes" },

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignUuid('warehouse_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('customer_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('coupon_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUuid('table_id')->nullable()->constrained('dining_tables')->nullOnDelete();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete(); // cashier
             // Nullable: a number is issued only when a sale is *completed*, so a held
             // or draft cart legitimately carries none. NULLs do not collide in a
@@ -57,19 +56,10 @@ return new class extends Migration
             $table->index(['tenant_id', 'status', 'sold_at'], 'sales_tenant_status_sold_at_index');
             $table->unique(['tenant_id', 'invoice_number']);
         });
-
-        // Closes the dining_tables <-> sales cycle; see the dining tables migration.
-        Schema::table('dining_tables', function (Blueprint $table) {
-            $table->foreign('active_sale_id')->references('id')->on('sales')->nullOnDelete();
-        });
     }
 
     public function down(): void
     {
-        Schema::table('dining_tables', function (Blueprint $table) {
-            $table->dropForeign(['active_sale_id']);
-        });
-
         Schema::dropIfExists('sales');
     }
 };

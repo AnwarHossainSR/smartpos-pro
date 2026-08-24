@@ -115,6 +115,7 @@ export default function SuppliersPage() {
         onSearchChange={list.setSearch}
         addLabel={can("suppliers.create") ? "Add supplier" : undefined}
         onAdd={can("suppliers.create") ? () => { setEditing(null); setDrawerOpen(true); } : undefined}
+        onRefresh={list.refetch}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable

@@ -369,6 +369,7 @@ export default function ProductsPage() {
         onExport={handleExport}
         addLabel={can("products.create") ? t("products.addProduct") : undefined}
         onAdd={can("products.create") ? openCreate : undefined}
+        onRefresh={list.refetch}
         filters={
           <Button variant="outline" size="sm" asChild>
             <Link to="/products/labels">

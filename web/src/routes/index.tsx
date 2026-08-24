@@ -1,6 +1,6 @@
+import { RouteErrorBoundary } from "@/components/error-boundary";
 import { AppShell } from "@/components/layout/app-shell";
 import { RouteMeta } from "@/components/route-meta";
-import { RouteErrorBoundary } from "@/components/error-boundary";
 import { loadPage, seo } from "@/routes/helpers";
 import { type RouteObject, Navigate } from "react-router";
 
@@ -167,11 +167,6 @@ export const routes: RouteObject[] = [
                 handle: seo("Loyalty", "Loyalty programme, points balances and rewards."),
               },
               {
-                path: "tables",
-                lazy: () => loadPage(() => import("@/app/(app)/tables/page")),
-                handle: seo("Tables", "Floor plan, table status and open orders."),
-              },
-              {
                 path: "team",
                 lazy: () => loadPage(() => import("@/app/(app)/team/page")),
                 handle: seo("Team", "Staff accounts, roles and permissions."),
@@ -248,11 +243,6 @@ export const routes: RouteObject[] = [
                   "Reorder Suggestions",
                   "Products running low, with suggested order quantities.",
                 ),
-              },
-              {
-                path: "test-data",
-                lazy: () => loadPage(() => import("@/app/(app)/test-data/page")),
-                handle: seo("Test Data", "Generate sample data for trying out the app."),
               },
               {
                 path: "super-admin",

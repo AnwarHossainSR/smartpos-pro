@@ -124,6 +124,7 @@ export default function ExpensesPage() {
         onSearchChange={list.setSearch}
         addLabel={can("expenses.create") ? "Add expense" : undefined}
         onAdd={can("expenses.create") ? () => setDrawerOpen(true) : undefined}
+        onRefresh={list.refetch}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable

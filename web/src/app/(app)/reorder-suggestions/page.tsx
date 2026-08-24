@@ -188,6 +188,7 @@ export default function ReorderSuggestionsPage() {
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder={t("reorder.title") + "..."}
+        onRefresh={refetch}
         filters={
           canCreate && selected.size > 0 ? (
             <div className="flex items-center gap-2">

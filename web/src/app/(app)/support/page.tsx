@@ -198,6 +198,7 @@ function TicketList({
           search={searchInput}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search tickets\u2026"
+          onRefresh={refetch}
           filters={
             <Select
               className="w-40"
@@ -229,6 +230,7 @@ function TicketList({
         search={searchInput}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search tickets\u2026"
+        onRefresh={refetch}
         filters={
           <Select
             className="w-40"

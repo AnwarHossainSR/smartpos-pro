@@ -49,6 +49,7 @@ class PermissionCatalog
                 $permissions[] = [
                     'slug' => "{$module}.{$action}",
                     'name' => ucfirst($action).' '.ucfirst($module),
+                    'title' => ucfirst($action).' '.ucfirst($module),
                     'module' => $module,
                     'action' => $action,
                 ];
