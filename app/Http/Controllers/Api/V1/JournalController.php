@@ -11,11 +11,14 @@ use App\Models\JournalLine;
 use App\Services\Accounting\JournalService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class JournalController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected JournalService $journals) {}
 
     public function index(Request $request)
@@ -62,17 +65,15 @@ class JournalController extends Controller
             ->limit($this->limit($request, 200))
             ->get(['journal_lines.type', 'journal_lines.amount', 'journal_lines.description', 'journal_entries.entry_date', 'journal_entries.reference']);
 
-        return response()->json([
-            'data' => [
-                'account' => ['id' => $account->id, 'name' => $account->name, 'type' => $account->type, 'balance' => (float) $account->balance],
-                'lines' => $lines->map(fn ($l) => [
-                    'entry_date' => $l->entry_date,
-                    'reference' => $l->reference,
-                    'type' => $l->type,
-                    'amount' => (float) $l->amount,
-                    'description' => $l->description,
-                ]),
-            ],
+        return $this->success([
+            'account' => ['id' => $account->id, 'name' => $account->name, 'type' => $account->type, 'balance' => (float) $account->balance],
+            'lines' => $lines->map(fn ($l) => [
+                'entry_date' => $l->entry_date,
+                'reference' => $l->reference,
+                'type' => $l->type,
+                'amount' => (float) $l->amount,
+                'description' => $l->description,
+            ]),
         ]);
     }
 
@@ -102,12 +103,10 @@ class JournalController extends Controller
                 ];
             });
 
-        return response()->json([
-            'data' => [
-                'accounts' => $rows,
-                'total_debit' => round((float) $rows->sum('debit'), 2),
-                'total_credit' => round((float) $rows->sum('credit'), 2),
-            ],
+        return $this->success([
+            'accounts' => $rows,
+            'total_debit' => round((float) $rows->sum('debit'), 2),
+            'total_credit' => round((float) $rows->sum('credit'), 2),
         ]);
     }
 }

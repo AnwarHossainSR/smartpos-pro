@@ -15,16 +15,9 @@ class PermissionCatalog
         'warehouses' => ['view', 'create', 'update', 'delete'],
         'products' => ['view', 'create', 'update', 'delete', 'export'],
         'inventory' => ['view', 'create', 'update', 'adjust', 'export', 'approve'],
-        // `approve` is the supervisor bit: it lets a user's PIN authorise an over-limit
-        // discount, a price override or a void at the till (see ApprovalService).
-        'pos' => ['view', 'create', 'refund', 'discount', 'price_override', 'approve'],
+        'pos' => ['view', 'create', 'refund', 'discount', 'price_override'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
-        // Restaurant vertical: the dining-room floor plan. `update` is the one a
-        // cashier uses constantly — seating a party, clearing a table.
-        'tables' => ['view', 'create', 'update', 'delete'],
-        // Delivery vertical: dispatching an order and tracking it to the door.
-        'deliveries' => ['view', 'create', 'update'],
-        'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export', 'edit', 'return'],
+        'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export'],
         'customers' => ['view', 'create', 'update', 'delete', 'export'],
         'suppliers' => ['view', 'create', 'update', 'delete', 'export'],
         'expenses' => ['view', 'create', 'update', 'delete', 'approve'],
@@ -34,23 +27,18 @@ class PermissionCatalog
         'coupons' => ['view', 'create', 'update', 'delete'],
         'loyalty' => ['view', 'manage'],
         'subscriptions' => ['view', 'manage'],
+        // `shifts.manage` is deliberately self-scoped — it grants clocking *yourself*
+        // in and out, never editing anyone else's timesheet. Reading another user's
+        // shifts additionally requires `users.view`.
         'shifts' => ['view', 'manage'],
         'users' => ['view', 'create', 'update', 'delete'],
         'roles' => ['view', 'create', 'update', 'delete'],
         'settings' => ['view', 'update'],
-        'stocktakes' => ['view', 'create', 'update'],
-        'reorder-suggestions' => ['view', 'create'],
         'audit' => ['view'],
-        'super-admin' => ['tenants.view', 'tenants.manage', 'tenants.create', 'users.manage', 'impersonate', 'audit.view', 'plans.manage', 'support.view', 'support.manage'],
     ];
 
     /**
-     * The flattened catalogue. `slug` is the machine key stored in `permissions.name`
-     * (spatie keys everything off `name`); `title` is the human label stored in
-     * `permissions.title`. `name` is kept as an alias of `title` so the shape stays
-     * backwards compatible for older callers.
-     *
-     * @return array<int, array{slug:string, title:string, name:string, module:string, action:string}>
+     * @return array<int, array{slug:string, name:string, module:string, action:string}>
      */
     public static function all(): array
     {
@@ -58,12 +46,9 @@ class PermissionCatalog
 
         foreach (self::MATRIX as $module => $actions) {
             foreach ($actions as $action) {
-                $title = ucfirst(str_replace('_', ' ', $action)).' '.ucfirst(str_replace('-', ' ', $module));
-
                 $permissions[] = [
                     'slug' => "{$module}.{$action}",
-                    'title' => $title,
-                    'name' => $title,
+                    'name' => ucfirst($action).' '.ucfirst($module),
                     'module' => $module,
                     'action' => $action,
                 ];
@@ -86,30 +71,25 @@ class PermissionCatalog
             'branch_manager' => ['name' => 'Branch Manager', 'permissions' => [
                 'dashboard.view', 'branches.view', 'warehouses.view',
                 'products.view', 'inventory.view', 'inventory.adjust', 'inventory.approve',
-                'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override', 'pos.approve',
+                'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
-                'reports.view', 'reports.export', 'shifts.view', 'shifts.manage',
-                'stocktakes.view', 'stocktakes.create', 'stocktakes.update',
-                // Runs the room and the dispatch board; tearing down the floor plan
-                // itself (tables.delete) stays with the owner/admin.
-                'tables.view', 'tables.create', 'tables.update',
-                'deliveries.view', 'deliveries.create', 'deliveries.update',
+                'reports.view', 'reports.export',
+                'shifts.view', 'shifts.manage',
             ]],
             'cashier' => ['name' => 'Cashier', 'permissions' => [
                 'dashboard.view', 'products.view', 'pos.view', 'pos.create',
-                'sales.view', 'customers.view', 'customers.create', 'shifts.view',
-                // Seats and clears tables and rings up delivery orders, but does not
-                // redraw the floor plan or re-dispatch someone else's run.
-                'tables.view', 'tables.update',
-                'deliveries.view', 'deliveries.create',
+                'sales.view', 'customers.view', 'customers.create',
+                'shifts.view', 'shifts.manage',
             ]],
             'accountant' => ['name' => 'Accountant', 'permissions' => [
                 'dashboard.view', 'accounting.view', 'accounting.create', 'accounting.approve',
                 'expenses.view', 'expenses.create', 'expenses.approve', 'taxes.view', 'taxes.manage',
                 'reports.view', 'reports.export', 'sales.view', 'purchases.view',
+                'shifts.view', 'shifts.manage',
             ]],
             'viewer' => ['name' => 'Viewer', 'permissions' => [
                 'dashboard.view', 'products.view', 'sales.view', 'reports.view',
+                'shifts.view', 'shifts.manage',
             ]],
         ];
     }

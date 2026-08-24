@@ -9,12 +9,15 @@ use App\Http\Resources\DeliveryResource;
 use App\Models\Delivery;
 use App\Models\Sale;
 use App\Services\Delivery\DeliveryService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DeliveryController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected DeliveryService $service) {}
 
     public function assign(AssignDeliveryRequest $request, Sale $sale): JsonResponse

@@ -10,11 +10,14 @@ use App\Http\Resources\PurchaseResource;
 use App\Models\Warehouse;
 use App\Services\Inventory\ReorderSuggestionService;
 use App\Services\Purchasing\PurchaseService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ReorderSuggestionController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected ReorderSuggestionService $suggestions,
         protected PurchaseService $purchases,
@@ -22,9 +25,7 @@ class ReorderSuggestionController extends Controller
 
     public function index()
     {
-        return response()->json([
-            'data' => $this->suggestions->getSuggestions(),
-        ]);
+        return $this->success($this->suggestions->getSuggestions());
     }
 
     public function createDraftPo(Request $request): JsonResponse

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderStatusResource;
 use App\Models\Sale;
 use App\Support\Tenancy\TenantContext;
+use App\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -18,6 +19,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class OrderStatusController extends Controller
 {
+    use ApiResponse;
+
     public function show(TenantContext $tenants, string $token): OrderStatusResource
     {
         $sale = Sale::withoutTenancy()

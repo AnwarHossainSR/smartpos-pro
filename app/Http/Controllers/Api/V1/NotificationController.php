@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    use ApiResponse;
+
     /** Notifications addressed to the current user or broadcast to the whole tenant. */
     public function index(Request $request)
     {
@@ -36,21 +39,21 @@ class NotificationController extends Controller
 
     public function unreadCount(Request $request): JsonResponse
     {
-        return response()->json(['data' => ['unread' => $this->scoped($request)->whereNull('read_at')->count()]]);
+        return $this->success(['unread' => $this->scoped($request)->whereNull('read_at')->count()]);
     }
 
     public function markRead(Request $request, AppNotification $notification): JsonResponse
     {
         $notification->update(['read_at' => now()]);
 
-        return response()->json(['data' => ['id' => $notification->id, 'read_at' => $notification->read_at]]);
+        return $this->success(['id' => $notification->id, 'read_at' => $notification->read_at]);
     }
 
     public function markAllRead(Request $request): JsonResponse
     {
         $count = $this->scoped($request)->whereNull('read_at')->update(['read_at' => now()]);
 
-        return response()->json(['data' => ['marked' => $count]]);
+        return $this->success(['marked' => $count]);
     }
 
     protected function scoped(Request $request)

@@ -4,19 +4,22 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrinterProfile;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class PrinterProfileController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): JsonResponse
     {
         $profiles = PrinterProfile::query()
             ->when($request->business_id, fn ($q, $id) => $q->where('business_id', $id))
             ->get();
 
-        return response()->json(['data' => $profiles]);
+        return $this->success($profiles);
     }
 
     public function store(Request $request): JsonResponse
@@ -37,7 +40,7 @@ class PrinterProfileController extends Controller
 
         $profile = PrinterProfile::create($data);
 
-        return response()->json(['data' => $profile], 201);
+        return $this->created($profile);
     }
 
     public function update(Request $request, PrinterProfile $printerProfile): JsonResponse
@@ -54,13 +57,13 @@ class PrinterProfileController extends Controller
 
         $printerProfile->update($data);
 
-        return response()->json(['data' => $printerProfile]);
+        return $this->success($printerProfile);
     }
 
     public function destroy(PrinterProfile $printerProfile): JsonResponse
     {
         $printerProfile->delete();
 
-        return response()->json(null, 204);
+        return $this->noContent();
     }
 }

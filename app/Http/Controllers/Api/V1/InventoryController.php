@@ -12,6 +12,7 @@ use App\Models\StockMovement;
 use App\Services\Inventory\StockLedgerService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ use Illuminate\Validation\Rule;
 
 class InventoryController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected StockLedgerService $ledger) {}
 
     /** Live stock balances across warehouses, with search + low-stock filter. */

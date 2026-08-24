@@ -9,10 +9,13 @@ use App\Http\Resources\AccountResource;
 use App\Models\Account;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $accounts = QueryPipeline::for(Account::query()->orderBy('type'), $request)

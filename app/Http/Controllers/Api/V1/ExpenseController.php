@@ -10,10 +10,13 @@ use App\Models\Expense;
 use App\Services\Accounting\TradingJournalService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $expenses = QueryPipeline::for(Expense::query()->with('category'), $request)

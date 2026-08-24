@@ -8,11 +8,14 @@ use App\Http\Resources\BrandResource;
 use App\Models\Brand;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class BrandController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $brands = QueryPipeline::for(Brand::query()->withCount('products'), $request)

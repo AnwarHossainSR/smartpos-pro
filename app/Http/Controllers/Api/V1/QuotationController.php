@@ -11,11 +11,14 @@ use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class QuotationController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected QuotationService $service) {}
 
     public function index(Request $request): JsonResponse
@@ -30,39 +33,39 @@ class QuotationController extends Controller
             ->sortable(['id', 'valid_until', 'total'], default: '-id')
             ->paginate(20);
 
-        return response()->json($quotations);
+        return $this->success($quotations);
     }
 
     public function store(StoreQuotationRequest $request): JsonResponse
     {
         $quotation = $this->service->create($request->validated(), $request->user());
 
-        return response()->json(['data' => $quotation], 201);
+        return $this->created($quotation);
     }
 
     public function show(Quotation $quotation): JsonResponse
     {
-        return response()->json(['data' => $quotation->load(['items.product', 'customer', 'user', 'convertedToSale'])]);
+        return $this->success($quotation->load(['items.product', 'customer', 'user', 'convertedToSale']));
     }
 
     public function update(UpdateQuotationRequest $request, Quotation $quotation): JsonResponse
     {
         $quotation->update($request->validated());
 
-        return response()->json(['data' => $quotation]);
+        return $this->success($quotation);
     }
 
     public function destroy(Quotation $quotation): JsonResponse
     {
         $quotation->delete();
 
-        return response()->json(null, 204);
+        return $this->noContent();
     }
 
     public function convert(ConvertQuotationRequest $request, Quotation $quotation): JsonResponse
     {
         $sale = $this->service->convertToSale($quotation, $request->validated(), $request->user());
 
-        return response()->json(['data' => $sale->load(['items.product', 'payments'])], 201);
+        return $this->created($sale->load(['items.product', 'payments']));
     }
 }

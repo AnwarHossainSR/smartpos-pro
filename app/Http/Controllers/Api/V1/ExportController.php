@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\Export\ExportService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ExportController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ExportService $exportService) {}
 
     public function index(string $module, Request $request): StreamedResponse

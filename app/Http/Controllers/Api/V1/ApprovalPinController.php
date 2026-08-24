@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\SetApprovalPinRequest;
 use App\Models\User;
 use App\Services\Pos\ApprovalService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ApprovalPinController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ApprovalService $approvals) {}
 
     /** Set or replace the caller's own PIN. */
@@ -29,10 +32,10 @@ class ApprovalPinController extends Controller
         $this->approvals->setPin($user, (string) $request->input('pin'));
         $user->loadMissing('roles.permissions');
 
-        return response()->json(['data' => [
+        return $this->success([
             'has_approval_pin' => true,
             'can_approve' => $user->hasPermission('pos.approve'),
-        ]]);
+        ]);
     }
 
     /** Remove the caller's own PIN. */
@@ -45,7 +48,7 @@ class ApprovalPinController extends Controller
 
         $this->approvals->clearPin($user, $user);
 
-        return response()->json(['data' => ['has_approval_pin' => false]]);
+        return $this->success(['has_approval_pin' => false]);
     }
 
     /**
@@ -57,7 +60,7 @@ class ApprovalPinController extends Controller
     {
         $this->approvals->clearPin($user, $request->user());
 
-        return response()->json(['data' => ['has_approval_pin' => false]]);
+        return $this->success(['has_approval_pin' => false]);
     }
 
     protected function assertPassword(User $user, #[\SensitiveParameter] string $password): void

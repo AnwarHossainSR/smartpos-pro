@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TotpService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class TwoFactorController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected TotpService $totp, protected AuditLogService $audit) {}
 
     /** Step 1: generate a pending (unconfirmed) secret and the QR provisioning URI. */
@@ -24,10 +27,10 @@ class TwoFactorController extends Controller
         $secret = $this->totp->generateSecret();
         $user->forceFill(['two_factor_secret' => $secret, 'two_factor_confirmed_at' => null])->save();
 
-        return response()->json(['data' => [
+        return $this->success([
             'secret' => $secret,
             'otpauth_url' => $this->totp->provisioningUri($secret, $user->email),
-        ]]);
+        ]);
     }
 
     /** Step 2: confirm the pending secret with a code from the authenticator app. */
@@ -50,7 +53,7 @@ class TwoFactorController extends Controller
 
         $this->audit->log('auth.2fa_enabled', $user, null, null, $user, $user->tenant_id);
 
-        return response()->json(['data' => ['recovery_codes' => $codes]]);
+        return $this->success(['recovery_codes' => $codes]);
     }
 
     /** Disables 2FA — requires the current password to confirm. */
@@ -71,7 +74,7 @@ class TwoFactorController extends Controller
 
         $this->audit->log('auth.2fa_disabled', $user, null, null, $user, $user->tenant_id);
 
-        return response()->json(['message' => 'Two-factor authentication disabled.']);
+        return $this->success(null, 'Two-factor authentication disabled.');
     }
 
     /** Invalidates all existing recovery codes and issues a fresh set — requires the current password. */
@@ -91,6 +94,6 @@ class TwoFactorController extends Controller
 
         $this->audit->log('auth.2fa_recovery_codes_regenerated', $user, null, null, $user, $user->tenant_id);
 
-        return response()->json(['data' => ['recovery_codes' => $codes]]);
+        return $this->success(['recovery_codes' => $codes]);
     }
 }

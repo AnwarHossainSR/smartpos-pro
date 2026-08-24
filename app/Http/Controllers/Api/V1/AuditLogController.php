@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {
+    use ApiResponse;
+
     /** Immutable audit trail. Filters: actor (user id), action, model, from/to (date). */
     public function index(Request $request)
     {

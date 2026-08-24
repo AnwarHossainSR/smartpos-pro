@@ -7,6 +7,7 @@ use App\Domain\Enums\SaleStatus;
 use App\Models\Business;
 use App\Models\PurchaseItemTax;
 use App\Models\SaleItemTax;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,6 +20,8 @@ use Illuminate\Support\Carbon;
  */
 class TaxReportController extends ReportController
 {
+    use ApiResponse;
+
     public function summary(Request $request): JsonResponse
     {
         [$from, $to] = $this->range($request);
@@ -29,14 +32,12 @@ class TaxReportController extends ReportController
         $outputTotal = round((float) $output->sum('amount'), 2);
         $inputTotal = round((float) $input->sum('amount'), 2);
 
-        return response()->json([
-            'data' => [
-                'from' => $from->toDateString(),
-                'to' => $to->toDateString(),
-                'output_tax' => ['total' => $outputTotal, 'components' => $output->values()],
-                'input_tax' => ['total' => $inputTotal, 'components' => $input->values()],
-                'net_payable' => round($outputTotal - $inputTotal, 2),
-            ],
+        return $this->success([
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'output_tax' => ['total' => $outputTotal, 'components' => $output->values()],
+            'input_tax' => ['total' => $inputTotal, 'components' => $input->values()],
+            'net_payable' => round($outputTotal - $inputTotal, 2),
         ]);
     }
 
@@ -54,23 +55,21 @@ class TaxReportController extends ReportController
         $outputTotal = round((float) $output->sum('amount'), 2);
         $inputTotal = round((float) $input->sum('amount'), 2);
 
-        return response()->json([
-            'data' => [
-                'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
-                'business' => [
-                    'name' => $business?->name,
-                    'tax_number_label' => $profile?->tax_number_label ?? 'Tax number',
-                    'tax_number' => $business?->tax_number,
-                ],
-                'profile' => [
-                    'code' => $profile?->code,
-                    'name' => $profile?->name,
-                    'required_invoice_fields' => $profile?->required_invoice_fields ?? [],
-                ],
-                'output_tax' => ['total' => $outputTotal, 'components' => $output->values()],
-                'input_tax' => ['total' => $inputTotal, 'components' => $input->values()],
-                'net_payable' => round($outputTotal - $inputTotal, 2),
+        return $this->success([
+            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'business' => [
+                'name' => $business?->name,
+                'tax_number_label' => $profile?->tax_number_label ?? 'Tax number',
+                'tax_number' => $business?->tax_number,
             ],
+            'profile' => [
+                'code' => $profile?->code,
+                'name' => $profile?->name,
+                'required_invoice_fields' => $profile?->required_invoice_fields ?? [],
+            ],
+            'output_tax' => ['total' => $outputTotal, 'components' => $output->values()],
+            'input_tax' => ['total' => $inputTotal, 'components' => $input->values()],
+            'net_payable' => round($outputTotal - $inputTotal, 2),
         ]);
     }
 

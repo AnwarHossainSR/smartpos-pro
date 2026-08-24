@@ -8,10 +8,13 @@ use App\Http\Resources\TaxZoneResource;
 use App\Models\TaxZone;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class TaxZoneController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $zones = QueryPipeline::for(TaxZone::query()->with('taxGroup'), $request)

@@ -13,12 +13,15 @@ use App\Models\Purchase;
 use App\Services\Purchasing\PurchaseService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected PurchaseService $purchases) {}
 
     public function index(Request $request)

@@ -8,6 +8,7 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $customers = QueryPipeline::for(Customer::query(), $request)
@@ -78,11 +81,9 @@ class CustomerController extends Controller
 
         $customer->save();
 
-        return response()->json([
-            'data' => [
-                'anonymized_at' => now(),
-                'hashed_fields' => $hashedFields,
-            ],
+        return $this->success([
+            'anonymized_at' => now(),
+            'hashed_fields' => $hashedFields,
         ]);
     }
 }

@@ -9,12 +9,15 @@ use App\Http\Resources\CashRegisterSessionResource;
 use App\Models\CashRegister;
 use App\Models\CashRegisterSession;
 use App\Services\Accounting\CashRegisterService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CashRegisterController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected CashRegisterService $service) {}
 
     public function index(Request $request): JsonResponse
@@ -31,7 +34,7 @@ class CashRegisterController extends Controller
                 'has_open_session' => $r->sessions->contains('status', CashSessionStatus::Open),
             ]);
 
-        return response()->json(['data' => $registers]);
+        return $this->success($registers);
     }
 
     public function store(Request $request): JsonResponse
@@ -43,7 +46,7 @@ class CashRegisterController extends Controller
 
         $register = CashRegister::create($data);
 
-        return response()->json(['data' => $register->only('id', 'name', 'branch_id')], 201);
+        return $this->created($register->only('id', 'name', 'branch_id'));
     }
 
     public function open(Request $request, CashRegister $cashRegister): CashRegisterSessionResource
@@ -59,7 +62,7 @@ class CashRegisterController extends Controller
     {
         $session = $cashRegister->openSession();
 
-        return response()->json(['data' => $session ? new CashRegisterSessionResource($session) : null]);
+        return $this->success($session ? new CashRegisterSessionResource($session) : null);
     }
 
     public function movement(Request $request, CashRegisterSession $session): CashRegisterSessionResource

@@ -10,11 +10,14 @@ use App\Models\Sale;
 use App\Models\Warehouse;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class WarehouseController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         // Page size is generous because this list doubles as the warehouse picker on

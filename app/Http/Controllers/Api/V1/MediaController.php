@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Business;
 use App\Services\Media\MediaService;
 use App\Support\Media\BusinessMediaSlots;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,8 @@ use Illuminate\Http\Request;
  */
 class MediaController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(private readonly MediaService $media) {}
 
     /** POST /v1/settings/business/media/{slot} */
@@ -38,9 +41,7 @@ class MediaController extends Controller
 
         $business->update([$column => $path]);
 
-        return response()->json([
-            'data' => $this->payload($path, $request->collection(), $request->slot()),
-        ]);
+        return $this->success($this->payload($path, $request->collection(), $request->slot()));
     }
 
     /**
@@ -57,9 +58,7 @@ class MediaController extends Controller
         $this->media->delete($business->{$column});
         $business->update([$column => null]);
 
-        return response()->json([
-            'data' => ['slot' => $slot, 'path' => null, 'url' => null, 'urls' => null],
-        ]);
+        return $this->success(['slot' => $slot, 'path' => null, 'url' => null, 'urls' => null]);
     }
 
     /** POST /v1/brands/{brand}/logo */
@@ -74,7 +73,7 @@ class MediaController extends Controller
 
         $brand->update(['logo_path' => $path]);
 
-        return response()->json(['data' => $this->payload($path, $request->collection())]);
+        return $this->success($this->payload($path, $request->collection()));
     }
 
     /** DELETE /v1/brands/{brand}/logo */
@@ -83,7 +82,7 @@ class MediaController extends Controller
         $this->media->delete($brand->logo_path);
         $brand->update(['logo_path' => null]);
 
-        return response()->json(['data' => ['path' => null, 'url' => null, 'urls' => null]]);
+        return $this->success(['path' => null, 'url' => null, 'urls' => null]);
     }
 
     /**
@@ -107,7 +106,7 @@ class MediaController extends Controller
 
         $user->forceFill(['avatar_path' => $path])->save();
 
-        return response()->json(['data' => $this->payload($path, $request->collection())]);
+        return $this->success($this->payload($path, $request->collection()));
     }
 
     /** DELETE /v1/me/avatar */
@@ -118,7 +117,7 @@ class MediaController extends Controller
         $this->media->delete($user->avatar_path);
         $user->forceFill(['avatar_path' => null])->save();
 
-        return response()->json(['data' => ['path' => null, 'url' => null, 'urls' => null]]);
+        return $this->success(['path' => null, 'url' => null, 'urls' => null]);
     }
 
     /**
@@ -152,7 +151,7 @@ class MediaController extends Controller
             ])
             ->values();
 
-        return response()->json(['data' => $collections]);
+        return $this->success($collections);
     }
 
     /** @return array<string, mixed> */

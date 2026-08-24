@@ -19,6 +19,7 @@ use App\Models\Sale;
 use App\Services\Sales\SaleService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -26,6 +27,8 @@ use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected SaleService $sales) {}
 
     public function index(Request $request)
@@ -62,7 +65,7 @@ class SaleController extends Controller
             ], 422);
         }
 
-        return (new SaleResource($sale))->response()->setStatusCode(201);
+        return $this->created(new SaleResource($sale));
     }
 
     public function show(Sale $sale): SaleResource
@@ -131,6 +134,6 @@ class SaleController extends Controller
             rtrim(config('app.frontend_url'), '/')."/order/{$sale->public_token}",
         ));
 
-        return response()->json(['data' => ['sent_to' => $email]]);
+        return $this->success(['sent_to' => $email]);
     }
 }

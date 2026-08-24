@@ -10,6 +10,7 @@ use App\Http\Requests\Hr\ShiftReportRequest;
 use App\Http\Resources\ShiftResource;
 use App\Models\Shift;
 use App\Services\Hr\ShiftService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ShiftController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ShiftService $service) {}
 
     /** The caller's own open shift, or `null` when they are clocked out. */
@@ -29,7 +32,7 @@ class ShiftController extends Controller
     {
         $shift = $this->service->currentShift(request()->user());
 
-        return response()->json(['data' => $shift ? new ShiftResource($shift) : null]);
+        return $this->success($shift ? new ShiftResource($shift) : null);
     }
 
     public function clockIn(ClockInRequest $request): JsonResponse
@@ -84,15 +87,13 @@ class ShiftController extends Controller
             $userId = $request->user()->id;
         }
 
-        return response()->json([
-            'data' => $this->service->hoursReport(
-                $from,
-                $to,
-                $request->validated('group_by') ?? 'day',
-                $userId,
-                $request->validated('branch_id'),
-            ),
-        ]);
+        return $this->success($this->service->hoursReport(
+            $from,
+            $to,
+            $request->validated('group_by') ?? 'day',
+            $userId,
+            $request->validated('branch_id'),
+        ));
     }
 
     /** @return array{0: Carbon, 1: Carbon} */

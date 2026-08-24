@@ -7,12 +7,15 @@ use App\Models\Stocktake;
 use App\Services\Inventory\StocktakeService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class StocktakeController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected StocktakeService $service) {}
 
     public function index(Request $request): JsonResponse
@@ -30,7 +33,7 @@ class StocktakeController extends Controller
             ->sortable(['id', 'created_at', 'started_at', 'completed_at'], default: '-id')
             ->paginate(20);
 
-        return response()->json($stocktakes);
+        return $this->success($stocktakes);
     }
 
     public function store(Request $request): JsonResponse
@@ -52,23 +55,21 @@ class StocktakeController extends Controller
             $request->user(),
         );
 
-        return response()->json(['data' => $stocktake], 201);
+        return $this->created($stocktake);
     }
 
     public function show(Stocktake $stocktake): JsonResponse
     {
-        return response()->json([
-            'data' => $stocktake->load([
-                'items.product', 'items.variant', 'warehouse', 'branch', 'countedBy',
-            ]),
-        ]);
+        return $this->success($stocktake->load([
+            'items.product', 'items.variant', 'warehouse', 'branch', 'countedBy',
+        ]));
     }
 
     public function start(Stocktake $stocktake, Request $request): JsonResponse
     {
         $stocktake = $this->service->startCounting($stocktake->id, $request->user());
 
-        return response()->json(['data' => $stocktake]);
+        return $this->success($stocktake);
     }
 
     public function recordCount(Stocktake $stocktake, string $item, Request $request): JsonResponse
@@ -79,20 +80,20 @@ class StocktakeController extends Controller
 
         $item = $this->service->recordCount($item, (float) $data['counted_qty']);
 
-        return response()->json(['data' => $item]);
+        return $this->success($item);
     }
 
     public function complete(Stocktake $stocktake, Request $request): JsonResponse
     {
         $stocktake = $this->service->completeStocktake($stocktake->id, $request->user());
 
-        return response()->json(['data' => $stocktake]);
+        return $this->success($stocktake);
     }
 
     public function cancel(Stocktake $stocktake): JsonResponse
     {
         $stocktake = $this->service->cancelStocktake($stocktake->id);
 
-        return response()->json(['data' => $stocktake]);
+        return $this->success($stocktake);
     }
 }

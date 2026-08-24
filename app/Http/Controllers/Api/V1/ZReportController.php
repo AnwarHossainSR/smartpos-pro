@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\ZReportRequest;
 use App\Models\Business;
 use App\Services\Reporting\ZReportService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -16,13 +17,13 @@ use Illuminate\Http\JsonResponse;
  */
 class ZReportController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(private readonly ZReportService $reports) {}
 
     public function show(ZReportRequest $request): JsonResponse
     {
-        return response()->json([
-            'data' => $this->reports->generate($this->business($request), $request->reportDate(), $request->branchId()),
-        ]);
+        return $this->success($this->reports->generate($this->business($request), $request->reportDate(), $request->branchId()));
     }
 
     /** Streams the Z-report inline by default; `?download=1` forces a download. */

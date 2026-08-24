@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Mail\CustomerPortalMagicLinkMail;
 use App\Models\Customer;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerPortalController extends Controller
 {
+    use ApiResponse;
+
     public function magicLink(Request $request): JsonResponse
     {
         $request->validate([
@@ -35,7 +38,7 @@ class CustomerPortalController extends Controller
             Mail::to($customer->email)->send(new CustomerPortalMagicLinkMail($customer, $url));
         }
 
-        return response()->json(['message' => 'If that email is registered, a magic link has been sent.']);
+        return $this->success(null, 'If that email is registered, a magic link has been sent.');
     }
 
     public function verify(Request $request, string $token): JsonResponse

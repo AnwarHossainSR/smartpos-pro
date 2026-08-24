@@ -11,10 +11,13 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Billing\SubscriptionService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class SubscriptionController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected PlanLimitService $limits,
         protected SubscriptionService $subscriptions,
@@ -36,17 +39,15 @@ class SubscriptionController extends Controller
             ->latest('id')
             ->first();
 
-        return response()->json([
-            'data' => [
-                'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
-                'usage' => $this->limits->usage(),
-            ],
+        return $this->success([
+            'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
+            'usage' => $this->limits->usage(),
         ]);
     }
 
     public function usage(): JsonResponse
     {
-        return response()->json(['data' => $this->limits->usage()]);
+        return $this->success($this->limits->usage());
     }
 
     public function checkout(StoreSubscriptionRequest $request): JsonResponse
