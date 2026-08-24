@@ -32,10 +32,10 @@ class AuthController extends Controller
         $user = $this->provisioner->register($request->validated());
         $result = $this->auth->completeLogin($user, $request->input('device_name', 'web'));
 
-        return $this->created([
+        return response()->json([
             'user' => new UserResource($result['user']),
             'token' => $result['token'],
-        ]);
+        ], 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -47,10 +47,10 @@ class AuthController extends Controller
         );
 
         if (isset($result['requires_2fa'])) {
-            return $this->success($result);
+            return response()->json($result);
         }
 
-        return $this->success([
+        return response()->json([
             'user' => new UserResource($result['user']),
             'token' => $result['token'],
         ]);
@@ -65,7 +65,7 @@ class AuthController extends Controller
             $request->input('device_name', 'web')
         );
 
-        return $this->success([
+        return response()->json([
             'user' => new UserResource($result['user']),
             'token' => $result['token'],
         ]);
