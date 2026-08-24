@@ -67,6 +67,7 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
         search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax groups…"
+        onRefresh={list.refetch}
         filters={
           <Select
             className="h-10 w-40"

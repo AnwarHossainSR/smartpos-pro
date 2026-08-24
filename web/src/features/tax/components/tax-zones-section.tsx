@@ -55,6 +55,7 @@ export function TaxZonesSection({ canManage }: { canManage: boolean }) {
         search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax zones…"
+        onRefresh={list.refetch}
         filters={
           <div className="flex gap-2">
             <Input

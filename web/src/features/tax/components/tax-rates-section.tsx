@@ -50,6 +50,7 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
         search={list.searchInput}
         onSearchChange={list.setSearch}
         searchPlaceholder="Search tax rates…"
+        onRefresh={list.refetch}
         filters={
           <Select
             className="h-10 w-40"

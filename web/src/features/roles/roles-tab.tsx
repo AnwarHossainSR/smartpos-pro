@@ -399,6 +399,7 @@ export function RolesTab() {
           setPage(1);
         }}
         searchPlaceholder={t("roles.searchPlaceholder")}
+        onRefresh={refetch}
         filters={
           <Select
             className="sm:w-40"
