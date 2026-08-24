@@ -323,6 +323,7 @@ export default function StocktakesPage() {
         searchPlaceholder="Search stocktakes..."
         addLabel={can("stocktakes.create") ? "New Stocktake" : undefined}
         onAdd={can("stocktakes.create") ? () => setDrawerOpen(true) : undefined}
+        onRefresh={list.refetch}
         filters={
           <Select
             className="sm:w-44"

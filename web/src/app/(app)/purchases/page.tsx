@@ -235,6 +235,7 @@ export default function PurchasesPage() {
         onSearchChange={list.setSearch}
         addLabel={can("purchases.create") ? "New purchase" : undefined}
         onAdd={can("purchases.create") ? () => setDrawerOpen(true) : undefined}
+        onRefresh={list.refetch}
       />
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable

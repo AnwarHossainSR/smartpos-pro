@@ -173,6 +173,7 @@ export default function InventoryPage() {
         searchPlaceholder="Search products…"
         addLabel={can("inventory.update") ? "Adjust stock" : undefined}
         onAdd={can("inventory.update") ? () => setDrawerOpen(true) : undefined}
+        onRefresh={list.refetch}
         filters={
           <Button
             variant={lowStock ? "primary" : "outline"}
