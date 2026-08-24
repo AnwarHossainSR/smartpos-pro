@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock, Download, Loader2, Printer,
+  FileText, Wallet, Lock, ArrowDownCircle, ArrowUpCircle, Clock, Download, Loader2, Printer, Plus,
 } from "lucide-react";
 import { api, apiBlob, ApiError } from "@/lib/api";
 import { cn, downloadBlob, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/stat-card";
 import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
 import { useAuth } from "@/stores/auth";
@@ -52,6 +53,8 @@ export default function CashRegisterPage() {
   const [movementType, setMovementType] = useState<"in" | "out">("in");
   const [movementNote, setMovementNote] = useState("");
   const [showClose, setShowClose] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState("Main Register");
 
   const { data: registers } = useQuery<{ data: Register[] }>({
     queryKey: ["registers"],
@@ -59,6 +62,20 @@ export default function CashRegisterPage() {
   });
 
   const register = registers?.data?.[0];
+
+  const createMutation = useMutation({
+    mutationFn: () => api("/cash-registers", {
+      method: "POST",
+      body: { name: newName.trim() || "Main Register", branch_id: user?.branch_id },
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["registers"] });
+      setShowCreate(false);
+      setNewName("Main Register");
+      toast("Cash register created");
+    },
+    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Failed to create register", "error"),
+  });
 
   const { data: sessionData, isLoading } = useQuery<{ data: Session | null }>({
     queryKey: ["cash-session", register?.id],
@@ -141,9 +158,35 @@ export default function CashRegisterPage() {
 
   if (!register) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
         <Wallet className="h-8 w-8 text-[var(--muted)]" />
         <p className="text-sm text-[var(--muted)]">No cash register configured for your branch.</p>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="h-4 w-4" /> Create Cash Register
+        </Button>
+
+        <Drawer open={showCreate} onClose={() => setShowCreate(false)} title="Create Cash Register">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              createMutation.mutate();
+            }}
+          >
+            <div>
+              <Label htmlFor="register-name">Register Name</Label>
+              <Input
+                id="register-name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="e.g. Main Register"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </form>
+        </Drawer>
       </div>
     );
   }

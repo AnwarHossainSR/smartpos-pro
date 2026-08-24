@@ -61,7 +61,6 @@ export const queryKeys = {
   expenses: resource("expenses"),
   expenseCategories: resource("expense-categories"),
   coupons: resource("coupons"),
-  diningTables: resource("dining-tables"),
 
   /* ---- accounting ---- */
   accounts: resource("accounts"),

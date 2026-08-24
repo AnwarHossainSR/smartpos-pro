@@ -1,6 +1,6 @@
+import { RouteErrorBoundary } from "@/components/error-boundary";
 import { AppShell } from "@/components/layout/app-shell";
 import { RouteMeta } from "@/components/route-meta";
-import { RouteErrorBoundary } from "@/components/error-boundary";
 import { loadPage, seo } from "@/routes/helpers";
 import { type RouteObject, Navigate } from "react-router";
 
@@ -243,11 +243,6 @@ export const routes: RouteObject[] = [
                   "Reorder Suggestions",
                   "Products running low, with suggested order quantities.",
                 ),
-              },
-              {
-                path: "test-data",
-                lazy: () => loadPage(() => import("@/app/(app)/test-data/page")),
-                handle: seo("Test Data", "Generate sample data for trying out the app."),
               },
               {
                 path: "super-admin",
