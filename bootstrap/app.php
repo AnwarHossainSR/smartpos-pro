@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\DomainException;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\EnsureTenant;
@@ -156,6 +157,14 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'message' => 'A database error occurred. Please try again.',
             ], 500);
+        });
+
+        $exceptions->renderable(function (DomainException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return $e->render();
         });
 
         $exceptions->renderable(function (Throwable $e, Request $request) {
