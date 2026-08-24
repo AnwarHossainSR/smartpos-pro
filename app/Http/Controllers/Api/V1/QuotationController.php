@@ -11,11 +11,14 @@ use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class QuotationController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected QuotationService $service) {}
 
     public function index(Request $request): JsonResponse

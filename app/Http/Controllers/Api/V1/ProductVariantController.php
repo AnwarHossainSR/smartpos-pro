@@ -11,6 +11,7 @@ use App\Models\StockBatch;
 use App\Models\StockSerial;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
  */
 class ProductVariantController extends Controller
 {
+    use ApiResponse;
     // ---------- Variants ----------
 
     public function variants(Product $product): JsonResponse

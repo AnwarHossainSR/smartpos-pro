@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Business;
 use App\Services\Media\MediaService;
 use App\Support\Media\BusinessMediaSlots;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,8 @@ use Illuminate\Http\Request;
  */
 class MediaController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(private readonly MediaService $media) {}
 
     /** POST /v1/settings/business/media/{slot} */

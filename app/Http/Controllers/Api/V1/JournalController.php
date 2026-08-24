@@ -11,11 +11,14 @@ use App\Models\JournalLine;
 use App\Services\Accounting\JournalService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class JournalController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected JournalService $journals) {}
 
     public function index(Request $request)

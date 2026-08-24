@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Support\Query\QueryPipeline;
 use App\Support\Rbac\PermissionCatalog;
 use App\Support\Rbac\RbacProvisioner;
+use App\Traits\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,8 @@ use Illuminate\Support\Str;
  */
 class RoleController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected RbacProvisioner $rbac) {}
 
     public function index(Request $request)

@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    use ApiResponse;
+
     /** Notifications addressed to the current user or broadcast to the whole tenant. */
     public function index(Request $request)
     {

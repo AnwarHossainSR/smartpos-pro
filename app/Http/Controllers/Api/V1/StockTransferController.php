@@ -10,11 +10,14 @@ use App\Models\StockTransfer;
 use App\Services\Inventory\StockTransferService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class StockTransferController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected StockTransferService $service) {}
 
     public function index(Request $request): JsonResponse

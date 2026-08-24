@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pos\StoreApprovalRequest;
 use App\Models\PosApproval;
 use App\Services\Pos\ApprovalService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -16,6 +17,8 @@ use Illuminate\Http\JsonResponse;
  */
 class PosApprovalController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ApprovalService $approvals) {}
 
     public function store(StoreApprovalRequest $request): JsonResponse

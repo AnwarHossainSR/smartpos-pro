@@ -9,11 +9,14 @@ use App\Http\Resources\TaxProfileResource;
 use App\Models\Business;
 use App\Services\Media\MediaService;
 use App\Support\Media\BusinessMediaSlots;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
+    use ApiResponse;
+
     public function showBusiness(Request $request): JsonResponse
     {
         $business = Business::findOrFail($request->user()->business_id);

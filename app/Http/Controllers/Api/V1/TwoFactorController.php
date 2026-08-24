@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TotpService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class TwoFactorController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected TotpService $totp, protected AuditLogService $audit) {}
 
     /** Step 1: generate a pending (unconfirmed) secret and the QR provisioning URI. */

@@ -8,11 +8,14 @@ use App\Http\Resources\TaxGroupResource;
 use App\Models\TaxGroup;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TaxGroupController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $groups = QueryPipeline::for(TaxGroup::query()->with('rates')->withCount('products'), $request)

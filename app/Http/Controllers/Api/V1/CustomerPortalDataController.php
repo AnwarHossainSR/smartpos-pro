@@ -6,11 +6,14 @@ use App\Domain\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Services\Billing\StripeService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CustomerPortalDataController extends Controller
 {
+    use ApiResponse;
+
     public function me(Request $request): JsonResponse
     {
         $customer = $request->user();

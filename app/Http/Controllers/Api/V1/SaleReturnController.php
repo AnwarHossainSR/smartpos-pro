@@ -11,11 +11,14 @@ use App\Models\SaleReturn;
 use App\Services\Sales\SaleReturnService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SaleReturnController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected SaleReturnService $returns) {}
 
     public function index(Request $request)

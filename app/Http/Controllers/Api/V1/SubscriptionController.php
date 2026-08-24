@@ -11,10 +11,13 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\Billing\PlanLimitService;
 use App\Services\Billing\SubscriptionService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class SubscriptionController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected PlanLimitService $limits,
         protected SubscriptionService $subscriptions,

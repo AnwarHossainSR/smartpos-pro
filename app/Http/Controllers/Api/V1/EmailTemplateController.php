@@ -8,6 +8,7 @@ use App\Mail\PreviewMail;
 use App\Models\EmailTemplate;
 use App\Services\Mail\EmailTemplateRenderer;
 use App\Support\Mail\EmailTemplateCatalog;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -15,6 +16,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EmailTemplateController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(private readonly EmailTemplateRenderer $renderer) {}
 
     /** The catalogue, each entry annotated with the tenant's override if it has one. */

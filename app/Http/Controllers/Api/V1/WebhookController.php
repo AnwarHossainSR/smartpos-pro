@@ -12,11 +12,14 @@ use App\Models\WebhookDelivery;
 use App\Services\Webhooks\WebhookService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class WebhookController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): JsonResponse
     {
         $webhooks = QueryPipeline::for(Webhook::query(), $request)

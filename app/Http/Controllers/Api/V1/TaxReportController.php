@@ -7,6 +7,7 @@ use App\Domain\Enums\SaleStatus;
 use App\Models\Business;
 use App\Models\PurchaseItemTax;
 use App\Models\SaleItemTax;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,6 +20,8 @@ use Illuminate\Support\Carbon;
  */
 class TaxReportController extends ReportController
 {
+    use ApiResponse;
+
     public function summary(Request $request): JsonResponse
     {
         [$from, $to] = $this->range($request);

@@ -8,12 +8,15 @@ use App\Models\InventoryBalance;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    use ApiResponse;
+
     /** Headline KPIs + a simple sales trend for the dashboard. */
     public function summary(Request $request): JsonResponse
     {

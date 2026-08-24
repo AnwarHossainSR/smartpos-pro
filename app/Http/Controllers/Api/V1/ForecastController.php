@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\ForecastRequest;
 use App\Models\Product;
 use App\Services\Analytics\ForecastService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -14,6 +15,8 @@ use Illuminate\Http\JsonResponse;
  */
 class ForecastController extends Controller
 {
+    use ApiResponse;
+
     /** How many products the unfiltered call forecasts. */
     private const DEFAULT_LIMIT = 10;
 

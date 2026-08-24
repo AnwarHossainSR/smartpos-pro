@@ -7,10 +7,13 @@ use App\Http\Requests\Catalog\StoreUnitRequest;
 use App\Http\Resources\UnitResource;
 use App\Models\Unit;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $units = QueryPipeline::for(Unit::query(), $request)

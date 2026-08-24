@@ -14,6 +14,7 @@ use App\Services\Audit\AuditLogService;
 use App\Services\Billing\PlanLimitService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected AuditLogService $audit) {}
 
     public function index(Request $request)

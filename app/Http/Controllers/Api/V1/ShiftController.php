@@ -10,6 +10,7 @@ use App\Http\Requests\Hr\ShiftReportRequest;
 use App\Http\Resources\ShiftResource;
 use App\Models\Shift;
 use App\Services\Hr\ShiftService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ShiftController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ShiftService $service) {}
 
     /** The caller's own open shift, or `null` when they are clocked out. */

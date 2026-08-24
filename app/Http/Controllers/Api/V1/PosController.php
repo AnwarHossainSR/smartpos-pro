@@ -10,6 +10,7 @@ use App\Http\Resources\TaxProfileResource;
 use App\Models\Branch;
 use App\Models\CashRegister;
 use App\Models\Warehouse;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,8 @@ use Illuminate\Http\Request;
  */
 class PosController extends Controller
 {
+    use ApiResponse;
+
     public function bootstrap(Request $request): JsonResponse
     {
         $user = $request->user();

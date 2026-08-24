@@ -8,10 +8,13 @@ use App\Http\Resources\TaxRateResource;
 use App\Models\TaxRate;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class TaxRateController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $rates = QueryPipeline::for(TaxRate::query(), $request)

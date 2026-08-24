@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Table\StoreTableRequest;
 use App\Http\Requests\Api\V1\Table\UpdateTableRequest;
 use App\Http\Resources\Api\V1\TableResource;
 use App\Models\Table;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -20,6 +21,8 @@ use Illuminate\Http\Response;
  */
 class TableController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $tables = Table::query()

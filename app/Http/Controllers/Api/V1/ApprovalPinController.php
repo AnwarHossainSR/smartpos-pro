@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\SetApprovalPinRequest;
 use App\Models\User;
 use App\Services\Pos\ApprovalService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ApprovalPinController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected ApprovalService $approvals) {}
 
     /** Set or replace the caller's own PIN. */

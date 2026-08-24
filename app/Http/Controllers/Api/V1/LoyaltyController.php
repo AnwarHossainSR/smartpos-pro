@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\LoyaltyTransaction;
 use App\Services\Loyalty\LoyaltyService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LoyaltyController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected LoyaltyService $loyalty) {}
 
     /** Point balance + recent history for a customer. */

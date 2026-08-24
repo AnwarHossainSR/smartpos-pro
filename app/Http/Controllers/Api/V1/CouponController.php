@@ -7,11 +7,14 @@ use App\Http\Requests\Marketing\StoreCouponRequest;
 use App\Models\Coupon;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): JsonResponse
     {
         $coupons = QueryPipeline::for(Coupon::query(), $request)

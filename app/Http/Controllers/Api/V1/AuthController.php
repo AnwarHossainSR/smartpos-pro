@@ -17,6 +17,7 @@ use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
 use App\Services\Auth\TotpService;
 use App\Support\Tenancy\TenantContext;
+use App\Traits\ApiResponse;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,8 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     protected const LOCKOUT_THRESHOLD = 5;
 
     protected const LOCKOUT_MAX_MINUTES = 60;

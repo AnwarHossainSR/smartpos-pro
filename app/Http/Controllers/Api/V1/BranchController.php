@@ -10,11 +10,14 @@ use App\Models\Sale;
 use App\Models\User;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class BranchController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $branches = QueryPipeline::for(Branch::query()->withCount('warehouses')->orderByDesc('is_default'), $request)

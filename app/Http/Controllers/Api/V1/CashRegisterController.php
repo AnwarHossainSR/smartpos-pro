@@ -9,12 +9,15 @@ use App\Http\Resources\CashRegisterSessionResource;
 use App\Models\CashRegister;
 use App\Models\CashRegisterSession;
 use App\Services\Accounting\CashRegisterService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CashRegisterController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(protected CashRegisterService $service) {}
 
     public function index(Request $request): JsonResponse

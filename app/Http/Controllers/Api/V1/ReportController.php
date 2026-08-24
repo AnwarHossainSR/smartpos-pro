@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Supplier;
 use App\Services\Accounting\FinancialStatementService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ReportController extends Controller
 {
+    use ApiResponse;
+
     /** Headline sales figures + payment-method breakdown for a period. */
     public function salesSummary(Request $request): JsonResponse
     {

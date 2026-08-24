@@ -15,6 +15,7 @@ use App\Services\Inventory\StockLedgerService;
 use App\Services\Media\MediaService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected StockLedgerService $ledger,
         protected MediaService $media,

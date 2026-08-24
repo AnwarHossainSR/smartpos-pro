@@ -11,12 +11,15 @@ use App\Services\Purchasing\SupplierPaymentService;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
 use App\Support\Tenancy\TenantContext;
+use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SupplierController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $suppliers = QueryPipeline::for(Supplier::query(), $request)

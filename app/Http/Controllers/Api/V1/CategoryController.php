@@ -8,11 +8,14 @@ use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\Support\Query\AllowedFilter;
 use App\Support\Query\QueryPipeline;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $categories = QueryPipeline::for(Category::query()->withCount('products'), $request)
