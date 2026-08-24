@@ -218,31 +218,33 @@ class PurchaseService
 
     public function returnPurchase(Purchase $purchase, array $data): Purchase
     {
-        if (! in_array($purchase->status, [PurchaseStatus::Draft, PurchaseStatus::Approved], true)) {
-            throw new \DomainException('Only draft or approved purchases can be returned.');
-        }
+        return DB::transaction(function () use ($purchase, $data) {
+            if (! in_array($purchase->status, [PurchaseStatus::Draft, PurchaseStatus::Approved], true)) {
+                throw new \DomainException('Only draft or approved purchases can be returned.');
+            }
 
-        $hasReceivedItems = $purchase->items()
-            ->where('accepted_qty', '>', 0)
-            ->exists();
+            $hasReceivedItems = $purchase->items()
+                ->where('accepted_qty', '>', 0)
+                ->exists();
 
-        if ($hasReceivedItems) {
-            throw new \DomainException('Cannot return a purchase with received items.');
-        }
+            if ($hasReceivedItems) {
+                throw new \DomainException('Cannot return a purchase with received items.');
+            }
 
-        if (isset($data['note'])) {
-            $purchase->update(['note' => $data['note']]);
-        }
+            if (isset($data['note'])) {
+                $purchase->update(['note' => $data['note']]);
+            }
 
-        $supplier = $purchase->supplier;
+            $supplier = $purchase->supplier;
 
-        $purchase->update(['status' => PurchaseStatus::Returned]);
+            $purchase->update(['status' => PurchaseStatus::Returned]);
 
-        if ($supplier) {
-            Supplier::whereKey($supplier->id)->decrement('balance', (float) $purchase->total);
-        }
+            if ($supplier) {
+                Supplier::whereKey($supplier->id)->decrement('balance', (float) $purchase->total);
+            }
 
-        return $purchase->fresh('items', 'supplier');
+            return $purchase->fresh('items', 'supplier');
+        });
     }
 
     private function netOf(PurchaseLineData $line): float
