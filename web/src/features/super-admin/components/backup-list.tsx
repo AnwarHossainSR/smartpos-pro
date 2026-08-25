@@ -1,4 +1,4 @@
-import { Database, Download, Trash2, Plus, Loader2 } from "lucide-react";
+import { Database, Download, Trash2, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useBackups, useBackupMutations } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,24 @@ function getStatusBadge(status: string): "success" | "warning" | "danger" | "inf
   }
 }
 
+function getStatusIcon(status: string) {
+  switch (status) {
+    case "completed":
+      return <CheckCircle className="h-4 w-4 text-[var(--success)]" />;
+    case "pending":
+      return <Loader2 className="h-4 w-4 animate-spin text-[var(--warning)]" />;
+    case "failed":
+      return <XCircle className="h-4 w-4 text-[var(--danger)]" />;
+    default:
+      return <Database className="h-4 w-4 text-[var(--muted)]" />;
+  }
+}
+
 export function BackupList() {
   const list = useBackups();
   const { create, remove, download } = useBackupMutations();
+
+  const hasPending = list.data?.some((b) => b.status === "pending") ?? false;
 
   const handleDownload = async (backup: BackupLog) => {
     const result = await download.mutateAsync(backup.id);
@@ -52,7 +67,12 @@ export function BackupList() {
       key: "status",
       header: "Status",
       render: (log) => (
-        <Badge tone={getStatusBadge(log.status)}>{log.status}</Badge>
+        <div className="flex items-center gap-2">
+          {getStatusIcon(log.status)}
+          <Badge tone={getStatusBadge(log.status)}>
+            {log.status === "pending" ? "Processing..." : log.status}
+          </Badge>
+        </div>
       ),
     },
     {
@@ -91,6 +111,13 @@ export function BackupList() {
           Create Backup
         </Button>
       </div>
+
+      {hasPending && (
+        <div className="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--muted)]">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Processing backup... auto-refreshing every 3 seconds
+        </div>
+      )}
 
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable

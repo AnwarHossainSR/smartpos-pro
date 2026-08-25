@@ -130,11 +130,27 @@ export function useImpersonationMutations() {
 }
 
 export function useBackups() {
-  return useResourceList({
+  const list = useResourceList({
     queryKey: queryKeys.superAdmin.backups(),
     queryFn: superAdminApi.backups.list,
     defaultSort: "-created_at",
   });
+
+  // Poll every 3s when there are pending backups
+  const hasPending = list.data?.some((b) => b.status === "pending") ?? false;
+
+  useQuery({
+    queryKey: [...queryKeys.superAdmin.backups(), "poll"],
+    queryFn: async () => {
+      await list.refetch();
+      return null;
+    },
+    enabled: hasPending,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  return list;
 }
 
 export function useBackupMutations() {
