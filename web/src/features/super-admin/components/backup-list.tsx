@@ -1,0 +1,141 @@
+import { Database, Download, Trash2, Plus, Loader2 } from "lucide-react";
+import { useBackups, useBackupMutations } from "../hooks";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Pagination } from "@/components/ui/pagination";
+import type { BackupLog } from "../types";
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleString();
+}
+
+function getStatusBadge(status: string): "success" | "warning" | "danger" | "info" {
+  switch (status) {
+    case "completed": return "success";
+    case "pending": return "warning";
+    case "failed": return "danger";
+    default: return "info";
+  }
+}
+
+export function BackupList() {
+  const list = useBackups();
+  const { create, remove, download } = useBackupMutations();
+
+  const handleDownload = async (backup: BackupLog) => {
+    const result = await download.mutateAsync(backup.id);
+    if (result.data.url) {
+      window.open(result.data.url, "_blank");
+    }
+  };
+
+  const columns: DataTableColumn<BackupLog>[] = [
+    {
+      key: "filename",
+      header: "Filename",
+      render: (log) => (
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-[var(--muted)]" />
+          <span className="text-sm font-medium">{log.filename}</span>
+        </div>
+      ),
+    },
+    {
+      key: "size",
+      header: "Size",
+      render: (log) => (
+        <span className="text-sm text-[var(--muted)]">{log.size_human}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (log) => (
+        <Badge tone={getStatusBadge(log.status)}>{log.status}</Badge>
+      ),
+    },
+    {
+      key: "created_by",
+      header: "Created By",
+      render: (log) => (
+        <span className="text-sm text-[var(--muted)]">
+          {log.created_by?.name ?? "—"}
+        </span>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Date",
+      render: (log) => (
+        <span className="text-sm text-[var(--muted)]">{formatDate(log.created_at)}</span>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Database Backups</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Backups are stored securely in Cloudflare R2
+          </p>
+        </div>
+        <Button onClick={() => create.mutate()} disabled={create.isPending}>
+          {create.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          Create Backup
+        </Button>
+      </div>
+
+      <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+        <DataTable
+          columns={columns}
+          data={list.data}
+          rowKey={(log) => log.id}
+          loading={list.isLoading}
+          loadingRows={5}
+          error={list.error}
+          onRetry={list.refetch}
+          emptyMessage="No backups found."
+          actions={(log) => (
+            <div className="flex items-center gap-1">
+              {log.status === "completed" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleDownload(log)}
+                  title="Download"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-[var(--danger)]"
+                onClick={() => remove.mutate(log.id)}
+                title="Delete"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        />
+        {list.meta && (
+          <Pagination
+            page={list.page}
+            lastPage={list.lastPage}
+            onPageChange={list.setPage}
+            label={`Page ${list.meta.current_page} of ${list.meta.last_page}`}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

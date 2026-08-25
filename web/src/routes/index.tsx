@@ -290,6 +290,11 @@ export const routes: RouteObject[] = [
                 handle: seo("Support Tickets", "View and manage customer support tickets across all tenants."),
               },
               {
+                path: "super-admin/backups",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/backups/page")),
+                handle: seo("Database Backups", "View backup history, create new backups and download restore files."),
+              },
+              {
                 path: "super-admin/settings",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/settings/page")),
                 handle: seo("Platform Settings", "Configure global modules and platform behavior."),

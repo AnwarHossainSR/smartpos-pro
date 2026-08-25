@@ -10,6 +10,7 @@ import type {
   SystemHealth,
   SuperAdminPlan,
   PlatformSettings,
+  BackupLog,
   SupportTicket,
   TicketMetrics,
 } from "./types";
@@ -122,6 +123,18 @@ export const superAdminApi = {
         method: "PUT",
         body: { settings },
       }),
+  },
+  backups: {
+    list: (params: ResourceListParams<Record<string, string>>) =>
+      api<Paginated<BackupLog>>(`/super/backups?${buildListQuery(params)}`),
+    create: () =>
+      api<{ data: BackupLog }>("/super/backups", { method: "POST" }),
+    download: (id: string) =>
+      api<{ data: { url: string; filename: string; expires_at: string } }>(
+        `/super/backups/${id}/download`,
+      ),
+    remove: (id: string) =>
+      api<void>(`/super/backups/${id}`, { method: "DELETE" }),
   },
 };
 

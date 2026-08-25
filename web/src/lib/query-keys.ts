@@ -183,5 +183,6 @@ export const queryKeys = {
     health: () => ["super-admin", "health"] as const,
     plans: (params?: ListParams) => ["super-admin", "plans", params ?? {}] as const,
     settings: () => ["super-admin", "settings"] as const,
+    backups: (params?: ListParams) => ["super-admin", "backups", params ?? {}] as const,
   },
 } as const;

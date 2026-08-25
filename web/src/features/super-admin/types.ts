@@ -89,3 +89,16 @@ export interface PlatformSettings {
   registration_enabled: boolean;
   max_tenants: number | null;
 }
+
+export interface BackupLog {
+  id: string;
+  filename: string;
+  disk: string;
+  size_bytes: number;
+  size_human: string;
+  status: "pending" | "completed" | "failed";
+  error: string | null;
+  created_by: { id: string; name: string; email: string } | null;
+  completed_at: string | null;
+  created_at: string;
+}

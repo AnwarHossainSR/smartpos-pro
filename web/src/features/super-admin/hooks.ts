@@ -129,6 +129,40 @@ export function useImpersonationMutations() {
   return { revoke };
 }
 
+export function useBackups() {
+  return useResourceList({
+    queryKey: queryKeys.superAdmin.backups(),
+    queryFn: superAdminApi.backups.list,
+    defaultSort: "-created_at",
+  });
+}
+
+export function useBackupMutations() {
+  const qc = useQueryClient();
+
+  const create = useMutation({
+    mutationFn: superAdminApi.backups.create,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.backups() });
+      toast("Backup started", "success");
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: superAdminApi.backups.remove,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.backups() });
+      toast("Backup deleted", "success");
+    },
+  });
+
+  const download = useMutation({
+    mutationFn: superAdminApi.backups.download,
+  });
+
+  return { create, remove, download };
+}
+
 export function usePlans() {
   return useResourceList({
     queryKey: queryKeys.superAdmin.plans(),
