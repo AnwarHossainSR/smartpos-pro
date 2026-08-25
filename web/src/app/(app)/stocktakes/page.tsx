@@ -17,7 +17,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
@@ -326,16 +326,18 @@ export default function StocktakesPage() {
         onRefresh={list.refetch}
         filters={
           <Select
-            className="sm:w-44"
             value={list.filters.status ?? ""}
-            onChange={(e) => list.setFilter("status", e.target.value || undefined)}
+            onValueChange={(v) => list.setFilter("status", v || undefined)}
           >
-            <option value="">All statuses</option>
-            {STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
+            <SelectTrigger className="sm:w-44"><SelectValue placeholder="All statuses" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All statuses</SelectItem>
+              {STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
       />

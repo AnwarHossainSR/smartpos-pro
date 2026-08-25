@@ -7,7 +7,7 @@ import { useAuth } from "@/stores/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -98,9 +98,12 @@ function TaxReportBody() {
           <Label className="mb-0">To</Label>
           <Input type="date" className="h-9 w-36" value={to} onChange={(e) => setTo(e.target.value)} />
           {branches.length > 0 && (
-            <Select className="h-9 w-40" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-              <option value="">All branches</option>
-              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            <Select value={branchId} onValueChange={setBranchId}>
+              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="All branches" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All branches</SelectItem>
+                {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+              </SelectContent>
             </Select>
           )}
         </div>
@@ -108,10 +111,10 @@ function TaxReportBody() {
 
       <div className="flex items-center justify-between print:hidden">
         <div className="flex gap-2">
-          <Button size="sm" variant={view === "summary" ? "primary" : "outline"} onClick={() => setView("summary")}>
+          <Button size="sm" variant={view === "summary" ? "default" : "outline"} onClick={() => setView("summary")}>
             Summary
           </Button>
-          <Button size="sm" variant={view === "return" ? "primary" : "outline"} onClick={() => setView("return")}>
+          <Button size="sm" variant={view === "return" ? "default" : "outline"} onClick={() => setView("return")}>
             Tax return (filing view)
           </Button>
         </div>

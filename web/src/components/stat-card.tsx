@@ -16,7 +16,7 @@ export function StatCard({
   tone?: "default" | "success" | "warning" | "danger";
 }) {
   const toneColor = {
-    default: "text-[var(--fg)]",
+    default: "text-foreground",
     success: "text-green-600 dark:text-green-400",
     warning: "text-amber-600 dark:text-amber-400",
     danger: "text-red-600 dark:text-red-400",
@@ -24,13 +24,13 @@ export function StatCard({
 
   return (
     <Card className="p-5">
-      <div className="text-sm text-[var(--muted)]">{label}</div>
+      <div className="text-sm text-muted-foreground">{label}</div>
       {loading ? (
         <Skeleton className="mt-2 h-8 w-24" />
       ) : (
         <div className={cn("mt-1 text-2xl font-semibold tracking-tight", toneColor)}>{value}</div>
       )}
-      {hint && <div className="mt-1 text-xs text-[var(--muted)]">{hint}</div>}
+      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
     </Card>
   );
 }

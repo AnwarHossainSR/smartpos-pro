@@ -110,7 +110,7 @@ export default function LoyaltyPage() {
 
       <div className="flex gap-2">
         {(["coupons", "points"] as Tab[]).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? "primary" : "outline"} onClick={() => setTab(t)}>
+          <Button key={t} size="sm" variant={tab === t ? "default" : "outline"} onClick={() => setTab(t)}>
             {t === "coupons" ? "Coupons" : "Loyalty points"}
           </Button>
         ))}

@@ -85,7 +85,7 @@ export function ApprovalPinCard() {
         </p>
 
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={hasPin ? "outline" : "primary"} onClick={() => { reset(); setSetting(true); }}>
+          <Button size="sm" variant={hasPin ? "outline" : "default"} onClick={() => { reset(); setSetting(true); }}>
             {hasPin ? "Change PIN" : "Set a PIN"}
           </Button>
           {hasPin && (
@@ -168,7 +168,7 @@ export function ApprovalPinCard() {
               Cancel
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               onClick={() => clearMutation.mutate()}
               disabled={clearMutation.isPending || password.length === 0}
             >

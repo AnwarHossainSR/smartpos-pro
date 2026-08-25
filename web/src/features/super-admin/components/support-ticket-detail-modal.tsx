@@ -9,7 +9,7 @@ import {
 import { useSupportTicket, useUpdateTicketStatus, useReplyToTicket, useAddInternalNote } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 const STATUS_TONES: Record<string, "info" | "warning" | "danger" | "success" | "default"> = {
@@ -233,16 +233,20 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                     label="Status"
                     value={
                       <Select
-                        className="w-36"
                         value={ticket.status}
-                        onChange={(e) => handleStatusChange(e.target.value)}
+                        onValueChange={(v) => handleStatusChange(v)}
                         disabled={updateStatus.isPending}
                       >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s] ?? s}
-                          </option>
-                        ))}
+                        <SelectTrigger className="w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {STATUS_LABELS[s] ?? s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                     }
                   />

@@ -116,7 +116,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 md:px-6">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/50 bg-[var(--surface)] px-4 md:px-6">
         <div className="flex items-center gap-3">
           <button onClick={onMenuClick} className="rounded p-1.5 hover:bg-[var(--surface-2)] md:hidden">
             <Menu className="h-5 w-5" />
@@ -133,7 +133,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
                 isClockedIn
                   ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
-                  : "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                  : "bg-[var(--surface-2)] text-muted-foreground hover:bg-[var(--surface-3)]"
               }`}
               title={isClockedIn ? t("header.clockOut") : t("header.clockIn")}
             >
@@ -159,7 +159,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           {/* Search / command palette */}
           <button
             onClick={() => setPaletteOpen(true)}
-            className="hidden items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-[var(--muted)] transition hover:border-[var(--primary)] sm:flex"
+            className="hidden items-center gap-2 rounded-[var(--radius)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-[var(--surface-3)] sm:flex"
           >
             <Search className="h-3.5 w-3.5" />
             <span>{t("header.searchPlaceholder")}</span>
@@ -194,7 +194,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               />
             </Button>
             {swatchMenuOpen && (
-              <div className="absolute end-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+              <div className="absolute end-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] bg-[var(--surface)] p-2 shadow-lg">
                 <PalettePicker compact />
               </div>
             )}
@@ -206,7 +206,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
               <ThemeIcon className="h-4 w-4" />
             </Button>
             {themeMenuOpen && (
-              <div className="absolute end-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1">
+              <div className="absolute end-0 top-full z-20 mt-1 w-36 rounded-[var(--radius)] bg-[var(--surface)] shadow-lg py-1">
                 {(["light", "dark", "system"] as Theme[]).map((option) => {
                   const Icon = themeIcons[option];
                   return (

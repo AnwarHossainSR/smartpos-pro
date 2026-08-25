@@ -219,7 +219,7 @@ export function WebhookList() {
             {t("common.cancel")}
           </Button>
           <Button
-            variant="danger"
+            variant="destructive"
             onClick={() => deletingId && deleteMutation.mutate(deletingId)}
             disabled={deleteMutation.isPending}
           >

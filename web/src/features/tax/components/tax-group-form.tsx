@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useAllTaxRates, useTaxGroupMutations } from "@/features/tax/hooks";
 import type { TaxGroup, TaxRate } from "@/features/tax/types";
@@ -34,7 +34,7 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
   );
   const [pickerValue, setPickerValue] = useState("");
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: editing
       ? { name: editing.name, code: editing.code ?? "", is_default: editing.is_default, is_active: editing.is_active }
@@ -89,10 +89,24 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
         </div>
         <div>
           <Label>Status</Label>
-          <Select {...register("is_active", { setValueAs: (v: string) => v === "true" })}>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </Select>
+          <Controller
+            control={control}
+            name="is_active"
+            render={({ field }) => (
+              <Select
+                value={String(field.value)}
+                onValueChange={(v) => field.onChange(v === "true")}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">
@@ -162,13 +176,17 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
         )}
 
         <div className="flex gap-2">
-          <Select value={pickerValue} onChange={(e) => setPickerValue(e.target.value)} className="flex-1">
-            <option value="">{availableRates.length === 0 ? "No more rates available" : "Select a tax rate to add…"}</option>
-            {availableRates.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.type === "percentage" ? `${r.rate}%` : r.rate.toFixed(2)})
-              </option>
-            ))}
+          <Select value={pickerValue} onValueChange={setPickerValue}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder={availableRates.length === 0 ? "No more rates available" : "Select a tax rate to add…"} />
+            </SelectTrigger>
+            <SelectContent>
+              {availableRates.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name} ({r.type === "percentage" ? `${r.rate}%` : r.rate.toFixed(2)})
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Button type="button" variant="outline" disabled={!pickerValue} onClick={addComponent}>
             <Plus className="h-4 w-4" /> Add

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { queryKeys } from "@/lib/query-keys";
 import { superAdminApi } from "../api";
 import type { SuperAdminPlan } from "../types";
@@ -36,7 +36,7 @@ export function AssignPlanDialog({ open, onClose, onSubmit, loading }: AssignPla
       title="Assign Plan"
       description="Assign a subscription plan to this tenant."
       confirmLabel="Assign"
-      confirmVariant="primary"
+      confirmVariant="default"
       loading={loading}
       onConfirm={() => {
         if (selectedPlanId) onSubmit(selectedPlanId);
@@ -45,13 +45,17 @@ export function AssignPlanDialog({ open, onClose, onSubmit, loading }: AssignPla
       <div className="space-y-3">
         <div>
           <Label>Plan</Label>
-          <Select value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)}>
-            <option value="">Select a plan…</option>
-            {plans.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name} — {plan.currency} {plan.price.toFixed(2)}
-              </option>
-            ))}
+          <Select value={selectedPlanId} onValueChange={(v) => setSelectedPlanId(v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a plan…" />
+            </SelectTrigger>
+            <SelectContent>
+              {plans.map((plan) => (
+                <SelectItem key={plan.id} value={plan.id}>
+                  {plan.name} — {plan.currency} {plan.price.toFixed(2)}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
       </div>

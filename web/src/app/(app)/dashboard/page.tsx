@@ -14,6 +14,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatNumber, formatDateTime } from "@/lib/utils";
 import {
   TrendingUp,
@@ -68,6 +69,41 @@ interface Summary {
   week_comparison: WeekComparison;
 }
 
+function ChartSkeleton() {
+  return (
+    <div className="h-72 w-full space-y-3 p-4">
+      <div className="flex items-end gap-2 h-full">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="flex-1 rounded-t"
+            style={{ height: `${20 + Math.random() * 60}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="space-y-3 p-1">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-6" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const t = useTranslation();
   const { data, isLoading } = useQuery({
@@ -90,9 +126,9 @@ export default function DashboardPage() {
         <StatCard label={t("dashboard.customerDues")} value={formatCurrency(s?.customer_dues ?? 0)} loading={isLoading} tone="warning" />
         <StatCard label={t("dashboard.lowStockItems")} value={formatNumber(s?.low_stock_count ?? 0)} loading={isLoading} tone={s && s.low_stock_count > 0 ? "danger" : "default"} />
         <Card className="p-5">
-          <div className="text-sm text-[var(--muted)]">{t("dashboard.weekComparison")}</div>
+          <div className="text-sm text-muted-foreground">{t("dashboard.weekComparison")}</div>
           {isLoading ? (
-            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-[var(--muted)]/20" />
+            <Skeleton className="mt-2 h-8 w-24" />
           ) : (
             <div className="mt-1 flex items-center gap-2">
               <div className="text-2xl font-semibold tracking-tight">
@@ -106,7 +142,7 @@ export default function DashboardPage() {
             </div>
           )}
           {weekComp && (
-            <div className="mt-1 text-xs text-[var(--muted)]">
+            <div className="mt-1 text-xs text-muted-foreground">
               {formatCurrency(weekComp.this_week)} / {formatCurrency(weekComp.last_week)}
             </div>
           )}
@@ -119,7 +155,9 @@ export default function DashboardPage() {
           <CardTitle>{t("dashboard.salesTrend")}</CardTitle>
         </CardHeader>
         <CardContent className="h-72">
-          {s?.sales_trend?.length ? (
+          {isLoading ? (
+            <ChartSkeleton />
+          ) : s?.sales_trend?.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={s.sales_trend} margin={{ left: -18, right: 8, top: 8 }}>
                 <defs>
@@ -128,14 +166,15 @@ export default function DashboardPage() {
                     <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted)" tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted)" tickLine={false} axisLine={false} width={56} />
+                <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" tickLine={false} axisLine={false} width={56} />
                 <Tooltip
                   contentStyle={{
-                    background: "var(--surface)",
+                    background: "var(--card)",
                     border: "1px solid var(--border)",
-                    borderRadius: 12,
+                    borderRadius: 8,
                     fontSize: 12,
+                    color: "var(--foreground)",
                   }}
                   formatter={(v) => formatCurrency(Number(v))}
                 />
@@ -143,7 +182,7 @@ export default function DashboardPage() {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-[var(--muted)]">
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               {t("dashboard.noSalesData")}
             </div>
           )}
@@ -158,23 +197,25 @@ export default function DashboardPage() {
             <CardTitle>{t("dashboard.topProducts")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {s?.top_products?.length ? (
+            {isLoading ? (
+              <TableSkeleton />
+            ) : s?.top_products?.length ? (
               <div className="space-y-3">
                 {s.top_products.map((product, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-[var(--muted)]">#{idx + 1}</span>
+                      <span className="text-sm font-medium text-muted-foreground">#{idx + 1}</span>
                       <span className="text-sm">{product.name}</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-[var(--muted)]">{product.quantity} sold</span>
+                      <span className="text-muted-foreground">{product.quantity} sold</span>
                       <span className="font-medium">{formatCurrency(product.revenue)}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex h-32 items-center justify-center text-sm text-[var(--muted)]">
+              <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
                 {t("dashboard.noTopProducts")}
               </div>
             )}
@@ -187,17 +228,19 @@ export default function DashboardPage() {
             <CardTitle>{t("dashboard.recentTransactions")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {s?.recent_sales?.length ? (
+            {isLoading ? (
+              <TableSkeleton />
+            ) : s?.recent_sales?.length ? (
               <div className="space-y-3">
                 {s.recent_sales.map((sale) => (
                   <Link
                     key={sale.id}
                     to={`/sales?filter=${sale.id}`}
-                    className="flex items-center justify-between rounded-lg p-2 hover:bg-[var(--muted)]/10 transition-colors"
+                    className="flex items-center justify-between rounded-lg p-2 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex flex-col gap-1">
                       <span className="text-sm font-medium">{sale.invoice_number}</span>
-                      <span className="text-xs text-[var(--muted)]">
+                      <span className="text-xs text-muted-foreground">
                         {sale.customer_name ?? t("dashboard.walkIn")} · {formatDateTime(sale.sold_at)}
                       </span>
                     </div>
@@ -211,7 +254,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="flex h-32 items-center justify-center text-sm text-[var(--muted)]">
+              <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
                 {t("dashboard.noRecentSales")}
               </div>
             )}
@@ -231,13 +274,13 @@ export default function DashboardPage() {
               <Link
                 key={idx}
                 to={`/inventory?filter=low-stock`}
-                className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30 hover:shadow-sm transition-shadow"
+                className="rounded-lg bg-amber-50/50 p-3 dark:bg-amber-950/20 hover:shadow-sm transition-shadow"
               >
                 <div className="text-sm font-medium truncate">{item.name}</div>
-                <div className="text-xs text-[var(--muted)]">{item.warehouse}</div>
+                <div className="text-xs text-muted-foreground">{item.warehouse}</div>
                 <div className="mt-1 text-xs">
                   <span className="text-amber-600 dark:text-amber-400 font-medium">{item.quantity}</span>
-                  <span className="text-[var(--muted)]"> / {item.min_stock_level}</span>
+                  <span className="text-muted-foreground"> / {item.min_stock_level}</span>
                 </div>
               </Link>
             ))}
@@ -254,30 +297,30 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Link
               to="/pos"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
+              className="flex flex-col items-center gap-2 rounded-lg bg-[var(--surface)] p-4 hover:bg-[var(--surface-2)] transition-colors"
             >
-              <ShoppingCart className="h-6 w-6 text-[var(--primary)]" />
+              <ShoppingCart className="h-6 w-6 text-primary" />
               <span className="text-sm font-medium">{t("dashboard.newSale")}</span>
             </Link>
             <Link
               to="/products?new=1"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
+              className="flex flex-col items-center gap-2 rounded-lg bg-[var(--surface)] p-4 hover:bg-[var(--surface-2)] transition-colors"
             >
-              <Package className="h-6 w-6 text-[var(--primary)]" />
+              <Package className="h-6 w-6 text-primary" />
               <span className="text-sm font-medium">{t("dashboard.addProduct")}</span>
             </Link>
             <Link
               to="/cash-register"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
+              className="flex flex-col items-center gap-2 rounded-lg bg-[var(--surface)] p-4 hover:bg-[var(--surface-2)] transition-colors"
             >
-              <Wallet className="h-6 w-6 text-[var(--primary)]" />
+              <Wallet className="h-6 w-6 text-primary" />
               <span className="text-sm font-medium">{t("dashboard.openRegister")}</span>
             </Link>
             <Link
               to="/expenses?new=1"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 hover:bg-[var(--muted)]/10 transition-colors"
+              className="flex flex-col items-center gap-2 rounded-lg bg-[var(--surface)] p-4 hover:bg-[var(--surface-2)] transition-colors"
             >
-              <Receipt className="h-6 w-6 text-[var(--primary)]" />
+              <Receipt className="h-6 w-6 text-primary" />
               <span className="text-sm font-medium">{t("dashboard.recordExpense")}</span>
             </Link>
           </div>

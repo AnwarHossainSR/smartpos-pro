@@ -15,7 +15,8 @@ import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Controller } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
@@ -93,7 +94,7 @@ function ProductForm({
   const { warehouses } = useWarehouses({ enabled: !isEdit });
   const { data: taxGroups } = useAllTaxGroups();
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { is_active: true, purchase_price: 0, selling_price: 0, is_weighed: false, ...defaultValues },
   });
@@ -149,10 +150,15 @@ function ProductForm({
         </div>
         <div>
           <Label>{t("products.form.status")}</Label>
-          <Select {...register("is_active", { setValueAs: (v: string) => v === "true" })}>
-            <option value="true">{t("products.form.active")}</option>
-            <option value="false">{t("products.form.inactive")}</option>
-          </Select>
+          <Controller name="is_active" control={control} render={({ field }) => (
+            <Select value={field.value ? "true" : "false"} onValueChange={(v) => field.onChange(v === "true")}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">{t("products.form.active")}</SelectItem>
+                <SelectItem value="false">{t("products.form.inactive")}</SelectItem>
+              </SelectContent>
+            </Select>
+          )} />
         </div>
       </div>
 
@@ -173,35 +179,55 @@ function ProductForm({
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label>{t("products.form.category")}</Label>
-          <Select {...register("category_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
-            <option value="">{t("products.form.none")}</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </Select>
+          <Controller name="category_id" control={control} render={({ field }) => (
+            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || undefined)}>
+              <SelectTrigger className="w-full"><SelectValue placeholder={t("products.form.none")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("products.form.none")}</SelectItem>
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )} />
         </div>
         <div>
           <Label>{t("products.form.brand")}</Label>
-          <Select {...register("brand_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
-            <option value="">{t("products.form.none")}</option>
-            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </Select>
+          <Controller name="brand_id" control={control} render={({ field }) => (
+            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || undefined)}>
+              <SelectTrigger className="w-full"><SelectValue placeholder={t("products.form.none")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("products.form.none")}</SelectItem>
+                {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )} />
         </div>
         <div>
           <Label>{t("products.form.unit")}</Label>
-          <Select {...register("unit_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
-            <option value="">{t("products.form.none")}</option>
-            {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </Select>
+          <Controller name="unit_id" control={control} render={({ field }) => (
+            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || undefined)}>
+              <SelectTrigger className="w-full"><SelectValue placeholder={t("products.form.none")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("products.form.none")}</SelectItem>
+                {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )} />
         </div>
       </div>
 
       <div>
         <Label>{t("products.form.taxGroup")}</Label>
-        <Select {...register("tax_group_id", { setValueAs: (v) => (v ? String(v) : null) })}>
-          <option value="">{t("products.form.taxGroupNone")}</option>
-          {taxGroups?.data?.map((g) => (
-            <option key={g.id} value={g.id}>{g.name}{g.is_default ? ` (${t("products.form.default")})` : ""}</option>
-          ))}
-        </Select>
+        <Controller name="tax_group_id" control={control} render={({ field }) => (
+          <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || null)}>
+            <SelectTrigger className="w-full"><SelectValue placeholder={t("products.form.taxGroupNone")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{t("products.form.taxGroupNone")}</SelectItem>
+              {taxGroups?.data?.map((g) => (
+                <SelectItem key={g.id} value={g.id}>{g.name}{g.is_default ? ` (${t("products.form.default")})` : ""}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )} />
         <p className="mt-1 text-xs text-[var(--muted)]">{t("products.form.taxGroupHint")}</p>
       </div>
 
@@ -227,11 +253,16 @@ function ProductForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>{t("products.weight_unit")}</Label>
-              <Select {...register("weight_unit")}>
-                <option value="kg">{t("products.per_kg")}</option>
-                <option value="lb">{t("products.per_lb")}</option>
-                <option value="g">per g</option>
-              </Select>
+              <Controller name="weight_unit" control={control} render={({ field }) => (
+                <Select value={field.value ?? "kg"} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kg">{t("products.per_kg")}</SelectItem>
+                    <SelectItem value="lb">{t("products.per_lb")}</SelectItem>
+                    <SelectItem value="g">per g</SelectItem>
+                  </SelectContent>
+                </Select>
+              )} />
             </div>
             <div>
               <Label>{t("products.price_per_unit")}</Label>
@@ -251,12 +282,17 @@ function ProductForm({
             </div>
             <div>
               <Label>{t("products.form.warehouse")}</Label>
-              <Select {...register("opening_stock_warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
-                <option value="">{t("products.form.selectWarehouse")}</option>
-                {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</option>
-                ))}
-              </Select>
+              <Controller name="opening_stock_warehouse_id" control={control} render={({ field }) => (
+                <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || undefined)}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder={t("products.form.selectWarehouse")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t("products.form.selectWarehouse")}</SelectItem>
+                    {warehouses.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.name}{w.is_default ? ` (${t("products.form.default")})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )} />
             </div>
           </div>
         </div>
@@ -356,7 +392,7 @@ export default function ProductsPage() {
       stock: p.stock ?? 0,
       status: p.is_active ? "active" : "inactive",
     }));
-    exportToCsv("products.csv", rows);
+    exportToCsv(rows, "products.csv");
   }
 
   return (
@@ -460,7 +496,7 @@ export default function ProductsPage() {
         title={t("products.deleteTitle")}
         description={t("products.deleteConfirm", { name: deleting?.name ?? "" })}
         confirmLabel={t("common.delete")}
-        confirmVariant="danger"
+        confirmVariant="destructive"
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
         loading={deleteMutation.isPending}
       />

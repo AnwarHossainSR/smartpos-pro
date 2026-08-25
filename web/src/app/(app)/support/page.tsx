@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { ListToolbar } from "@/components/ui/list-toolbar";
@@ -201,19 +201,21 @@ function TicketList({
           onRefresh={refetch}
           filters={
             <Select
-              className="w-40"
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onValueChange={(v) => {
+                setStatusFilter(v);
                 setPage(1);
               }}
             >
-              <option value="">All statuses</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="waiting_on_customer">Waiting</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <SelectTrigger className="w-40"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="waiting_on_customer">Waiting</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
             </Select>
           }
           addLabel="New Ticket"
@@ -233,19 +235,21 @@ function TicketList({
         onRefresh={refetch}
         filters={
           <Select
-            className="w-40"
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onValueChange={(v) => {
+              setStatusFilter(v);
               setPage(1);
             }}
           >
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="waiting_on_customer">Waiting</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
+            <SelectTrigger className="w-40"><SelectValue placeholder="All statuses" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="waiting_on_customer">Waiting</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
           </Select>
         }
         addLabel="New Ticket"
@@ -364,34 +368,36 @@ function NewTicketForm({ onCreated }: { onCreated: () => void }) {
             <div>
               <Label htmlFor="category">Category</Label>
               <Select
-                id="category"
-                className="mt-1.5"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onValueChange={setCategory}
               >
-                <option value="">Select category</option>
-                <option value="technical">Technical Issue</option>
-                <option value="billing">Billing</option>
-                <option value="feature_request">Feature Request</option>
-                <option value="bug_report">Bug Report</option>
-                <option value="general">General Inquiry</option>
-                <option value="account">Account</option>
-                <option value="other">Other</option>
+                <SelectTrigger id="category" className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Select category</SelectItem>
+                  <SelectItem value="technical">Technical Issue</SelectItem>
+                  <SelectItem value="billing">Billing</SelectItem>
+                  <SelectItem value="feature_request">Feature Request</SelectItem>
+                  <SelectItem value="bug_report">Bug Report</SelectItem>
+                  <SelectItem value="general">General Inquiry</SelectItem>
+                  <SelectItem value="account">Account</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
               <Label htmlFor="priority">Priority</Label>
               <Select
-                id="priority"
-                className="mt-1.5"
                 value={priority}
-                onChange={(e) => setPriority(e.target.value)}
+                onValueChange={setPriority}
               >
-                <option value="">Select priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <SelectTrigger id="priority" className="mt-1.5"><SelectValue placeholder="Select priority" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Select priority</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>

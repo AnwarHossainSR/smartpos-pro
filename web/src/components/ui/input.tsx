@@ -1,22 +1,22 @@
-import { cn } from "@/lib/utils";
+import * as React from "react"
 
-// React 19 accepts `ref` as a plain prop on function components (no forwardRef needed) — it
-// just has to be declared in the props type, since InputHTMLAttributes itself doesn't include it.
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { ref?: React.Ref<HTMLInputElement> };
+import { cn } from "@/lib/utils"
 
-export function Input({ className, ref, ...props }: InputProps) {
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
-      ref={ref}
+      type={type}
+      data-slot="input"
       className={cn(
-        "h-10 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 placeholder:text-[var(--muted)]",
-        className,
+        "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30",
+        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+        className
       )}
       {...props}
     />
-  );
+  )
 }
 
-export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1.5 block text-sm font-medium", className)} {...props} />;
-}
+export { Input }
+export { Label } from "@/components/ui/label"

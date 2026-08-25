@@ -5,7 +5,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
@@ -273,16 +273,20 @@ export function ResourceManager<T extends ResourceRecord>({
                   </Label>
                   {field.type === "select" ? (
                     <Select
-                      id={field.name}
                       value={String(form[field.name] ?? "")}
-                      onChange={(e) => setForm((f) => ({ ...f, [field.name]: e.target.value }))}
+                      onValueChange={(v) => setForm((f) => ({ ...f, [field.name]: v }))}
                     >
-                      <option value="">— None —</option>
-                      {field.options?.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
+                      <SelectTrigger id={field.name}>
+                        <SelectValue placeholder="— None —" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">— None —</SelectItem>
+                        {field.options?.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   ) : field.type === "textarea" ? (
                     <textarea

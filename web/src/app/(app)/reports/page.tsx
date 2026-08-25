@@ -10,7 +10,7 @@ import { useBranches } from "@/lib/lookups";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -109,7 +109,7 @@ export default function ReportsPage() {
           <Button
             key={rep.id}
             size="sm"
-            variant={report === rep.id ? "primary" : "outline"}
+            variant={report === rep.id ? "default" : "outline"}
             onClick={() => setReport(rep.id)}
           >
             {rep.label}
@@ -118,7 +118,7 @@ export default function ReportsPage() {
         {can("reports.view") && (
           <Button
             size="sm"
-            variant={report === "shifts" ? "primary" : "outline"}
+            variant={report === "shifts" ? "default" : "outline"}
             onClick={() => setReport("shifts")}
           >
             <Clock className="h-3.5 w-3.5" /> Shift hours
@@ -178,9 +178,12 @@ function ZReportTab({ date, branchId, setBranchId }: { date: string; branchId: s
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Label className="mb-0">{t("reports.branch")}</Label>
-        <Select className="h-9 w-48" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-          <option value="">{t("reports.allBranches")}</option>
-          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        <Select value={branchId} onValueChange={setBranchId}>
+          <SelectTrigger className="h-9 w-48"><SelectValue placeholder={t("reports.allBranches")} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{t("reports.allBranches")}</SelectItem>
+            {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+          </SelectContent>
         </Select>
         <div className="ml-auto">
           <Button size="sm" variant="outline" onClick={handleDownloadPdf}>

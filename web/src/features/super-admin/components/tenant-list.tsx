@@ -8,7 +8,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TenantDetailModal } from "./tenant-detail-modal";
 import { CreateTenantDialog } from "./create-tenant-dialog";
 import type { Tenant } from "../types";
@@ -93,18 +93,22 @@ export function TenantList() {
         onRefresh={list.refetch}
         filters={
           <Select
-            className="w-40"
             value={(list.filters as Record<string, string>).status ?? ""}
-            onChange={(e) =>
+            onValueChange={(v) =>
               list.setFilter(
                 "status" as never,
-                e.target.value || (undefined as never),
+                v || (undefined as never),
               )
             }
           >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
           </Select>
         }
         {...(canManage ? { addLabel: "Create Tenant", onAdd: () => setCreating(true) } : {})}

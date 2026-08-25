@@ -1,30 +1,29 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
-import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
-import { queryKeys } from "@/lib/query-keys";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
-import { useTranslation } from "@/i18n/context";
-import { QuantityPopover } from "@/features/pos/components/quantity-popover";
-import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
-import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
-import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
-import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
-import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
-import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
-import { CategoryTabs } from "@/features/pos/components/category-tabs";
 import { approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-challenge";
 import { ApprovalPinDialog } from "@/components/approval-pin-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
+import { CategoryTabs } from "@/features/pos/components/category-tabs";
+import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
+import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
+import { QuantityPopover } from "@/features/pos/components/quantity-popover";
+import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
 import { ViewToggle } from "@/features/pos/components/view-toggle";
+import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
+import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
+import { useTranslation } from "@/i18n/context";
+import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FileText, Minus, Pause, Plus, Search, ShoppingCart, Star, User, UserPlus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /* ---- types ---- */
 export interface Product {
@@ -305,12 +304,15 @@ function PaymentModal({
           <Label>{t("currency.tender")}</Label>
           <Select
             value={tenderCurrency}
-            onChange={(e) => setTenderCurrency(e.target.value)}
+            onValueChange={(v) => setTenderCurrency(v)}
           >
-            <option value="">{baseCurrency || "USD"} ({t("currency.base")})</option>
-            {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
-              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
-            ))}
+            <SelectTrigger><SelectValue placeholder={`${baseCurrency || "USD"} (${t("currency.base")})`} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{baseCurrency || "USD"} ({t("currency.base")})</SelectItem>
+              {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
+                <SelectItem key={c.code} value={c.code}>{c.code} — {c.name}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 
@@ -319,11 +321,13 @@ function PaymentModal({
             <div key={row.id} className="space-y-1">
               <div className="flex items-center gap-2">
                 <Select
-                  className="w-40 shrink-0"
                   value={row.method}
-                  onChange={(e) => updateRow(row.id, { method: e.target.value })}
+                  onValueChange={(v) => updateRow(row.id, { method: v })}
                 >
-                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  <SelectTrigger className="w-40 shrink-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                  </SelectContent>
                 </Select>
                 <Input
                   type="number"
@@ -572,31 +576,6 @@ export default function POSPage() {
     toast("Cart cleared");
   }, [cart.length]);
 
-  const handlers = useMemo(() => ({
-    focusSearch: () => searchInputRef.current?.focus(),
-    holdSale,
-    openPayment: () => {
-      if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
-    },
-    voidLastLine,
-    closeModal: () => {
-      if (showPayment) setShowPayment(false);
-      if (receipt) setReceipt(null);
-    },
-    clearCart,
-    confirmPayment: () => {},
-    toggleHelp: () => setShowHelp((v) => !v),
-  }), [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart]);
-
-  const shortcutState = useMemo(() => ({
-    cartEmpty: cart.length === 0,
-    showPayment,
-    showReceipt: !!receipt,
-    showHelp,
-  }), [cart.length, showPayment, receipt, showHelp]);
-
-  usePosShortcuts(handlers, shortcutState);
-
   useEffect(() => {
     searchInputRef.current?.focus();
   }, []);
@@ -742,6 +721,33 @@ export default function POSPage() {
     [],
   );
 
+  const handlers = useMemo(() => ({
+    focusSearch: () => searchInputRef.current?.focus(),
+    holdSale,
+    parkSale: () => {
+      if (cart.length > 0 && !showPayment && !receipt) parkMutation.mutate(undefined);
+    },
+    openPayment: () => {
+      if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+    },
+    voidLastLine,
+    closeModal: () => {
+      if (showPayment) setShowPayment(false);
+      if (receipt) setReceipt(null);
+    },
+    clearCart,
+    confirmPayment: () => {},
+    toggleHelp: () => setShowHelp((v) => !v),
+  }), [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart, parkMutation]);
+
+  const shortcutState = useMemo(() => ({
+    cartEmpty: cart.length === 0,
+    showPayment,
+    showReceipt: !!receipt,
+    showHelp,
+    showHeld,
+  }), [cart.length, showPayment, receipt, showHelp, showHeld]);
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "F2") {
@@ -838,9 +844,9 @@ export default function POSPage() {
                     onClick={() => addToCart(p)}
                     disabled={(p.stock ?? 0) <= 0}
                     className={cn(
-                      "flex w-full cursor-pointer flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 text-start",
+                      "flex w-full cursor-pointer flex-col rounded-[var(--radius)] bg-[var(--surface)] p-3 text-start",
                       "transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
-                      "enabled:hover:-translate-y-0.5 enabled:hover:border-[var(--primary)] enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
+                      "enabled:hover:-translate-y-0.5 enabled:hover:bg-[var(--surface-2)] enabled:hover:shadow-md",
                       "enabled:active:translate-y-0 enabled:active:scale-[0.98]",
                       "disabled:cursor-not-allowed disabled:opacity-50",
                     )}
@@ -877,7 +883,7 @@ export default function POSPage() {
           ) : (
             <div className="space-y-1">
               {displayedProducts.map((p) => (
-                <div key={p.id} className="relative group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 cursor-pointer transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]" onClick={() => addToCart(p)}>
+                <div key={p.id} className="relative group flex items-center gap-3 rounded-[var(--radius)] bg-[var(--surface)] p-2 cursor-pointer transition-colors hover:bg-[var(--surface-2)]" onClick={() => addToCart(p)}>
                   {p.image_url ? (
                     <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
                   ) : (
@@ -910,7 +916,7 @@ export default function POSPage() {
       </div>
 
       {/* Right: cart */}
-      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] bg-[var(--surface)]">        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
           <button
             onClick={() => setShowHeld(true)}
             className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
@@ -919,7 +925,7 @@ export default function POSPage() {
             {t("pos.heldOrders.button", { count: heldCount })}
           </button>
         </div>
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
           <div className="flex items-center gap-2 font-semibold">
             <ShoppingCart className="h-4 w-4" />
             Cart
@@ -935,7 +941,7 @@ export default function POSPage() {
         </div>
 
         {/* Customer selector */}
-        <div className="border-b border-[var(--border)] p-3">
+        <div className="border-b border-border/50 p-3">
           <div className="relative">
             <User className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <Input

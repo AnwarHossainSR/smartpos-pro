@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SuperAdminPlan } from "../types";
 
 export interface EditPlanFormData {
@@ -37,7 +37,7 @@ function initForm(plan: SuperAdminPlan | null): EditPlanFormData {
 export function EditPlanDialog({ plan, onClose, onSubmit, loading }: EditPlanDialogProps) {
   const [form, setForm] = useState<EditPlanFormData>(() => initForm(plan));
 
-  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({
       ...prev,
       [key]: key === "price" || key === "trial_days" ? Number(e.target.value) : e.target.value,
@@ -72,12 +72,17 @@ export function EditPlanDialog({ plan, onClose, onSubmit, loading }: EditPlanDia
         </div>
         <div>
           <Label>Currency</Label>
-          <Select value={form.currency} onChange={set("currency")}>
-            <option value="USD">USD — US Dollar</option>
-            <option value="EUR">EUR — Euro</option>
-            <option value="GBP">GBP — British Pound</option>
-            <option value="BDT">BDT — Bangladeshi Taka</option>
-            <option value="INR">INR — Indian Rupee</option>
+          <Select value={form.currency} onValueChange={(v) => setForm((prev) => ({ ...prev, currency: v }))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD — US Dollar</SelectItem>
+              <SelectItem value="EUR">EUR — Euro</SelectItem>
+              <SelectItem value="GBP">GBP — British Pound</SelectItem>
+              <SelectItem value="BDT">BDT — Bangladeshi Taka</SelectItem>
+              <SelectItem value="INR">INR — Indian Rupee</SelectItem>
+            </SelectContent>
           </Select>
         </div>
         <div>

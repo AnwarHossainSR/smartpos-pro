@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
 import { api } from "@/lib/api";
@@ -192,15 +192,14 @@ export default function ReorderSuggestionsPage() {
         filters={
           canCreate && selected.size > 0 ? (
             <div className="flex items-center gap-2">
-              <Select
-                value={warehouseId}
-                onChange={(e) => setWarehouseId(e.target.value)}
-                className="w-48"
-              >
-                <option value="">{t("reorder.warehouse") ?? "Warehouse"}</option>
-                {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}</option>
-                ))}
+              <Select value={warehouseId} onValueChange={setWarehouseId}>
+                <SelectTrigger className="w-48"><SelectValue placeholder={t("reorder.warehouse") ?? "Warehouse"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{t("reorder.warehouse") ?? "Warehouse"}</SelectItem>
+                  {warehouses.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               <Button size="sm" onClick={handleCreateDraftPo} disabled={createMutation.isPending}>
                 {createMutation.isPending ? "..." : t("reorder.create_draft") + ` (${selected.size})`}

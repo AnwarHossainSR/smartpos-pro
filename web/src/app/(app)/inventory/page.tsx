@@ -176,7 +176,7 @@ export default function InventoryPage() {
         onRefresh={list.refetch}
         filters={
           <Button
-            variant={lowStock ? "primary" : "outline"}
+            variant={lowStock ? "default" : "outline"}
             size="sm"
             onClick={() => list.setFilter("low_stock", lowStock ? undefined : "1")}
           >

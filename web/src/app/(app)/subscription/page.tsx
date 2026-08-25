@@ -125,8 +125,8 @@ export default function SubscriptionPage() {
                 <p className="font-medium">Current Plan: {sub.plan.name}</p>
                 <p className="text-sm text-[var(--muted)]">
                   {sub.status === "trialing"
-                    ? `Trial ends ${formatDate(sub.trial_ends_at)}`
-                    : `Active until ${formatDate(sub.current_period_ends_at)}`}
+                    ? `Trial ends ${formatDate(sub.trial_ends_at!)}`
+                    : `Active until ${formatDate(sub.current_period_ends_at!)}`}
                 </p>
               </div>
             </div>

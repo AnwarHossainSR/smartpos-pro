@@ -261,9 +261,9 @@ export default function TeamPage() {
       </div>
 
       <div role="tablist" aria-label={t("team.title")} className="flex gap-2 border-b border-[var(--border)] pb-2">
-        {canViewMembers && <Button role="tab" aria-selected={tab === "members"} size="sm" variant={tab === "members" ? "primary" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>}
-        {canViewRoles && <Button role="tab" aria-selected={tab === "roles"} size="sm" variant={tab === "roles" ? "primary" : "ghost"} onClick={() => setTab("roles")}><Shield className="h-3.5 w-3.5" /> {t("team.rolesTab")}</Button>}
-        {canViewShifts && <Button role="tab" aria-selected={tab === "shifts"} size="sm" variant={tab === "shifts" ? "primary" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
+        {canViewMembers && <Button role="tab" aria-selected={tab === "members"} size="sm" variant={tab === "members" ? "default" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>}
+        {canViewRoles && <Button role="tab" aria-selected={tab === "roles"} size="sm" variant={tab === "roles" ? "default" : "ghost"} onClick={() => setTab("roles")}><Shield className="h-3.5 w-3.5" /> {t("team.rolesTab")}</Button>}
+        {canViewShifts && <Button role="tab" aria-selected={tab === "shifts"} size="sm" variant={tab === "shifts" ? "default" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
       </div>
 
       {tab === "roles" ? (

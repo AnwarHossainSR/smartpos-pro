@@ -8,7 +8,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
@@ -401,18 +401,15 @@ export function RolesTab() {
         searchPlaceholder={t("roles.searchPlaceholder")}
         onRefresh={refetch}
         filters={
-          <Select
-            className="sm:w-40"
-            aria-label={t("roles.type")}
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value as RoleFilter);
-              setPage(1);
-            }}
-          >
-            <option value="all">{t("roles.all")}</option>
-            <option value="custom">{t("roles.custom")}</option>
-            <option value="system">{t("roles.system")}</option>
+          <Select value={filter} onValueChange={(v) => { setFilter(v as RoleFilter); setPage(1); }}>
+            <SelectTrigger className="sm:w-40" aria-label={t("roles.type")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("roles.all")}</SelectItem>
+              <SelectItem value="custom">{t("roles.custom")}</SelectItem>
+              <SelectItem value="system">{t("roles.system")}</SelectItem>
+            </SelectContent>
           </Select>
         }
         addLabel={canCreate ? t("roles.new") : undefined}
@@ -555,7 +552,7 @@ export function RolesTab() {
             : t("roles.deleteConfirm", { name: deleting?.name ?? "" })
         }
         confirmLabel={t("common.delete")}
-        confirmVariant="danger"
+        confirmVariant="destructive"
         loading={remove.isPending}
         onConfirm={() => deleting && remove.mutate(deleting)}
       />

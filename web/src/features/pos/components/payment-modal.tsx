@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
 import { round2 } from "@/features/pos/totals";
@@ -90,14 +90,16 @@ export function PaymentModal({
 
         <div>
           <Label>{t("currency.tender")}</Label>
-          <Select
-            value={tenderCurrency}
-            onChange={(e) => setTenderCurrency(e.target.value)}
-          >
-            <option value="">{baseCurrency || "USD"} ({t("currency.base")})</option>
-            {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
-              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
-            ))}
+          <Select value={tenderCurrency} onValueChange={(v) => setTenderCurrency(v)}>
+            <SelectTrigger>
+              <SelectValue placeholder={`${baseCurrency || "USD"} (${t("currency.base")})`} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{baseCurrency || "USD"} ({t("currency.base")})</SelectItem>
+              {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
+                <SelectItem key={c.code} value={c.code}>{c.code} — {c.name}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 
@@ -105,12 +107,13 @@ export function PaymentModal({
           {rows.map((row, i) => (
             <div key={row.id} className="space-y-1">
               <div className="flex items-center gap-2">
-                <Select
-                  className="w-40 shrink-0"
-                  value={row.method}
-                  onChange={(e) => updateRow(row.id, { method: e.target.value })}
-                >
-                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                <Select value={row.method} onValueChange={(v) => updateRow(row.id, { method: v })}>
+                  <SelectTrigger className="w-40 shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                  </SelectContent>
                 </Select>
                 <Input
                   type="number"

@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
-import { superAdminApi } from "../api";
 import { StatCard } from "@/components/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryKeys } from "@/lib/query-keys";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { superAdminApi } from "../api";
 
 const PERIODS = [
   { label: "7d", days: 7 },
@@ -39,7 +39,7 @@ export function RevenueDashboard() {
           {PERIODS.map((p) => (
             <Button
               key={p.days}
-              variant={days === p.days ? "primary" : "ghost"}
+              variant={days === p.days ? "default" : "ghost"}
               size="sm"
               onClick={() => setDays(p.days)}
             >

@@ -6,7 +6,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaxZoneForm } from "@/features/tax/components/tax-zone-form";
 import { useTaxZoneMutations, useTaxZones } from "@/features/tax/hooks";
 import type { TaxZone } from "@/features/tax/types";
@@ -66,13 +66,17 @@ export function TaxZonesSection({ canManage }: { canManage: boolean }) {
               maxLength={2}
             />
             <Select
-              className="h-10 w-40"
               value={list.filters.is_active ?? ""}
-              onChange={(e) => list.setFilter("is_active", e.target.value || undefined)}
+              onValueChange={(v) => list.setFilter("is_active", v || undefined)}
             >
-              <option value="">All statuses</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
+              <SelectTrigger className="h-10 w-40">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="true">Active</SelectItem>
+                <SelectItem value="false">Inactive</SelectItem>
+              </SelectContent>
             </Select>
           </div>
         }

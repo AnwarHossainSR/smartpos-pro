@@ -159,7 +159,7 @@ function SaleDetailModal({ sale, onClose, onReturn }: { sale: Sale; onClose: () 
             </>
           )}
           {can("sales.refund") && sale.status === "completed" && (
-            <Button variant="danger" onClick={onReturn} className="flex-1 basis-28">
+            <Button variant="destructive" onClick={onReturn} className="flex-1 basis-28">
               <RotateCcw className="h-4 w-4" /> Return
             </Button>
           )}
@@ -221,7 +221,7 @@ function ReturnModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose} disabled={mutation.isPending} className="flex-1">Cancel</Button>
-          <Button variant="danger" onClick={() => mutation.mutate()} disabled={!hasItems || mutation.isPending} className="flex-1">
+          <Button variant="destructive" onClick={() => mutation.mutate()} disabled={!hasItems || mutation.isPending} className="flex-1">
             {mutation.isPending ? "Processing…" : "Confirm return"}
           </Button>
         </div>

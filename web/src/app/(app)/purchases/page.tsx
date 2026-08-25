@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Trash2 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, type Envelope, type Paginated } from "@/lib/api";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
 import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
@@ -96,27 +96,42 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Warehouse *</Label>
-          <Select {...register("warehouse_id", { setValueAs: (v) => v ? String(v) : undefined })}>
-            <option value="">— Select —</option>
-            {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </Select>
+          <Controller name="warehouse_id" control={control} render={({ field }) => (
+            <Select value={field.value ?? ""} onValueChange={field.onChange}>
+              <SelectTrigger className="w-full"><SelectValue placeholder="— Select —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">— Select —</SelectItem>
+                {warehouses.map((w) => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )} />
         </div>
         <div>
           <Label>Supplier</Label>
-          <Select {...register("supplier_id", { setValueAs: (v) => v ? String(v) : undefined })}>
-            <option value="">— None —</option>
-            {suppliers?.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </Select>
+          <Controller name="supplier_id" control={control} render={({ field }) => (
+            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || undefined)}>
+              <SelectTrigger className="w-full"><SelectValue placeholder="— None —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">— None —</SelectItem>
+                {suppliers?.data?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )} />
         </div>
       </div>
 
       <div>
         <Label>Status</Label>
-        <Select {...register("status")}>
-          <option value="received">Received (stock added)</option>
-          <option value="ordered">Ordered</option>
-          <option value="draft">Draft</option>
-        </Select>
+        <Controller name="status" control={control} render={({ field }) => (
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="received">Received (stock added)</SelectItem>
+              <SelectItem value="ordered">Ordered</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+        )} />
       </div>
 
       {/* Items */}
@@ -163,9 +178,16 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         {payFields.map((field, idx) => (
           <div key={field.id} className="flex items-center gap-2 mb-2">
-            <Select className="w-36" {...register(`payments.${idx}.method`)}>
-              <option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank</option>
-            </Select>
+            <Controller name={`payments.${idx}.method`} control={control} render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="bank">Bank</SelectItem>
+                </SelectContent>
+              </Select>
+            )} />
             <Input type="number" step="0.01" min="0" {...register(`payments.${idx}.amount`, { valueAsNumber: true })} />
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removePay(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
           </div>

@@ -374,7 +374,7 @@ export default function CashRegisterPage() {
                       </span>
                     </div>
                   )}
-                  <Button variant="danger" className="w-full" onClick={() => setShowClose(true)}>
+                  <Button variant="destructive" className="w-full" onClick={() => setShowClose(true)}>
                     <Lock className="h-3.5 w-3.5" /> Close register
                   </Button>
                 </CardContent>

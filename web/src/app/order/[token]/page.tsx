@@ -73,7 +73,7 @@ export default function OrderStatusPage() {
         <h1 className="text-2xl font-semibold">
           {t("orderStatus.title", { invoice: order.invoice_number ?? "—" })}
         </h1>
-        <p className="text-sm text-[var(--muted)]">{formatDate(order.sold_at)}</p>
+        <p className="text-sm text-[var(--muted)]">{formatDate(order.sold_at!)}</p>
       </header>
 
       <Card>

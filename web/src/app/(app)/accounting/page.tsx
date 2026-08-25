@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, type Paginated } from "@/lib/api";
@@ -13,7 +13,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer } from "@/components/ui/drawer";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
@@ -108,14 +108,31 @@ function JournalForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="space-y-2">
           {fields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
-              <Select className="flex-1" {...register(`lines.${idx}.account_id`, { setValueAs: (v) => v ? String(v) : "" })}>
-                <option value="">— Account —</option>
-                {accounts?.data?.map((a) => <option key={a.id} value={a.id}>{a.account_number} {a.name}</option>)}
-              </Select>
-              <Select className="w-24" {...register(`lines.${idx}.type`)}>
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-              </Select>
+              <Controller
+                control={control}
+                name={`lines.${idx}.account_id`}
+                render={({ field: { value, onChange } }) => (
+                <Select value={value} onValueChange={onChange}>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="— Account —" /></SelectTrigger>
+                  <SelectContent>
+                    {accounts?.data?.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.account_number} {a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                )} />
+              <Controller
+                control={control}
+                name={`lines.${idx}.type`}
+                render={({ field: { value, onChange } }) => (
+                <Select value={value} onValueChange={onChange}>
+                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="debit">Debit</SelectItem>
+                    <SelectItem value="credit">Credit</SelectItem>
+                  </SelectContent>
+                </Select>
+                )} />
               <Input className="w-28" type="number" step="0.01" min="0" {...register(`lines.${idx}.amount`, { valueAsNumber: true })} />
               {fields.length > 2 && <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => remove(idx)}>×</Button>}
             </div>
@@ -172,7 +189,7 @@ export default function AccountingPage() {
 
       <div className="flex gap-2">
         {(["accounts", "journals", "trial-balance"] as Tab[]).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? "primary" : "outline"} onClick={() => { setTab(t); setPage(1); }}>
+          <Button key={t} size="sm" variant={tab === t ? "default" : "outline"} onClick={() => { setTab(t); setPage(1); }}>
             {t === "accounts" ? "Chart of accounts" : t === "journals" ? "Journal entries" : "Trial balance"}
           </Button>
         ))}

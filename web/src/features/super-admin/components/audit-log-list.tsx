@@ -7,7 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AuditLog } from "../types";
 
 function formatAction(action: string): string {
@@ -97,21 +97,25 @@ export function AuditLogList() {
         searchPlaceholder="Search audit logs…"
         filters={
           <Select
-            className="w-40"
             value={(list.filters as Record<string, string>).action ?? ""}
-            onChange={(e) =>
+            onValueChange={(v) =>
               list.setFilter(
                 "action" as never,
-                e.target.value || (undefined as never),
+                v || (undefined as never),
               )
             }
           >
-            <option value="">All actions</option>
-            <option value="created">Created</option>
-            <option value="updated">Updated</option>
-            <option value="deleted">Deleted</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All actions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All actions</SelectItem>
+              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="updated">Updated</SelectItem>
+              <SelectItem value="deleted">Deleted</SelectItem>
+              <SelectItem value="login">Login</SelectItem>
+              <SelectItem value="logout">Logout</SelectItem>
+            </SelectContent>
           </Select>
         }
       />

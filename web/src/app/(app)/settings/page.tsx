@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { PalettePicker } from "@/components/ui/palette-picker";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/i18n/config";
@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, ChevronRight, Mail, Percent, Printer, Shield, ShieldCheck, Webhook } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 function Section({
@@ -164,18 +164,19 @@ function PreferencesCard({
           hint={t("currency.baseHint")}
           control={
             <Select
-              aria-label={t("currency.base")}
               value={baseCurrency}
-              disabled={save.isPending}
-              onChange={(e) =>
-                save.mutate({ base_currency: e.target.value }, { onSuccess: () => toast(t("currency.saved")) })
-              }
+              onValueChange={(v) => {
+                save.mutate({ base_currency: v }, { onSuccess: () => toast(t("currency.saved")) });
+              }}
             >
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} — {c.name}
-                </option>
-              ))}
+              <SelectTrigger aria-label={t("currency.base")}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code} — {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           }
         />
@@ -185,15 +186,17 @@ function PreferencesCard({
           hint={t("settings.localizationHint")}
           control={
             <Select
-              aria-label={t("settings.language")}
               value={locale}
-              onChange={(e) => setLocale(e.target.value as Locale)}
+              onValueChange={(v) => setLocale(v as Locale)}
             >
-              {LOCALES.map((code) => (
-                <option key={code} value={code}>
-                  {LOCALE_LABELS[code]}
-                </option>
-              ))}
+              <SelectTrigger aria-label={t("settings.language")}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LOCALES.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {LOCALE_LABELS[code]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           }
         />
@@ -247,7 +250,7 @@ export default function SettingsPage() {
     queryFn: () => api<Envelope<BusinessSettings>>("/settings/business"),
   });
 
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     values: data?.data
       ? {
@@ -321,34 +324,49 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-3 xl:col-span-3">
                 <div>
                   <Label>{t("settings.currency")}</Label>
-                  <Select {...register("currency")}>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="BDT">BDT</option>
-                    <option value="INR">INR</option>
-                    <option value="SAR">SAR</option>
-                  </Select>
+                  <Controller name="currency" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="BDT">BDT</SelectItem>
+                        <SelectItem value="INR">INR</SelectItem>
+                        <SelectItem value="SAR">SAR</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
                 </div>
                 <div>
                   <Label>{t("settings.timezone")}</Label>
-                  <Select {...register("timezone")}>
-                    <option value="UTC">UTC</option>
-                    <option value="America/New_York">America/New_York</option>
-                    <option value="America/Los_Angeles">America/Los_Angeles</option>
-                    <option value="Europe/London">Europe/London</option>
-                    <option value="Asia/Dhaka">Asia/Dhaka</option>
-                    <option value="Asia/Kolkata">Asia/Kolkata</option>
-                    <option value="Asia/Riyadh">Asia/Riyadh</option>
-                  </Select>
+                  <Controller name="timezone" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UTC">UTC</SelectItem>
+                        <SelectItem value="America/New_York">America/New_York</SelectItem>
+                        <SelectItem value="America/Los_Angeles">America/Los_Angeles</SelectItem>
+                        <SelectItem value="Europe/London">Europe/London</SelectItem>
+                        <SelectItem value="Asia/Dhaka">Asia/Dhaka</SelectItem>
+                        <SelectItem value="Asia/Kolkata">Asia/Kolkata</SelectItem>
+                        <SelectItem value="Asia/Riyadh">Asia/Riyadh</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
                 </div>
                 <div>
                   <Label>{t("settings.dateFormat")}</Label>
-                  <Select {...register("date_format")}>
-                    <option value="Y-m-d">YYYY-MM-DD</option>
-                    <option value="d/m/Y">DD/MM/YYYY</option>
-                    <option value="m/d/Y">MM/DD/YYYY</option>
-                  </Select>
+                  <Controller name="date_format" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Select date format" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Y-m-d">YYYY-MM-DD</SelectItem>
+                        <SelectItem value="d/m/Y">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="m/d/Y">MM/DD/YYYY</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
                 </div>
               </div>
             </CardContent>

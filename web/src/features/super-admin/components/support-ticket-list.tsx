@@ -7,7 +7,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SupportTicketDetailModal } from "./support-ticket-detail-modal";
 import type { SupportTicket, TicketMetrics } from "../types";
 
@@ -197,33 +197,41 @@ export function SupportTicketList() {
         filters={
           <div className="flex gap-2">
             <Select
-              className="w-40"
               value={filters.status}
-              onChange={(e) => {
-                setFilters((f) => ({ ...f, status: e.target.value }));
+              onValueChange={(v) => {
+                setFilters((f) => ({ ...f, status: v }));
                 setPage(1);
               }}
             >
-              <option value="">All statuses</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="waiting_on_customer">Waiting on Customer</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="waiting_on_customer">Waiting on Customer</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
             </Select>
             <Select
-              className="w-36"
               value={filters.priority}
-              onChange={(e) => {
-                setFilters((f) => ({ ...f, priority: e.target.value }));
+              onValueChange={(v) => {
+                setFilters((f) => ({ ...f, priority: v }));
                 setPage(1);
               }}
             >
-              <option value="">All priorities</option>
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="All priorities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All priorities</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
             </Select>
           </div>
         }

@@ -1,83 +1,75 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { useLocaleStore } from "@/stores/locale";
-import { useBusinessStore } from "@/stores/business";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
-/** Merge conditional class names, resolving Tailwind conflicts. */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-/** UI language (nav, buttons, …) and the number/date locale are the same store — but stay
- *  independent of `currency`, which is a tenant setting (see docs/REDESIGN_I18N_PLAN.md). */
-function activeLocale(): string {
-  return useLocaleStore.getState().locale;
+export function formatCurrency(amount: number, currency = "BDT"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+  }).format(amount)
 }
 
-/** Locale-aware grouping/decimal separators, but always Latin (0-9) digits — some locales
- *  (bn, ar, …) default to native digit glyphs, which we don't want here. */
-function numericLocale(): string {
-  return `${activeLocale()}-u-nu-latn`;
+export function formatDateTime(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
-/** `currency` overrides the tenant default — pass it explicitly for a sale/purchase that was
- *  recorded in a different currency than the tenant's current setting. */
-export function formatCurrency(value: number, currency?: string) {
-  const cur = currency ?? useBusinessStore.getState().currency;
-  return new Intl.NumberFormat(numericLocale(), { style: "currency", currency: cur }).format(value ?? 0);
+export function formatDate(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
 }
 
-export function formatNumber(value: number) {
-  return new Intl.NumberFormat(numericLocale()).format(value ?? 0);
+export function formatNumber(n: number): string {
+  return new Intl.NumberFormat("en-US").format(n)
 }
 
-export function formatDate(value: string | number | Date | null | undefined) {
-  if (value == null) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium" }).format(date);
+export function openPdfBlob(blob: Blob, filename = "document.pdf") {
+  const url = URL.createObjectURL(blob)
+  window.open(url, "_blank")
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 
-export function formatDateTime(value: string | number | Date | null | undefined) {
-  if (value == null) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
-
-/** Opens a fetched PDF blob in a new tab — the browser's built-in viewer handles print/save. */
-export function openPdfBlob(blob: Blob) {
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
-/** Saves a fetched blob straight to disk — the download counterpart to `openPdfBlob`. Used for
- *  the `?download=1` PDF endpoints: their Content-Disposition filename doesn't survive the
- *  fetch-to-blob round trip, so the name has to be re-applied here. */
 export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 
-/** Client-side CSV export — no backend endpoint required for a plain list dump. */
-export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
-  if (rows.length === 0) return;
-  const headers = Object.keys(rows[0]);
-  const escape = (v: unknown) => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+export function exportToCsv(data: Record<string, unknown>[], filename: string) {
+  if (!data.length) return
+  const headers = Object.keys(data[0])
+  const csv = [
+    headers.join(","),
+    ...data.map((row) =>
+      headers
+        .map((h) => {
+          const val = String(row[h] ?? "")
+          return val.includes(",") || val.includes('"') || val.includes("\n")
+            ? `"${val.replace(/"/g, '""')}"`
+            : val
+        })
+        .join(",")
+    ),
+  ].join("\n")
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  downloadBlob(blob, filename)
 }

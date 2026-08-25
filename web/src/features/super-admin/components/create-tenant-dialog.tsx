@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface CreateTenantFormData {
   tenant_name: string;
@@ -38,7 +38,7 @@ export function CreateTenantDialog({
     base_currency: "USD",
   });
 
-  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleTenantName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,12 +116,17 @@ export function CreateTenantDialog({
         </div>
         <div>
           <Label>Currency</Label>
-          <Select className="mt-1.5" value={form.base_currency} onChange={set("base_currency")}>
-            <option value="USD">USD — US Dollar</option>
-            <option value="EUR">EUR — Euro</option>
-            <option value="GBP">GBP — British Pound</option>
-            <option value="BDT">BDT — Bangladeshi Taka</option>
-            <option value="INR">INR — Indian Rupee</option>
+          <Select value={form.base_currency} onValueChange={(v) => setForm((prev) => ({ ...prev, base_currency: v }))}>
+            <SelectTrigger className="mt-1.5">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD — US Dollar</SelectItem>
+              <SelectItem value="EUR">EUR — Euro</SelectItem>
+              <SelectItem value="GBP">GBP — British Pound</SelectItem>
+              <SelectItem value="BDT">BDT — Bangladeshi Taka</SelectItem>
+              <SelectItem value="INR">INR — Indian Rupee</SelectItem>
+            </SelectContent>
           </Select>
         </div>
       </div>

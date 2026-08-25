@@ -9,7 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input, Label as FieldLabel } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/stores/auth";
 import { Label as LabelPreview, LabelSheet, type LabelOptions } from "./label-sheet";
@@ -313,12 +313,15 @@ export default function LabelPrintingPage() {
         <div className="space-y-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <div>
             <FieldLabel>Label stock</FieldLabel>
-            <Select value={sheetId} onChange={(event) => setSheetId(event.target.value)}>
-              {SHEET_PRESETS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
+            <Select value={sheetId} onValueChange={(v) => setSheetId(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SHEET_PRESETS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <p className="mt-1 text-xs text-[var(--muted)]">{preset.description}</p>
           </div>
@@ -327,13 +330,16 @@ export default function LabelPrintingPage() {
             <FieldLabel>Template</FieldLabel>
             <Select
               value={template}
-              onChange={(event) => setTemplate(event.target.value as LabelTemplateId)}
+              onValueChange={(v) => setTemplate(v as LabelTemplateId)}
             >
-              {LABEL_TEMPLATES.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LABEL_TEMPLATES.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <p className="mt-1 text-xs text-[var(--muted)]">
               {LABEL_TEMPLATES.find((option) => option.id === template)?.description}
@@ -377,12 +383,15 @@ export default function LabelPrintingPage() {
 
           <div>
             <FieldLabel>Preview zoom</FieldLabel>
-            <Select value={zoom} onChange={(event) => setZoom(event.target.value)}>
-              {ZOOMS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+            <Select value={zoom} onValueChange={(v) => setZoom(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ZOOMS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <p className="mt-1 text-xs text-[var(--muted)]">
               Zoom only affects the screen. Print at 100% scale with default margins.

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { TenantDetail } from "../types";
 
 export interface EditTenantFormData {
@@ -31,7 +31,7 @@ function initForm(tenant: TenantDetail | null): EditTenantFormData {
 export function EditTenantDialog({ tenant, onClose, onSubmit, loading }: EditTenantDialogProps) {
   const [form, setForm] = useState<EditTenantFormData>(() => initForm(tenant));
 
-  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value || undefined }));
 
   return (
@@ -51,12 +51,17 @@ export function EditTenantDialog({ tenant, onClose, onSubmit, loading }: EditTen
         </div>
         <div>
           <Label>Plan</Label>
-          <Select value={form.plan ?? ""} onChange={set("plan")}>
-            <option value="">No plan</option>
-            <option value="free">Free</option>
-            <option value="starter">Starter</option>
-            <option value="pro">Pro</option>
-            <option value="enterprise">Enterprise</option>
+          <Select value={form.plan ?? ""} onValueChange={(v) => setForm((prev) => ({ ...prev, plan: v || undefined }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="No plan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No plan</SelectItem>
+              <SelectItem value="free">Free</SelectItem>
+              <SelectItem value="starter">Starter</SelectItem>
+              <SelectItem value="pro">Pro</SelectItem>
+              <SelectItem value="enterprise">Enterprise</SelectItem>
+            </SelectContent>
           </Select>
         </div>
         <div>
@@ -65,12 +70,17 @@ export function EditTenantDialog({ tenant, onClose, onSubmit, loading }: EditTen
         </div>
         <div>
           <Label>Currency</Label>
-          <Select value={form.base_currency ?? "USD"} onChange={set("base_currency")}>
-            <option value="USD">USD — US Dollar</option>
-            <option value="EUR">EUR — Euro</option>
-            <option value="GBP">GBP — British Pound</option>
-            <option value="BDT">BDT — Bangladeshi Taka</option>
-            <option value="INR">INR — Indian Rupee</option>
+          <Select value={form.base_currency ?? "USD"} onValueChange={(v) => setForm((prev) => ({ ...prev, base_currency: v || undefined }))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD — US Dollar</SelectItem>
+              <SelectItem value="EUR">EUR — Euro</SelectItem>
+              <SelectItem value="GBP">GBP — British Pound</SelectItem>
+              <SelectItem value="BDT">BDT — Bangladeshi Taka</SelectItem>
+              <SelectItem value="INR">INR — Indian Rupee</SelectItem>
+            </SelectContent>
           </Select>
         </div>
       </div>
