@@ -23,6 +23,8 @@ class UserResource extends JsonResource
             'tenant_id' => $this->tenant_id,
             'tenant_name' => $this->whenLoaded('tenant', fn () => $this->tenant->name),
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
+            'business_id' => $this->business_id,
+            'branch_id' => $this->branch_id,
             'created_at' => $this->created_at,
         ];
     }

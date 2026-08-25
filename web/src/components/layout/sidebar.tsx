@@ -266,14 +266,18 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
           <img
             src={logoUrl}
             alt={businessName ?? "Business logo"}
-            className="shrink-0 rounded-lg object-contain"
-            style={{ width: collapsed ? 30 : 34, height: collapsed ? 30 : 34 }}
+            className={cn(
+              "shrink-0 rounded-xl object-contain",
+              collapsed ? "h-9 w-9" : "h-10 w-auto",
+            )}
           />
         ) : (
-          <Logo size={collapsed ? 30 : 34} />
-        )}
-        {!collapsed && (
-          <span className="truncate text-lg font-semibold tracking-tight">{businessName ?? "SmartPOS"}</span>
+          <>
+            <Logo size={collapsed ? 32 : 38} />
+            {!collapsed && (
+              <span className="truncate text-lg font-semibold tracking-tight">SmartPOS</span>
+            )}
+          </>
         )}
         <button
           onClick={toggle}
