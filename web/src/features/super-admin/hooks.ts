@@ -111,7 +111,7 @@ export function useAuditLogs() {
     queryKey: queryKeys.superAdmin.audit(),
     queryFn: superAdminApi.audit.list,
     defaultSort: "-created_at",
-    filterKeys: ["action"] as const,
+    filterKeys: ["action", "tenant_id", "user_id", "from", "to"] as const,
   });
 }
 

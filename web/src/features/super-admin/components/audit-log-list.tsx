@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Eye, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 import { useAuditLogs } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
@@ -31,8 +32,12 @@ function formatDate(dateString: string): string {
 export function AuditLogList() {
   const [viewing, setViewing] = useState<AuditLog | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const list = useAuditLogs();
+  const filters = (list.filters as Record<string, string>) ?? {};
+
+  const hasActiveFilters = filters.tenant_id || filters.user_id || filters.from || filters.to;
 
   const columns: DataTableColumn<AuditLog>[] = [
     {
@@ -96,25 +101,113 @@ export function AuditLogList() {
         onSearchChange={list.setSearch}
         searchPlaceholder="Search audit logs…"
         filters={
-          <Select
-            className="w-40"
-            value={(list.filters as Record<string, string>).action ?? ""}
-            onChange={(e) =>
-              list.setFilter(
-                "action" as never,
-                e.target.value || (undefined as never),
-              )
-            }
-          >
-            <option value="">All actions</option>
-            <option value="created">Created</option>
-            <option value="updated">Updated</option>
-            <option value="deleted">Deleted</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Select
+              className="w-40"
+              value={filters.action ?? ""}
+              onChange={(e) =>
+                list.setFilter("action" as never, e.target.value || (undefined as never))
+              }
+            >
+              <option value="">All actions</option>
+              <option value="created">Created</option>
+              <option value="updated">Updated</option>
+              <option value="deleted">Deleted</option>
+              <option value="login">Login</option>
+              <option value="logout">Logout</option>
+            </Select>
+
+            <Button
+              variant={showFilters ? "primary" : "ghost"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-1 h-3.5 w-3.5" />
+              More Filters
+              {hasActiveFilters && (
+                <Badge tone="info" className="ml-1">
+                  {(filters.tenant_id ? 1 : 0) +
+                    (filters.user_id ? 1 : 0) +
+                    (filters.from ? 1 : 0) +
+                    (filters.to ? 1 : 0)}
+                </Badge>
+              )}
+            </Button>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  list.setFilter("tenant_id" as never, undefined as never);
+                  list.setFilter("user_id" as never, undefined as never);
+                  list.setFilter("from" as never, undefined as never);
+                  list.setFilter("to" as never, undefined as never);
+                }}
+              >
+                <X className="mr-1 h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
         }
       />
+
+      {showFilters && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="text-sm font-medium text-[var(--muted)]">Tenant ID</label>
+                <input
+                  type="text"
+                  value={filters.tenant_id ?? ""}
+                  onChange={(e) =>
+                    list.setFilter("tenant_id" as never, e.target.value || (undefined as never))
+                  }
+                  placeholder="Filter by tenant…"
+                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--muted)]">User ID</label>
+                <input
+                  type="text"
+                  value={filters.user_id ?? ""}
+                  onChange={(e) =>
+                    list.setFilter("user_id" as never, e.target.value || (undefined as never))
+                  }
+                  placeholder="Filter by user…"
+                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--muted)]">From Date</label>
+                <input
+                  type="date"
+                  value={filters.from ?? ""}
+                  onChange={(e) =>
+                    list.setFilter("from" as never, e.target.value || (undefined as never))
+                  }
+                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--muted)]">To Date</label>
+                <input
+                  type="date"
+                  value={filters.to ?? ""}
+                  onChange={(e) =>
+                    list.setFilter("to" as never, e.target.value || (undefined as never))
+                  }
+                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
         <DataTable
           columns={columns}

@@ -77,7 +77,7 @@ export const superAdminApi = {
       api<{ message: string }>(`/super/users/${id}/force-logout`, { method: "POST" }),
   },
   audit: {
-    list: (params: ResourceListParams<{ action: string }>) =>
+    list: (params: ResourceListParams<{ action: string; tenant_id: string; user_id: string; from: string; to: string }>) =>
       api<Paginated<AuditLog>>(`/super/audit-logs?${buildListQuery(params)}`),
   },
   health: {
