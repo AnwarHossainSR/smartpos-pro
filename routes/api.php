@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController as SuperAuditLogController;
+use App\Http\Controllers\Api\V1\SuperAdmin\BackupController;
 use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController as SuperImpersonationController;
 use App\Http\Controllers\Api\V1\SuperAdmin\PlanController as SuperPlanController;
 use App\Http\Controllers\Api\V1\SuperAdmin\SettingController;
@@ -359,5 +360,11 @@ Route::prefix('v1')->group(function () {
         // Platform settings
         Route::get('settings', [SettingController::class, 'index']);
         Route::put('settings', [SettingController::class, 'update']);
+
+        // Database backups
+        Route::get('backups', [BackupController::class, 'index']);
+        Route::post('backups', [BackupController::class, 'store']);
+        Route::get('backups/{backup}/download', [BackupController::class, 'download']);
+        Route::delete('backups/{backup}', [BackupController::class, 'destroy']);
     });
 });
