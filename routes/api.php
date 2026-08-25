@@ -29,13 +29,14 @@ use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
-use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController as SuperAuditLogController;
 use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController as SuperImpersonationController;
 use App\Http\Controllers\Api\V1\SuperAdmin\PlanController as SuperPlanController;
+use App\Http\Controllers\Api\V1\SuperAdmin\SettingController;
 use App\Http\Controllers\Api\V1\SuperAdmin\SupportController as SuperSupportController;
 use App\Http\Controllers\Api\V1\SuperAdmin\TenantController as SuperTenantController;
 use App\Http\Controllers\Api\V1\SuperAdmin\UserController as SuperUserController;
+use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
@@ -354,5 +355,9 @@ Route::prefix('v1')->group(function () {
         Route::put('support/tickets/{id}/status', [SuperSupportController::class, 'updateStatus']);
         Route::post('support/tickets/{id}/reply', [SuperSupportController::class, 'addReply']);
         Route::post('support/tickets/{id}/notes', [SuperSupportController::class, 'addInternalNote']);
+
+        // Platform settings
+        Route::get('settings', [SettingController::class, 'index']);
+        Route::put('settings', [SettingController::class, 'update']);
     });
 });
