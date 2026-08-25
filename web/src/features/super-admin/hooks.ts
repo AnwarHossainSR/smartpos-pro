@@ -1,17 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/toast";
-import { useResourceList } from "@/lib/use-resource-list";
 import { queryKeys } from "@/lib/query-keys";
+import { useResourceList } from "@/lib/use-resource-list";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  superAdminApi,
-  getSupportTickets,
-  getSupportTicket,
-  updateTicketStatus,
-  replyToTicket,
   addInternalNote,
+  getSupportTicket,
+  getSupportTickets,
   getTicketMetrics,
+  replyToTicket,
+  superAdminApi,
+  updateTicketStatus,
 } from "./api";
-import type { TicketMetrics } from "./types";
+import type { AuditLog, TicketMetrics } from "./types";
 
 export function useTenants() {
   return useResourceList({
@@ -107,7 +107,7 @@ export function useUserMutations() {
 }
 
 export function useAuditLogs() {
-  return useResourceList({
+  return useResourceList<AuditLog, { action: string; tenant_id: string; user_id: string; from: string; to: string }>({
     queryKey: queryKeys.superAdmin.audit(),
     queryFn: superAdminApi.audit.list,
     defaultSort: "-created_at",
