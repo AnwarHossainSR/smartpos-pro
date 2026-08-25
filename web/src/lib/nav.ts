@@ -11,6 +11,7 @@ import {
   ClipboardList,
   CreditCard,
   Crown,
+  Database,
   DollarSign,
   Gift,
   Headset,
@@ -143,6 +144,8 @@ export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
   { key: "superAdminAudit", groupIcon: Shield, items: [{ href: "/super-admin/audit", key: "auditLogs", icon: ScrollText }] },
   { key: "superAdminSupport", groupIcon: Shield, items: [{ href: "/super-admin/support-tickets", key: "supportTickets", icon: Headset }] },
   { key: "superAdminHealth", groupIcon: Shield, items: [{ href: "/super-admin/health", key: "health", icon: Activity }] },
+  { key: "superAdminSettings", groupIcon: Shield, items: [{ href: "/super-admin/settings", key: "platformSettings", icon: Settings }] },
+  { key: "superAdminBackups", groupIcon: Shield, items: [{ href: "/super-admin/backups", key: "databaseBackups", icon: Database }] },
 ];
 
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = SUPER_ADMIN_NAV_GROUPS.flatMap((g) => g.items);

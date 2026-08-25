@@ -48,7 +48,9 @@
     "security": "セキュリティ",
     "tables": "テーブル",
     "taxSettings": "税設定",
-    "taxReport": "税レポート"
+    "taxReport": "税レポート",
+    "platformSettings": "プラットフォーム設定",
+    "databaseBackups": "データベースバックアップ"
   },
   "sidebar": {
     "collapse": "サイドバーを折りたたむ",

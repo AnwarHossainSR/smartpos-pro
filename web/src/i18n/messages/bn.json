@@ -48,7 +48,9 @@
     "security": "নিরাপত্তা",
     "tables": "টেবিল",
     "taxSettings": "কর সেটিংস",
-    "taxReport": "কর প্রতিবেদন"
+    "taxReport": "কর প্রতিবেদন",
+    "platformSettings": "প্ল্যাটফর্ম সেটিংস",
+    "databaseBackups": "ডাটাবেস ব্যাকআপ"
   },
   "sidebar": {
     "collapse": "সাইডবার সংকুচিত করুন",
