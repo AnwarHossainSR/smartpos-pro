@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Database, Download, Trash2, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useBackups, useBackupMutations } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import type { BackupLog } from "../types";
@@ -35,6 +37,7 @@ function getStatusIcon(status: string) {
 export function BackupList() {
   const list = useBackups();
   const { create, remove, download } = useBackupMutations();
+  const [deleting, setDeleting] = useState<BackupLog | null>(null);
 
   const hasPending = list.data?.some((b) => b.status === "pending") ?? false;
 
@@ -146,7 +149,7 @@ export function BackupList() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-[var(--danger)]"
-                onClick={() => remove.mutate(log.id)}
+                onClick={() => setDeleting(log)}
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -163,6 +166,23 @@ export function BackupList() {
           />
         )}
       </div>
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete Backup"
+        description={`Are you sure you want to delete "${deleting?.filename}"? This will also remove the file from R2 storage. This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={() => {
+          if (deleting) {
+            remove.mutate(deleting.id, {
+              onSuccess: () => setDeleting(null),
+            });
+          }
+        }}
+        loading={remove.isPending}
+      />
     </div>
   );
 }
