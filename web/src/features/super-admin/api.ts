@@ -9,6 +9,7 @@ import type {
   AuditLog,
   SystemHealth,
   SuperAdminPlan,
+  PlatformSettings,
   SupportTicket,
   TicketMetrics,
 } from "./types";
@@ -112,6 +113,15 @@ export const superAdminApi = {
       api<{ data: SuperAdminPlan }>(`/super/plans/${id}`, { method: "PUT", body: data }),
     delete: (id: string) =>
       api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
+  },
+  settings: {
+    get: () =>
+      api<{ data: PlatformSettings }>("/super/settings"),
+    update: (settings: Partial<PlatformSettings>) =>
+      api<{ data: PlatformSettings }>("/super/settings", {
+        method: "PUT",
+        body: { settings },
+      }),
   },
 };
 

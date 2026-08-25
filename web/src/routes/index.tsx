@@ -289,6 +289,11 @@ export const routes: RouteObject[] = [
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/support-tickets/page")),
                 handle: seo("Support Tickets", "View and manage customer support tickets across all tenants."),
               },
+              {
+                path: "super-admin/settings",
+                lazy: () => loadPage(() => import("@/app/(app)/super-admin/settings/page")),
+                handle: seo("Platform Settings", "Configure global modules and platform behavior."),
+              },
 
             ],
           },

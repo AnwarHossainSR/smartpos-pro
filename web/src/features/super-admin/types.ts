@@ -81,3 +81,11 @@ export interface SystemHealth {
     free: string;
   };
 }
+
+export interface PlatformSettings {
+  modules: Record<string, boolean>;
+  tenant_overrides: Record<string, Record<string, boolean>>;
+  maintenance_mode: boolean;
+  registration_enabled: boolean;
+  max_tenants: number | null;
+}

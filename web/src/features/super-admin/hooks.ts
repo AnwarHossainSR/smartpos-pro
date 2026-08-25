@@ -168,6 +168,25 @@ export function usePlanMutations() {
   return { create, update, remove };
 }
 
+export function usePlatformSettings() {
+  const qc = useQueryClient();
+
+  const query = useQuery({
+    queryKey: queryKeys.superAdmin.settings(),
+    queryFn: superAdminApi.settings.get,
+  });
+
+  const update = useMutation({
+    mutationFn: superAdminApi.settings.update,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.settings() });
+      toast("Settings updated", "success");
+    },
+  });
+
+  return { ...query, update };
+}
+
 // Support Ticket hooks
 export function useSupportTickets(params?: Record<string, string | number | undefined>) {
   return useQuery({
