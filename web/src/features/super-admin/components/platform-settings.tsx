@@ -16,37 +16,31 @@ const MODULE_LABELS: Record<string, string> = {
   ecommerce: "E-Commerce Integration",
 };
 
-export function PlatformSettings() {
-  const { data, isLoading, update } = usePlatformSettings();
-  const [modules, setModules] = useState<Record<string, boolean>>({});
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [registrationEnabled, setRegistrationEnabled] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+interface SettingsFormProps {
+  settings: {
+    modules: Record<string, boolean>;
+    maintenance_mode: boolean;
+    registration_enabled: boolean;
+  };
+  onSave: (values: {
+    modules: Record<string, boolean>;
+    maintenance_mode: boolean;
+    registration_enabled: boolean;
+  }) => void;
+  isPending: boolean;
+}
 
-  const settings = data?.data;
-
-  if (settings && !initialized) {
-    setModules(settings.modules);
-    setMaintenanceMode(settings.maintenance_mode);
-    setRegistrationEnabled(settings.registration_enabled);
-    setInitialized(true);
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader><Skeleton className="h-4 w-32" /></CardHeader>
-            <CardContent><Skeleton className="h-20 w-full" /></CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+function SettingsForm({ settings, onSave, isPending }: SettingsFormProps) {
+  const [modules, setModules] = useState(settings.modules);
+  const [maintenanceMode, setMaintenanceMode] = useState(
+    settings.maintenance_mode,
+  );
+  const [registrationEnabled, setRegistrationEnabled] = useState(
+    settings.registration_enabled,
+  );
 
   const handleSave = () => {
-    update.mutate({
+    onSave({
       modules,
       maintenance_mode: maintenanceMode,
       registration_enabled: registrationEnabled,
@@ -62,9 +56,9 @@ export function PlatformSettings() {
             Configure global modules and platform behavior
           </p>
         </div>
-        <Button onClick={handleSave} disabled={update.isPending}>
+        <Button onClick={handleSave} disabled={isPending}>
           <Save className="mr-2 h-4 w-4" />
-          {update.isPending ? "Saving..." : "Save Changes"}
+          {isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
@@ -81,7 +75,9 @@ export function PlatformSettings() {
               <button
                 key={key}
                 type="button"
-                onClick={() => setModules((prev) => ({ ...prev, [key]: !prev[key] }))}
+                onClick={() =>
+                  setModules((prev) => ({ ...prev, [key]: !prev[key] }))
+                }
                 className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--border)] p-3 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <span className="text-sm font-medium">{label}</span>
@@ -141,5 +137,40 @@ export function PlatformSettings() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export function PlatformSettings() {
+  const { data, isLoading, update } = usePlatformSettings();
+  const settings = data?.data;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-4 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return null;
+  }
+
+  return (
+    <SettingsForm
+      key={JSON.stringify(settings)}
+      settings={settings}
+      onSave={(values) => update.mutate(values)}
+      isPending={update.isPending}
+    />
   );
 }
