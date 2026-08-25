@@ -19,11 +19,11 @@ trait ApiResponse
 {
     protected function success(mixed $data = null, string $message = 'OK', int $status = 200): JsonResponse
     {
-        $payload = ['message' => $message];
-
         if ($data instanceof ResourceCollection || $data instanceof LengthAwarePaginator) {
-            return response()->json($data, $status);
+            return $data->response()->setStatusCode($status);
         }
+
+        $payload = ['message' => $message];
 
         if ($data instanceof JsonResource) {
             $payload['data'] = $data->resolve();
