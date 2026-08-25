@@ -51,6 +51,34 @@ class SuperAdminController extends Controller
         $diskTotal = @disk_total_space('/') ?: 0;
         $diskFree = @disk_free_space('/') ?: 0;
 
+        $r2Metrics = [
+            'configured' => false,
+            'connected' => false,
+            'bucket' => null,
+            'object_count' => null,
+            'total_size_bytes' => null,
+            'total_size_human' => null,
+        ];
+
+        try {
+            $r2Disk = \Storage::disk('r2');
+            $r2Metrics['configured'] = true;
+            $r2Metrics['bucket'] = config('filesystems.disks.r2.bucket');
+
+            $objects = $r2Disk->allFiles('/');
+            $r2Metrics['connected'] = true;
+            $r2Metrics['object_count'] = count($objects);
+
+            $totalSize = 0;
+            foreach ($objects as $object) {
+                $totalSize += $r2Disk->size($object);
+            }
+            $r2Metrics['total_size_bytes'] = $totalSize;
+            $r2Metrics['total_size_human'] = $this->humanFileSize($totalSize);
+        } catch (\Throwable) {
+            $r2Metrics['connected'] = false;
+        }
+
         return $this->success([
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
@@ -71,6 +99,7 @@ class SuperAdminController extends Controller
                 'total_mb' => round($diskTotal / 1024 / 1024, 0),
                 'free_mb' => round($diskFree / 1024 / 1024, 0),
             ],
+            'r2' => $r2Metrics,
         ]);
     }
 
@@ -105,5 +134,16 @@ class SuperAdminController extends Controller
             'plan_distribution' => $planDistribution,
             'recent_subscriptions' => $recentSubscriptions,
         ]);
+    }
+
+    private function humanFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = 0;
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        return round($bytes, 1) . ' ' . $units[$i];
     }
 }

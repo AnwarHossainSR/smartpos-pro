@@ -80,6 +80,14 @@ export interface SystemHealth {
     total: string;
     free: string;
   };
+  r2: {
+    configured: boolean;
+    connected: boolean;
+    bucket: string | null;
+    object_count: number | null;
+    total_size_bytes: number | null;
+    total_size_human: string | null;
+  };
 }
 
 export interface PlatformSettings {
