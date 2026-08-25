@@ -129,7 +129,18 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted)" tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted)" tickLine={false} axisLine={false} width={56} />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted)"
+                  tickLine={false}
+                  axisLine={false}
+                  width={56}
+                  tickFormatter={(v: number) => {
+                    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
+                    if (v >= 1_000) return `${(v / 1_000).toFixed(v % 1_000 === 0 ? 0 : 1)}k`;
+                    return String(v);
+                  }}
+                />
                 <Tooltip
                   contentStyle={{
                     background: "var(--surface)",

@@ -4,6 +4,7 @@ import { NAV_GROUPS, type NavGroup } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { hasPermission, useAuth } from "@/stores/auth";
+import { useBusinessStore } from "@/stores/business";
 import { useSidebarStore } from "@/stores/sidebar";
 import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -238,6 +239,8 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
   const expandedGroup = useSidebarStore((s) => s.expandedGroup);
   const setExpandedGroup = useSidebarStore((s) => s.setExpandedGroup);
   const user = useAuth((s) => s.user);
+  const logoUrl = useBusinessStore((s) => s.logoUrl);
+  const businessName = useBusinessStore((s) => s.businessName);
   const defaultGroups = useVisibleNavGroups();
   const groups = navGroups ?? defaultGroups;
 
@@ -259,9 +262,22 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
           collapsed ? "flex-col justify-center gap-2 px-0 py-4" : "h-[72px] px-4",
         )}
       >
-        <Logo size={collapsed ? 30 : 34} />
-        {!collapsed && (
-          <span className="truncate text-lg font-semibold tracking-tight">SmartPOS</span>
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt={businessName ?? "Business logo"}
+            className={cn(
+              "shrink-0 rounded-xl object-contain",
+              collapsed ? "h-9 w-9" : "h-10 w-auto",
+            )}
+          />
+        ) : (
+          <>
+            <Logo size={collapsed ? 32 : 38} />
+            {!collapsed && (
+              <span className="truncate text-lg font-semibold tracking-tight">SmartPOS</span>
+            )}
+          </>
         )}
         <button
           onClick={toggle}

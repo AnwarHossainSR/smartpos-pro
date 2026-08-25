@@ -151,7 +151,7 @@ class FullDemoSeeder extends TransactionalSeeder
             'name' => 'Super Admin',
             'email' => 'superadmin@smartpos.com',
             'password' => bcrypt('password'),
-            'business_name' => 'SmartPOS Platform',
+            'business_name' => 'SmartPOS',
             'business_type' => 'retail',
             'currency' => 'BDT',
         ]);

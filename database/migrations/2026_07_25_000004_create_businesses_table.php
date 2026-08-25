@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('legal_name')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->text('address')->nullable();
             $table->string('tax_number')->nullable();
             $table->foreignUuid('tax_profile_id')->nullable()->constrained()->nullOnDelete();
             // Denormalised from the profile so a tenant can override the default
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->string('price_display')->default('exclusive');
             $table->string('currency', 3)->default('USD');
             $table->string('timezone')->default('UTC');
+            $table->string('date_format', 20)->nullable()->default('Y-m-d');
             // Media paths, not URLs — the bucket a path resolves against is an
             // environment concern, so the URL is built at read time by
             // App\Services\Media\MediaService rather than frozen into a row.
