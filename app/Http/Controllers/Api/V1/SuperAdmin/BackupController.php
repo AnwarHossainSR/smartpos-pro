@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api\V1\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BackupLogResource;
+use App\Jobs\CreateBackupJob;
 use App\Models\BackupLog;
 use App\Services\Backup\BackupService;
 use App\Support\Scopes\TenantScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BackupController extends Controller
 {
@@ -30,12 +32,20 @@ class BackupController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $log = $this->backupService->create($request->user());
+        $log = BackupLog::create([
+            'filename' => 'backup-'.now()->format('Y-m-d-His').'-'.Str::random(8).'.sql.gz',
+            'disk' => 'r2',
+            'path' => '',
+            'status' => 'pending',
+            'created_by' => $request->user()->id,
+        ]);
+
+        CreateBackupJob::dispatch($log);
 
         return $this->success(
-            new BackupLogResource($log),
-            'Created',
-            201,
+            new BackupLogResource($log->fresh()),
+            'Backup queued',
+            202,
         );
     }
 

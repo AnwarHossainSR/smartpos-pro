@@ -140,4 +140,14 @@ class BackupService
 
         return $log->delete();
     }
+
+    public function dumpDatabaseForJob(string $filename): string
+    {
+        return $this->dumpDatabase($filename);
+    }
+
+    public function uploadToR2ForJob(string $localPath, string $filename): string
+    {
+        return $this->uploadToR2($localPath, $filename);
+    }
 }
