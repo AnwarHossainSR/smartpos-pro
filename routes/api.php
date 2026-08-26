@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
+use App\Http\Controllers\Api\V1\ModuleController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -79,6 +80,9 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
+
+        // Modules — enabled modules for the current tenant
+        Route::get('modules', ModuleController::class);
 
         // Organization — branches
         Route::get('branches', [BranchController::class, 'index'])->middleware('permission:branches.view');
