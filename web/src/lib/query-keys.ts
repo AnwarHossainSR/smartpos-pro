@@ -151,6 +151,9 @@ export const queryKeys = {
   printerProfiles: resource("printer-profiles"),
   labels: resource("labels"),
 
+  /** Current tenant's enabled modules — synced to the modules Zustand store. */
+  modules: ["modules"] as const,
+
   /** Server-declared upload limits behind every `MediaField`. Config, not data. */
   mediaCollections: ["media-collections"] as const,
 

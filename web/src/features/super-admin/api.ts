@@ -181,3 +181,8 @@ export async function getTicketMetrics(tenantId?: string) {
   const qs = tenantId ? `?tenant_id=${tenantId}` : "";
   return api<{ data: TicketMetrics }>(`/super/support/tickets/metrics${qs}`);
 }
+
+export async function getEnabledModules(): Promise<Record<string, boolean>> {
+  const res = await api<{ data: Record<string, boolean> }>("/modules");
+  return res.data;
+}

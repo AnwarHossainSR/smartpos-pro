@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import { toast } from "@/components/ui/toast";
 import { queryKeys } from "@/lib/query-keys";
 import { useResourceList } from "@/lib/use-resource-list";
+import { useModulesStore } from "@/stores/modules";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addInternalNote,
+  getEnabledModules,
   getSupportTicket,
   getSupportTickets,
   getTicketMetrics,
@@ -292,4 +295,22 @@ export function useAddInternalNote() {
       toast("Internal note added", "success");
     },
   });
+}
+
+export function useModules() {
+  const setModules = useModulesStore((s) => s.setModules);
+
+  const query = useQuery({
+    queryKey: queryKeys.modules,
+    queryFn: getEnabledModules,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      setModules(query.data);
+    }
+  }, [query.data, setModules]);
+
+  return query;
 }
