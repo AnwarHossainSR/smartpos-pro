@@ -364,6 +364,8 @@ Route::prefix('v1')->group(function () {
         // Platform settings
         Route::get('settings', [SettingController::class, 'index']);
         Route::put('settings', [SettingController::class, 'update']);
+        Route::get('settings/tenant-overrides', [SettingController::class, 'tenantOverrides']);
+        Route::put('settings/tenant-overrides', [SettingController::class, 'updateTenantOverrides']);
 
         // Database backups
         Route::get('backups', [BackupController::class, 'index']);

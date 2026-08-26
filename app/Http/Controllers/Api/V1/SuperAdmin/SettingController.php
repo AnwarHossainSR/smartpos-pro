@@ -7,6 +7,7 @@ use App\Http\Requests\SuperAdmin\UpdatePlatformSettingsRequest;
 use App\Models\PlatformSetting;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
@@ -28,6 +29,28 @@ class SettingController extends Controller
         }
 
         return $this->success(PlatformSetting::all()->pluck('value', 'key'));
+    }
+
+    public function tenantOverrides(): JsonResponse
+    {
+        $overrides = PlatformSetting::get('tenant_overrides', []);
+
+        return $this->success($overrides);
+    }
+
+    public function updateTenantOverrides(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tenant_id' => 'required|string|exists:tenants,id',
+            'modules' => 'required|array',
+            'modules.*' => 'boolean',
+        ]);
+
+        $overrides = PlatformSetting::get('tenant_overrides', []);
+        $overrides[$request->tenant_id] = $request->modules;
+        PlatformSetting::set('tenant_overrides', $overrides);
+
+        return $this->success($overrides);
     }
 
     public function isModuleEnabled(string $module, ?string $tenantId = null): bool
