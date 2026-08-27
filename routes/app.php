@@ -214,9 +214,10 @@ Route::prefix('v1')->group(function () {
         Route::get('tax-profiles', [TaxProfileController::class, 'index'])->middleware('permission:taxes.view');
         Route::get('tax-profiles/{taxProfile}', [TaxProfileController::class, 'show'])->middleware('permission:taxes.view');
 
-        // Accounting is a platform module a tenant's plan can have switched off.
-        // The toggle used to be advisory — the SPA hid the nav and the endpoints
-        // stayed callable — so it is enforced here as well as rendered there.
+        // NOTE: every route in this group is also declared in api.php, which Laravel
+        // loads first — so this copy never answers a request and this gate never runs.
+        // The one that does is on the same block in api.php. Kept in step with it so
+        // that de-duplicating the two files cannot silently drop the module gate.
         Route::middleware('module:accounting')->group(function () {
             Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');
             Route::post('accounts', [AccountController::class, 'store'])->middleware('permission:accounting.create');
