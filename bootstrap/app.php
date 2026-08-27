@@ -18,12 +18,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\RateLimiter\Exception\ThrottleRequestsException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -133,13 +134,40 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            $retryAfter = $e->getResponse()->headers->get('Retry-After');
+            // `getHeaders()` is the HttpException API. `getResponse()` belongs to
+            // HttpResponseException, which this is not — calling it would throw and
+            // land right back in the catch-all as a 500.
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? null;
 
             return response()->json([
                 'message' => 'Too many requests. Please slow down.',
             ], 429)->withHeaders([
                 'Retry-After' => $retryAfter ?? 60,
             ]);
+        });
+
+        // `abort(403)`, `abort_if(..., 422, '...')` and friends throw an HttpException that
+        // nothing below caught, so they fell through to the catch-all and every one of
+        // them surfaced as a 500 — the status the caller asked for was thrown away.
+        //
+        // Registered after the NotFound/MethodNotAllowed/Throttle handlers above, which
+        // are also HttpExceptions: the first matching renderable wins, so the specific
+        // ones must stay ahead of this catch-all.
+        $exceptions->renderable(function (HttpExceptionInterface $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $status = $e->getStatusCode();
+
+            return response()->json([
+                'message' => $e->getMessage() ?: match (true) {
+                    $status === 403 => 'Forbidden.',
+                    $status === 404 => 'Not found.',
+                    $status >= 500 => 'Internal server error.',
+                    default => 'Request could not be processed.',
+                },
+            ], $status)->withHeaders($e->getHeaders());
         });
 
         $exceptions->renderable(function (InsufficientStockException $e, Request $request) {
