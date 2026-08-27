@@ -123,6 +123,13 @@ export const superAdminApi = {
         method: "PUT",
         body: { settings },
       }),
+    getTenantOverrides: () =>
+      api<{ data: Record<string, Record<string, boolean>> }>("/super/settings/tenant-overrides"),
+    updateTenantOverrides: (tenantId: string, modules: Record<string, boolean>) =>
+      api<{ data: Record<string, Record<string, boolean>> }>("/super/settings/tenant-overrides", {
+        method: "PUT",
+        body: { tenant_id: tenantId, modules },
+      }),
   },
   backups: {
     list: (params: ResourceListParams<Record<string, string>>) =>

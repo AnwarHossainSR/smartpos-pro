@@ -314,3 +314,22 @@ export function useModules() {
 
   return query;
 }
+
+export function useTenantModuleOverrides() {
+  return useQuery({
+    queryKey: [...queryKeys.superAdmin.all, "tenant-overrides"],
+    queryFn: superAdminApi.settings.getTenantOverrides,
+  });
+}
+
+export function useUpdateTenantModules() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tenantId, modules }: { tenantId: string; modules: Record<string, boolean> }) =>
+      superAdminApi.settings.updateTenantOverrides(tenantId, modules),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...queryKeys.superAdmin.all, "tenant-overrides"] });
+      toast("Tenant modules updated", "success");
+    },
+  });
+}

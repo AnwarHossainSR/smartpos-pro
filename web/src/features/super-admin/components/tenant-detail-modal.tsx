@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, ToggleLeft, ToggleRight } from "lucide-react";
 import { superAdminApi } from "../api";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "@/components/ui/toast";
@@ -8,13 +8,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { TenantDetail } from "../types";
 import { EditTenantDialog, type EditTenantFormData } from "./edit-tenant-dialog";
+import { useTenantModuleOverrides, useUpdateTenantModules } from "../hooks";
 
-const TABS = ["Overview", "Businesses", "Users", "Products", "Sales", "Subscription"] as const;
+const TABS = ["Overview", "Businesses", "Users", "Products", "Sales", "Subscription", "Modules"] as const;
 type Tab = (typeof TABS)[number];
 
 function fmt(amount: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
+
+const MODULE_LABELS: Record<string, string> = {
+  pos: "Point of Sale",
+  inventory: "Inventory Management",
+  accounting: "Accounting",
+  hr: "Human Resources",
+  crm: "Customer Relations",
+  reports: "Reports & Analytics",
+  multi_branch: "Multi-Branch",
+  ecommerce: "E-Commerce Integration",
+};
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -227,6 +239,54 @@ function Subscription({ d }: { d: TenantDetail }) {
   );
 }
 
+function Modules({ d }: { d: TenantDetail }) {
+  const { data: overridesData, isLoading } = useTenantModuleOverrides();
+  const updateTenantModules = useUpdateTenantModules();
+
+  const overrides = overridesData?.data ?? {};
+  const tenantModules = overrides[d.id] ?? {};
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-10 animate-pulse rounded bg-[var(--muted)]/10" />
+        ))}
+      </div>
+    );
+  }
+
+  if (Object.keys(tenantModules).length === 0) {
+    return <p className="text-sm text-[var(--muted)]">No module overrides for this tenant. Modules follow global platform settings.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[var(--muted)]">
+        Per-tenant module overrides for this tenant.
+      </p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {Object.entries(tenantModules).map(([key, enabled]) => (
+          <div
+            key={key}
+            className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--border)] p-3"
+          >
+            <span className="text-sm font-medium">{MODULE_LABELS[key] ?? key}</span>
+            {enabled ? (
+              <ToggleRight className="h-5 w-5 text-[var(--success)]" />
+            ) : (
+              <ToggleLeft className="h-5 w-5 text-[var(--muted)]" />
+            )}
+          </div>
+        ))}
+      </div>
+      {updateTenantModules.isPending && (
+        <p className="text-xs text-[var(--muted)]">Updating...</p>
+      )}
+    </div>
+  );
+}
+
 const TAB_COMPONENTS: Record<Tab, React.FC<{ d: TenantDetail; onEdit?: () => void }>> = {
   Overview,
   Businesses,
@@ -234,6 +294,7 @@ const TAB_COMPONENTS: Record<Tab, React.FC<{ d: TenantDetail; onEdit?: () => voi
   Products,
   Sales,
   Subscription,
+  Modules,
 };
 
 interface Props {
