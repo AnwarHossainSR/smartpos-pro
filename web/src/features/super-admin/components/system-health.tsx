@@ -142,6 +142,40 @@ export function SystemHealth() {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Cloudflare R2
+              {h?.r2?.configured ? (
+                <Badge tone={h.r2.connected ? "success" : "danger"}>
+                  {h.r2.connected ? "Connected" : "Error"}
+                </Badge>
+              ) : (
+                <Badge tone="warning">Not Configured</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {h?.r2?.configured ? (
+              <>
+                <p className="text-sm">
+                  Bucket: <span className="font-medium">{h.r2.bucket ?? "—"}</span>
+                </p>
+                <p className="text-sm">
+                  Objects: <span className="font-medium">{h.r2.object_count ?? "—"}</span>
+                </p>
+                <p className="text-sm">
+                  Total Size: <span className="font-medium">{h.r2.total_size_human ?? "—"}</span>
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">
+                Configure R2_* env variables to enable cloud backups
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

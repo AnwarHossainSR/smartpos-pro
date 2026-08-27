@@ -6,9 +6,10 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
+import { useModulesStore } from "@/stores/modules";
 import { useSyncBusinessCurrency } from "@/lib/hooks";
 import { queryKeys } from "@/lib/query-keys";
-import { navKeyForPathname, NAV_GROUPS, SUPER_ADMIN_NAV_GROUPS } from "@/lib/nav";
+import { navKeyForPathname } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { RequirePermission } from "@/components/require-permission";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -125,6 +126,11 @@ export function AppShell() {
 
   useSyncBusinessCurrency(!!token);
 
+  const fetchModules = useModulesStore((s) => s.fetchModules);
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
+
   if (!hydrated || !token) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -141,9 +147,6 @@ export function AppShell() {
     return <ProfileUnavailableScreen />;
   }
 
-  const showSuperAdminNav = user?.is_super_admin ?? false;
-  const navGroups = showSuperAdminNav ? SUPER_ADMIN_NAV_GROUPS : NAV_GROUPS;
-
   const navKey = navKeyForPathname(pathname);
   const title = navKey ? t(`nav.${navKey}`) : "SmartPOS";
 
@@ -155,7 +158,7 @@ export function AppShell() {
       <OnboardingWizard />
       <div className="flex h-dvh overflow-hidden">
         {authLoaded ? (
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} navGroups={navGroups} />
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         ) : (
           <aside className="hidden h-full w-64 shrink-0 bg-[var(--sidebar-bg)] md:block">
             <div className="flex h-full flex-col px-3 py-4">

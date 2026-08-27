@@ -151,6 +151,9 @@ export const queryKeys = {
   printerProfiles: resource("printer-profiles"),
   labels: resource("labels"),
 
+  /** Current tenant's enabled modules — synced to the modules Zustand store. */
+  modules: ["modules"] as const,
+
   /** Server-declared upload limits behind every `MediaField`. Config, not data. */
   mediaCollections: ["media-collections"] as const,
 
@@ -182,5 +185,7 @@ export const queryKeys = {
     audit: (params?: ListParams) => ["super-admin", "audit", params ?? {}] as const,
     health: () => ["super-admin", "health"] as const,
     plans: (params?: ListParams) => ["super-admin", "plans", params ?? {}] as const,
+    settings: () => ["super-admin", "settings"] as const,
+    backups: (params?: ListParams) => ["super-admin", "backups", params ?? {}] as const,
   },
 } as const;

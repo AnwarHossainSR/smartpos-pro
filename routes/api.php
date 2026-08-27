@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
+use App\Http\Controllers\Api\V1\ModuleController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PosController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -29,13 +30,15 @@ use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\StockTransferController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
-use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SuperAdmin\AuditLogController as SuperAuditLogController;
+use App\Http\Controllers\Api\V1\SuperAdmin\BackupController;
 use App\Http\Controllers\Api\V1\SuperAdmin\ImpersonationController as SuperImpersonationController;
 use App\Http\Controllers\Api\V1\SuperAdmin\PlanController as SuperPlanController;
+use App\Http\Controllers\Api\V1\SuperAdmin\SettingController;
 use App\Http\Controllers\Api\V1\SuperAdmin\SupportController as SuperSupportController;
 use App\Http\Controllers\Api\V1\SuperAdmin\TenantController as SuperTenantController;
 use App\Http\Controllers\Api\V1\SuperAdmin\UserController as SuperUserController;
+use App\Http\Controllers\Api\V1\SuperAdminController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
 use App\Http\Controllers\Api\V1\TaxProfileController;
@@ -77,6 +80,9 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
+
+        // Modules — enabled modules for the current tenant
+        Route::get('modules', ModuleController::class);
 
         // Organization — branches
         Route::get('branches', [BranchController::class, 'index'])->middleware('permission:branches.view');
@@ -354,5 +360,17 @@ Route::prefix('v1')->group(function () {
         Route::put('support/tickets/{id}/status', [SuperSupportController::class, 'updateStatus']);
         Route::post('support/tickets/{id}/reply', [SuperSupportController::class, 'addReply']);
         Route::post('support/tickets/{id}/notes', [SuperSupportController::class, 'addInternalNote']);
+
+        // Platform settings
+        Route::get('settings', [SettingController::class, 'index']);
+        Route::put('settings', [SettingController::class, 'update']);
+        Route::get('settings/tenant-overrides', [SettingController::class, 'tenantOverrides']);
+        Route::put('settings/tenant-overrides', [SettingController::class, 'updateTenantOverrides']);
+
+        // Database backups
+        Route::get('backups', [BackupController::class, 'index']);
+        Route::post('backups', [BackupController::class, 'store']);
+        Route::get('backups/{backup}/download', [BackupController::class, 'download']);
+        Route::delete('backups/{backup}', [BackupController::class, 'destroy']);
     });
 });

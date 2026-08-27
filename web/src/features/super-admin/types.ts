@@ -80,4 +80,33 @@ export interface SystemHealth {
     total: string;
     free: string;
   };
+  r2: {
+    configured: boolean;
+    connected: boolean;
+    bucket: string | null;
+    object_count: number | null;
+    total_size_bytes: number | null;
+    total_size_human: string | null;
+  };
+}
+
+export interface PlatformSettings {
+  modules: Record<string, boolean>;
+  tenant_overrides: Record<string, Record<string, boolean>>;
+  maintenance_mode: boolean;
+  registration_enabled: boolean;
+  max_tenants: number | null;
+}
+
+export interface BackupLog {
+  id: string;
+  filename: string;
+  disk: string;
+  size_bytes: number;
+  size_human: string;
+  status: "pending" | "completed" | "failed";
+  error: string | null;
+  created_by: { id: string; name: string; email: string } | null;
+  completed_at: string | null;
+  created_at: string;
 }

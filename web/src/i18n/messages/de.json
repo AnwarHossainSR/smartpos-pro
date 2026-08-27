@@ -48,7 +48,9 @@
     "security": "Sicherheit",
     "tables": "Tische",
     "taxSettings": "Steuereinstellungen",
-    "taxReport": "Steuerbericht"
+    "taxReport": "Steuerbericht",
+    "platformSettings": "Plattformeinstellungen",
+    "databaseBackups": "Datenbank-Backups"
   },
   "sidebar": {
     "collapse": "Seitenleiste einklappen",

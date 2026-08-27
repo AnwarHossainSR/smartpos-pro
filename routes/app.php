@@ -161,9 +161,9 @@ Route::prefix('v1')->group(function () {
         Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment'])->middleware(['permission:sales.update', 'idempotency']);
         Route::post('sales/{sale}/email-status-link', [SaleController::class, 'emailStatusLink'])->middleware(['permission:sales.view', 'throttle:reports']);
         Route::post('sales/{sale}/resume', [SaleController::class, 'resume'])->middleware(['permission:pos.create', 'idempotency']);
-            Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
+        Route::post('sales/{sale}/void', [SaleController::class, 'void'])->middleware('permission:sales.delete');
 
-            Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
+        Route::post('sales/{sale}/deliveries', [DeliveryController::class, 'assign'])->middleware('permission:deliveries.create');
         Route::get('deliveries', [DeliveryController::class, 'index'])->middleware('permission:deliveries.view');
         Route::get('deliveries/{delivery}', [DeliveryController::class, 'show'])->middleware('permission:deliveries.view');
         Route::put('deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus'])->middleware('permission:deliveries.update');

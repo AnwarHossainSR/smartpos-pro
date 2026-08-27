@@ -1,10 +1,11 @@
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/context";
-import { NAV_GROUPS, type NavGroup } from "@/lib/nav";
+import { NAV_GROUPS, SUPER_ADMIN_NAV_GROUPS, type NavGroup } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { hasPermission, useAuth } from "@/stores/auth";
 import { useBusinessStore } from "@/stores/business";
+import { useModulesStore } from "@/stores/modules";
 import { useSidebarStore } from "@/stores/sidebar";
 import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -18,24 +19,29 @@ import { useEffect, useMemo } from "react";
  */
 function useVisibleNavGroups(): NavGroup[] {
   const user = useAuth((s) => s.user);
+  const modules = useModulesStore((s) => s.modules);
+  const loaded = useModulesStore((s) => s.loaded);
 
-  return useMemo(
-    () =>
-      NAV_GROUPS.map((group) => ({
-        ...group,
-        items: group.items.filter((item) => {
-          const required = permissionsForPathname(item.href);
-          return required.length === 0 || required.some((slug) => hasPermission(user, slug));
-        }),
-      })).filter((group) => group.items.length > 0),
-    [user],
-  );
+  return useMemo(() => {
+    if (user?.is_super_admin) return SUPER_ADMIN_NAV_GROUPS;
+
+    // Show all items until modules have loaded
+    if (!loaded) return NAV_GROUPS;
+
+    return NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (item.module && !modules[item.module]) return false;
+        const required = permissionsForPathname(item.href);
+        return required.length === 0 || required.some((slug) => hasPermission(user, slug));
+      }),
+    })).filter((group) => group.items.length > 0);
+  }, [user, modules, loaded]);
 }
 
 interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
-  navGroups?: NavGroup[];
 }
 
 const ACTIVE_TINT = "color-mix(in oklab, var(--sidebar-active) 16%, transparent)";
@@ -232,7 +238,7 @@ function SidebarGroup({
   );
 }
 
-function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => void; collapsed: boolean; navGroups?: NavGroup[] }) {
+function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapsed: boolean }) {
   const { pathname } = useLocation();
   const t = useTranslation();
   const toggle = useSidebarStore((s) => s.toggle);
@@ -241,8 +247,7 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
   const user = useAuth((s) => s.user);
   const logoUrl = useBusinessStore((s) => s.logoUrl);
   const businessName = useBusinessStore((s) => s.businessName);
-  const defaultGroups = useVisibleNavGroups();
-  const groups = navGroups ?? defaultGroups;
+  const groups = useVisibleNavGroups();
 
   const collapseLabel = t(collapsed ? "sidebar.expand" : "sidebar.collapse");
 
@@ -372,7 +377,7 @@ function SidebarContent({ onClose, collapsed, navGroups }: { onClose?: () => voi
   );
 }
 
-export function Sidebar({ open, onClose, navGroups }: SidebarProps) {
+export function Sidebar({ open, onClose }: SidebarProps) {
   const collapsed = useSidebarStore((s) => s.collapsed);
 
   return (
@@ -383,14 +388,14 @@ export function Sidebar({ open, onClose, navGroups }: SidebarProps) {
           collapsed ? "w-[76px]" : "w-64",
         )}
       >
-        <SidebarContent collapsed={collapsed} navGroups={navGroups} />
+        <SidebarContent collapsed={collapsed} />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={onClose} />
           <aside className="relative h-full w-72 bg-[var(--sidebar-bg)] shadow-2xl">
-            <SidebarContent onClose={onClose} collapsed={false} navGroups={navGroups} />
+            <SidebarContent onClose={onClose} collapsed={false} />
           </aside>
         </div>
       )}

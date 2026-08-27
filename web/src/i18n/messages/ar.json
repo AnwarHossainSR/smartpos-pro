@@ -48,7 +48,9 @@
     "security": "الأمان",
     "tables": "الطاولات",
     "taxSettings": "إعدادات الضرائب",
-    "taxReport": "تقرير الضرائب"
+    "taxReport": "تقرير الضرائب",
+    "platformSettings": "إعدادات المنصة",
+    "databaseBackups": "نسخ احتياطي لقاعدة البيانات"
   },
   "sidebar": {
     "collapse": "طي الشريط الجانبي",

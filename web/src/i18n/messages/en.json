@@ -56,7 +56,9 @@
     "auditLogs": "Audit Logs",
     "supportTickets": "Support Tickets",
     "health": "Health",
-    "superAdminDashboard": "Platform Dashboard"
+    "superAdminDashboard": "Platform Dashboard",
+    "platformSettings": "Platform Settings",
+    "databaseBackups": "Database Backups"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",

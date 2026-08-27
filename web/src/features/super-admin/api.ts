@@ -9,6 +9,8 @@ import type {
   AuditLog,
   SystemHealth,
   SuperAdminPlan,
+  PlatformSettings,
+  BackupLog,
   SupportTicket,
   TicketMetrics,
 } from "./types";
@@ -75,7 +77,7 @@ export const superAdminApi = {
       api<{ message: string }>(`/super/users/${id}/force-logout`, { method: "POST" }),
   },
   audit: {
-    list: (params: ResourceListParams<{ action: string }>) =>
+    list: (params: ResourceListParams<{ action: string; tenant_id: string; user_id: string; from: string; to: string }>) =>
       api<Paginated<AuditLog>>(`/super/audit-logs?${buildListQuery(params)}`),
   },
   health: {
@@ -112,6 +114,34 @@ export const superAdminApi = {
       api<{ data: SuperAdminPlan }>(`/super/plans/${id}`, { method: "PUT", body: data }),
     delete: (id: string) =>
       api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
+  },
+  settings: {
+    get: () =>
+      api<{ data: PlatformSettings }>("/super/settings"),
+    update: (settings: Partial<PlatformSettings>) =>
+      api<{ data: PlatformSettings }>("/super/settings", {
+        method: "PUT",
+        body: { settings },
+      }),
+    getTenantOverrides: () =>
+      api<{ data: Record<string, Record<string, boolean>> }>("/super/settings/tenant-overrides"),
+    updateTenantOverrides: (tenantId: string, modules: Record<string, boolean>) =>
+      api<{ data: Record<string, Record<string, boolean>> }>("/super/settings/tenant-overrides", {
+        method: "PUT",
+        body: { tenant_id: tenantId, modules },
+      }),
+  },
+  backups: {
+    list: (params: ResourceListParams<Record<string, string>>) =>
+      api<Paginated<BackupLog>>(`/super/backups?${buildListQuery(params)}`),
+    create: () =>
+      api<{ data: BackupLog }>("/super/backups", { method: "POST" }),
+    download: (id: string) =>
+      api<{ data: { url: string; filename: string; expires_at: string } }>(
+        `/super/backups/${id}/download`,
+      ),
+    remove: (id: string) =>
+      api<void>(`/super/backups/${id}`, { method: "DELETE" }),
   },
 };
 
@@ -157,4 +187,9 @@ export async function addInternalNote(id: string, message: string) {
 export async function getTicketMetrics(tenantId?: string) {
   const qs = tenantId ? `?tenant_id=${tenantId}` : "";
   return api<{ data: TicketMetrics }>(`/super/support/tickets/metrics${qs}`);
+}
+
+export async function getEnabledModules(): Promise<Record<string, boolean>> {
+  const res = await api<{ data: Record<string, boolean> }>("/modules");
+  return res.data;
 }

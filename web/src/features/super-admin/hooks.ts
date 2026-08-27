@@ -1,17 +1,20 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "@/components/ui/toast";
-import { useResourceList } from "@/lib/use-resource-list";
 import { queryKeys } from "@/lib/query-keys";
+import { useResourceList } from "@/lib/use-resource-list";
+import { useModulesStore } from "@/stores/modules";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  superAdminApi,
-  getSupportTickets,
-  getSupportTicket,
-  updateTicketStatus,
-  replyToTicket,
   addInternalNote,
+  getEnabledModules,
+  getSupportTicket,
+  getSupportTickets,
   getTicketMetrics,
+  replyToTicket,
+  superAdminApi,
+  updateTicketStatus,
 } from "./api";
-import type { TicketMetrics } from "./types";
+import type { AuditLog, TicketMetrics } from "./types";
 
 export function useTenants() {
   return useResourceList({
@@ -107,11 +110,11 @@ export function useUserMutations() {
 }
 
 export function useAuditLogs() {
-  return useResourceList({
+  return useResourceList<AuditLog, { action: string; tenant_id: string; user_id: string; from: string; to: string }>({
     queryKey: queryKeys.superAdmin.audit(),
     queryFn: superAdminApi.audit.list,
     defaultSort: "-created_at",
-    filterKeys: ["action"] as const,
+    filterKeys: ["action", "tenant_id", "user_id", "from", "to"] as const,
   });
 }
 
@@ -127,6 +130,56 @@ export function useImpersonationMutations() {
   });
 
   return { revoke };
+}
+
+export function useBackups() {
+  const list = useResourceList({
+    queryKey: queryKeys.superAdmin.backups(),
+    queryFn: superAdminApi.backups.list,
+    defaultSort: "-created_at",
+  });
+
+  // Poll every 3s when there are pending backups
+  const hasPending = list.data?.some((b) => b.status === "pending") ?? false;
+
+  useQuery({
+    queryKey: [...queryKeys.superAdmin.backups(), "poll"],
+    queryFn: async () => {
+      await list.refetch();
+      return null;
+    },
+    enabled: hasPending,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  return list;
+}
+
+export function useBackupMutations() {
+  const qc = useQueryClient();
+
+  const create = useMutation({
+    mutationFn: superAdminApi.backups.create,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.backups() });
+      toast("Backup started", "success");
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: superAdminApi.backups.remove,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.backups() });
+      toast("Backup deleted", "success");
+    },
+  });
+
+  const download = useMutation({
+    mutationFn: superAdminApi.backups.download,
+  });
+
+  return { create, remove, download };
 }
 
 export function usePlans() {
@@ -166,6 +219,25 @@ export function usePlanMutations() {
   });
 
   return { create, update, remove };
+}
+
+export function usePlatformSettings() {
+  const qc = useQueryClient();
+
+  const query = useQuery({
+    queryKey: queryKeys.superAdmin.settings(),
+    queryFn: superAdminApi.settings.get,
+  });
+
+  const update = useMutation({
+    mutationFn: superAdminApi.settings.update,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.superAdmin.settings() });
+      toast("Settings updated", "success");
+    },
+  });
+
+  return { ...query, update };
 }
 
 // Support Ticket hooks
@@ -221,6 +293,43 @@ export function useAddInternalNote() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "support-tickets"] });
       toast("Internal note added", "success");
+    },
+  });
+}
+
+export function useModules() {
+  const setModules = useModulesStore((s) => s.setModules);
+
+  const query = useQuery({
+    queryKey: queryKeys.modules,
+    queryFn: getEnabledModules,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      setModules(query.data);
+    }
+  }, [query.data, setModules]);
+
+  return query;
+}
+
+export function useTenantModuleOverrides() {
+  return useQuery({
+    queryKey: [...queryKeys.superAdmin.all, "tenant-overrides"],
+    queryFn: superAdminApi.settings.getTenantOverrides,
+  });
+}
+
+export function useUpdateTenantModules() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tenantId, modules }: { tenantId: string; modules: Record<string, boolean> }) =>
+      superAdminApi.settings.updateTenantOverrides(tenantId, modules),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...queryKeys.superAdmin.all, "tenant-overrides"] });
+      toast("Tenant modules updated", "success");
     },
   });
 }
