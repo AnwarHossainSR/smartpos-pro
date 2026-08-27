@@ -18,6 +18,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -203,6 +204,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return $e->render();
+        });
+
+        // `abort($response)` — how CheckPermission and EnsureTenant return their 403s —
+        // throws an HttpResponseException carrying the response to send. Laravel unwraps
+        // that itself, but only *after* the renderable callbacks, and the catch-all below
+        // matched it first and replaced it with a 500. So every unauthorised request to a
+        // permission-guarded route answered "Internal server error" instead of "Forbidden",
+        // and the tenant-suspension middleware did the same.
+        $exceptions->renderable(function (HttpResponseException $e) {
+            return $e->getResponse();
         });
 
         $exceptions->renderable(function (Throwable $e, Request $request) {
