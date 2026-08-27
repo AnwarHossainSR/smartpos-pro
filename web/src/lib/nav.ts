@@ -41,6 +41,8 @@ export interface NavItem {
   /** i18n key under the `nav` namespace, e.g. "dashboard" -> t("nav.dashboard"). */
   key: string;
   icon: React.ElementType;
+  /** Module key — when set the item is only visible if the module is enabled. */
+  module?: string;
 }
 
 export interface NavGroup {
@@ -63,9 +65,9 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "sales",
     groupIcon: Tag,
     items: [
-      { href: "/pos", key: "pos", icon: ShoppingCart },
-      { href: "/sales", key: "sales", icon: Receipt },
-      { href: "/cash-register", key: "cashRegister", icon: CreditCard },
+      { href: "/pos", key: "pos", icon: ShoppingCart, module: "pos" },
+      { href: "/sales", key: "sales", icon: Receipt, module: "pos" },
+      { href: "/cash-register", key: "cashRegister", icon: CreditCard, module: "pos" },
     ],
   },
   {
@@ -73,20 +75,20 @@ export const NAV_GROUPS: NavGroup[] = [
     groupIcon: Package,
     items: [
       // Listed before /products so navKeyForPathname() titles the labels page correctly.
-      { href: "/products/labels", key: "labels", icon: Barcode },
-      { href: "/products", key: "products", icon: Package },
-      { href: "/inventory", key: "inventory", icon: Boxes },
-      { href: "/stocktakes", key: "stocktakes", icon: ClipboardList },
-      { href: "/catalog", key: "catalogSetup", icon: Layers },
+      { href: "/products/labels", key: "labels", icon: Barcode, module: "inventory" },
+      { href: "/products", key: "products", icon: Package, module: "inventory" },
+      { href: "/inventory", key: "inventory", icon: Boxes, module: "inventory" },
+      { href: "/stocktakes", key: "stocktakes", icon: ClipboardList, module: "inventory" },
+      { href: "/catalog", key: "catalogSetup", icon: Layers, module: "inventory" },
     ],
   },
   {
     key: "purchasing",
     groupIcon: TruckIcon,
     items: [
-      { href: "/purchases", key: "purchases", icon: Truck },
-      { href: "/suppliers", key: "suppliers", icon: Truck },
-      { href: "/reorder-suggestions", key: "reorderSuggestions", icon: AlertTriangle },
+      { href: "/purchases", key: "purchases", icon: Truck, module: "inventory" },
+      { href: "/suppliers", key: "suppliers", icon: Truck, module: "inventory" },
+      { href: "/reorder-suggestions", key: "reorderSuggestions", icon: AlertTriangle, module: "inventory" },
     ],
   },
   {
@@ -101,8 +103,8 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "finance",
     groupIcon: Landmark,
     items: [
-      { href: "/expenses", key: "expenses", icon: Wallet },
-      { href: "/accounting", key: "accounting", icon: BookOpen },
+      { href: "/expenses", key: "expenses", icon: Wallet, module: "accounting" },
+      { href: "/accounting", key: "accounting", icon: BookOpen, module: "accounting" },
     ],
   },
   {
@@ -111,9 +113,9 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       // More specific routes are listed before their parent so navKeyForPathname()
       // (a first-match .find()) resolves the page title correctly.
-      { href: "/reports/tax", key: "taxReport", icon: Percent },
-      { href: "/reports", key: "reports", icon: BarChart3 },
-      { href: "/loyalty", key: "loyalty", icon: Gift },
+      { href: "/reports/tax", key: "taxReport", icon: Percent, module: "reports" },
+      { href: "/reports", key: "reports", icon: BarChart3, module: "reports" },
+      { href: "/loyalty", key: "loyalty", icon: Gift, module: "loyalty" },
     ],
   },
   {
