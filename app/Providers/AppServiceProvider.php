@@ -11,6 +11,7 @@ use App\Observers\BusinessObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductVariantObserver;
 use App\Observers\TaxProfileObserver;
+use App\Services\Audit\AuditLogService;
 use App\Support\Telemetry\Telemetry;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -37,6 +38,11 @@ class AppServiceProvider extends ServiceProvider
             config('posthog.host'),
             (bool) config('posthog.enabled'),
         ));
+
+        // Scoped, not transient: AuditLogService memoises the current impersonation
+        // for the life of the request, and a fresh instance per injection would look
+        // it up again on every audit write.
+        $this->app->scoped(AuditLogService::class);
 
         $this->app->register(WebhookServiceProvider::class);
     }

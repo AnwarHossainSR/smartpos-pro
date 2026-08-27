@@ -3,6 +3,7 @@
 namespace App\Services\Audit;
 
 use App\Models\AuditLog;
+use App\Models\Impersonation;
 use App\Models\User;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,13 @@ use Illuminate\Support\Facades\Request as RequestFacade;
  */
 class AuditLogService
 {
+    /**
+     * Memoised per request: `impersonatedBy()` is consulted on every single audit
+     * write, and the answer cannot change within one request. `false` is the
+     * "not looked up yet" marker, since `null` is a legitimate answer.
+     */
+    private string|null|false $impersonatorId = false;
+
     public function __construct(protected TenantContext $context) {}
 
     /**
@@ -35,6 +43,7 @@ class AuditLogService
         return AuditLog::create([
             'tenant_id' => $tenantId ?? $this->context->id(),
             'user_id' => $actor?->id,
+            'impersonated_by' => $this->impersonatedBy(),
             'action' => $action,
             'auditable_type' => $auditable ? $auditable->getMorphClass() : null,
             'auditable_id' => $auditable?->getKey(),
@@ -43,5 +52,30 @@ class AuditLogService
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
+    }
+
+    /**
+     * The super admin behind the current request, if this is an impersonated session.
+     *
+     * An impersonation token belongs to the tenant *owner* — that is what makes the
+     * session work — so `user_id` alone records the customer as the author of changes
+     * support made on their behalf. This is the column that tells them apart.
+     */
+    private function impersonatedBy(): ?string
+    {
+        if ($this->impersonatorId !== false) {
+            return $this->impersonatorId;
+        }
+
+        $tokenId = RequestFacade::instance()->user()?->currentAccessToken()?->id;
+
+        if (! $tokenId) {
+            return $this->impersonatorId = null;
+        }
+
+        return $this->impersonatorId = Impersonation::query()
+            ->where('personal_access_token_id', $tokenId)
+            ->whereNull('ended_at')
+            ->value('super_admin_id');
     }
 }

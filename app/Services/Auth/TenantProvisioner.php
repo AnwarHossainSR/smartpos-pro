@@ -25,15 +25,27 @@ class TenantProvisioner
     public function __construct(protected TenantContext $context) {}
 
     /**
-     * @param  array{name:string, email:string, password:string, business_name:string, business_type?:string, currency?:string}  $data
+     * Note for callers: this binds the new tenant into `TenantContext` and deliberately
+     * leaves it bound, because self-serve registration logs the owner straight in
+     * afterwards and that read needs the tenant. Anything calling this on behalf of
+     * *someone else* — a super admin creating a tenant — must wrap the call in
+     * `TenantContext::runAs()` so the rest of its own request isn't left scoped to a
+     * tenant it doesn't belong to.
+     *
+     * `tenant_name`, `slug` and `plan` are optional overrides for that admin path;
+     * self-serve registration derives all three from the business name.
+     *
+     * @param  array{name:string, email:string, password:string, business_name:string, business_type?:string, currency?:string, tenant_name?:string, slug?:string, plan?:string}  $data
      */
     public function register(array $data): User
     {
         return DB::transaction(function () use ($data) {
+            $tenantName = $data['tenant_name'] ?? $data['business_name'];
+
             $tenant = Tenant::create([
-                'name' => $data['business_name'],
-                'slug' => $this->uniqueSlug($data['business_name']),
-                'plan' => 'free',
+                'name' => $tenantName,
+                'slug' => $this->uniqueSlug($data['slug'] ?? $tenantName),
+                'plan' => $data['plan'] ?? 'free',
                 'status' => 'active',
                 'trial_ends_at' => null,
             ]);

@@ -162,12 +162,6 @@ export function SystemHealth() {
                 <p className="text-sm">
                   Bucket: <span className="font-medium">{h.r2.bucket ?? "—"}</span>
                 </p>
-                <p className="text-sm">
-                  Objects: <span className="font-medium">{h.r2.object_count ?? "—"}</span>
-                </p>
-                <p className="text-sm">
-                  Total Size: <span className="font-medium">{h.r2.total_size_human ?? "—"}</span>
-                </p>
               </>
             ) : (
               <p className="text-sm text-[var(--muted)]">

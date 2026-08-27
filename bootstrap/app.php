@@ -3,6 +3,8 @@
 use App\Exceptions\DomainException;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureTenant;
 use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\Idempotency;
@@ -30,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/api.php',
             __DIR__.'/../routes/auth.php',
             __DIR__.'/../routes/app.php',
+            __DIR__.'/../routes/portal.php',
         ],
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
@@ -41,6 +44,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'ensure.tenant' => EnsureTenant::class,
+            'ensure.active' => EnsureActiveUser::class,
+            'module' => EnsureModuleEnabled::class,
             'permission' => CheckPermission::class,
             'idempotency' => Idempotency::class,
             'super_admin' => SuperAdmin::class,
@@ -51,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [SecurityHeaders::class]);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveTenant::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureTenant::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureActiveUser::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

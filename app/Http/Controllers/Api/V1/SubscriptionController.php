@@ -34,9 +34,10 @@ class SubscriptionController extends Controller
 
     public function current(): JsonResponse
     {
+        // `latest()` on created_at, never on the UUID primary key — see PlanLimitService.
         $subscription = Subscription::with('plan')
             ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::Trialing])
-            ->latest('id')
+            ->latest()
             ->first();
 
         return $this->success([

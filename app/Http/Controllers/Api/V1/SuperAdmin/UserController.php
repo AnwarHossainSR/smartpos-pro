@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1\SuperAdmin;
 
+use App\Domain\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +14,8 @@ use Illuminate\Http\Request;
 class UserController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(protected AuditLogService $audit) {}
 
     public function indexUsers(Request $request): JsonResponse
     {
@@ -60,15 +64,44 @@ class UserController extends Controller
             'status' => ['required', 'string', 'in:active,invited,suspended'],
         ]);
 
-        $user->update(['status' => $validated['status']]);
+        $before = $user->status?->value;
+        $status = UserStatus::from($validated['status']);
+
+        $user->update(['status' => $status]);
+
+        // Suspension has to end the sessions the user already holds, not just bar the
+        // next login — a 14-day token would otherwise outlive the suspension entirely.
+        // `EnsureActiveUser` is the fail-closed backstop for anything already in flight.
+        if ($status === UserStatus::Suspended) {
+            $user->tokens()->delete();
+        }
+
+        $this->audit->log(
+            'user.status_changed',
+            $user,
+            ['status' => $before],
+            ['status' => $status->value],
+            $request->user(),
+            $user->tenant_id,
+        );
 
         return $this->success(new UserResource($user->fresh()));
     }
 
-    public function forceLogoutUser(string $id): JsonResponse
+    public function forceLogoutUser(Request $request, string $id): JsonResponse
     {
         $user = User::withoutTenancy()->findOrFail($id);
+        $revoked = $user->tokens()->count();
         $user->tokens()->delete();
+
+        $this->audit->log(
+            'user.force_logout',
+            $user,
+            null,
+            ['tokens_revoked' => $revoked],
+            $request->user(),
+            $user->tenant_id,
+        );
 
         return $this->success(null, 'User logged out from all devices.');
     }

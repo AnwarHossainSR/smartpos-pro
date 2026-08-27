@@ -63,7 +63,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('signed')->name('verification.verify');
 
     // ---- Authenticated + tenant-scoped ----
-    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant'])->group(function () {
+    Route::middleware(['auth:sanctum', 'ensure.active', 'tenant', 'ensure.tenant'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('auth/email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:login');
@@ -317,17 +317,20 @@ Route::prefix('v1')->group(function () {
     // Called from *inside* an impersonated session (the tenant owner's own token, not a
     // super-admin token) — deliberately outside the super_admin-gated group below.
     Route::post('super/impersonation/stop', [SuperImpersonationController::class, 'stopImpersonation'])
-        ->middleware(['auth:sanctum']);
+        ->middleware(['auth:sanctum', 'ensure.active']);
 
     // T31-T33 — Super-admin (separate guard, no tenant scope)
-    Route::prefix('super')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
+    Route::prefix('super')->middleware(['auth:sanctum', 'ensure.active', 'super_admin'])->group(function () {
         Route::get('tenants', [SuperTenantController::class, 'index']);
+        Route::post('tenants', [SuperTenantController::class, 'store']);
         Route::get('tenants/{tenant}', [SuperTenantController::class, 'show']);
+        Route::put('tenants/{tenant}', [SuperTenantController::class, 'update']);
         Route::post('tenants/{tenant}/suspend', [SuperTenantController::class, 'suspend']);
         Route::post('tenants/{tenant}/activate', [SuperTenantController::class, 'activate']);
         Route::delete('tenants/{tenant}', [SuperTenantController::class, 'destroy']);
 
         // T32
+        Route::get('metrics', [SuperTenantController::class, 'metrics']);
         Route::get('metrics/revenue', [SuperAdminController::class, 'revenueMetrics']);
 
         // T33
@@ -352,6 +355,7 @@ Route::prefix('v1')->group(function () {
         Route::post('plans', [SuperPlanController::class, 'storePlan']);
         Route::put('plans/{id}', [SuperPlanController::class, 'updatePlan']);
         Route::delete('plans/{id}', [SuperPlanController::class, 'destroyPlan']);
+        Route::post('tenants/{tenantId}/assign-plan', [SuperPlanController::class, 'assignPlan']);
 
         // Super-admin support tickets
         Route::get('support/tickets', [SuperSupportController::class, 'index']);

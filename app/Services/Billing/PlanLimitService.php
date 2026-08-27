@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing;
 
+use App\Domain\Enums\SubscriptionStatus;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Subscription;
@@ -26,10 +27,20 @@ class PlanLimitService
 
     public function __construct(protected TenantContext $context) {}
 
-    /** @return array<string, int|null> */
+    /**
+     * @return array<string, int|null>
+     *
+     * Two things this must not do, both of which it used to:
+     *   - order by `id`. Subscriptions are UUID-keyed, so `latest('id')` sorts a random
+     *     string and "the newest subscription" was whichever UUID happened to sort high.
+     *   - ignore status. A cancelled subscription kept handing out its plan's limits.
+     */
     public function limits(): array
     {
-        $subscription = Subscription::with('plan')->latest('id')->first();
+        $subscription = Subscription::with('plan')
+            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::Trialing])
+            ->latest()
+            ->first();
 
         return $subscription?->plan?->limits ?? self::FREE_LIMITS;
     }

@@ -19,8 +19,10 @@ use App\Services\Audit\AuditLogService;
 use App\Services\Auth\TenantProvisioner;
 use App\Support\Query\QueryPipeline;
 use App\Support\Scopes\TenantScope;
+use App\Support\Tenancy\TenantContext;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -31,6 +33,7 @@ class TenantController extends Controller
 
     public function __construct(
         protected AuditLogService $audit,
+        protected TenantContext $context,
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -52,19 +55,29 @@ class TenantController extends Controller
     {
         $data = $request->validated();
 
-        $owner = app(TenantProvisioner::class)->register([
+        // The provisioner binds the new tenant into the context and leaves it bound for
+        // the self-serve path's benefit. Here the caller is a super admin who belongs to
+        // no tenant, so restore whatever they had once provisioning is done.
+        $owner = $this->context->runAs(null, fn () => app(TenantProvisioner::class)->register([
             'business_name' => $data['business_name'],
+            'tenant_name' => $data['tenant_name'] ?? null,
+            'slug' => $data['slug'] ?? null,
+            'plan' => $data['plan'] ?? null,
             'name' => $data['owner_name'],
             'email' => $data['owner_email'],
             'password' => $data['owner_password'],
             'currency' => $data['base_currency'] ?? 'USD',
-        ]);
+        ]));
 
         $tenant = $owner->tenant;
         $this->audit->log('tenant.created', $tenant, null, [
             'name' => $tenant->name,
             'slug' => $tenant->slug,
+            'plan' => $tenant->plan,
+            'owner_email' => $owner->email,
         ], $request->user(), $tenant->id);
+
+        $tenant->load(['businesses' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)]);
 
         return $this->created(new TenantResource($tenant));
     }
@@ -201,9 +214,20 @@ class TenantController extends Controller
         return $this->success($tenant, 'Tenant activated.');
     }
 
-    public function destroy(Tenant $tenant): JsonResponse
+    public function destroy(Request $request, Tenant $tenant): JsonResponse
     {
+        $userIds = User::withoutTenancy()->where('tenant_id', $tenant->id)->pluck('id');
+
+        // Deleting is at least as final as suspending, so it revokes at least as much.
+        // (`Tenant` soft-deletes, so nothing cascades — the rows stay until a purge.)
+        PersonalAccessToken::where('tokenable_type', User::class)
+            ->whereIn('tokenable_id', $userIds)
+            ->delete();
+
+        $snapshot = $tenant->only('id', 'name', 'slug', 'plan', 'status');
         $tenant->delete();
+
+        $this->audit->log('tenant.deleted', $tenant, $snapshot, null, $request->user(), $tenant->id);
 
         return $this->noContent();
     }
@@ -214,7 +238,7 @@ class TenantController extends Controller
             'total_tenants' => Tenant::count(),
             'total_users' => User::withoutTenancy()->count(),
             'tenants_by_status' => Tenant::query()
-                ->select('status', \DB::raw('count(*) as count'))
+                ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->pluck('count', 'status'),
         ]);

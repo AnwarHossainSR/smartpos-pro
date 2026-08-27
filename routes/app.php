@@ -56,7 +56,7 @@ use App\Http\Controllers\Api\V1\ZReportController;
 use App\Support\Media\BusinessMediaSlots;
 
 Route::prefix('v1')->group(function () {
-    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
+    Route::middleware(['auth:sanctum', 'ensure.active', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::post('me/avatar', [MediaController::class, 'uploadAvatar'])
             ->defaults('media_collection', 'user.avatar');
         Route::delete('me/avatar', [MediaController::class, 'destroyAvatar']);
@@ -214,24 +214,29 @@ Route::prefix('v1')->group(function () {
         Route::get('tax-profiles', [TaxProfileController::class, 'index'])->middleware('permission:taxes.view');
         Route::get('tax-profiles/{taxProfile}', [TaxProfileController::class, 'show'])->middleware('permission:taxes.view');
 
-        Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');
-        Route::post('accounts', [AccountController::class, 'store'])->middleware('permission:accounting.create');
-        Route::put('accounts/{account}', [AccountController::class, 'update'])->middleware('permission:accounting.update');
+        // Accounting is a platform module a tenant's plan can have switched off.
+        // The toggle used to be advisory — the SPA hid the nav and the endpoints
+        // stayed callable — so it is enforced here as well as rendered there.
+        Route::middleware('module:accounting')->group(function () {
+            Route::get('accounts', [AccountController::class, 'index'])->middleware('permission:accounting.view');
+            Route::post('accounts', [AccountController::class, 'store'])->middleware('permission:accounting.create');
+            Route::put('accounts/{account}', [AccountController::class, 'update'])->middleware('permission:accounting.update');
 
-        Route::get('journals', [JournalController::class, 'index'])->middleware('permission:accounting.view');
-        Route::get('journals/trial-balance', [JournalController::class, 'trialBalance'])->middleware('permission:accounting.view');
-        Route::get('journals/{journal}', [JournalController::class, 'show'])->middleware('permission:accounting.view');
-        Route::post('journals', [JournalController::class, 'store'])->middleware('permission:accounting.create');
-        Route::get('accounts/{account}/ledger', [JournalController::class, 'generalLedger'])->middleware('permission:accounting.view');
+            Route::get('journals', [JournalController::class, 'index'])->middleware('permission:accounting.view');
+            Route::get('journals/trial-balance', [JournalController::class, 'trialBalance'])->middleware('permission:accounting.view');
+            Route::get('journals/{journal}', [JournalController::class, 'show'])->middleware('permission:accounting.view');
+            Route::post('journals', [JournalController::class, 'store'])->middleware('permission:accounting.create');
+            Route::get('accounts/{account}/ledger', [JournalController::class, 'generalLedger'])->middleware('permission:accounting.view');
 
-        Route::get('cash-registers', [CashRegisterController::class, 'index'])->middleware('permission:accounting.view');
-        Route::post('cash-registers', [CashRegisterController::class, 'store'])->middleware('permission:accounting.create');
-        Route::post('cash-registers/{cashRegister}/open', [CashRegisterController::class, 'open'])->middleware('permission:accounting.create');
-        Route::get('cash-registers/{cashRegister}/current-session', [CashRegisterController::class, 'currentSession'])->middleware('permission:accounting.view');
-        Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
-        Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware(['permission:accounting.view', 'throttle:reports']);
-        Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
-        Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
+            Route::get('cash-registers', [CashRegisterController::class, 'index'])->middleware('permission:accounting.view');
+            Route::post('cash-registers', [CashRegisterController::class, 'store'])->middleware('permission:accounting.create');
+            Route::post('cash-registers/{cashRegister}/open', [CashRegisterController::class, 'open'])->middleware('permission:accounting.create');
+            Route::get('cash-registers/{cashRegister}/current-session', [CashRegisterController::class, 'currentSession'])->middleware('permission:accounting.view');
+            Route::get('cash-register-sessions/{session}', [CashRegisterController::class, 'show'])->middleware('permission:accounting.view');
+            Route::get('cash-register-sessions/{session}/slip', [CashRegisterController::class, 'slip'])->middleware(['permission:accounting.view', 'throttle:reports']);
+            Route::post('cash-register-sessions/{session}/movement', [CashRegisterController::class, 'movement'])->middleware('permission:accounting.create');
+            Route::post('cash-register-sessions/{session}/close', [CashRegisterController::class, 'close'])->middleware('permission:accounting.create');
+        });
 
         Route::get('users', [UserController::class, 'index'])->middleware('permission:users.view');
         Route::get('users/{user}', [UserController::class, 'show'])->middleware('permission:users.view');
