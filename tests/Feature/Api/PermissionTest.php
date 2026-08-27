@@ -77,6 +77,53 @@ class PermissionTest extends TestCase
         ));
     }
 
+    /**
+     * The sibling of the route-guard scan above, for the checks the scan cannot see.
+     *
+     * A slug consulted from code rather than from a route guard fails just as silently
+     * and is harder to spot: `hasPermission()` never throws for an unknown slug, it
+     * just answers false forever. `pos.approve` sat like that in five call sites —
+     * `ApprovalService`'s PIN lookup among them — so a supervisor PIN could never
+     * authorise anything and only the owner's implicit grant worked.
+     */
+    public function test_every_permission_checked_in_code_exists_in_the_catalogue(): void
+    {
+        $catalogue = array_column(PermissionCatalog::all(), 'slug');
+        $missing = [];
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(app_path(), \FilesystemIterator::SKIP_DOTS),
+        );
+
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            // Literal slugs only; anything assembled at runtime is out of reach here.
+            preg_match_all(
+                "/->(?:hasPermission|checkPermissionTo)\(\s*'([a-z0-9_.\-]+)'/",
+                file_get_contents($file->getPathname()),
+                $matches,
+            );
+
+            foreach ($matches[1] as $slug) {
+                if (! in_array($slug, $catalogue, true)) {
+                    $missing[$slug] = str_replace(base_path().'/', '', $file->getPathname());
+                }
+            }
+        }
+
+        $this->assertSame([], $missing, sprintf(
+            "Code checks permissions that PermissionCatalog does not define:\n  %s",
+            implode("\n  ", array_map(
+                fn ($file, $slug) => "{$slug}  ({$file})",
+                $missing,
+                array_keys($missing),
+            )),
+        ));
+    }
+
     public function test_a_role_granted_tables_view_passes_the_permission_middleware(): void
     {
         $owner = $this->createTenant();
