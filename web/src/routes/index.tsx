@@ -1,8 +1,9 @@
 import { RouteErrorBoundary } from "@/components/error-boundary";
 import { AppShell } from "@/components/layout/app-shell";
+import { RequireModule } from "@/components/require-module";
 import { RouteMeta } from "@/components/route-meta";
 import { loadPage, seo } from "@/routes/helpers";
-import { type RouteObject, Navigate } from "react-router";
+import { type RouteObject, Navigate, Outlet } from "react-router";
 
 export const routes: RouteObject[] = [
   {
@@ -85,8 +86,18 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "pos",
-                lazy: () => loadPage(() => import("@/app/(app)/pos/page")),
-                handle: seo("POS Terminal", "Ring up sales, take payments and print receipts."),
+                element: (
+                  <RequireModule module="pos">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/pos/page")),
+                    handle: seo("POS Terminal", "Ring up sales, take payments and print receipts."),
+                  },
+                ],
               },
               {
                 path: "customers",
@@ -95,76 +106,216 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "products",
-                lazy: () => loadPage(() => import("@/app/(app)/products/page")),
-                handle: seo("Products", "Manage your product catalog, pricing and barcodes."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/products/page")),
+                    handle: seo("Products", "Manage your product catalog, pricing and barcodes."),
+                  },
+                ],
               },
               {
                 path: "products/labels",
-                lazy: () => loadPage(() => import("@/app/(app)/products/labels/page")),
-                handle: seo("Product Labels", "Design and print barcode label sheets for your products."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/products/labels/page")),
+                    handle: seo("Product Labels", "Design and print barcode label sheets for your products."),
+                  },
+                ],
               },
               {
                 path: "purchases",
-                lazy: () => loadPage(() => import("@/app/(app)/purchases/page")),
-                handle: seo("Purchases", "Purchase orders, goods receipts and supplier bills."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/purchases/page")),
+                    handle: seo("Purchases", "Purchase orders, goods receipts and supplier bills."),
+                  },
+                ],
               },
               {
                 path: "sales",
-                lazy: () => loadPage(() => import("@/app/(app)/sales/page")),
-                handle: seo("Sales", "Browse sales history, receipts, refunds and returns."),
+                element: (
+                  <RequireModule module="pos">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/sales/page")),
+                    handle: seo("Sales", "Browse sales history, receipts, refunds and returns."),
+                  },
+                ],
               },
               {
                 path: "expenses",
-                lazy: () => loadPage(() => import("@/app/(app)/expenses/page")),
-                handle: seo("Expenses", "Record and categorise business expenses."),
+                element: (
+                  <RequireModule module="accounting">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/expenses/page")),
+                    handle: seo("Expenses", "Record and categorise business expenses."),
+                  },
+                ],
               },
               {
                 path: "accounting",
-                lazy: () => loadPage(() => import("@/app/(app)/accounting/page")),
-                handle: seo("Accounting", "Chart of accounts, journals and financial statements."),
+                element: (
+                  <RequireModule module="accounting">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/accounting/page")),
+                    handle: seo("Accounting", "Chart of accounts, journals and financial statements."),
+                  },
+                ],
               },
               {
                 path: "inventory",
-                lazy: () => loadPage(() => import("@/app/(app)/inventory/page")),
-                handle: seo("Inventory", "Stock levels, transfers and movement history by location."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/inventory/page")),
+                    handle: seo("Inventory", "Stock levels, transfers and movement history by location."),
+                  },
+                ],
               },
               {
                 path: "stocktakes",
-                lazy: () => loadPage(() => import("@/app/(app)/stocktakes/page")),
-                handle: seo("Stocktakes", "Count stock, review variances and post adjustments."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/stocktakes/page")),
+                    handle: seo("Stocktakes", "Count stock, review variances and post adjustments."),
+                  },
+                ],
               },
               {
                 path: "suppliers",
-                lazy: () => loadPage(() => import("@/app/(app)/suppliers/page")),
-                handle: seo("Suppliers", "Supplier directory, terms and outstanding payables."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/suppliers/page")),
+                    handle: seo("Suppliers", "Supplier directory, terms and outstanding payables."),
+                  },
+                ],
               },
               {
                 path: "catalog",
-                lazy: () => loadPage(() => import("@/app/(app)/catalog/page")),
-                handle: seo("Catalog Setup", "Categories, brands, units and product attributes."),
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/catalog/page")),
+                    handle: seo("Catalog Setup", "Categories, brands, units and product attributes."),
+                  },
+                ],
               },
               {
                 path: "reports",
-                lazy: () => loadPage(() => import("@/app/(app)/reports/page")),
-                handle: seo("Reports", "Sales, profit, inventory and cash-flow reporting."),
+                element: (
+                  <RequireModule module="reports">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/reports/page")),
+                    handle: seo("Reports", "Sales, profit, inventory and cash-flow reporting."),
+                  },
+                ],
               },
               {
                 path: "reports/tax",
-                lazy: () => loadPage(() => import("@/app/(app)/reports/tax/page")),
-                handle: seo("Tax Report", "Tax collected and paid, broken down by rate and period."),
+                element: (
+                  <RequireModule module="reports">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/reports/tax/page")),
+                    handle: seo("Tax Report", "Tax collected and paid, broken down by rate and period."),
+                  },
+                ],
               },
               {
                 path: "cash-register",
-                lazy: () => loadPage(() => import("@/app/(app)/cash-register/page")),
-                handle: seo(
-                  "Cash Register",
-                  "Open and close shifts, count the drawer and reconcile cash.",
+                element: (
+                  <RequireModule module="pos">
+                    <Outlet />
+                  </RequireModule>
                 ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/cash-register/page")),
+                    handle: seo(
+                      "Cash Register",
+                      "Open and close shifts, count the drawer and reconcile cash.",
+                    ),
+                  },
+                ],
               },
               {
                 path: "loyalty",
-                lazy: () => loadPage(() => import("@/app/(app)/loyalty/page")),
-                handle: seo("Loyalty", "Loyalty programme, points balances and rewards."),
+                element: (
+                  <RequireModule module="loyalty">
+                    <Outlet />
+                  </RequireModule>
+                ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/loyalty/page")),
+                    handle: seo("Loyalty", "Loyalty programme, points balances and rewards."),
+                  },
+                ],
               },
               {
                 path: "team",
@@ -238,11 +389,21 @@ export const routes: RouteObject[] = [
               },
               {
                 path: "reorder-suggestions",
-                lazy: () => loadPage(() => import("@/app/(app)/reorder-suggestions/page")),
-                handle: seo(
-                  "Reorder Suggestions",
-                  "Products running low, with suggested order quantities.",
+                element: (
+                  <RequireModule module="inventory">
+                    <Outlet />
+                  </RequireModule>
                 ),
+                children: [
+                  {
+                    index: true,
+                    lazy: () => loadPage(() => import("@/app/(app)/reorder-suggestions/page")),
+                    handle: seo(
+                      "Reorder Suggestions",
+                      "Products running low, with suggested order quantities.",
+                    ),
+                  },
+                ],
               },
               {
                 path: "super-admin",
