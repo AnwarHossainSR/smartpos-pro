@@ -20,7 +20,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['nullable', Password::min(8)->letters()->numbers()],
+            'password' => ['nullable', Password::min(12)->letters()->numbers()->mixedCase()->symbols()->uncompromised()],
             'phone' => ['nullable', 'string', 'max:50'],
             'branch_id' => ['nullable', Rule::exists('branches', 'id')->where('tenant_id', $tenantId)],
             'roles' => ['nullable', 'array'],

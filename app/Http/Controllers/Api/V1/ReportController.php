@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\InventoryBalance;
 use App\Models\Product;
+use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Supplier;
+use App\Models\SupplierPayment;
 use App\Services\Accounting\FinancialStatementService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -181,33 +183,39 @@ class ReportController extends Controller
     {
         [$from, $to] = $this->range($request);
 
-        $suppliers = Supplier::where('tenant_id', $request->user()->business_id)
+        $tenantId = $request->user()->business_id;
+
+        $suppliers = Supplier::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->get();
+
+        // Collapse the per-supplier N+1 (two queries per supplier) into two grouped
+        // aggregate queries. The global TenantScope still constrains these to the
+        // current tenant; the explicit tenant_id is belt-and-suspenders.
+        $purchaseSums = Purchase::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('supplier_id', $suppliers->modelKeys())
+            ->whereNotNull('due_amount')
+            ->where('due_amount', '>', 0)
+            ->whereBetween('purchased_at', [$from, $to])
+            ->selectRaw('supplier_id, SUM(due_amount) AS total')
+            ->groupBy('supplier_id')
+            ->pluck('total', 'supplier_id');
+
+        $paymentSums = SupplierPayment::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('supplier_id', $suppliers->modelKeys())
+            ->whereNotNull('paid_at')
+            ->whereBetween('paid_at', [$from, $to])
+            ->selectRaw('supplier_id, SUM(amount) AS total')
+            ->groupBy('supplier_id')
+            ->pluck('total', 'supplier_id');
 
         $aging = [];
 
         foreach ($suppliers as $supplier) {
-            $balance = 0;
-
-            $purchases = $supplier->purchases()
-                ->whereNotNull('due_amount')
-                ->where('due_amount', '>', 0)
-                ->whereBetween('purchased_at', [$from, $to])
-                ->get();
-
-            foreach ($purchases as $purchase) {
-                $balance += (float) $purchase->due_amount;
-            }
-
-            $payments = $supplier->payments()
-                ->whereNotNull('paid_at')
-                ->whereBetween('paid_at', [$from, $to])
-                ->get();
-
-            foreach ($payments as $payment) {
-                $balance -= (float) $payment->amount;
-            }
+            $balance = (float) ($purchaseSums[$supplier->id] ?? 0)
+                - (float) ($paymentSums[$supplier->id] ?? 0);
 
             $bucket = '90+';
             if ($balance >= 0 && $balance <= 30) {

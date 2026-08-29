@@ -73,7 +73,15 @@ class AppServiceProvider extends ServiceProvider
         // (the N+1 that only shows up under real data volume), assigning an attribute
         // that isn't fillable, and reading one the query never selected. Left off in
         // production so a missed eager-load degrades performance rather than 500ing.
-        Model::shouldBeStrict(! $this->app->isProduction());
+        Model::shouldBeStrict(! app()->isProduction());
+
+        // Defense-in-depth: never leak stack traces / env in production, even if a
+        // deploy accidentally ships APP_DEBUG=true. The env default in config/app.php
+        // is already false, but config values are evaluated lazily, so a stray
+        // APP_DEBUG=true in a production .env would otherwise re-enable detailed errors.
+        if (app()->isProduction()) {
+            config(['app.debug' => false]);
+        }
 
         // Global per-token (or per-IP for unauthenticated requests) limit for the whole API.
         RateLimiter::for('api', function (Request $request) {
@@ -99,6 +107,13 @@ class AppServiceProvider extends ServiceProvider
         // brute force needs — the service adds its own 5-miss lockout on top.
         RateLimiter::for('approval-pin', function (Request $request) {
             return Limit::perMinute(10)->by('approval-pin:'.($request->user()?->id ?: $request->ip()));
+        });
+
+        // Support-ticket creation: per-account ceiling so a compromised or abusive
+        // session can't flood the support queue. Reads/mutations stay scoped to the
+        // ticket owner in the controller, so this only throttles new-ticket volume.
+        RateLimiter::for('support', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
 
         // The reset-password flow is entirely frontend-driven (the SPA collects the new

@@ -54,6 +54,8 @@ use App\Http\Controllers\Api\V1\WarehouseController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\ZReportController;
 use App\Support\Media\BusinessMediaSlots;
+use Illuminate\Support\Facades\Route;
+
 
 Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'ensure.active', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
@@ -355,7 +357,7 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('support')->group(function () {
             Route::get('tickets', [SupportTicketController::class, 'index']);
-            Route::post('tickets', [SupportTicketController::class, 'store']);
+            Route::post('tickets', [SupportTicketController::class, 'store'])->middleware('throttle:support');
             Route::get('tickets/{id}', [SupportTicketController::class, 'show']);
             Route::get('tickets/{id}/replies', [SupportTicketController::class, 'replies']);
             Route::post('tickets/{id}/replies', [SupportTicketController::class, 'reply']);

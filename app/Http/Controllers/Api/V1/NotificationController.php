@@ -24,7 +24,7 @@ class NotificationController extends Controller
             ->paginate(20);
 
         return response()->json([
-            'data' => $notifications->map(fn ($n) => [
+            'data' => $notifications->getCollection()->map(fn ($n) => [
                 'id' => $n->id,
                 'type' => $n->type,
                 'title' => $n->title,
@@ -32,7 +32,7 @@ class NotificationController extends Controller
                 'data' => $n->data,
                 'read_at' => $n->read_at,
                 'created_at' => $n->created_at,
-            ]),
+            ])->all(),
             'meta' => ['current_page' => $notifications->currentPage(), 'last_page' => $notifications->lastPage(), 'total' => $notifications->total()],
         ]);
     }
@@ -44,6 +44,14 @@ class NotificationController extends Controller
 
     public function markRead(Request $request, AppNotification $notification): JsonResponse
     {
+        // The route-model binding is unscoped, so re-resolve through `scoped()`: a user
+        // may only mark their own notifications (or tenant-wide broadcasts) as read.
+        // Without this, POST /notifications/{any_id}/read was an IDOR that let any user
+        // toggle read-state on another user's notification.
+        $notification = $this->scoped($request)
+            ->whereKey($notification->id)
+            ->firstOrFail();
+
         $notification->update(['read_at' => now()]);
 
         return $this->success(['id' => $notification->id, 'read_at' => $notification->read_at]);

@@ -73,9 +73,13 @@ class DeliverWebhookJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
+            // Capture failures to product telemetry. This MUST stay inside the catch:
+            // on the success path $e is undefined, and passing null to
+            // Telemetry::captureException(Throwable) threw a TypeError that failed
+            // every successful delivery.
+            app(Telemetry::class)->captureException($e);
+
             throw $e;
         }
-
-        app(Telemetry::class)->captureException($e);
     }
 }
