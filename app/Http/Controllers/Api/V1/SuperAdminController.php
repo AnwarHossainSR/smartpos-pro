@@ -10,6 +10,8 @@ use App\Models\Tenant;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class SuperAdminController extends Controller
 {
@@ -36,11 +38,11 @@ class SuperAdminController extends Controller
     {
         $dbSize = 0;
         try {
-            $result = \DB::select('SELECT pg_database_size(current_database()) as size');
+            $result = DB::select('SELECT pg_database_size(current_database()) as size');
             $dbSize = $result[0]->size ?? 0;
         } catch (\Throwable) {
             try {
-                $path = \DB::getDatabasePath();
+                $path = DB::getDatabasePath();
                 $dbSize = file_exists($path) ? filesize($path) : 0;
             } catch (\Throwable) {
             }
@@ -49,8 +51,8 @@ class SuperAdminController extends Controller
         $pendingJobs = 0;
         $failedJobs = 0;
         try {
-            $pendingJobs = \DB::table('jobs')->count();
-            $failedJobs = \DB::table('failed_jobs')->count();
+            $pendingJobs = DB::table('jobs')->count();
+            $failedJobs = DB::table('failed_jobs')->count();
         } catch (\Throwable) {
         }
 
@@ -73,7 +75,7 @@ class SuperAdminController extends Controller
         ];
 
         try {
-            $r2Disk = \Storage::disk('r2');
+            $r2Disk = Storage::disk('r2');
             $r2Metrics['configured'] = true;
             $r2Metrics['bucket'] = config('filesystems.disks.r2.bucket');
 
@@ -90,7 +92,7 @@ class SuperAdminController extends Controller
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
             'database' => [
-                'connected' => \DB::getPdo() !== null,
+                'connected' => DB::getPdo() !== null,
                 // `size` (human) is what the health screen renders; `size_mb` stays for
                 // anything reading the raw number. It only ever had the latter, so the
                 // screen showed a dash where the database size should be.

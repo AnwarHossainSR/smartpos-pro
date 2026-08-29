@@ -23,8 +23,12 @@ class NotificationController extends Controller
             ->sortable(['id', 'created_at'], default: '-id')
             ->paginate(20);
 
+        $items = method_exists($notifications, 'getCollection')
+            ? $notifications->getCollection()
+            : $notifications->items();
+
         return response()->json([
-            'data' => $notifications->getCollection()->map(fn ($n) => [
+            'data' => collect($items)->map(fn ($n) => [
                 'id' => $n->id,
                 'type' => $n->type,
                 'title' => $n->title,
