@@ -14,7 +14,7 @@ class AuditLog extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'tenant_id', 'user_id', 'action', 'auditable_type', 'auditable_id',
+        'tenant_id', 'user_id', 'impersonated_by', 'action', 'auditable_type', 'auditable_id',
         'old_values', 'new_values', 'ip_address', 'user_agent',
     ];
 
@@ -26,5 +26,11 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Set only when the entry was written during a super-admin impersonation session. */
+    public function impersonator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'impersonated_by');
     }
 }

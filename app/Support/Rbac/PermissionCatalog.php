@@ -15,9 +15,17 @@ class PermissionCatalog
         'warehouses' => ['view', 'create', 'update', 'delete'],
         'products' => ['view', 'create', 'update', 'delete', 'export'],
         'inventory' => ['view', 'create', 'update', 'adjust', 'export', 'approve'],
-        'pos' => ['view', 'create', 'refund', 'discount', 'price_override'],
+        'stocktakes' => ['view', 'create', 'update'],
+        'reorder-suggestions' => ['view', 'create'],
+        // `pos.approve` backs the supervisor-PIN flow: ApprovalService only accepts a
+        // PIN from a user who also holds this, so it must exist as a grantable slug or
+        // the till can never escalate to anyone but the owner.
+        'pos' => ['view', 'create', 'refund', 'discount', 'price_override', 'approve'],
         'sales' => ['view', 'create', 'update', 'delete', 'export', 'refund'],
-        'purchases' => ['view', 'create', 'update', 'delete', 'approve', 'export'],
+        'deliveries' => ['view', 'create', 'update'],
+        // `edit` is deliberately distinct from `update`: `update` covers receive/cancel,
+        // `edit` amends an already-posted purchase and restates its stock ledger.
+        'purchases' => ['view', 'create', 'update', 'edit', 'delete', 'approve', 'export', 'return'],
         'customers' => ['view', 'create', 'update', 'delete', 'export'],
         'suppliers' => ['view', 'create', 'update', 'delete', 'export'],
         'expenses' => ['view', 'create', 'update', 'delete', 'approve'],
@@ -46,10 +54,12 @@ class PermissionCatalog
 
         foreach (self::MATRIX as $module => $actions) {
             foreach ($actions as $action) {
+                $label = self::label($action).' '.self::label($module);
+
                 $permissions[] = [
                     'slug' => "{$module}.{$action}",
-                    'name' => ucfirst($action).' '.ucfirst($module),
-                    'title' => ucfirst($action).' '.ucfirst($module),
+                    'name' => $label,
+                    'title' => $label,
                     'module' => $module,
                     'action' => $action,
                 ];
@@ -57,6 +67,12 @@ class PermissionCatalog
         }
 
         return $permissions;
+    }
+
+    /** `price_override` => `Price Override`, `reorder-suggestions` => `Reorder Suggestions`. */
+    private static function label(string $segment): string
+    {
+        return ucwords(str_replace(['_', '-'], ' ', $segment));
     }
 
     /**
@@ -73,7 +89,11 @@ class PermissionCatalog
                 'dashboard.view', 'branches.view', 'warehouses.view',
                 'products.view', 'inventory.view', 'inventory.adjust', 'inventory.approve',
                 'pos.view', 'pos.create', 'pos.refund', 'pos.discount', 'pos.price_override',
+                'pos.approve',
+                'stocktakes.view', 'stocktakes.create', 'stocktakes.update',
+                'reorder-suggestions.view', 'reorder-suggestions.create',
                 'sales.view', 'sales.refund', 'customers.view', 'customers.create',
+                'deliveries.view', 'deliveries.create', 'deliveries.update',
                 'reports.view', 'reports.export',
                 'shifts.view', 'shifts.manage',
             ]],

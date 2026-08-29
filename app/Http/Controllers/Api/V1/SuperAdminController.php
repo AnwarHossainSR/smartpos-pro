@@ -17,7 +17,22 @@ class SuperAdminController extends Controller
 
     public function __construct() {}
 
+    /**
+     * Cached briefly: the screen polls, and several of these probes hit the database,
+     * the queue tables and object storage. A minute-old answer is still an accurate
+     * answer for everything here.
+     */
     public function health(): JsonResponse
+    {
+        return $this->success(cache()->remember(
+            'platform:health',
+            now()->addMinute(),
+            fn () => $this->collectHealth(),
+        ));
+    }
+
+    /** @return array<string, mixed> */
+    private function collectHealth(): array
     {
         $dbSize = 0;
         try {
@@ -42,7 +57,7 @@ class SuperAdminController extends Controller
         $cacheDriver = config('cache.default');
         $cacheWorking = true;
         try {
-            cache()->put('__health_check', true);
+            cache()->put('__health_check', true, now()->addMinute());
             $cacheWorking = cache()->get('__health_check') === true;
         } catch (\Throwable) {
             $cacheWorking = false;
@@ -55,9 +70,6 @@ class SuperAdminController extends Controller
             'configured' => false,
             'connected' => false,
             'bucket' => null,
-            'object_count' => null,
-            'total_size_bytes' => null,
-            'total_size_human' => null,
         ];
 
         try {
@@ -65,25 +77,24 @@ class SuperAdminController extends Controller
             $r2Metrics['configured'] = true;
             $r2Metrics['bucket'] = config('filesystems.disks.r2.bucket');
 
-            $objects = $r2Disk->allFiles('/');
+            // Connectivity only. Totalling the bucket meant listing every object and then
+            // one `size()` API call *per object* — a billable, multi-second request that
+            // grows without bound with the tenant's media library, on a health check.
+            $r2Disk->directories('/');
             $r2Metrics['connected'] = true;
-            $r2Metrics['object_count'] = count($objects);
-
-            $totalSize = 0;
-            foreach ($objects as $object) {
-                $totalSize += $r2Disk->size($object);
-            }
-            $r2Metrics['total_size_bytes'] = $totalSize;
-            $r2Metrics['total_size_human'] = $this->humanFileSize($totalSize);
         } catch (\Throwable) {
             $r2Metrics['connected'] = false;
         }
 
-        return $this->success([
+        return [
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
             'database' => [
                 'connected' => \DB::getPdo() !== null,
+                // `size` (human) is what the health screen renders; `size_mb` stays for
+                // anything reading the raw number. It only ever had the latter, so the
+                // screen showed a dash where the database size should be.
+                'size' => $this->humanFileSize((int) $dbSize),
                 'size_mb' => round($dbSize / 1024 / 1024, 2),
             ],
             'queue' => [
@@ -96,21 +107,34 @@ class SuperAdminController extends Controller
                 'working' => $cacheWorking,
             ],
             'storage' => [
+                'total' => $this->humanFileSize((int) $diskTotal),
+                'free' => $this->humanFileSize((int) $diskFree),
                 'total_mb' => round($diskTotal / 1024 / 1024, 0),
                 'free_mb' => round($diskFree / 1024 / 1024, 0),
             ],
             'r2' => $r2Metrics,
-        ]);
+        ];
     }
 
     public function revenueMetrics(Request $request): JsonResponse
     {
-        $period = $request->integer('days', 30);
+        // Unbounded before: a negative value pushed `from` into the future and returned
+        // empty metrics with no error, a huge one scanned the whole table.
+        $period = (int) $request->validate([
+            'days' => ['nullable', 'integer', 'min:1', 'max:365'],
+        ])['days'] ?? 30;
+
         $from = now()->subDays($period);
 
         $planDistribution = Subscription::withoutTenancy()->where('status', SubscriptionStatus::Active)
             ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
-            ->selectRaw('plans.name as plan_name, plans.slug, count(*) as count, sum(plans.price) as mrr')
+            ->selectRaw(
+                // MRR means *monthly* recurring revenue, so an annual plan contributes a
+                // twelfth of its price. Summing `plans.price` flat counted a $1,200/year
+                // plan as $1,200/month.
+                'plans.name as plan_name, plans.slug, count(*) as count, '.
+                "sum(case when plans.interval = 'year' then plans.price / 12 else plans.price end) as mrr",
+            )
             ->groupBy('plans.id', 'plans.name', 'plans.slug')
             ->get();
 
@@ -118,7 +142,7 @@ class SuperAdminController extends Controller
         $activeTenants = Tenant::where('status', TenantStatus::Active)->count();
         $suspendedTenants = Tenant::where('status', TenantStatus::Suspended)->count();
 
-        $totalMrr = $planDistribution->sum('mrr');
+        $totalMrr = round((float) $planDistribution->sum('mrr'), 2);
 
         $recentSubscriptions = Subscription::withoutTenancy()->with(['plan'])
             ->where('created_at', '>=', $from)

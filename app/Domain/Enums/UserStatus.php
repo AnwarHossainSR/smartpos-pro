@@ -17,4 +17,15 @@ enum UserStatus: string
     {
         return $this === self::Active;
     }
+
+    /**
+     * Whether an *already authenticated* request may proceed. Deliberately laxer than
+     * `canAuthenticate()`: this runs on every request, and an invited user finishing
+     * setup must not be locked out of the flow that activates them. Only suspension
+     * cuts a live session — see {@see \App\Http\Middleware\EnsureActiveUser}.
+     */
+    public function hasApiAccess(): bool
+    {
+        return $this !== self::Suspended;
+    }
 }

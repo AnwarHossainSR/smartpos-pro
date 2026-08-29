@@ -63,6 +63,8 @@ class UserController extends Controller
         $data['password'] = $data['password'] ?? Str::random(40);
         $data['status'] = $invited ? UserStatus::Invited : UserStatus::Active;
 
+        $this->guardBranchScope($request->user(), $data['branch_id'] ?? null);
+
         $user = User::create($data);
         $this->syncRoles($user, $roles, $request->user());
 
@@ -70,6 +72,13 @@ class UserController extends Controller
             $token = Password::createToken($user);
             $user->notify(new SetPasswordNotification($token));
         }
+
+        $this->audit->log('user.created', $user, null, [
+            'name' => $user->name,
+            'email' => $user->email,
+            'branch_id' => $user->branch_id,
+            'invited' => $invited,
+        ], $request->user());
 
         return new UserResource($user->load('roles'));
     }
@@ -92,7 +101,19 @@ class UserController extends Controller
 
         $this->guardBranchScope($actor, $data['branch_id'] ?? $user->branch_id);
 
+        $before = $user->only(array_keys($data));
         $user->update($data);
+
+        // Suspending someone must end the sessions they already hold. Without this a
+        // suspended user keeps working for the full life of their token, and "suspend"
+        // silently means "cannot sign in again".
+        if ($user->status === UserStatus::Suspended) {
+            $user->tokens()->delete();
+        }
+
+        if ($before !== $user->only(array_keys($data))) {
+            $this->audit->log('user.updated', $user, $before, $user->only(array_keys($data)), $actor);
+        }
 
         if ($roles !== null) {
             $this->syncRoles($user, $roles, $actor);
@@ -106,7 +127,16 @@ class UserController extends Controller
         abort_if($user->id === $request->user()->id, 422, 'You cannot delete your own account.');
         abort_if($user->hasRole('owner'), 422, 'The business owner cannot be deleted.');
 
+        $this->guardBranchScope($request->user(), $user->branch_id);
+
+        $snapshot = $user->only('id', 'name', 'email', 'branch_id');
+
+        // Soft delete hides the row from Sanctum's tokenable lookup, but revoking is
+        // explicit rather than incidental — the same rule as suspension.
+        $user->tokens()->delete();
         $user->delete();
+
+        $this->audit->log('user.deleted', $user, $snapshot, null, $request->user());
 
         return response()->noContent();
     }

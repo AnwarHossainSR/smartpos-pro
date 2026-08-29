@@ -16,7 +16,7 @@ class SubscriptionService
     public function checkout(Plan $plan, User $user): Subscription
     {
         return DB::transaction(function () use ($plan) {
-            $existing = Subscription::where('status', SubscriptionStatus::Active)->latest('id')->first();
+            $existing = Subscription::where('status', SubscriptionStatus::Active)->latest()->first();
 
             if ($existing) {
                 if ($existing->plan_id === $plan->id) {

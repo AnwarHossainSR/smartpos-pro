@@ -9,7 +9,6 @@ use App\Models\Impersonation;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
-use App\Services\SuperAdmin\ImpersonationService;
 use App\Support\Scopes\TenantScope;
 use App\Support\Tenancy\TenantContext;
 use App\Traits\ApiResponse;
@@ -22,32 +21,9 @@ class ImpersonationController extends Controller
 {
     use ApiResponse;
 
-    protected const IMPERSONATION_MINUTES = 30;
-
     public function __construct(
         protected AuditLogService $audit,
-        protected ImpersonationService $impersonationService,
     ) {}
-
-    public function startImpersonation(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
-        ]);
-
-        $targetUser = User::findOrFail($data['user_id']);
-        $token = $this->impersonationService->start($request->user(), $targetUser->id);
-
-        $this->audit->log('impersonation.started', null, null, [
-            'target_user_id' => $targetUser->id,
-        ], $request->user(), $targetUser->tenant_id);
-
-        return $this->created([
-            'token' => $token,
-            'user' => $targetUser->only('id', 'name', 'email'),
-            'expires_at' => now()->addMinutes(60)->toISOString(),
-        ]);
-    }
 
     public function impersonate($tenant, Request $request): JsonResponse
     {
@@ -64,7 +40,7 @@ class ImpersonationController extends Controller
             ->whereHas('roles', fn ($q) => $q->withoutGlobalScope(TenantScope::class)->where('name', 'owner'))
             ->firstOrFail());
 
-        $expiresAt = now()->addMinutes(self::IMPERSONATION_MINUTES);
+        $expiresAt = now()->addMinutes(Impersonation::EXPIRES_AFTER_MINUTES);
         $token = $owner->createToken(
             name: 'impersonation:super-admin:'.$admin->id,
             abilities: ['impersonate'],
@@ -106,17 +82,10 @@ class ImpersonationController extends Controller
         ]);
     }
 
+    /** Called from inside the impersonated session, with the impersonation token itself. */
     public function stopImpersonation(Request $request): JsonResponse
     {
-        $token = $request->input('token');
-
-        if ($token) {
-            $this->impersonationService->stop($token);
-
-            return $this->success(null, 'Impersonation ended.');
-        }
-
-        $tokenId = $request->user()->currentAccessToken()->id;
+        $tokenId = $request->user()->currentAccessToken()?->id;
 
         $this->endImpersonation($tokenId, $request->user());
 
@@ -134,7 +103,7 @@ class ImpersonationController extends Controller
 
     public function activeImpersonations(): JsonResponse
     {
-        $records = Impersonation::whereNull('ended_at')
+        $records = Impersonation::stillActive()
             ->with([
                 'tenant:id,name',
                 'superAdmin' => fn ($q) => $q->withoutGlobalScope(TenantScope::class)->select('id', 'name', 'email'),

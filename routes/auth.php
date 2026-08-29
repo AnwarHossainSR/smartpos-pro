@@ -18,7 +18,7 @@ Route::prefix('v1')->group(function () {
     Route::get('orders/{token}', [OrderStatusController::class, 'show'])
         ->middleware('throttle:30,1')->name('orders.status');
 
-    Route::middleware(['auth:sanctum', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
+    Route::middleware(['auth:sanctum', 'ensure.active', 'tenant', 'ensure.tenant', 'error-tracking'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::patch('auth/preferences', [AuthController::class, 'updatePreferences']);
         Route::post('auth/logout', [AuthController::class, 'logout']);

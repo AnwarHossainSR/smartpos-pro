@@ -16,6 +16,14 @@ class AuditLogResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ]),
+            // Present only for entries written during a support session — the reader
+            // needs to know the tenant owner did not do this themselves.
+            'impersonated_by' => $this->whenLoaded('impersonator', fn () => [
+                'id' => $this->impersonator->id,
+                'name' => $this->impersonator->name,
+                'email' => $this->impersonator->email,
+            ]),
+            'is_impersonated' => $this->impersonated_by !== null,
             'tenant' => $this->whenLoaded('tenant', fn () => [
                 'id' => $this->tenant->id,
                 'name' => $this->tenant->name,
