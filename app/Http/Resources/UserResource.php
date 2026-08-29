@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Domain\Enums\UserStatus;
+use App\Support\Theme\ThemeCatalog;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
@@ -26,6 +27,11 @@ class UserResource extends JsonResource
             'business_id' => $this->business_id,
             'branch_id' => $this->branch_id,
             'created_at' => $this->created_at,
+            /** Mode only (light/dark/system). The colour palette is tenant-owned, served by
+             *  `GET /settings/business` rather than the per-user account. */
+            'theme' => $this->theme
+                ? ['mode' => $this->theme['mode'] ?? ThemeCatalog::DEFAULT_MODE]
+                : null,
         ];
     }
 }

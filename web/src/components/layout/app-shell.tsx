@@ -7,7 +7,7 @@ import { useAuth, type AuthUser } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
 import { useModulesStore } from "@/stores/modules";
-import { useSyncBusinessCurrency } from "@/lib/hooks";
+import { useSyncBusinessSettings } from "@/lib/hooks";
 import { queryKeys } from "@/lib/query-keys";
 import { navKeyForPathname } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
@@ -124,7 +124,7 @@ export function AppShell() {
     if (data?.data) setUser(data.data);
   }, [data, setUser]);
 
-  useSyncBusinessCurrency(!!token);
+  useSyncBusinessSettings(!!token);
 
   const fetchModules = useModulesStore((s) => s.fetchModules);
   useEffect(() => {

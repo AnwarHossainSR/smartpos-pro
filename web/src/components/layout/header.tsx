@@ -42,6 +42,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const qc = useQueryClient();
   const logout = useAuth((s) => s.logout);
   const user = useAuth((s) => s.user);
+  const can = useAuth((s) => s.can);
   const { theme, setTheme, palette } = useThemeStore();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -180,25 +181,26 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             )}
           </Button>
 
-          {/* Palette swatch */}
-          <div ref={swatchRef} className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSwatchMenuOpen((v) => !v)}
-              title={t("header.colorPalette")}
-            >
-              <span
-                className="h-4 w-4 rounded-full ring-1 ring-[var(--border)]"
-                style={{ backgroundColor: PALETTES.find((p) => p.id === palette)?.swatch }}
-              />
-            </Button>
-            {swatchMenuOpen && (
-              <div className="absolute end-0 top-full z-20 mt-1 w-48 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
-                <PalettePicker compact />
-              </div>
-            )}
-          </div>
+          {can("settings.update") && (
+            <div ref={swatchRef} className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSwatchMenuOpen((v) => !v)}
+                title={t("header.colorPalette")}
+              >
+                <span
+                  className="h-4 w-4 rounded-full ring-1 ring-[var(--border)]"
+                  style={{ backgroundColor: PALETTES.find((p) => p.id === palette)?.swatch }}
+                />
+              </Button>
+              {swatchMenuOpen && (
+                <div className="absolute end-0 top-full z-20 mt-1 w-44 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+                  <PalettePicker compact />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Theme toggle */}
           <div ref={themeRef} className="relative">

@@ -22,5 +22,5 @@ final class ThemeCatalog
 
     public const DEFAULT_MODE = 'system';
 
-    public const DEFAULT_PALETTE = 'indigo';
+    public const DEFAULT_PALETTE = 'amber';
 }
