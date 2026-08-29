@@ -17,6 +17,7 @@ export const PERMISSION_MATRIX = {
   inventory: ["view", "create", "update", "adjust", "export", "approve"],
   pos: ["view", "create", "refund", "discount", "price_override", "approve"],
   sales: ["view", "create", "update", "delete", "export", "refund"],
+  deliveries: ["view", "create", "update"],
   purchases: ["view", "create", "update", "delete", "approve", "export", "edit", "return"],
   customers: ["view", "create", "update", "delete", "export"],
   suppliers: ["view", "create", "update", "delete", "export"],

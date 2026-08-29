@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Services\Billing\PlanLimitService;
 use App\Http\Requests\Organization\StoreBranchRequest;
 use App\Http\Resources\BranchResource;
 use App\Models\Branch;
@@ -31,6 +32,8 @@ class BranchController extends Controller
 
     public function store(StoreBranchRequest $request): BranchResource
     {
+        app(PlanLimitService::class)->ensureCanCreate('branches');
+
         $data = $request->validated();
         $data['business_id'] = $request->user()->business_id;
 

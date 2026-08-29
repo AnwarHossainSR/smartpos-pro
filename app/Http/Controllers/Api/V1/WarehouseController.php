@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Services\Billing\PlanLimitService;
 use App\Http\Requests\Organization\StoreWarehouseRequest;
 use App\Http\Resources\WarehouseResource;
 use App\Models\InventoryBalance;
@@ -41,6 +42,8 @@ class WarehouseController extends Controller
 
     public function store(StoreWarehouseRequest $request): WarehouseResource
     {
+        app(PlanLimitService::class)->ensureCanCreate('warehouses');
+
         $data = $request->validated();
         $data['business_id'] = $request->user()->business_id;
 

@@ -3,6 +3,8 @@
 use App\Exceptions\DomainException;
 use App\Exceptions\InsufficientStockException;
 use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureTenant;
 use App\Http\Middleware\ErrorTracking;
 use App\Http\Middleware\Idempotency;
@@ -16,12 +18,14 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\RateLimiter\Exception\ThrottleRequestsException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -30,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/api.php',
             __DIR__.'/../routes/auth.php',
             __DIR__.'/../routes/app.php',
+            __DIR__.'/../routes/portal.php',
         ],
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
@@ -41,6 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'ensure.tenant' => EnsureTenant::class,
+            'ensure.active' => EnsureActiveUser::class,
+            'module' => EnsureModuleEnabled::class,
             'permission' => CheckPermission::class,
             'idempotency' => Idempotency::class,
             'super_admin' => SuperAdmin::class,
@@ -51,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [SecurityHeaders::class]);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveTenant::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureTenant::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureActiveUser::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
@@ -127,13 +135,40 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            $retryAfter = $e->getResponse()->headers->get('Retry-After');
+            // `getHeaders()` is the HttpException API. `getResponse()` belongs to
+            // HttpResponseException, which this is not — calling it would throw and
+            // land right back in the catch-all as a 500.
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? null;
 
             return response()->json([
                 'message' => 'Too many requests. Please slow down.',
             ], 429)->withHeaders([
                 'Retry-After' => $retryAfter ?? 60,
             ]);
+        });
+
+        // `abort(403)`, `abort_if(..., 422, '...')` and friends throw an HttpException that
+        // nothing below caught, so they fell through to the catch-all and every one of
+        // them surfaced as a 500 — the status the caller asked for was thrown away.
+        //
+        // Registered after the NotFound/MethodNotAllowed/Throttle handlers above, which
+        // are also HttpExceptions: the first matching renderable wins, so the specific
+        // ones must stay ahead of this catch-all.
+        $exceptions->renderable(function (HttpExceptionInterface $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $status = $e->getStatusCode();
+
+            return response()->json([
+                'message' => $e->getMessage() ?: match (true) {
+                    $status === 403 => 'Forbidden.',
+                    $status === 404 => 'Not found.',
+                    $status >= 500 => 'Internal server error.',
+                    default => 'Request could not be processed.',
+                },
+            ], $status)->withHeaders($e->getHeaders());
         });
 
         $exceptions->renderable(function (InsufficientStockException $e, Request $request) {
@@ -169,6 +204,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return $e->render();
+        });
+
+        // `abort($response)` — how CheckPermission and EnsureTenant return their 403s —
+        // throws an HttpResponseException carrying the response to send. Laravel unwraps
+        // that itself, but only *after* the renderable callbacks, and the catch-all below
+        // matched it first and replaced it with a 500. So every unauthorised request to a
+        // permission-guarded route answered "Internal server error" instead of "Forbidden",
+        // and the tenant-suspension middleware did the same.
+        $exceptions->renderable(function (HttpResponseException $e) {
+            return $e->getResponse();
         });
 
         $exceptions->renderable(function (Throwable $e, Request $request) {

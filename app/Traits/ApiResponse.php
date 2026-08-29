@@ -19,8 +19,16 @@ trait ApiResponse
 {
     protected function success(mixed $data = null, string $message = 'OK', int $status = 200): JsonResponse
     {
-        if ($data instanceof ResourceCollection || $data instanceof LengthAwarePaginator) {
+        if ($data instanceof ResourceCollection) {
             return $data->response()->setStatusCode($status);
+        }
+
+        // A bare paginator has no `response()`: the call fell through `AbstractPaginator::__call()`
+        // to the underlying Collection and died as `Collection::response does not exist`, so every
+        // controller handing a raw paginator to `success()` returned a 500. Encoding it directly
+        // gives the `{ data: [...], current_page, total, ... }` payload callers already read.
+        if ($data instanceof LengthAwarePaginator) {
+            return response()->json($data->toArray(), $status);
         }
 
         $payload = ['message' => $message];

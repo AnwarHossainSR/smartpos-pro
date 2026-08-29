@@ -90,9 +90,15 @@ class SuperAdminAuditLogTest extends TestCase
 
         AuditLog::withoutTenancy()->truncate();
 
+        // Points at the impersonation flow that actually ships. This used to call
+        // `POST /super/impersonate`, a second implementation that handed back a cache
+        // key nothing authenticated against and skipped the reason, the Impersonation
+        // record, the owner's notification and the email — and whose route lived in a
+        // file that was never loaded, so it has always 404'd. That endpoint is gone;
+        // what the test is really asserting — that starting a support session leaves an
+        // audit trail — is now checked against the real thing.
         $response = $this->actingAs($admin)
-            ->postJson('/api/v1/super/impersonate', [
-                'user_id' => $owner->id,
+            ->postJson("/api/v1/super/tenants/{$tenant->id}/impersonate", [
                 'reason' => 'Testing impersonation audit log functionality',
             ]);
 

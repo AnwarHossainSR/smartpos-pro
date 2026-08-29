@@ -66,6 +66,7 @@ export interface SystemHealth {
   database: {
     connected: boolean;
     size: string;
+    size_mb: number;
   };
   queue: {
     connection: string;
@@ -79,14 +80,13 @@ export interface SystemHealth {
   storage: {
     total: string;
     free: string;
+    total_mb: number;
+    free_mb: number;
   };
   r2: {
     configured: boolean;
     connected: boolean;
     bucket: string | null;
-    object_count: number | null;
-    total_size_bytes: number | null;
-    total_size_human: string | null;
   };
 }
 

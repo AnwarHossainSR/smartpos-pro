@@ -11,6 +11,8 @@ use App\Services\Audit\AuditLogService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PlanController extends Controller
@@ -58,6 +60,21 @@ class PlanController extends Controller
     public function destroyPlan(string $id): JsonResponse
     {
         $plan = Plan::findOrFail($id);
+
+        // A live subscription pointing at a missing plan silently falls back to the free
+        // tier's limits, so paying tenants would quietly lose capacity. Deactivating is
+        // the reversible way to retire a plan — it already hides it from the catalogue.
+        $inUse = Subscription::withoutTenancy()
+            ->where('plan_id', $plan->id)
+            ->where('status', '!=', 'cancelled')
+            ->count();
+
+        if ($inUse > 0) {
+            throw ValidationException::withMessages([
+                'plan' => ["{$inUse} tenant(s) are subscribed to this plan. Deactivate it instead of deleting it."],
+            ]);
+        }
+
         $planData = $plan->only('id', 'name', 'slug', 'price');
         $plan->delete();
 
@@ -74,31 +91,38 @@ class PlanController extends Controller
         ]);
 
         $tenant = Tenant::findOrFail($tenantId);
+        $plan = Plan::findOrFail($data['plan_id']);
 
-        $subscription = Subscription::withoutTenancy()
-            ->where('tenant_id', $tenantId)
-            ->where('status', '!=', 'cancelled')
-            ->first();
+        // `tenants.plan` and `subscriptions.plan_id` feed two different limit paths, so
+        // they must not be able to end up disagreeing with each other.
+        $oldPlanId = DB::transaction(function () use ($data, $tenantId, $tenant, $plan) {
+            $subscription = Subscription::withoutTenancy()
+                ->where('tenant_id', $tenantId)
+                ->where('status', '!=', 'cancelled')
+                ->latest()
+                ->first();
 
-        if ($subscription) {
-            $oldPlanId = $subscription->plan_id;
-            $subscription->update([
-                'plan_id' => $data['plan_id'],
-                'status' => 'active',
-                'current_period_ends_at' => $data['plan_expires_at'] ?? $subscription->current_period_ends_at,
-            ]);
-        } else {
-            $oldPlanId = null;
-            Subscription::withoutTenancy()->create([
-                'tenant_id' => $tenantId,
-                'plan_id' => $data['plan_id'],
-                'status' => 'active',
-                'current_period_ends_at' => $data['plan_expires_at'] ?? now()->addMonth(),
-            ]);
-        }
+            if ($subscription) {
+                $previous = $subscription->plan_id;
+                $subscription->update([
+                    'plan_id' => $plan->id,
+                    'status' => 'active',
+                    'current_period_ends_at' => $data['plan_expires_at'] ?? $subscription->current_period_ends_at,
+                ]);
+            } else {
+                $previous = null;
+                Subscription::withoutTenancy()->create([
+                    'tenant_id' => $tenantId,
+                    'plan_id' => $plan->id,
+                    'status' => 'active',
+                    'current_period_ends_at' => $data['plan_expires_at'] ?? now()->addMonth(),
+                ]);
+            }
 
-        $plan = Plan::find($data['plan_id']);
-        $tenant->update(['plan' => $plan->slug]);
+            $tenant->update(['plan' => $plan->slug]);
+
+            return $previous;
+        });
 
         $this->audit->log('plan.assigned', $tenant, ['plan_id' => $oldPlanId], [
             'plan_id' => $data['plan_id'],
