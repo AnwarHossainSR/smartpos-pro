@@ -174,13 +174,16 @@ class UserController extends Controller
         // `model_has_roles` carries a nullable `branch_id`: null means the grant is
         // tenant-wide, a value pins it to one branch.
         $roles = $actor->roles()->get();
-        $isTenantWide = $roles->isEmpty() || $roles->contains(fn (Role $role) => $role->pivot->branch_id === null);
+        $isTenantWide = $roles->isEmpty() || $roles->contains(fn (Role $role) => data_get($role, 'pivot.branch_id') === null);
 
         if ($isTenantWide) {
             return;
         }
 
-        $scopedBranchIds = $roles->pluck('pivot.branch_id')->filter()->all();
+        $scopedBranchIds = $roles
+            ->map(fn (Role $role) => data_get($role, 'pivot.branch_id'))
+            ->filter()
+            ->all();
 
         if (! in_array($targetBranchId, $scopedBranchIds, true)) {
             throw new AuthorizationException('You cannot manage users outside your assigned branch.');
@@ -200,7 +203,12 @@ class UserController extends Controller
 
         $user->syncRoles($roleSlugs);
 
-        $after = Role::query()->whereIn('name', $roleSlugs)->pluck('name')->sort()->values()->all();
+        $after = $user->roles()
+            ->whereIn('name', $roleSlugs)
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
 
         if ($before !== $after) {
             $this->audit->log('user.roles_changed', $user, ['roles' => $before], ['roles' => $after], $actor);

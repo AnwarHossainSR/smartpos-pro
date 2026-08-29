@@ -27,8 +27,61 @@ class BusinessSettingsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.auto_post_journals', true);
 
-        $this->getJson('/api/v1/settings/business')
+         $this->getJson('/api/v1/settings/business')
             ->assertOk()
             ->assertJsonPath('data.auto_post_journals', true);
+    }
+
+    public function test_palette_is_amber_by_default(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->getJson('/api/v1/settings/business')
+            ->assertOk()
+            ->assertJsonPath('data.theme.palette', 'amber');
+
+        $this->assertNull(Business::find($owner->business_id)->settings['theme']['palette'] ?? null);
+    }
+
+    public function test_palette_can_be_changed_and_reads_back(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->putJson('/api/v1/settings/business', ['theme' => ['palette' => 'rose']])
+            ->assertOk()
+            ->assertJsonPath('data.theme.palette', 'rose');
+
+        $this->assertSame('rose', Business::find($owner->business_id)->settings['theme']['palette']);
+
+        $this->getJson('/api/v1/settings/business')
+            ->assertOk()
+            ->assertJsonPath('data.theme.palette', 'rose');
+    }
+
+    public function test_an_unknown_palette_is_rejected(): void
+    {
+        $owner = $this->createTenant();
+        Sanctum::actingAs($owner);
+
+        $this->putJson('/api/v1/settings/business', ['theme' => ['palette' => 'chartreuse']])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('theme.palette');
+
+        $business = Business::find($owner->business_id);
+        $this->assertArrayNotHasKey('theme', $business->settings ?? []);
+    }
+
+    public function test_a_non_admin_cannot_change_the_palette(): void
+    {
+        $owner = $this->createTenant();
+        $cashier = $this->userWithRole($owner, 'cashier');
+        Sanctum::actingAs($cashier);
+
+        $this->putJson('/api/v1/settings/business', ['theme' => ['palette' => 'rose']])
+            ->assertForbidden();
+
+        $this->assertArrayNotHasKey('theme', Business::find($owner->business_id)->settings ?? []);
     }
 }

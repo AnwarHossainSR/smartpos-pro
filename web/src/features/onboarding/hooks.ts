@@ -3,7 +3,7 @@ import { onboardingApi } from "@/features/onboarding/api";
 import { queryKeys } from "@/lib/query-keys";
 
 /**
- * Deliberately the same key as Settings -> Business info and `useSyncBusinessCurrency()`:
+ * Deliberately the same key as Settings -> Business info and `useSyncBusinessSettings()`:
  * all three read `/settings/business`, so sharing the key means one request feeds the
  * wizard, the settings form and the currency formatter.
  */

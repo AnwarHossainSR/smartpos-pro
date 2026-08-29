@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Export\ExportService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -56,8 +57,9 @@ class ExportController extends Controller
     protected function validatePermission(string $module): void
     {
         $slug = "{$module}.export";
+        $user = Auth::user();
 
-        if (! auth()->user()?->can($slug)) {
+        if (! $user || ! method_exists($user, 'can') || ! $user->can($slug)) {
             throw new AccessDeniedHttpException("Unauthorized. Missing permission: {$slug}.");
         }
     }

@@ -27,7 +27,7 @@ class AuditLogController extends Controller
             ->paginate();
 
         return response()->json([
-            'data' => $logs->map(fn (AuditLog $log) => [
+            'data' => collect($logs->items())->map(fn (AuditLog $log) => [
                 'id' => $log->id,
                 'action' => $log->action,
                 'auditable_type' => $log->auditable_type ? class_basename($log->auditable_type) : null,
@@ -38,7 +38,7 @@ class AuditLogController extends Controller
                 'user_agent' => $log->user_agent,
                 'user' => $log->user ? ['id' => $log->user->id, 'name' => $log->user->name, 'email' => $log->user->email] : null,
                 'created_at' => $log->created_at,
-            ]),
+            ])->values(),
             'meta' => [
                 'current_page' => $logs->currentPage(),
                 'last_page' => $logs->lastPage(),

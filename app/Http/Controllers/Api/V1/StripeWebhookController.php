@@ -7,7 +7,8 @@ use App\Services\Billing\StripeService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Stripe\Event;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
 
 class StripeWebhookController extends Controller
 {
@@ -22,13 +23,32 @@ class StripeWebhookController extends Controller
 
     public function handle(Request $request)
     {
-        $event = Event::retrieve($request->header('Stripe-Event-Id'));
+        $payload = $request->getContent();
+        $signature = $request->header('Stripe-Signature');
+        $webhookSecret = (string) config('services.stripe.webhook_secret');
+
+        // Authenticate the request with Stripe's signature header BEFORE trusting any
+        // payload data. The previous code fetched the event by its header-supplied
+        // id, which let anyone who could call the Stripe API impersonate the API by
+        // replaying a header. constructEvent fails closed: a missing/empty/whitelist-
+        // mismatched secret returns 402 and no event is processed.
+        try {
+            $event = Webhook::constructEvent($payload, $signature, $webhookSecret);
+        } catch (\UnexpectedValueException $e) {
+            Log::warning('Stripe webhook rejected: malformed payload', ['error' => $e->getMessage()]);
+
+            return response('Bad payload', 400);
+        } catch (SignatureVerificationException $e) {
+            Log::warning('Stripe webhook rejected: bad signature', ['error' => $e->getMessage()]);
+
+            return response('Invalid signature', 400);
+        }
 
         $result = $this->stripe->constructFromWebhookEvent($event);
 
-        // Handle the event - for now just log it
-        // In production, you would dispatch events to update sales, customers, etc.
-        Log::info('Stripe webhook received', ['event' => $result['type'], 'sale_id' => $result['sale_id']]);
+        // Log only the event type — sale/customer ids and amounts are payment-PII best
+        // kept out of the application log.
+        Log::info('Stripe webhook received', ['event' => $result['type']]);
 
         return $this->success(['status' => 'received']);
     }

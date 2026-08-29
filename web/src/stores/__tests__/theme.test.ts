@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { useThemeStore, THEME_STORAGE_KEY, type ServerTheme } from "../theme";
 
 beforeEach(() => {
-  useThemeStore.setState({ theme: "system", palette: "indigo", dirty: false });
+  useThemeStore.setState({ theme: "system", palette: "amber", modeDirty: false, paletteDirty: false });
 });
 
 describe("useThemeStore", () => {
-  it("defaults to system", () => {
+  it("defaults to system mode", () => {
     expect(useThemeStore.getState().theme).toBe("system");
   });
 
@@ -20,8 +20,8 @@ describe("useThemeStore", () => {
     expect(useThemeStore.getState().theme).toBe("light");
   });
 
-  it("defaults to the indigo palette", () => {
-    expect(useThemeStore.getState().palette).toBe("indigo");
+  it("defaults to the amber palette", () => {
+    expect(useThemeStore.getState().palette).toBe("amber");
   });
 
   it("can switch palette", () => {
@@ -31,46 +31,79 @@ describe("useThemeStore", () => {
 });
 
 describe("useThemeStore server sync", () => {
-  it("marks a local change as needing a push", () => {
-    expect(useThemeStore.getState().dirty).toBe(false);
+  it("marks a local mode change as needing a push", () => {
+    expect(useThemeStore.getState().modeDirty).toBe(false);
+
+    useThemeStore.getState().setTheme("dark");
+    expect(useThemeStore.getState().modeDirty).toBe(true);
+
+    useThemeStore.getState().markModePushed();
+    expect(useThemeStore.getState().modeDirty).toBe(false);
+  });
+
+  it("marks a local palette change as needing a push", () => {
+    expect(useThemeStore.getState().paletteDirty).toBe(false);
 
     useThemeStore.getState().setPalette("rose");
-    expect(useThemeStore.getState().dirty).toBe(true);
+    expect(useThemeStore.getState().paletteDirty).toBe(true);
 
-    useThemeStore.getState().markPushed();
-    expect(useThemeStore.getState().dirty).toBe(false);
+    useThemeStore.getState().markPalettePushed();
+    expect(useThemeStore.getState().paletteDirty).toBe(false);
   });
 
-  it("adopts the theme stored on the account without marking it dirty", () => {
-    useThemeStore.getState().applyServerTheme({ mode: "dark", palette: "ocean" });
+  it("adopts the mode stored on the account without marking it dirty", () => {
+    useThemeStore.getState().applyServerTheme({ mode: "dark" } as ServerTheme);
 
     expect(useThemeStore.getState().theme).toBe("dark");
-    expect(useThemeStore.getState().palette).toBe("ocean");
-    expect(useThemeStore.getState().dirty).toBe(false);
+    expect(useThemeStore.getState().modeDirty).toBe(false);
   });
 
-  it("keeps the local preference and pushes it when the account has none", () => {
-    useThemeStore.setState({ theme: "light", palette: "violet", dirty: false });
+  it("keeps the local mode and pushes it when the account has none", () => {
+    useThemeStore.setState({ theme: "light", modeDirty: false });
 
     useThemeStore.getState().applyServerTheme(null);
 
     expect(useThemeStore.getState().theme).toBe("light");
-    expect(useThemeStore.getState().palette).toBe("violet");
-    expect(useThemeStore.getState().dirty).toBe(true);
+    expect(useThemeStore.getState().modeDirty).toBe(true);
   });
 
-  it("ignores an unknown mode or palette from the API", () => {
-    useThemeStore.setState({ theme: "light", palette: "violet", dirty: false });
+  it("adopts the tenant palette without marking it dirty", () => {
+    useThemeStore.getState().applyPalette("ocean");
+
+    expect(useThemeStore.getState().palette).toBe("ocean");
+    expect(useThemeStore.getState().paletteDirty).toBe(false);
+  });
+
+  it("keeps a local palette and pushes it when the tenant has none", () => {
+    useThemeStore.setState({ palette: "violet", paletteDirty: false });
+
+    useThemeStore.getState().applyPalette(null);
+
+    expect(useThemeStore.getState().palette).toBe("violet");
+    expect(useThemeStore.getState().paletteDirty).toBe(true);
+  });
+
+  it("ignores an unknown mode from the API", () => {
+    useThemeStore.setState({ theme: "light", modeDirty: false });
 
     useThemeStore
       .getState()
-      .applyServerTheme({ mode: "midnight", palette: "chartreuse" } as unknown as ServerTheme);
+      .applyServerTheme({ mode: "midnight" } as unknown as ServerTheme);
 
     expect(useThemeStore.getState().theme).toBe("light");
-    expect(useThemeStore.getState().palette).toBe("violet");
+    expect(useThemeStore.getState().modeDirty).toBe(true);
   });
 
-  it("does not persist the dirty flag", () => {
+  it("ignores an unknown palette from the API", () => {
+    useThemeStore.setState({ palette: "violet", paletteDirty: false });
+
+    useThemeStore.getState().applyPalette("chartreuse" as never);
+
+    expect(useThemeStore.getState().palette).toBe("violet");
+    expect(useThemeStore.getState().paletteDirty).toBe(true);
+  });
+
+  it("does not persist the dirty flags", () => {
     useThemeStore.getState().setPalette("rose");
 
     const stored = JSON.parse(localStorage.getItem(THEME_STORAGE_KEY) ?? "{}");

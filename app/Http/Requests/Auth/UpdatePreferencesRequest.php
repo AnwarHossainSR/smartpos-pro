@@ -24,9 +24,8 @@ class UpdatePreferencesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'theme' => ['required', 'array:mode,palette'],
+            'theme' => ['required', 'array:mode'],
             'theme.mode' => ['required', 'string', Rule::in(ThemeCatalog::MODES)],
-            'theme.palette' => ['required', 'string', Rule::in(ThemeCatalog::PALETTES)],
         ];
     }
 }

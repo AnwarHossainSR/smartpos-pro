@@ -9,7 +9,7 @@ export const PALETTES = [
 
 export type Palette = (typeof PALETTES)[number]["id"];
 
-export const DEFAULT_PALETTE: Palette = "indigo";
+export const DEFAULT_PALETTE: Palette = "amber";
 
 /**
  * Narrows an untrusted value (an API payload, a stale localStorage entry) to a palette id.
