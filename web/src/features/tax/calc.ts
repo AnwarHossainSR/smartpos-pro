@@ -57,7 +57,9 @@ function componentsFor(net: number, quantity: number, rates: TaxRate[]): TaxComp
 
 /** Recovers the net from a tax-inclusive price — mirrors the backend's netFromGross(). */
 function netFromGross(gross: number, quantity: number, rates: TaxRate[]): number {
-  const fixedTotal = rates.filter((r) => r.type === "fixed").reduce((sum, r) => sum + r.rate * quantity, 0);
+  const fixedTotal = rates
+    .filter((r) => r.type === "fixed")
+    .reduce((sum, r) => sum + r.rate * quantity, 0);
   const percentageRates = rates.filter((r) => r.type !== "fixed");
   const remaining = gross - fixedTotal;
   if (percentageRates.length === 0) return remaining;
@@ -97,13 +99,19 @@ export function calculateLineTax(
     net: round2(net),
     tax: round2(tax),
     gross: round2(net + tax),
-    components: raw.map((c) => ({ ...c, amount: round2(c.amount), base_amount: round2(c.base_amount) })),
+    components: raw.map((c) => ({
+      ...c,
+      amount: round2(c.amount),
+      base_amount: round2(c.base_amount),
+    })),
   };
 }
 
 /** Merges per-component tax across every cart line into cart-level totals, e.g.
  *  "CGST 9%: ৳18.00" + "SGST 9%: ৳18.00" instead of one blended number. */
-export function mergeTaxComponents(lines: TaxComponentResult[][]): { name: string; rate: number; amount: number }[] {
+export function mergeTaxComponents(
+  lines: TaxComponentResult[][],
+): { name: string; rate: number; amount: number }[] {
   const byKey = new Map<string, { name: string; rate: number; amount: number }>();
 
   for (const line of lines) {

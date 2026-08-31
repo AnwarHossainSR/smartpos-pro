@@ -9,9 +9,9 @@
 
 import { barcodeValueFor, encodeBarcode, layoutBarcode } from "@/lib/barcode";
 import {
-  labelsPerSheet,
   type LabelProduct,
   type LabelTemplateId,
+  labelsPerSheet,
   type SheetPreset,
 } from "./label-templates";
 
@@ -46,7 +46,9 @@ export function narrowestModuleMm(
   const pad = Math.max(1.2, preset.labelHeightMm * 0.055);
   const inner = preset.labelWidthMm - pad * 2;
   const heightMm =
-    template === "barcode-only" ? preset.labelHeightMm * 0.72 : Math.max(8, preset.labelHeightMm * 0.3);
+    template === "barcode-only"
+      ? preset.labelHeightMm * 0.72
+      : Math.max(8, preset.labelHeightMm * 0.3);
 
   let narrowest: number | null = null;
   for (const product of labels) {

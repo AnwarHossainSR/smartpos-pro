@@ -1,3 +1,9 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Eye, EyeOff, Plus, Trash2, Webhook } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -5,15 +11,9 @@ import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, errorMessage, type Envelope } from "@/lib/api";
+import { api, type Envelope, errorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, Plus, Trash2, Webhook } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 const AVAILABLE_EVENTS = [
   "sale.completed",
@@ -73,7 +73,10 @@ export function WebhookList() {
       setDeletingId(null);
     },
     // Also drops the confirm drawer, which would otherwise stay open over the failure.
-    onError: (e: unknown) => { setDeletingId(null); toast(errorMessage(e, t("webhooks.deleteFailed")), "error"); },
+    onError: (e: unknown) => {
+      setDeletingId(null);
+      toast(errorMessage(e, t("webhooks.deleteFailed")), "error");
+    },
   });
 
   const copySecret = (secret: string) => {
@@ -200,7 +203,11 @@ export function WebhookList() {
         </div>
       )}
 
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t("webhooks.createTitle")}>
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={t("webhooks.createTitle")}
+      >
         <WebhookCreateForm
           onSubmit={(d) => createMutation.mutate(d)}
           loading={createMutation.isPending}
@@ -254,9 +261,7 @@ function WebhookCreateForm({
 
   function toggleEvent(event: string) {
     const current = getValues("events") ?? [];
-    const next = current.includes(event)
-      ? current.filter((e) => e !== event)
-      : [...current, event];
+    const next = current.includes(event) ? current.filter((e) => e !== event) : [...current, event];
     setValue("events", next, { shouldValidate: true });
   }
 
@@ -274,10 +279,7 @@ function WebhookCreateForm({
         <Label>{t("webhooks.form.events")} *</Label>
         <div className="mt-2 space-y-2">
           {AVAILABLE_EVENTS.map((event) => (
-            <label
-              key={event}
-              className="flex items-center gap-2 cursor-pointer text-sm"
-            >
+            <label key={event} className="flex items-center gap-2 cursor-pointer text-sm">
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-[var(--primary)]"

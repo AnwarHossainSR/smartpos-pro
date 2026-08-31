@@ -40,7 +40,7 @@
   <meta name="twitter:description" content="A multi-tenant point-of-sale and retail management platform: sell fast, track stock, manage suppliers and keep your books in one place." />
   <meta name="twitter:image" content="/og-image.png" />
 
-  <script>(function(){try{
+  <script>(()=> {try{
 var d=document.documentElement;
   var t="system",p="amber";
 var rt=localStorage.getItem("smartpos-theme");
@@ -53,7 +53,7 @@ if(rl){var sl=JSON.parse(rl).state||{};locale=sl.locale||locale;}
 if(locale==="ar")dir="rtl";
 d.setAttribute("lang",locale);
 d.setAttribute("dir",dir);
-}catch(e){}})();</script>
+}catch{/* ignore */}})();</script>
 </head>
 <body>
   <div id="root"></div>

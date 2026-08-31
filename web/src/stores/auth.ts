@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { ServerTheme } from "@/stores/theme";
-import { splitSlug, type PermissionSlug } from "@/lib/permissions";
+import { type PermissionSlug, splitSlug } from "@/lib/permissions";
 import { queryClient } from "@/lib/query-client";
+import type { ServerTheme } from "@/stores/theme";
 
 export interface AuthUser {
   id: string;
@@ -89,7 +89,9 @@ const TOKEN_COOKIE_MAX_AGE = 60 * 60 * 24 * 14; // 14 days — matches config/sa
 function readTokenCookie(): string | null {
   if (typeof document === "undefined") return null;
   // Prefer impersonation token when present (only set in impersonated tabs)
-  const impersonateMatch = document.cookie.match(new RegExp(`(?:^|; )${IMPERSONATE_COOKIE}=([^;]*)`));
+  const impersonateMatch = document.cookie.match(
+    new RegExp(`(?:^|; )${IMPERSONATE_COOKIE}=([^;]*)`),
+  );
   if (impersonateMatch) return decodeURIComponent(impersonateMatch[1]);
   const match = document.cookie.match(new RegExp(`(?:^|; )${TOKEN_COOKIE}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
@@ -97,7 +99,8 @@ function readTokenCookie(): string | null {
 
 function writeTokenCookie(token: string | null) {
   if (typeof document === "undefined") return;
-  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+  const secure =
+    typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
   if (token) {
     document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; Path=/; SameSite=Strict; Max-Age=${TOKEN_COOKIE_MAX_AGE}${secure}`;
   } else {
@@ -107,7 +110,8 @@ function writeTokenCookie(token: string | null) {
 
 function writeImpersonateCookie(token: string | null) {
   if (typeof document === "undefined") return;
-  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+  const secure =
+    typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
   if (token) {
     document.cookie = `${IMPERSONATE_COOKIE}=${encodeURIComponent(token)}; Path=/; SameSite=Strict; Max-Age=${TOKEN_COOKIE_MAX_AGE}${secure}`;
   } else {
@@ -115,41 +119,43 @@ function writeImpersonateCookie(token: string | null) {
   }
 }
 
-export const useAuth = create<AuthState>()((set, get): AuthState => ({
-  token: null,
-  user: null,
-  hydrated: false,
-  setAuth: (token, user) => {
-    writeTokenCookie(token);
-    set({ token, user });
-  },
-  setImpersonateAuth: (token, user) => {
-    writeImpersonateCookie(token);
-    set({ token, user });
-  },
-  setUser: (user) => set({ user }),
-  setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
-  logout: () => {
-    writeTokenCookie(null);
-    writeImpersonateCookie(null);
-    localStorage.removeItem("smartpos-locale");
-    localStorage.removeItem("smartpos-theme");
-    localStorage.removeItem("pos-view-mode");
-    localStorage.removeItem("pos-favorites");
-    localStorage.removeItem("smartpos-portal-token");
-    queryClient.clear();
-    set({ token: null, user: null });
-  },
-  stopImpersonation: () => {
-    writeImpersonateCookie(null);
-    // The original super-admin token in `smartpos_token` is still intact.
-    // Reload so the store re-hydrates from the original cookie.
-    window.location.reload();
-  },
-  can: (permission) => hasPermission(get().user, permission),
-  canAny: (permissions) =>
-    permissions.length === 0 ||
-    permissions.some((permission) => hasPermission(get().user, permission)),
-  canAll: (permissions) =>
-    permissions.every((permission) => hasPermission(get().user, permission)),
-}));
+export const useAuth = create<AuthState>()(
+  (set, get): AuthState => ({
+    token: null,
+    user: null,
+    hydrated: false,
+    setAuth: (token, user) => {
+      writeTokenCookie(token);
+      set({ token, user });
+    },
+    setImpersonateAuth: (token, user) => {
+      writeImpersonateCookie(token);
+      set({ token, user });
+    },
+    setUser: (user) => set({ user }),
+    setHydrated: () => set({ token: readTokenCookie(), hydrated: true }),
+    logout: () => {
+      writeTokenCookie(null);
+      writeImpersonateCookie(null);
+      localStorage.removeItem("smartpos-locale");
+      localStorage.removeItem("smartpos-theme");
+      localStorage.removeItem("pos-view-mode");
+      localStorage.removeItem("pos-favorites");
+      localStorage.removeItem("smartpos-portal-token");
+      queryClient.clear();
+      set({ token: null, user: null });
+    },
+    stopImpersonation: () => {
+      writeImpersonateCookie(null);
+      // The original super-admin token in `smartpos_token` is still intact.
+      // Reload so the store re-hydrates from the original cookie.
+      window.location.reload();
+    },
+    can: (permission) => hasPermission(get().user, permission),
+    canAny: (permissions) =>
+      permissions.length === 0 ||
+      permissions.some((permission) => hasPermission(get().user, permission)),
+    canAll: (permissions) =>
+      permissions.every((permission) => hasPermission(get().user, permission)),
+  }),
+);

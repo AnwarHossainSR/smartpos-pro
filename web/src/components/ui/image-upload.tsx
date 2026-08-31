@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "./toast";
 
@@ -96,7 +96,10 @@ export function ImageUpload({
           : "border-[var(--border)] hover:border-[var(--primary)]/50",
         className,
       )}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}

@@ -1,17 +1,17 @@
+import { Ban, Eye, LogIn, Play, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Eye, Ban, Play, Trash2, LogIn } from "lucide-react";
-import { useTenants, useTenantMutations } from "../hooks";
-import { useAuth } from "@/stores/auth";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
-import { TenantDetailModal } from "./tenant-detail-modal";
-import { CreateTenantDialog } from "./create-tenant-dialog";
+import { useAuth } from "@/stores/auth";
+import { useTenantMutations, useTenants } from "../hooks";
 import type { Tenant } from "../types";
+import { CreateTenantDialog } from "./create-tenant-dialog";
+import { TenantDetailModal } from "./tenant-detail-modal";
 
 export function TenantList() {
   const [viewing, setViewing] = useState<Tenant | null>(null);
@@ -43,11 +43,7 @@ export function TenantList() {
     {
       key: "status",
       header: "Status",
-      render: (t) => (
-        <Badge tone={t.status === "active" ? "success" : "danger"}>
-          {t.status}
-        </Badge>
-      ),
+      render: (t) => <Badge tone={t.status === "active" ? "success" : "danger"}>{t.status}</Badge>,
     },
     {
       key: "users",
@@ -96,10 +92,7 @@ export function TenantList() {
             className="w-40"
             value={(list.filters as Record<string, string>).status ?? ""}
             onChange={(e) =>
-              list.setFilter(
-                "status" as never,
-                e.target.value || (undefined as never),
-              )
+              list.setFilter("status" as never, e.target.value || (undefined as never))
             }
           >
             <option value="">All statuses</option>
@@ -121,12 +114,7 @@ export function TenantList() {
           emptyMessage="No tenants found."
           actions={(t) => (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewing(t)}
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewing(t)}>
                 <Eye className="h-3.5 w-3.5" />
               </Button>
               {canManage && (
@@ -184,10 +172,7 @@ export function TenantList() {
         )}
       </div>
 
-      <TenantDetailModal
-        tenantId={viewing?.id ?? null}
-        onClose={() => setViewing(null)}
-      />
+      <TenantDetailModal tenantId={viewing?.id ?? null} onClose={() => setViewing(null)} />
 
       <Dialog
         open={!!deleting}

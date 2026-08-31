@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { paginateLabels } from "./label-layout";
 import {
+  expandRows,
+  type LabelProduct,
+  labelsPerSheet,
   PAGE_HEIGHT_MM,
   PAGE_WIDTH_MM,
   SHEET_PRESETS,
-  expandRows,
-  labelsPerSheet,
   sheetContentHeightMm,
   sheetContentWidthMm,
   sheetPreset,
   unitLabel,
-  type LabelProduct,
 } from "./label-templates";
-import { paginateLabels } from "./label-layout";
 
 function product(id: string, overrides: Partial<LabelProduct> = {}): LabelProduct {
   return { id, name: `Product ${id}`, sku: `SKU-${id}`, selling_price: 9.99, ...overrides };
@@ -92,8 +92,12 @@ describe("paginateLabels", () => {
 
 describe("unitLabel", () => {
   it("prefers the unit, then the brand, then the category", () => {
-    expect(unitLabel(product("a", { unit: { id: "u", name: "Litre", short_name: "L" } }))).toBe("L");
-    expect(unitLabel(product("a", { unit: { id: "u", name: "Litre", short_name: null } }))).toBe("Litre");
+    expect(unitLabel(product("a", { unit: { id: "u", name: "Litre", short_name: "L" } }))).toBe(
+      "L",
+    );
+    expect(unitLabel(product("a", { unit: { id: "u", name: "Litre", short_name: null } }))).toBe(
+      "Litre",
+    );
     expect(unitLabel(product("a", { brand: { id: "b", name: "Acme" } }))).toBe("Acme");
     expect(unitLabel(product("a", { category: { id: "c", name: "Drinks" } }))).toBe("Drinks");
     expect(unitLabel(product("a"))).toBeNull();

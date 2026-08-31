@@ -1,16 +1,15 @@
+import { AlertTriangle, ChevronDown, ChevronUp, Clock, Send } from "lucide-react";
 import { useState } from "react";
-import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Send,
-} from "lucide-react";
-import { useSupportTicket, useUpdateTicketStatus, useReplyToTicket, useAddInternalNote } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  useAddInternalNote,
+  useReplyToTicket,
+  useSupportTicket,
+  useUpdateTicketStatus,
+} from "../hooks";
 
 const STATUS_TONES: Record<string, "info" | "warning" | "danger" | "success" | "default"> = {
   open: "info",
@@ -73,7 +72,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function SLABanner({ ticket }: { ticket: { is_sla_breached: boolean; sla_due_at: string | null } }) {
+function SLABanner({
+  ticket,
+}: {
+  ticket: { is_sla_breached: boolean; sla_due_at: string | null };
+}) {
   if (ticket.is_sla_breached) {
     return (
       <div className="flex items-center gap-2 rounded-[var(--radius)] bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
@@ -139,7 +142,12 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
     if (!ticket || !replyText.trim()) return;
     replyMutation.mutate(
       { id: ticket.id, message: replyText.trim() },
-      { onSuccess: () => { setReplyText(""); ticketQuery.refetch(); } },
+      {
+        onSuccess: () => {
+          setReplyText("");
+          ticketQuery.refetch();
+        },
+      },
     );
   };
 
@@ -147,7 +155,12 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
     if (!ticket || !noteText.trim()) return;
     addNote.mutate(
       { id: ticket.id, message: noteText.trim() },
-      { onSuccess: () => { setNoteText(""); ticketQuery.refetch(); } },
+      {
+        onSuccess: () => {
+          setNoteText("");
+          ticketQuery.refetch();
+        },
+      },
     );
   };
 
@@ -220,7 +233,9 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                         <span>
                           {ticket.user.name}
                           {ticket.user.email && (
-                            <span className="block text-xs text-[var(--muted)]">{ticket.user.email}</span>
+                            <span className="block text-xs text-[var(--muted)]">
+                              {ticket.user.email}
+                            </span>
                           )}
                         </span>
                       ) : (
@@ -228,7 +243,10 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                       )
                     }
                   />
-                  <Row label="Category" value={CATEGORY_LABELS[ticket.category] ?? ticket.category} />
+                  <Row
+                    label="Category"
+                    value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
+                  />
                   <Row
                     label="Status"
                     value={
@@ -259,7 +277,9 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                     value={
                       ticket.sla_due_at ? (
                         <span className="flex items-center gap-1">
-                          {ticket.is_sla_breached && <AlertTriangle className="h-3 w-3 text-red-500" />}
+                          {ticket.is_sla_breached && (
+                            <AlertTriangle className="h-3 w-3 text-red-500" />
+                          )}
                           {formatDate(ticket.sla_due_at)}
                         </span>
                       ) : (
@@ -291,7 +311,9 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                   <div className="mb-4 rounded-[var(--radius)] border border-[var(--border)] p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <span className="text-sm font-medium">{ticket.user?.name ?? "Customer"}</span>
-                      <span className="text-xs text-[var(--muted)]">{formatDate(ticket.created_at)}</span>
+                      <span className="text-xs text-[var(--muted)]">
+                        {formatDate(ticket.created_at)}
+                      </span>
                     </div>
                     <p className="whitespace-pre-wrap text-sm">{ticket.message}</p>
                   </div>
@@ -358,9 +380,7 @@ export function SupportTicketDetailModal({ ticketId, onClose }: Props) {
                   )}
 
                   {externalReplies.length === 0 && internalNotes.length === 0 && (
-                    <p className="py-8 text-center text-sm text-[var(--muted)]">
-                      No replies yet.
-                    </p>
+                    <p className="py-8 text-center text-sm text-[var(--muted)]">No replies yet.</p>
                   )}
                 </div>
 

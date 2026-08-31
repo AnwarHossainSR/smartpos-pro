@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { Numpad } from "@/components/ui/numpad";
 import { useIsTouchDevice } from "@/components/ui/use-is-touch-device";
+import { cn } from "@/lib/utils";
 
 interface PaymentNumpadProps {
   value: string;
@@ -34,11 +34,7 @@ export function PaymentNumpad({ value, onChange }: PaymentNumpadProps) {
 
   return (
     <div className="mt-2" key={value}>
-      <Numpad
-        onDigit={handleDigit}
-        onBackspace={handleBackspace}
-        className={cn("max-w-[240px]")}
-      />
+      <Numpad onDigit={handleDigit} onBackspace={handleBackspace} className={cn("max-w-[240px]")} />
     </div>
   );
 }

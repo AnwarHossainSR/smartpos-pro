@@ -1,25 +1,32 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Clock, KeyRound, Shield } from "lucide-react";
-import { Pagination } from "@/components/ui/pagination";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Clock, KeyRound, Pencil, Plus, Search, Shield, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/components/ui/toast";
+import { RolesTab } from "@/features/roles/roles-tab";
+import { useTranslation } from "@/i18n/context";
 import { api, errorMessage, type Paginated } from "@/lib/api";
 import { useRoles } from "@/lib/lookups";
-import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Drawer } from "@/components/ui/drawer";
-import { Dialog } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
-import { useTranslation } from "@/i18n/context";
 import { queryKeys } from "@/lib/query-keys";
-import { RolesTab } from "@/features/roles/roles-tab";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
+import { useAuth } from "@/stores/auth";
 import type { Role } from "@/types/domain";
 
 interface TeamUser {
@@ -49,8 +56,21 @@ interface ShiftReport {
   to: string;
   group_by: string;
   rows: ShiftRow[];
-    by_user: { user_id: string; user_name: string; shifts: number; hours: number; overtime_hours: number; is_overtime: boolean }[];
-  totals: { shifts: number; minutes: number; hours: number; overtime_minutes: number; overtime_hours: number };
+  by_user: {
+    user_id: string;
+    user_name: string;
+    shifts: number;
+    hours: number;
+    overtime_hours: number;
+    is_overtime: boolean;
+  }[];
+  totals: {
+    shifts: number;
+    minutes: number;
+    hours: number;
+    overtime_minutes: number;
+    overtime_hours: number;
+  };
 }
 
 const schema = z.object({
@@ -62,9 +82,27 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { defaultValues?: Partial<FormValues>; userId?: string; isEdit: boolean; roles: Role[]; onSuccess: () => void }) {
+function UserForm({
+  defaultValues,
+  userId,
+  isEdit,
+  roles,
+  onSuccess,
+}: {
+  defaultValues?: Partial<FormValues>;
+  userId?: string;
+  isEdit: boolean;
+  roles: Role[];
+  onSuccess: () => void;
+}) {
   const qc = useQueryClient();
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { roles: [], ...defaultValues },
   });
@@ -72,33 +110,75 @@ function UserForm({ defaultValues, userId, isEdit, roles, onSuccess }: { default
   const selectedRoles = watch("roles") ?? [];
 
   const toggleRole = (slug: string) => {
-    setValue("roles", selectedRoles.includes(slug) ? selectedRoles.filter((r) => r !== slug) : [...selectedRoles, slug]);
+    setValue(
+      "roles",
+      selectedRoles.includes(slug)
+        ? selectedRoles.filter((r) => r !== slug)
+        : [...selectedRoles, slug],
+    );
   };
 
   const mutation = useMutation({
     mutationFn: (data: FormValues) =>
-      isEdit ? api(`/users/${userId}`, { method: "PUT", body: data }) : api("/users", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast(isEdit ? "User updated" : "User invited"); onSuccess(); },
+      isEdit
+        ? api(`/users/${userId}`, { method: "PUT", body: data })
+        : api("/users", { method: "POST", body: data }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.team.all });
+      toast(isEdit ? "User updated" : "User invited");
+      onSuccess();
+    },
   });
 
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-      <div><Label>Name *</Label><Input {...register("name")} />{errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}</div>
-      <div><Label>Email *</Label><Input type="email" {...register("email")} />{errors.email && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email.message}</p>}</div>
-      <div><Label>Phone</Label><Input {...register("phone")} /></div>
-      <div><Label>{isEdit ? "New password (leave blank to keep)" : "Password (optional)"}</Label><Input type="password" {...register("password")} placeholder={isEdit ? "Unchanged" : "Min 8 chars"} /></div>
+      <div>
+        <Label>Name *</Label>
+        <Input {...register("name")} />
+        {errors.name && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+        )}
+      </div>
+      <div>
+        <Label>Email *</Label>
+        <Input type="email" {...register("email")} />
+        {errors.email && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email.message}</p>
+        )}
+      </div>
+      <div>
+        <Label>Phone</Label>
+        <Input {...register("phone")} />
+      </div>
+      <div>
+        <Label>{isEdit ? "New password (leave blank to keep)" : "Password (optional)"}</Label>
+        <Input
+          type="password"
+          {...register("password")}
+          placeholder={isEdit ? "Unchanged" : "Min 8 chars"}
+        />
+      </div>
       <div>
         <Label>Roles *</Label>
         <div className="mt-1 flex flex-wrap gap-2">
           {roles.map((r) => (
-            <button key={r.slug} type="button" onClick={() => toggleRole(r.slug)}
+            <button
+              key={r.slug}
+              type="button"
+              onClick={() => toggleRole(r.slug)}
               className={`rounded-full px-3 py-1 text-sm border transition ${selectedRoles.includes(r.slug) ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]" : "border-[var(--border)]"}`}
-            >{r.name}</button>
+            >
+              {r.name}
+            </button>
           ))}
         </div>
-        {errors.roles && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.roles.message}</p>}
+        {errors.roles && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.roles.message}</p>
+        )}
       </div>
-      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? "Saving…" : isEdit ? "Update user" : "Invite user"}</Button>
+      <Button type="submit" disabled={mutation.isPending} className="w-full">
+        {mutation.isPending ? "Saving…" : isEdit ? "Update user" : "Invite user"}
+      </Button>
     </form>
   );
 }
@@ -118,7 +198,8 @@ function ShiftsTab() {
 
   const { data, isLoading } = useQuery<{ data: ShiftReport }>({
     queryKey: queryKeys.shifts.report({ from, to }),
-    queryFn: () => api<{ data: ShiftReport }>(`/reports/shifts?from=${from}&to=${to}&group_by=week`),
+    queryFn: () =>
+      api<{ data: ShiftReport }>(`/reports/shifts?from=${from}&to=${to}&group_by=week`),
   });
 
   const report = data?.data;
@@ -127,15 +208,29 @@ function ShiftsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w - 1)}>←</Button>
-          <span className="text-sm font-medium">{from} — {to}</span>
-          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w + 1)}>→</Button>
-          {weekOffset !== 0 && <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Today</Button>}
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w - 1)}>
+            ←
+          </Button>
+          <span className="text-sm font-medium">
+            {from} — {to}
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w + 1)}>
+            →
+          </Button>
+          {weekOffset !== 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+              Today
+            </Button>
+          )}
         </div>
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[var(--radius)]" />)}</div>
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 rounded-[var(--radius)]" />
+          ))}
+        </div>
       ) : report && report.by_user.length > 0 ? (
         <>
           <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
@@ -189,7 +284,11 @@ function ShiftsTab() {
                         <TableCell className="text-end">{r.shifts}</TableCell>
                         <TableCell className="text-end">{r.hours.toFixed(1)}h</TableCell>
                         <TableCell className="text-end">
-                          {r.is_overtime ? <Badge tone="warning">{r.overtime_hours.toFixed(1)}h</Badge> : "—"}
+                          {r.is_overtime ? (
+                            <Badge tone="warning">{r.overtime_hours.toFixed(1)}h</Badge>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -200,8 +299,16 @@ function ShiftsTab() {
           )}
 
           <div className="flex gap-4 text-sm text-[var(--muted)]">
-            <span>{t("shifts.totalHours")}: <strong className="text-[var(--foreground)]">{report.totals.hours.toFixed(1)}h</strong></span>
-            <span>{t("shifts.totalOvertime")}: <strong className="text-amber-600">{report.totals.overtime_hours.toFixed(1)}h</strong></span>
+            <span>
+              {t("shifts.totalHours")}:{" "}
+              <strong className="text-[var(--foreground)]">
+                {report.totals.hours.toFixed(1)}h
+              </strong>
+            </span>
+            <span>
+              {t("shifts.totalOvertime")}:{" "}
+              <strong className="text-amber-600">{report.totals.overtime_hours.toFixed(1)}h</strong>
+            </span>
           </div>
         </>
       ) : (
@@ -227,7 +334,8 @@ export default function TeamPage() {
   const [tab, setTab] = useState<TeamTab>(() =>
     canViewMembers ? "members" : canViewRoles ? "roles" : "shifts",
   );
-  const [drawerOpen, setDrawerOpen] = useState(false); const [editing, setEditing] = useState<TeamUser | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<TeamUser | null>(null);
   const [deleting, setDeleting] = useState<TeamUser | null>(null);
   const [revokingPin, setRevokingPin] = useState<TeamUser | null>(null);
 
@@ -243,56 +351,207 @@ export default function TeamPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/users/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast("User removed"); setDeleting(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.team.all });
+      toast("User removed");
+      setDeleting(null);
+    },
   });
 
   const revokePinMutation = useMutation({
     mutationFn: (id: string) => api(`/users/${id}/approval-pin`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.team.all }); toast("Approval PIN revoked"); setRevokingPin(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.team.all });
+      toast("Approval PIN revoked");
+      setRevokingPin(null);
+    },
   });
 
-  const statusColor: Record<string, "success" | "warning" | "default"> = { active: "success", invited: "warning", suspended: "danger" as "default" };
+  const statusColor: Record<string, "success" | "warning" | "default"> = {
+    active: "success",
+    invited: "warning",
+    suspended: "danger" as "default",
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t("team.title")}</h1>
-        {can("users.create") && tab === "members" && <Button size="sm" onClick={() => { setEditing(null); setDrawerOpen(true); }}><Plus className="h-4 w-4" />{t("team.inviteUser")}</Button>}
+        {can("users.create") && tab === "members" && (
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditing(null);
+              setDrawerOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            {t("team.inviteUser")}
+          </Button>
+        )}
       </div>
 
-      <div role="tablist" aria-label={t("team.title")} className="flex gap-2 border-b border-[var(--border)] pb-2">
-        {canViewMembers && <Button role="tab" aria-selected={tab === "members"} size="sm" variant={tab === "members" ? "primary" : "ghost"} onClick={() => setTab("members")}>{t("team.members")}</Button>}
-        {canViewRoles && <Button role="tab" aria-selected={tab === "roles"} size="sm" variant={tab === "roles" ? "primary" : "ghost"} onClick={() => setTab("roles")}><Shield className="h-3.5 w-3.5" /> {t("team.rolesTab")}</Button>}
-        {canViewShifts && <Button role="tab" aria-selected={tab === "shifts"} size="sm" variant={tab === "shifts" ? "primary" : "ghost"} onClick={() => setTab("shifts")}><Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}</Button>}
+      <div
+        role="tablist"
+        aria-label={t("team.title")}
+        className="flex gap-2 border-b border-[var(--border)] pb-2"
+      >
+        {canViewMembers && (
+          <Button
+            role="tab"
+            aria-selected={tab === "members"}
+            size="sm"
+            variant={tab === "members" ? "primary" : "ghost"}
+            onClick={() => setTab("members")}
+          >
+            {t("team.members")}
+          </Button>
+        )}
+        {canViewRoles && (
+          <Button
+            role="tab"
+            aria-selected={tab === "roles"}
+            size="sm"
+            variant={tab === "roles" ? "primary" : "ghost"}
+            onClick={() => setTab("roles")}
+          >
+            <Shield className="h-3.5 w-3.5" /> {t("team.rolesTab")}
+          </Button>
+        )}
+        {canViewShifts && (
+          <Button
+            role="tab"
+            aria-selected={tab === "shifts"}
+            size="sm"
+            variant={tab === "shifts" ? "primary" : "ghost"}
+            onClick={() => setTab("shifts")}
+          >
+            <Clock className="h-3.5 w-3.5" /> {t("team.shiftsTab")}
+          </Button>
+        )}
       </div>
 
       {tab === "roles" ? (
         <RolesTab />
       ) : tab === "members" ? (
         <>
-          <div className="relative"><Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" /><Input className="ps-9" placeholder={t("team.searchPlaceholder")} value={list.searchInput} onChange={(e) => list.setSearch(e.target.value)} /></div>
+          <div className="relative">
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+            <Input
+              className="ps-9"
+              placeholder={t("team.searchPlaceholder")}
+              value={list.searchInput}
+              onChange={(e) => list.setSearch(e.target.value)}
+            />
+          </div>
           <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
             <Table>
-              <TableHeader><TableRow><TableHead>{t("team.name")}</TableHead><TableHead>{t("team.email")}</TableHead><TableHead>{t("team.roles")}</TableHead><TableHead>{t("team.status")}</TableHead><TableHead className="w-20" /></TableRow></TableHeader>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("team.name")}</TableHead>
+                  <TableHead>{t("team.email")}</TableHead>
+                  <TableHead>{t("team.roles")}</TableHead>
+                  <TableHead>{t("team.status")}</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
               <TableBody>
-                {list.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                  : list.isError ? <TableRow><TableCell colSpan={5} className="py-12 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(list.error, t("team.empty"))}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => list.refetch()}>{t("tables.retry")}</Button></TableCell></TableRow>
-                  : list.isEmpty ? <TableRow><TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">{t("team.empty")}</TableCell></TableRow>
-                  : list.data.map((u) => (
+                {list.isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 5 }).map((__, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : list.isError ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center">
+                      <p className="text-sm text-[var(--muted)]">
+                        {errorMessage(list.error, t("team.empty"))}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => list.refetch()}
+                      >
+                        {t("tables.retry")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ) : list.isEmpty ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center text-[var(--muted)]">
+                      {t("team.empty")}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  list.data.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.name}{u.phone && <span className="block text-xs text-[var(--muted)]">{u.phone}</span>}</TableCell>
+                      <TableCell className="font-medium">
+                        {u.name}
+                        {u.phone && (
+                          <span className="block text-xs text-[var(--muted)]">{u.phone}</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} tone="info">{r}</Badge>)}{u.has_approval_pin && <Badge tone="success">PIN</Badge>}</div></TableCell>
-                      <TableCell><Badge tone={statusColor[u.status] ?? "default"}>{u.status}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {u.roles.map((r) => (
+                            <Badge key={r} tone="info">
+                              {r}
+                            </Badge>
+                          ))}
+                          {u.has_approval_pin && <Badge tone="success">PIN</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge tone={statusColor[u.status] ?? "default"}>{u.status}</Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {can("users.update") && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(u); setDrawerOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
-                          {can("users.update") && u.has_approval_pin && <Button variant="ghost" size="icon" className="h-8 w-8" title="Revoke approval PIN" onClick={() => setRevokingPin(u)}><KeyRound className="h-3.5 w-3.5" /></Button>}
-                          {can("users.delete") && <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(u)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+                          {can("users.update") && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditing(u);
+                                setDrawerOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {can("users.update") && u.has_approval_pin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Revoke approval PIN"
+                              onClick={() => setRevokingPin(u)}
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {can("users.delete") && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-[var(--color-danger)]"
+                              onClick={() => setDeleting(u)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))
+                )}
               </TableBody>
             </Table>
             {list.meta && (
@@ -304,10 +563,39 @@ export default function TeamPage() {
               />
             )}
           </div>
-          <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? `Edit: ${editing.name}` : t("team.inviteUser")}>
-            <UserForm key={editing?.id ?? "new"} isEdit={!!editing} userId={editing?.id} roles={roles} defaultValues={editing ? { name: editing.name, email: editing.email, phone: editing.phone ?? undefined, roles: editing.roles } : undefined} onSuccess={() => setDrawerOpen(false)} />
+          <Drawer
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            title={editing ? `Edit: ${editing.name}` : t("team.inviteUser")}
+          >
+            <UserForm
+              key={editing?.id ?? "new"}
+              isEdit={!!editing}
+              userId={editing?.id}
+              roles={roles}
+              defaultValues={
+                editing
+                  ? {
+                      name: editing.name,
+                      email: editing.email,
+                      phone: editing.phone ?? undefined,
+                      roles: editing.roles,
+                    }
+                  : undefined
+              }
+              onSuccess={() => setDrawerOpen(false)}
+            />
           </Drawer>
-          <Dialog open={!!deleting} onClose={() => setDeleting(null)} title={t("team.removeUser")} description={`${t("team.removeConfirm")} "${deleting?.name}"?`} confirmLabel={t("team.remove")} confirmVariant="danger" onConfirm={() => deleting && deleteMutation.mutate(deleting.id)} loading={deleteMutation.isPending} />
+          <Dialog
+            open={!!deleting}
+            onClose={() => setDeleting(null)}
+            title={t("team.removeUser")}
+            description={`${t("team.removeConfirm")} "${deleting?.name}"?`}
+            confirmLabel={t("team.remove")}
+            confirmVariant="danger"
+            onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+            loading={deleteMutation.isPending}
+          />
           <Dialog
             open={!!revokingPin}
             onClose={() => setRevokingPin(null)}

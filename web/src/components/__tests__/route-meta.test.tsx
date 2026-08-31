@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
+import { describe, expect, it } from "vitest";
 import { RouteMeta } from "@/components/route-meta";
 import { SITE_NAME } from "@/lib/seo";
 
@@ -12,7 +12,11 @@ const routes = [
         path: "/shell",
         element: <div>shell</div>,
         children: [
-          { path: "products", element: <div>products page</div>, handle: { seo: { title: "Products" } } },
+          {
+            path: "products",
+            element: <div>products page</div>,
+            handle: { seo: { title: "Products" } },
+          },
         ],
       },
       { path: "/login", element: <div>login page</div>, handle: { seo: { title: "Sign in" } } },

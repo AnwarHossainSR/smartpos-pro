@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { api, ApiError } from "@/lib/api";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/context";
+import { ApiError, api } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const t = useTranslation();
@@ -39,11 +39,18 @@ export default function ForgotPasswordPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label>{t("auth.email")}</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
           </div>
           {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading && <Spinner />} {loading ? t("auth.sendingResetLink") : t("auth.sendResetLink")}
+            {loading && <Spinner />}{" "}
+            {loading ? t("auth.sendingResetLink") : t("auth.sendResetLink")}
           </Button>
         </form>
       )}

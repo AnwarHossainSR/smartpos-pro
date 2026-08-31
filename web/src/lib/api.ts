@@ -1,8 +1,7 @@
-import { useAuth } from "@/stores/auth";
 import { toast } from "@/components/ui/toast";
+import { useAuth } from "@/stores/auth";
 
-export const API_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
 
 export class ApiError extends Error {
   constructor(

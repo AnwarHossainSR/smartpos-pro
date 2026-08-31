@@ -1,10 +1,10 @@
-import { Link } from "react-router";
 import { ShieldOff } from "lucide-react";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/context";
-import { hasPermission, useAuth } from "@/stores/auth";
 import type { PermissionSlug } from "@/lib/permissions";
+import { hasPermission, useAuth } from "@/stores/auth";
 
 /**
  * The single permission guard for the app. Every route under `(app)` goes through it via
@@ -38,7 +38,11 @@ export function RequirePermission({
 
   if (!hydrated || !user) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
+      <div
+        className="flex min-h-[40vh] items-center justify-center"
+        role="status"
+        aria-live="polite"
+      >
         <Spinner className="h-6 w-6 text-[var(--primary)]" />
         <span className="sr-only">Loading</span>
       </div>

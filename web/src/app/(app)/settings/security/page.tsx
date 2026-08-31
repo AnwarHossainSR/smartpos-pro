@@ -1,23 +1,32 @@
-import { ApprovalPinCard } from "@/components/approval-pin-card";
-import { useTranslation } from "@/i18n/context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Dialog } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/toast";
-import { api, errorMessage } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { useAuth } from "@/stores/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ShieldCheck, ShieldOff, Lock, KeyRound, Laptop, Smartphone, AlertTriangle } from "lucide-react";
-import { Link } from "react-router";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  KeyRound,
+  Laptop,
+  Lock,
+  ShieldCheck,
+  ShieldOff,
+  Smartphone,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "react-router";
 import { z } from "zod";
+import { ApprovalPinCard } from "@/components/approval-pin-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/context";
+import { api, errorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { formatDateTime } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
 
 interface Session {
   id: string;
@@ -40,25 +49,35 @@ interface LockoutStatus {
   failed_attempts: number;
 }
 
-const passwordSchema = z.object({
-  current_password: z.string().min(1),
-  new_password: z.string().min(8),
-  new_password_confirmation: z.string().min(1),
-}).refine((d) => d.new_password === d.new_password_confirmation, {
-  message: "Passwords don't match",
-  path: ["new_password_confirmation"],
-});
+const passwordSchema = z
+  .object({
+    current_password: z.string().min(1),
+    new_password: z.string().min(8),
+    new_password_confirmation: z.string().min(1),
+  })
+  .refine((d) => d.new_password === d.new_password_confirmation, {
+    message: "Passwords don't match",
+    path: ["new_password_confirmation"],
+  });
 type PasswordForm = z.infer<typeof passwordSchema>;
 
 function PasswordSection() {
   const t = useTranslation();
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<PasswordForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<PasswordForm>({
     resolver: zodResolver(passwordSchema),
   });
 
   const mutation = useMutation({
     mutationFn: (d: PasswordForm) => api("/auth/change-password", { method: "POST", body: d }),
-    onSuccess: () => { toast(t("security.password.success")); reset(); },
+    onSuccess: () => {
+      toast(t("security.password.success"));
+      reset();
+    },
   });
 
   return (
@@ -73,18 +92,38 @@ function PasswordSection() {
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 max-w-md">
           <div>
             <Label>{t("security.password.current")}</Label>
-            <Input type="password" autoComplete="current-password" {...register("current_password")} />
-            {errors.current_password && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.current_password.message}</p>}
+            <Input
+              type="password"
+              autoComplete="current-password"
+              {...register("current_password")}
+            />
+            {errors.current_password && (
+              <p className="mt-1 text-xs text-[var(--color-danger)]">
+                {errors.current_password.message}
+              </p>
+            )}
           </div>
           <div>
             <Label>{t("security.password.new")}</Label>
             <Input type="password" autoComplete="new-password" {...register("new_password")} />
-            {errors.new_password && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.new_password.message}</p>}
+            {errors.new_password && (
+              <p className="mt-1 text-xs text-[var(--color-danger)]">
+                {errors.new_password.message}
+              </p>
+            )}
           </div>
           <div>
             <Label>{t("security.password.confirm")}</Label>
-            <Input type="password" autoComplete="new-password" {...register("new_password_confirmation")} />
-            {errors.new_password_confirmation && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.new_password_confirmation.message}</p>}
+            <Input
+              type="password"
+              autoComplete="new-password"
+              {...register("new_password_confirmation")}
+            />
+            {errors.new_password_confirmation && (
+              <p className="mt-1 text-xs text-[var(--color-danger)]">
+                {errors.new_password_confirmation.message}
+              </p>
+            )}
           </div>
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? t("common.saving") : t("security.password.submit")}
@@ -126,18 +165,28 @@ function TwoFactorSection() {
   const refetchUser = () => qc.refetchQueries({ queryKey: queryKeys.me });
 
   const enableMutation = useMutation({
-    mutationFn: () => api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", { method: "POST" }),
+    mutationFn: () =>
+      api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", {
+        method: "POST",
+      }),
     onSuccess: (res) => {
       setSecret(res.data.secret);
       setEnrolling(true);
       import("qrcode").then((QRCode) => {
-        QRCode.default.toDataURL(res.data.otpauth_url, { width: 200 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
+        QRCode.default
+          .toDataURL(res.data.otpauth_url, { width: 200 })
+          .then(setQrDataUrl)
+          .catch(() => setQrDataUrl(null));
       });
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: () => api<{ data: { recovery_codes: string[] } }>("/auth/2fa/confirm", { method: "POST", body: { code } }),
+    mutationFn: () =>
+      api<{ data: { recovery_codes: string[] } }>("/auth/2fa/confirm", {
+        method: "POST",
+        body: { code },
+      }),
     onSuccess: async (res) => {
       setRecoveryCodes(res.data.recovery_codes);
       setEnrolling(false);
@@ -162,7 +211,11 @@ function TwoFactorSection() {
   });
 
   const regenerateMutation = useMutation({
-    mutationFn: () => api<{ data: { recovery_codes: string[] } }>("/auth/2fa/recovery-codes/regenerate", { method: "POST", body: { password } }),
+    mutationFn: () =>
+      api<{ data: { recovery_codes: string[] } }>("/auth/2fa/recovery-codes/regenerate", {
+        method: "POST",
+        body: { password },
+      }),
     onSuccess: (res) => {
       setRecoveryCodes(res.data.recovery_codes);
       setRegenerating(false);
@@ -174,7 +227,11 @@ function TwoFactorSection() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {enabled ? <ShieldCheck className="h-4 w-4 text-[var(--color-success)]" /> : <ShieldOff className="h-4 w-4 text-[var(--muted)]" />}
+          {enabled ? (
+            <ShieldCheck className="h-4 w-4 text-[var(--color-success)]" />
+          ) : (
+            <ShieldOff className="h-4 w-4 text-[var(--muted)]" />
+          )}
           {t("security.2fa.title")}
         </CardTitle>
       </CardHeader>
@@ -195,12 +252,21 @@ function TwoFactorSection() {
               <Button variant="outline" size="sm" onClick={() => setRegenerating(true)}>
                 {t("security.2fa.recovery")}
               </Button>
-              <Button variant="outline" size="sm" className="text-[var(--color-danger)]" onClick={() => setDisabling(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[var(--color-danger)]"
+                onClick={() => setDisabling(true)}
+              >
                 {t("security.2fa.disable")}
               </Button>
             </div>
           ) : (
-            <Button size="sm" onClick={() => enableMutation.mutate()} disabled={enableMutation.isPending}>
+            <Button
+              size="sm"
+              onClick={() => enableMutation.mutate()}
+              disabled={enableMutation.isPending}
+            >
               {t("security.2fa.enable")}
             </Button>
           )}
@@ -226,14 +292,23 @@ function TwoFactorSection() {
             )}
             <div>
               <Label>6-digit code</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" maxLength={6} autoFocus />
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                inputMode="numeric"
+                maxLength={6}
+                autoFocus
+              />
             </div>
           </div>
         </Dialog>
 
         <Dialog
           open={disabling}
-          onClose={() => { setDisabling(false); setPassword(""); }}
+          onClose={() => {
+            setDisabling(false);
+            setPassword("");
+          }}
           title={t("security.2fa.disable")}
           description="Enter your password to confirm."
           confirmLabel={t("security.2fa.disable")}
@@ -243,13 +318,21 @@ function TwoFactorSection() {
         >
           <div>
             <Label>{t("security.password.current")}</Label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+            />
           </div>
         </Dialog>
 
         <Dialog
           open={regenerating}
-          onClose={() => { setRegenerating(false); setPassword(""); }}
+          onClose={() => {
+            setRegenerating(false);
+            setPassword("");
+          }}
           title={t("security.2fa.recovery")}
           description={t("security.2fa.recovery_warning")}
           confirmLabel={t("security.2fa.recovery")}
@@ -259,7 +342,12 @@ function TwoFactorSection() {
         >
           <div>
             <Label>{t("security.password.current")}</Label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+            />
           </div>
         </Dialog>
 
@@ -271,7 +359,10 @@ function TwoFactorSection() {
         >
           <div className="grid grid-cols-2 gap-2 font-mono text-sm">
             {recoveryCodes?.map((c) => (
-              <div key={c} className="rounded-[var(--radius)] bg-[var(--surface-2)] p-2 text-center">
+              <div
+                key={c}
+                className="rounded-[var(--radius)] bg-[var(--surface-2)] p-2 text-center"
+              >
                 {c}
               </div>
             ))}
@@ -298,15 +389,29 @@ function SessionsSection() {
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => api(`/auth/sessions/${id}`, { method: "DELETE" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.authSessions }); toast(t("security.sessions.revoked")); setRevoking(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.authSessions });
+      toast(t("security.sessions.revoked"));
+      setRevoking(null);
+    },
     // Keeps the confirm dialog from sticking open on a failed revoke.
-    onError: (e: unknown) => { setRevoking(null); toast(errorMessage(e), "error"); },
+    onError: (e: unknown) => {
+      setRevoking(null);
+      toast(errorMessage(e), "error");
+    },
   });
 
   const revokeAllMutation = useMutation({
     mutationFn: () => api("/auth/sessions/revoke-all", { method: "POST" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.authSessions }); toast(t("security.sessions.revoked_all")); setRevokingAll(false); },
-    onError: (e: unknown) => { setRevokingAll(false); toast(errorMessage(e), "error"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.authSessions });
+      toast(t("security.sessions.revoked_all"));
+      setRevokingAll(false);
+    },
+    onError: (e: unknown) => {
+      setRevokingAll(false);
+      toast(errorMessage(e), "error");
+    },
   });
 
   const sessions = data?.data ?? [];
@@ -347,12 +452,19 @@ function SessionsSection() {
                     </div>
                     <p className="truncate text-xs text-[var(--muted)]">
                       {s.ip_address ?? "—"} · {t("security.sessions.last_used")}{" "}
-                      {s.last_used_at ? formatDateTime(s.last_used_at) : formatDateTime(s.created_at)}
+                      {s.last_used_at
+                        ? formatDateTime(s.last_used_at)
+                        : formatDateTime(s.created_at)}
                     </p>
                   </div>
                 </div>
                 {!s.current && (
-                  <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setRevoking(s)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[var(--color-danger)]"
+                    onClick={() => setRevoking(s)}
+                  >
                     {t("security.sessions.revoke")}
                   </Button>
                 )}

@@ -1,17 +1,12 @@
-import {
-  barcodeValueFor,
-  encodeBarcode,
-  layoutBarcode,
-  type EncodedBarcode,
-} from "@/lib/barcode";
-import { formatCurrency } from "@/lib/utils";
 import { useMemo } from "react";
+import { barcodeValueFor, type EncodedBarcode, encodeBarcode, layoutBarcode } from "@/lib/barcode";
+import { formatCurrency } from "@/lib/utils";
 import {
-  sheetContentWidthMm,
-  unitLabel,
   type LabelProduct,
   type LabelTemplateId,
   type SheetPreset,
+  sheetContentWidthMm,
+  unitLabel,
 } from "./label-templates";
 
 /** Everything below is sized in millimetres so what prints measures what it says. */

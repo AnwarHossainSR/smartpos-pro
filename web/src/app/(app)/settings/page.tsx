@@ -1,4 +1,19 @@
-import { BrandingCard } from "@/features/settings/branding-card";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  Mail,
+  Percent,
+  Printer,
+  Shield,
+  ShieldCheck,
+  Webhook,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { Link } from "react-router";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -6,20 +21,14 @@ import { PalettePicker } from "@/components/ui/palette-picker";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { LOCALES, LOCALE_LABELS, type Locale } from "@/i18n/config";
+import { BrandingCard } from "@/features/settings/branding-card";
+import { LOCALE_LABELS, LOCALES, type Locale } from "@/i18n/config";
 import { useTranslation } from "@/i18n/context";
 import { api, type Envelope } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, ChevronRight, Mail, Percent, Printer, Shield, ShieldCheck, Webhook } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { Link } from "react-router";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 function Section({
   title,
@@ -55,7 +64,11 @@ function SettingRow({
   stacked?: boolean;
 }) {
   return (
-    <div className={stacked ? "space-y-3 p-5" : "flex flex-wrap items-center justify-between gap-4 p-5"}>
+    <div
+      className={
+        stacked ? "space-y-3 p-5" : "flex flex-wrap items-center justify-between gap-4 p-5"
+      }
+    >
       <div className="min-w-0 max-w-prose">
         <p className="text-sm font-medium">{label}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-[var(--muted)]">{hint}</p>
@@ -86,7 +99,9 @@ function SettingsLink({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{title}</span>
-        <span className="mt-0.5 block text-xs leading-relaxed text-[var(--muted)]">{description}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-[var(--muted)]">
+          {description}
+        </span>
       </span>
       <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--muted)] transition-transform group-hover:translate-x-0.5 rtl:scale-x-[-1]" />
     </Link>
@@ -132,7 +147,8 @@ function PreferencesCard({
   const setLocale = useLocaleStore((s) => s.setLocale);
 
   const save = useMutation({
-    mutationFn: (body: Record<string, unknown>) => api("/settings/business", { method: "PUT", body }),
+    mutationFn: (body: Record<string, unknown>) =>
+      api("/settings/business", { method: "PUT", body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.businessSettings }),
   });
 
@@ -168,7 +184,10 @@ function PreferencesCard({
               value={baseCurrency}
               disabled={save.isPending}
               onChange={(e) =>
-                save.mutate({ base_currency: e.target.value }, { onSuccess: () => toast(t("currency.saved")) })
+                save.mutate(
+                  { base_currency: e.target.value },
+                  { onSuccess: () => toast(t("currency.saved")) },
+                )
               }
             >
               {CURRENCIES.map((c) => (
@@ -247,7 +266,11 @@ export default function SettingsPage() {
     queryFn: () => api<Envelope<BusinessSettings>>("/settings/business"),
   });
 
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     values: data?.data
       ? {
@@ -265,7 +288,10 @@ export default function SettingsPage() {
 
   const mutation = useMutation({
     mutationFn: (d: FormValues) => api("/settings/business", { method: "PUT", body: d }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.businessSettings }); toast(t("settings.saved")); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.businessSettings });
+      toast(t("settings.saved"));
+    },
   });
 
   if (isLoading) {
@@ -295,12 +321,16 @@ export default function SettingsPage() {
               <div className="sm:col-span-2 xl:col-span-1">
                 <Label>{t("settings.businessName")} *</Label>
                 <Input {...register("name")} />
-                {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+                {errors.name && (
+                  <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+                )}
               </div>
               <div>
                 <Label>{t("settings.email")}</Label>
                 <Input type="email" {...register("email")} />
-                {errors.email && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.email.message}</p>
+                )}
               </div>
               <div>
                 <Label>{t("settings.phone")}</Label>
@@ -316,7 +346,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="border-t border-[var(--border)] pt-4 sm:col-span-2 xl:col-span-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">Regional formats</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+                  Regional formats
+                </p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-3 xl:col-span-3">
                 <div>

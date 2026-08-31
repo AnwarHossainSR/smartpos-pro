@@ -1,14 +1,14 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, errorMessage, type Envelope } from "@/lib/api";
+import { api, type Envelope, errorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { formatDateTime } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RotateCcw } from "lucide-react";
-import { useState } from "react";
 
 interface Delivery {
   id: string;
@@ -59,11 +59,7 @@ export function DeliveryLog() {
         if (!row.delivered_at) return <Badge tone="warning">{t("webhooks.pending")}</Badge>;
         const code = row.response_code ?? 0;
         const ok = code >= 200 && code < 300;
-        return (
-          <Badge tone={ok ? "success" : "danger"}>
-            {code || t("webhooks.error")}
-          </Badge>
-        );
+        return <Badge tone={ok ? "success" : "danger"}>{code || t("webhooks.error")}</Badge>;
       },
     },
     {

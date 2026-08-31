@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { api, type Paginated } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency } from "@/lib/utils";
-import type { Named } from "@/types/domain";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Drawer } from "@/components/ui/drawer";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { ListToolbar } from "@/components/ui/list-toolbar";
-import { Pagination } from "@/components/ui/pagination";
-import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import type { Named } from "@/types/domain";
 
 interface Expense {
   id: string;
@@ -49,28 +49,47 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
     queryFn: () => api<Paginated<Named>>("/expense-categories?per_page=100"),
     staleTime: 5 * 60_000,
   });
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { payment_method: "cash", spent_at: new Date().toISOString().slice(0, 10) },
   });
   const mutation = useMutation({
     mutationFn: (data: FormValues) => api("/expenses", { method: "POST", body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.expenses.all }); toast("Expense added"); onSuccess(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.expenses.all });
+      toast("Expense added");
+      onSuccess();
+    },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
         <Label>Category</Label>
-        <Select {...register("category_id", { setValueAs: (v) => v ? String(v) : undefined })}>
+        <Select {...register("category_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
           <option value="">— None —</option>
-          {cats?.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {cats?.data?.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </Select>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Amount *</Label>
-          <Input type="number" step="0.01" min="0.01" {...register("amount", { valueAsNumber: true })} />
-          {errors.amount && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.amount.message}</p>}
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register("amount", { valueAsNumber: true })}
+          />
+          {errors.amount && (
+            <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.amount.message}</p>
+          )}
         </div>
         <div>
           <Label>Date *</Label>
@@ -90,13 +109,17 @@ function ExpenseForm({ onSuccess }: { onSuccess: () => void }) {
         <Label>Note</Label>
         <Textarea {...register("note")} placeholder="Optional note…" />
       </div>
-      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? "Saving…" : "Add expense"}</Button>
+      <Button type="submit" disabled={mutation.isPending} className="w-full">
+        {mutation.isPending ? "Saving…" : "Add expense"}
+      </Button>
     </form>
   );
 }
 
 const payColor: Record<string, "success" | "warning" | "danger" | "default"> = {
-  approved: "success", pending: "warning", rejected: "danger",
+  approved: "success",
+  pending: "warning",
+  rejected: "danger",
 };
 
 export default function ExpensesPage() {
@@ -109,12 +132,32 @@ export default function ExpensesPage() {
   });
 
   const columns: DataTableColumn<Expense>[] = [
-    { key: "reference", header: "Reference", className: "font-mono text-xs", render: (e) => e.reference },
+    {
+      key: "reference",
+      header: "Reference",
+      className: "font-mono text-xs",
+      render: (e) => e.reference,
+    },
     { key: "category", header: "Category", render: (e) => e.category?.name ?? "—" },
     { key: "date", header: "Date", render: (e) => e.spent_at },
-    { key: "method", header: "Method", className: "capitalize", render: (e) => e.payment_method.replace("_", " ") },
-    { key: "amount", header: "Amount", align: "right", className: "font-medium", render: (e) => formatCurrency(e.amount) },
-    { key: "status", header: "Status", render: (e) => <Badge tone={payColor[e.status] ?? "default"}>{e.status}</Badge> },
+    {
+      key: "method",
+      header: "Method",
+      className: "capitalize",
+      render: (e) => e.payment_method.replace("_", " "),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      align: "right",
+      className: "font-medium",
+      render: (e) => formatCurrency(e.amount),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (e) => <Badge tone={payColor[e.status] ?? "default"}>{e.status}</Badge>,
+    },
   ];
 
   return (

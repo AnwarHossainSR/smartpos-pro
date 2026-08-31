@@ -1,8 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { useThemeStore, THEME_STORAGE_KEY, type ServerTheme } from "../theme";
+import { beforeEach, describe, expect, it } from "vitest";
+import { type ServerTheme, THEME_STORAGE_KEY, useThemeStore } from "../theme";
 
 beforeEach(() => {
-  useThemeStore.setState({ theme: "system", palette: "amber", modeDirty: false, paletteDirty: false });
+  useThemeStore.setState({
+    theme: "system",
+    palette: "amber",
+    modeDirty: false,
+    paletteDirty: false,
+  });
 });
 
 describe("useThemeStore", () => {
@@ -86,9 +91,7 @@ describe("useThemeStore server sync", () => {
   it("ignores an unknown mode from the API", () => {
     useThemeStore.setState({ theme: "light", modeDirty: false });
 
-    useThemeStore
-      .getState()
-      .applyServerTheme({ mode: "midnight" } as unknown as ServerTheme);
+    useThemeStore.getState().applyServerTheme({ mode: "midnight" } as unknown as ServerTheme);
 
     expect(useThemeStore.getState().theme).toBe("light");
     expect(useThemeStore.getState().modeDirty).toBe(true);

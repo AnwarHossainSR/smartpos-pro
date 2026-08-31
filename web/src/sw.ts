@@ -12,17 +12,21 @@ const SHELL = ["/", "/dashboard", "/pos", "/offline.html"];
 self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(SHELL).catch(() => {})
-    )
+      cache.addAll(SHELL).catch(() => {
+        /* ignore */
+      }),
+    ),
   );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event: ExtendableEvent) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
+      ),
   );
   self.clients.claim();
 });
@@ -48,16 +52,17 @@ self.addEventListener("fetch", (event: FetchEvent) => {
         // `caches.match` can miss, and respondWith() rejects on undefined — always
         // resolve to a real Response so a failed navigation shows the offline page
         // rather than the browser's own network error.
-        .catch(async () =>
-          cached ??
-          (await caches.match("/offline.html")) ??
-          new Response("Offline", { status: 504, statusText: "Gateway Timeout" }),
+        .catch(
+          async () =>
+            cached ??
+            (await caches.match("/offline.html")) ??
+            new Response("Offline", { status: 504, statusText: "Gateway Timeout" }),
         );
 
       if (request.mode === "navigate") return networkFetch;
 
       return cached || networkFetch;
-    })
+    }),
   );
 });
 
@@ -115,7 +120,7 @@ async function syncPendingSales() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": sale.token ? `Bearer ${sale.token}` : "",
+          Authorization: sale.token ? `Bearer ${sale.token}` : "",
           "Idempotency-Key": sale.idempotencyKey,
         },
         body: JSON.stringify(sale.payload),

@@ -72,8 +72,8 @@ grouping hint for humans and carry no behaviour.
 - **Route guarding** via `useAuth().can('module.action')` for permission checks.
 - **A module that exports a React component must not also export hooks or mutable helpers.**
   Vite re-executes such a module on every edit, re-creating module-level values — which is how a
-  React context gets duplicated and every consumer starts reading `null`. Enforced as an ESLint
-  error (`react-refresh/only-export-components`).
+  React context gets duplicated and every consumer starts reading `null`. Enforced by code review;
+  Biome has no `react-refresh/only-export-components` equivalent (ESLint was replaced).
 - **No emojis** in code or UI unless explicitly requested.
 
 ## Definition of Done
@@ -90,7 +90,7 @@ grouping hint for humans and carry no behaviour.
 ```bash
 npm run dev        # Dev server on http://localhost:3000
 npx tsc --noEmit   # Typecheck
-npm run lint       # ESLint
+npm run lint       # Biome
 npm test           # Vitest
 npm run build      # Vite build
 npm run test:e2e   # Playwright

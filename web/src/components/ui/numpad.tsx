@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
 import { Delete } from "lucide-react";
 import { useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 interface NumpadProps {
   onDigit: (digit: string) => void;
@@ -61,7 +61,10 @@ export function Numpad({ onDigit, onBackspace, onConfirm, confirmLabel, classNam
       {onConfirm && (
         <button
           type="button"
-          onClick={() => { haptic(); onConfirm(); }}
+          onClick={() => {
+            haptic();
+            onConfirm();
+          }}
           className={cn(
             "mt-1 flex h-12 items-center justify-center rounded-[var(--radius)] bg-[var(--primary)] text-sm font-medium text-[var(--primary-fg)] transition-colors",
             "active:scale-95 active:opacity-90",

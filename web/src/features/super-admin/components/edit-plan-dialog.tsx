@@ -23,7 +23,8 @@ interface EditPlanDialogProps {
 }
 
 function initForm(plan: SuperAdminPlan | null): EditPlanFormData {
-  if (!plan) return { name: "", slug: "", price: 0, currency: "USD", trial_days: 0, is_active: true };
+  if (!plan)
+    return { name: "", slug: "", price: 0, currency: "USD", trial_days: 0, is_active: true };
   return {
     name: plan.name,
     slug: plan.slug,

@@ -1,5 +1,5 @@
+import { CheckCircle, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ToastType = "success" | "error";
@@ -27,7 +27,9 @@ export function Toaster() {
       setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== t.id)), 4000);
     };
     listeners.push(handler);
-    return () => { listeners = listeners.filter((l) => l !== handler); };
+    return () => {
+      listeners = listeners.filter((l) => l !== handler);
+    };
   }, []);
 
   return (

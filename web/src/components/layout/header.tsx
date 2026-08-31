@@ -1,19 +1,30 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Bell,
+  Clock,
+  LogIn,
+  LogOut,
+  LogOut as LogOutIcon,
+  Menu,
+  Monitor,
+  Moon,
+  Search,
+  Sun,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { LogOut, Menu, Search, Sun, Moon, Monitor, Bell, Clock, LogIn, LogOut as LogOutIcon } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, errorMessage } from "@/lib/api";
-import { useAuth } from "@/stores/auth";
-import { useThemeStore, type Theme } from "@/stores/theme";
-import { useClickOutside } from "@/lib/hooks";
-import { PALETTES } from "@/lib/palettes";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { PalettePicker } from "@/components/ui/palette-picker";
-import { useTranslation } from "@/i18n/context";
 import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/context";
+import { api, errorMessage } from "@/lib/api";
+import { useClickOutside } from "@/lib/hooks";
 import type { NotificationResponse } from "@/lib/notifications";
+import { PALETTES } from "@/lib/palettes";
 import { queryKeys } from "@/lib/query-keys";
+import { useAuth } from "@/stores/auth";
+import { type Theme, useThemeStore } from "@/stores/theme";
 
 const themeIcons: Record<Theme, React.ElementType> = { light: Sun, dark: Moon, system: Monitor };
 
@@ -81,13 +92,19 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
   const clockInMutation = useMutation({
     mutationFn: () => api("/shifts/clock-in", { method: "POST", body: {} }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockInSuccess")); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.shifts.me });
+      toast(t("header.clockInSuccess"));
+    },
     onError: (e: unknown) => toast(errorMessage(e, t("header.clockInError")), "error"),
   });
 
   const clockOutMutation = useMutation({
     mutationFn: () => api("/shifts/clock-out", { method: "POST", body: {} }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.shifts.me }); toast(t("header.clockOutSuccess")); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.shifts.me });
+      toast(t("header.clockOutSuccess"));
+    },
     onError: (e: unknown) => toast(errorMessage(e, t("header.clockOutError")), "error"),
   });
 
@@ -107,7 +124,11 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   useClickOutside(swatchRef, () => setSwatchMenuOpen(false), swatchMenuOpen);
 
   async function onLogout() {
-    try { await api("/auth/logout", { method: "POST" }); } catch {}
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch {
+      /* ignore */
+    }
     logout();
     navigate("/login", { replace: true });
   }
@@ -119,7 +140,10 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     <>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <button onClick={onMenuClick} className="rounded p-1.5 hover:bg-[var(--surface-2)] md:hidden">
+          <button
+            onClick={onMenuClick}
+            className="rounded p-1.5 hover:bg-[var(--surface-2)] md:hidden"
+          >
             <Menu className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold md:text-lg">{title}</h1>
@@ -129,7 +153,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           {/* Clock in/out pill — hidden for super admin */}
           {!user?.is_super_admin && (
             <button
-              onClick={() => isClockedIn ? clockOutMutation.mutate() : clockInMutation.mutate()}
+              onClick={() => (isClockedIn ? clockOutMutation.mutate() : clockInMutation.mutate())}
               disabled={clockInMutation.isPending || clockOutMutation.isPending}
               className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition ${
                 isClockedIn
@@ -164,14 +188,28 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           >
             <Search className="h-3.5 w-3.5" />
             <span>{t("header.searchPlaceholder")}</span>
-            <kbd className="ms-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">⌘K</kbd>
+            <kbd className="ms-2 hidden rounded bg-[var(--border)] px-1 py-0.5 text-xs font-mono lg:inline">
+              ⌘K
+            </kbd>
           </button>
-          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setPaletteOpen(true)} title={t("header.searchPlaceholder")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden"
+            onClick={() => setPaletteOpen(true)}
+            title={t("header.searchPlaceholder")}
+          >
             <Search className="h-4 w-4" />
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} title={t("header.notifications")} className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/notifications")}
+            title={t("header.notifications")}
+            className="relative"
+          >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute end-1.5 top-1.5 flex h-2 w-2">
@@ -204,7 +242,12 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
           {/* Theme toggle */}
           <div ref={themeRef} className="relative">
-            <Button variant="ghost" size="icon" onClick={() => setThemeMenuOpen((v) => !v)} title={t("header.toggleTheme")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setThemeMenuOpen((v) => !v)}
+              title={t("header.toggleTheme")}
+            >
               <ThemeIcon className="h-4 w-4" />
             </Button>
             {themeMenuOpen && (
@@ -214,7 +257,10 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                   return (
                     <button
                       key={option}
-                      onClick={() => { setTheme(option); setThemeMenuOpen(false); }}
+                      onClick={() => {
+                        setTheme(option);
+                        setThemeMenuOpen(false);
+                      }}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[var(--surface-2)] ${theme === option ? "text-[var(--primary)] font-medium" : ""}`}
                     >
                       <Icon className="h-3.5 w-3.5" />

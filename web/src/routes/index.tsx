@@ -1,9 +1,9 @@
+import { Navigate, Outlet, type RouteObject } from "react-router";
 import { RouteErrorBoundary } from "@/components/error-boundary";
 import { AppShell } from "@/components/layout/app-shell";
 import { RequireModule } from "@/components/require-module";
 import { RouteMeta } from "@/components/route-meta";
 import { loadPage, seo } from "@/routes/helpers";
-import { type RouteObject, Navigate, Outlet } from "react-router";
 
 export const routes: RouteObject[] = [
   {
@@ -82,7 +82,10 @@ export const routes: RouteObject[] = [
               {
                 path: "dashboard",
                 lazy: () => loadPage(() => import("@/app/(app)/dashboard/page")),
-                handle: seo("Dashboard", "Sales for the day, revenue trends and stock alerts at a glance."),
+                handle: seo(
+                  "Dashboard",
+                  "Sales for the day, revenue trends and stock alerts at a glance.",
+                ),
               },
               {
                 path: "pos",
@@ -130,7 +133,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/products/labels/page")),
-                    handle: seo("Product Labels", "Design and print barcode label sheets for your products."),
+                    handle: seo(
+                      "Product Labels",
+                      "Design and print barcode label sheets for your products.",
+                    ),
                   },
                 ],
               },
@@ -190,7 +196,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/accounting/page")),
-                    handle: seo("Accounting", "Chart of accounts, journals and financial statements."),
+                    handle: seo(
+                      "Accounting",
+                      "Chart of accounts, journals and financial statements.",
+                    ),
                   },
                 ],
               },
@@ -205,7 +214,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/inventory/page")),
-                    handle: seo("Inventory", "Stock levels, transfers and movement history by location."),
+                    handle: seo(
+                      "Inventory",
+                      "Stock levels, transfers and movement history by location.",
+                    ),
                   },
                 ],
               },
@@ -220,7 +232,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/stocktakes/page")),
-                    handle: seo("Stocktakes", "Count stock, review variances and post adjustments."),
+                    handle: seo(
+                      "Stocktakes",
+                      "Count stock, review variances and post adjustments.",
+                    ),
                   },
                 ],
               },
@@ -250,7 +265,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/catalog/page")),
-                    handle: seo("Catalog Setup", "Categories, brands, units and product attributes."),
+                    handle: seo(
+                      "Catalog Setup",
+                      "Categories, brands, units and product attributes.",
+                    ),
                   },
                 ],
               },
@@ -280,7 +298,10 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: () => loadPage(() => import("@/app/(app)/reports/tax/page")),
-                    handle: seo("Tax Report", "Tax collected and paid, broken down by rate and period."),
+                    handle: seo(
+                      "Tax Report",
+                      "Tax collected and paid, broken down by rate and period.",
+                    ),
                   },
                 ],
               },
@@ -360,7 +381,10 @@ export const routes: RouteObject[] = [
               {
                 path: "settings/tax",
                 lazy: () => loadPage(() => import("@/app/(app)/settings/tax/page")),
-                handle: seo("Tax Settings", "Tax rates, groups and how tax is applied at checkout."),
+                handle: seo(
+                  "Tax Settings",
+                  "Tax rates, groups and how tax is applied at checkout.",
+                ),
               },
               {
                 path: "settings/webhooks",
@@ -408,7 +432,10 @@ export const routes: RouteObject[] = [
               {
                 path: "super-admin",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/dashboard/page")),
-                handle: seo("Platform Dashboard", "Platform-wide metrics, tenants and revenue at a glance."),
+                handle: seo(
+                  "Platform Dashboard",
+                  "Platform-wide metrics, tenants and revenue at a glance.",
+                ),
               },
               {
                 path: "super-admin/tenants",
@@ -433,7 +460,10 @@ export const routes: RouteObject[] = [
               {
                 path: "super-admin/impersonations",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/impersonations/page")),
-                handle: seo("Impersonations", "Active and recent impersonation sessions across the platform."),
+                handle: seo(
+                  "Impersonations",
+                  "Active and recent impersonation sessions across the platform.",
+                ),
               },
               {
                 path: "super-admin/audit",
@@ -443,24 +473,32 @@ export const routes: RouteObject[] = [
               {
                 path: "super-admin/health",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/health/page")),
-                handle: seo("System Health", "PHP version, Laravel version, database, queue, cache and disk storage status."),
+                handle: seo(
+                  "System Health",
+                  "PHP version, Laravel version, database, queue, cache and disk storage status.",
+                ),
               },
               {
                 path: "super-admin/support-tickets",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/support-tickets/page")),
-                handle: seo("Support Tickets", "View and manage customer support tickets across all tenants."),
+                handle: seo(
+                  "Support Tickets",
+                  "View and manage customer support tickets across all tenants.",
+                ),
               },
               {
                 path: "super-admin/backups",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/backups/page")),
-                handle: seo("Database Backups", "View backup history, create new backups and download restore files."),
+                handle: seo(
+                  "Database Backups",
+                  "View backup history, create new backups and download restore files.",
+                ),
               },
               {
                 path: "super-admin/settings",
                 lazy: () => loadPage(() => import("@/app/(app)/super-admin/settings/page")),
                 handle: seo("Platform Settings", "Configure global modules and platform behavior."),
               },
-
             ],
           },
         ],

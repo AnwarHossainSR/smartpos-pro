@@ -1,13 +1,13 @@
-import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { MailWarning } from "lucide-react";
-import { api, errorMessage } from "@/lib/api";
-import { useAuth } from "@/stores/auth";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
+import { api, errorMessage } from "@/lib/api";
+import { useAuth } from "@/stores/auth";
 
 export function VerifyEmailBanner() {
   const t = useTranslation();
@@ -56,7 +56,12 @@ export function VerifyEmailBanner() {
           <Button variant="ghost" size="sm" onClick={() => setShowOtp(true)}>
             {t("auth.verifyEmail") || "Verify"}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => resend.mutate()} disabled={resend.isPending}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => resend.mutate()}
+            disabled={resend.isPending}
+          >
             {t("auth.resendVerification")}
           </Button>
           <button
@@ -70,7 +75,11 @@ export function VerifyEmailBanner() {
 
       <Dialog
         open={showOtp}
-        onClose={() => { setShowOtp(false); setCode(""); setVerifyError(null); }}
+        onClose={() => {
+          setShowOtp(false);
+          setCode("");
+          setVerifyError(null);
+        }}
         title={t("auth.verifyEmail") || "Verify your email"}
         description={`${t("auth.verificationSent") || "A verification code was sent to"} ${user.email}`}
       >
@@ -82,17 +91,32 @@ export function VerifyEmailBanner() {
             maxLength={6}
             placeholder="000000"
             value={code}
-            onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setVerifyError(null); }}
-            onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6) verify.mutate(); }}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, ""));
+              setVerifyError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && code.length === 6) verify.mutate();
+            }}
             className="text-center text-lg tracking-[0.5em]"
             autoFocus
           />
           {verifyError && <p className="text-sm text-red-500">{verifyError}</p>}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => { setShowOtp(false); setCode(""); setVerifyError(null); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowOtp(false);
+                setCode("");
+                setVerifyError(null);
+              }}
+            >
               {t("common.cancel")}
             </Button>
-            <Button onClick={() => verify.mutate()} disabled={code.length !== 6 || verify.isPending}>
+            <Button
+              onClick={() => verify.mutate()}
+              disabled={code.length !== 6 || verify.isPending}
+            >
               {verify.isPending ? "…" : t("common.save") || "Verify"}
             </Button>
           </div>

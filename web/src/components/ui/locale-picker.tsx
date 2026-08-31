@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
-import { LOCALES, LOCALE_LABELS } from "@/i18n/config";
-import { useLocaleStore } from "@/stores/locale";
+import { LOCALE_LABELS, LOCALES } from "@/i18n/config";
 import { cn } from "@/lib/utils";
+import { useLocaleStore } from "@/stores/locale";
 
 export function LocalePicker({ className }: { className?: string }) {
   const locale = useLocaleStore((s) => s.locale);

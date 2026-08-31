@@ -1,6 +1,6 @@
 import { Keyboard } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n/context";
 
 interface Shortcut {
@@ -18,13 +18,7 @@ const SHORTCUTS: Shortcut[] = [
   { key: "`", labelKey: "pos.shortcuts.toggleHelp" },
 ];
 
-export function ShortcutsOverlay({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function ShortcutsOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslation();
 
   return (

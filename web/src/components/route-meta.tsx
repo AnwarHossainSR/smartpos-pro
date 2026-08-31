@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, useLocation, useMatches } from "react-router";
-import { applySeo, SITE_NAME, type RouteHandle, type RouteSeo } from "@/lib/seo";
+import { applySeo, type RouteHandle, type RouteSeo, SITE_NAME } from "@/lib/seo";
 
 const FALLBACK: RouteSeo = { title: SITE_NAME };
 

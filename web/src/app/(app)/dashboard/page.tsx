@@ -1,29 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { useTranslation } from "@/i18n/context";
+  AlertTriangle,
+  Package,
+  Receipt,
+  ShoppingCart,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { Link } from "react-router";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { StatCard } from "@/components/stat-card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/i18n/context";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import { StatCard } from "@/components/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatNumber, formatDateTime } from "@/lib/utils";
-import {
-  TrendingUp,
-  TrendingDown,
-  ShoppingCart,
-  Package,
-  Wallet,
-  Receipt,
-  AlertTriangle,
-} from "lucide-react";
+import { formatCurrency, formatDateTime, formatNumber } from "@/lib/utils";
 
 interface TopProduct {
   name: string;
@@ -85,10 +78,29 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Row 1: KPI cards + revenue comparison */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label={t("dashboard.todaySales")} value={formatCurrency(s?.todays_sales ?? 0)} loading={isLoading} tone="success" />
-        <StatCard label={t("dashboard.transactions")} value={formatNumber(s?.todays_transactions ?? 0)} loading={isLoading} />
-        <StatCard label={t("dashboard.customerDues")} value={formatCurrency(s?.customer_dues ?? 0)} loading={isLoading} tone="warning" />
-        <StatCard label={t("dashboard.lowStockItems")} value={formatNumber(s?.low_stock_count ?? 0)} loading={isLoading} tone={s && s.low_stock_count > 0 ? "danger" : "default"} />
+        <StatCard
+          label={t("dashboard.todaySales")}
+          value={formatCurrency(s?.todays_sales ?? 0)}
+          loading={isLoading}
+          tone="success"
+        />
+        <StatCard
+          label={t("dashboard.transactions")}
+          value={formatNumber(s?.todays_transactions ?? 0)}
+          loading={isLoading}
+        />
+        <StatCard
+          label={t("dashboard.customerDues")}
+          value={formatCurrency(s?.customer_dues ?? 0)}
+          loading={isLoading}
+          tone="warning"
+        />
+        <StatCard
+          label={t("dashboard.lowStockItems")}
+          value={formatNumber(s?.low_stock_count ?? 0)}
+          loading={isLoading}
+          tone={s && s.low_stock_count > 0 ? "danger" : "default"}
+        />
         <Card className="p-5">
           <div className="text-sm text-[var(--muted)]">{t("dashboard.weekComparison")}</div>
           {isLoading ? (
@@ -96,7 +108,8 @@ export default function DashboardPage() {
           ) : (
             <div className="mt-1 flex items-center gap-2">
               <div className="text-2xl font-semibold tracking-tight">
-                {weekPositive ? "+" : ""}{weekPct}%
+                {weekPositive ? "+" : ""}
+                {weekPct}%
               </div>
               {weekPositive ? (
                 <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -128,7 +141,13 @@ export default function DashboardPage() {
                     <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted)" tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted)"
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <YAxis
                   tick={{ fontSize: 11 }}
                   stroke="var(--muted)"
@@ -136,7 +155,8 @@ export default function DashboardPage() {
                   axisLine={false}
                   width={56}
                   tickFormatter={(v: number) => {
-                    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
+                    if (v >= 1_000_000)
+                      return `${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
                     if (v >= 1_000) return `${(v / 1_000).toFixed(v % 1_000 === 0 ? 0 : 1)}k`;
                     return String(v);
                   }}
@@ -150,7 +170,13 @@ export default function DashboardPage() {
                   }}
                   formatter={(v) => formatCurrency(Number(v))}
                 />
-                <Area type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={2} fill="url(#fill)" />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                  fill="url(#fill)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -209,7 +235,8 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-1">
                       <span className="text-sm font-medium">{sale.invoice_number}</span>
                       <span className="text-xs text-[var(--muted)]">
-                        {sale.customer_name ?? t("dashboard.walkIn")} · {formatDateTime(sale.sold_at)}
+                        {sale.customer_name ?? t("dashboard.walkIn")} ·{" "}
+                        {formatDateTime(sale.sold_at)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -247,7 +274,9 @@ export default function DashboardPage() {
                 <div className="text-sm font-medium truncate">{item.name}</div>
                 <div className="text-xs text-[var(--muted)]">{item.warehouse}</div>
                 <div className="mt-1 text-xs">
-                  <span className="text-amber-600 dark:text-amber-400 font-medium">{item.quantity}</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    {item.quantity}
+                  </span>
                   <span className="text-[var(--muted)]"> / {item.min_stock_level}</span>
                 </div>
               </Link>

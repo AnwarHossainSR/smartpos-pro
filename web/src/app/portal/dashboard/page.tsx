@@ -1,11 +1,11 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
+import { Skeleton } from "@/components/ui/skeleton";
 import { clearPortalToken, portalFetch, usePortalToken } from "@/lib/portal";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -29,10 +29,14 @@ interface PortalInvoice {
 
 function statusBadge(status: string) {
   switch (status) {
-    case "paid": return <Badge tone="success">Paid</Badge>;
-    case "partial": return <Badge tone="warning">Partial</Badge>;
-    case "unpaid": return <Badge tone="danger">Unpaid</Badge>;
-    default: return <Badge>{status}</Badge>;
+    case "paid":
+      return <Badge tone="success">Paid</Badge>;
+    case "partial":
+      return <Badge tone="warning">Partial</Badge>;
+    case "unpaid":
+      return <Badge tone="danger">Unpaid</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
   }
 }
 
@@ -67,7 +71,14 @@ export default function PortalDashboardPage() {
             <Logo size={28} />
             <span className="font-semibold">My Account</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { clearPortalToken(); window.location.href = "/portal"; }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              clearPortalToken();
+              window.location.href = "/portal";
+            }}
+          >
             <LogOut className="mr-1 h-4 w-4" /> Sign out
           </Button>
         </div>
@@ -108,7 +119,9 @@ export default function PortalDashboardPage() {
                   <div className="text-right">
                     <p>Total: {formatCurrency(inv.total)}</p>
                     {inv.due_amount > 0 && (
-                      <p className="text-[var(--color-danger)]">Due: {formatCurrency(inv.due_amount)}</p>
+                      <p className="text-[var(--color-danger)]">
+                        Due: {formatCurrency(inv.due_amount)}
+                      </p>
                     )}
                   </div>
                   {statusBadge(inv.payment_status)}

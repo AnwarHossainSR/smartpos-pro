@@ -21,12 +21,7 @@ interface CreateTenantDialogProps {
   loading?: boolean;
 }
 
-export function CreateTenantDialog({
-  open,
-  onClose,
-  onSubmit,
-  loading,
-}: CreateTenantDialogProps) {
+export function CreateTenantDialog({ open, onClose, onSubmit, loading }: CreateTenantDialogProps) {
   const [form, setForm] = useState({
     tenant_name: "",
     slug: "",
@@ -46,7 +41,10 @@ export function CreateTenantDialog({
     setForm((prev) => ({
       ...prev,
       tenant_name: name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+      slug: name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, ""),
     }));
   };
 
@@ -96,7 +94,11 @@ export function CreateTenantDialog({
         </div>
         <div>
           <Label>Business Name</Label>
-          <Input value={form.business_name} onChange={set("business_name")} placeholder="Acme Store" />
+          <Input
+            value={form.business_name}
+            onChange={set("business_name")}
+            placeholder="Acme Store"
+          />
         </div>
         <div>
           <Label>Owner Name</Label>
@@ -104,7 +106,12 @@ export function CreateTenantDialog({
         </div>
         <div>
           <Label>Owner Email</Label>
-          <Input type="email" value={form.owner_email} onChange={set("owner_email")} placeholder="john@acme.com" />
+          <Input
+            type="email"
+            value={form.owner_email}
+            onChange={set("owner_email")}
+            placeholder="john@acme.com"
+          />
         </div>
         <div>
           <Label>Owner Password</Label>
@@ -112,7 +119,11 @@ export function CreateTenantDialog({
         </div>
         <div>
           <Label>Confirm Password</Label>
-          <Input type="password" value={form.owner_password_confirmation} onChange={set("owner_password_confirmation")} />
+          <Input
+            type="password"
+            value={form.owner_password_confirmation}
+            onChange={set("owner_password_confirmation")}
+          />
         </div>
         <div>
           <Label>Currency</Label>

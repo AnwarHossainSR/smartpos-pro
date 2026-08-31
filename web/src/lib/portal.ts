@@ -1,5 +1,5 @@
-import { API_URL, parseResponse } from "@/lib/api";
 import { useSyncExternalStore } from "react";
+import { API_URL, parseResponse } from "@/lib/api";
 
 const PORTAL_TOKEN_KEY = "portal_token";
 
@@ -36,7 +36,9 @@ export function clearPortalToken() {
   localStorage.removeItem(PORTAL_TOKEN_KEY);
 }
 
-const subscribe = () => () => {};
+const subscribe = () => () => {
+  /* no-op */
+};
 const getSnapshot = () => localStorage.getItem(PORTAL_TOKEN_KEY);
 const getServerSnapshot = () => null;
 

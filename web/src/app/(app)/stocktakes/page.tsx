@@ -1,28 +1,35 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, Play, CheckCircle, XCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle, ClipboardList, Play, XCircle } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { api, errorMessage, type Envelope, type Paginated } from "@/lib/api";
-import { useBranches, useWarehouses } from "@/lib/lookups";
-import { queryKeys } from "@/lib/query-keys";
-import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { Drawer } from "@/components/ui/drawer";
 import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
+import { api, type Envelope, errorMessage, type Paginated } from "@/lib/api";
+import { useBranches, useWarehouses } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
 
 interface Stocktake {
   id: string;
@@ -73,7 +80,11 @@ function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
   const { warehouses } = useWarehouses();
   const { branches } = useBranches();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<StocktakeValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StocktakeValues>({
     resolver: zodResolver(stocktakeSchema),
   });
 
@@ -91,25 +102,39 @@ function StocktakeForm({ onSuccess }: { onSuccess: () => void }) {
       <div>
         <Label>Name *</Label>
         <Input {...register("name")} placeholder="e.g. Monthly Count" />
-        {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+        {errors.name && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+        )}
       </div>
 
       <div>
         <Label>Branch *</Label>
         <Select {...register("branch_id")}>
           <option value="">— Select —</option>
-          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
         </Select>
-        {errors.branch_id && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.branch_id.message}</p>}
+        {errors.branch_id && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.branch_id.message}</p>
+        )}
       </div>
 
       <div>
         <Label>Warehouse *</Label>
         <Select {...register("warehouse_id")}>
           <option value="">— Select —</option>
-          {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          {warehouses.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.name}
+            </option>
+          ))}
         </Select>
-        {errors.warehouse_id && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.warehouse_id.message}</p>}
+        {errors.warehouse_id && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.warehouse_id.message}</p>
+        )}
       </div>
 
       <div>
@@ -131,7 +156,10 @@ function CountDrawer({ stocktake }: { stocktake: StocktakeDetail }) {
 
   const countMutation = useMutation({
     mutationFn: ({ itemId, qty }: { itemId: string; qty: number }) =>
-      api(`/stocktakes/${stocktake.id}/items/${itemId}/count`, { method: "POST", body: { counted_qty: qty } }),
+      api(`/stocktakes/${stocktake.id}/items/${itemId}/count`, {
+        method: "POST",
+        body: { counted_qty: qty },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.stocktakes.detail(stocktake.id) });
       toast("Count recorded");
@@ -158,10 +186,14 @@ function CountDrawer({ stocktake }: { stocktake: StocktakeDetail }) {
             {stocktake.items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.product.name}</TableCell>
-                <TableCell className="font-mono text-xs text-[var(--muted)]">{item.product.sku ?? "—"}</TableCell>
+                <TableCell className="font-mono text-xs text-[var(--muted)]">
+                  {item.product.sku ?? "—"}
+                </TableCell>
                 <TableCell className="text-end">{item.system_qty}</TableCell>
                 <TableCell className="text-end">{item.counted_qty ?? "—"}</TableCell>
-                <TableCell className={`text-end ${item.variance !== 0 ? "font-medium text-[var(--color-danger)]" : ""}`}>
+                <TableCell
+                  className={`text-end ${item.variance !== 0 ? "font-medium text-[var(--color-danger)]" : ""}`}
+                >
                   {item.counted_qty !== null ? item.variance : "—"}
                 </TableCell>
                 <TableCell className="text-end">
@@ -187,7 +219,9 @@ function CountDrawer({ stocktake }: { stocktake: StocktakeDetail }) {
                       />
                       <Button
                         size="sm"
-                        onClick={() => countMutation.mutate({ itemId: item.id, qty: parseFloat(countValue) })}
+                        onClick={() =>
+                          countMutation.mutate({ itemId: item.id, qty: parseFloat(countValue) })
+                        }
                         disabled={countMutation.isPending}
                       >
                         Save
@@ -227,7 +261,10 @@ export default function StocktakesPage() {
   const qc = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailDrawer, setDetailDrawer] = useState<{ id: string } | null>(null);
-  const [confirmAction, setConfirmAction] = useState<{ type: "start" | "complete" | "cancel"; id: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "start" | "complete" | "cancel";
+    id: string;
+  } | null>(null);
 
   const list = useResourceList<Stocktake, { status: string }>({
     queryKey: queryKeys.stocktakes.lists(),
@@ -245,7 +282,11 @@ export default function StocktakesPage() {
   const detail = detailData?.data;
 
   /** The three lifecycle actions differ only in endpoint and copy. */
-  function lifecycleMutation(action: "start" | "complete" | "cancel", done: string, failed: string) {
+  function lifecycleMutation(
+    action: "start" | "complete" | "cancel",
+    done: string,
+    failed: string,
+  ) {
     return {
       mutationFn: (id: string) => api(`/stocktakes/${id}/${action}`, { method: "POST" }),
       onSuccess: () => {
@@ -262,9 +303,15 @@ export default function StocktakesPage() {
     };
   }
 
-  const startMutation = useMutation(lifecycleMutation("start", "Stocktake started", "Failed to start"));
-  const completeMutation = useMutation(lifecycleMutation("complete", "Stocktake completed", "Failed to complete"));
-  const cancelMutation = useMutation(lifecycleMutation("cancel", "Stocktake cancelled", "Failed to cancel"));
+  const startMutation = useMutation(
+    lifecycleMutation("start", "Stocktake started", "Failed to start"),
+  );
+  const completeMutation = useMutation(
+    lifecycleMutation("complete", "Stocktake completed", "Failed to complete"),
+  );
+  const cancelMutation = useMutation(
+    lifecycleMutation("cancel", "Stocktake cancelled", "Failed to cancel"),
+  );
 
   const columns: DataTableColumn<Stocktake>[] = [
     {
@@ -296,16 +343,28 @@ export default function StocktakesPage() {
       render: (s) => (
         <div className="flex items-center justify-end gap-1">
           {can("stocktakes.update") && s.status === "draft" && (
-            <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "start", id: s.id })}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setConfirmAction({ type: "start", id: s.id })}
+            >
               <Play className="h-3 w-3" />
             </Button>
           )}
           {can("stocktakes.update") && s.status === "counting" && (
             <>
-              <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "complete", id: s.id })}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setConfirmAction({ type: "complete", id: s.id })}
+              >
                 <CheckCircle className="h-3 w-3" />
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setConfirmAction({ type: "cancel", id: s.id })}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setConfirmAction({ type: "cancel", id: s.id })}
+              >
                 <XCircle className="h-3 w-3" />
               </Button>
             </>
@@ -379,7 +438,9 @@ export default function StocktakesPage() {
       >
         {detailLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
           </div>
         ) : detail ? (
           <CountDrawer stocktake={detail} />
@@ -389,12 +450,16 @@ export default function StocktakesPage() {
       <Dialog open={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm Action">
         <div className="space-y-4">
           <p>
-            {confirmAction?.type === "start" && "Start counting? This will snapshot current stock levels."}
-            {confirmAction?.type === "complete" && "Complete this stocktake? Adjustments will be posted to inventory."}
+            {confirmAction?.type === "start" &&
+              "Start counting? This will snapshot current stock levels."}
+            {confirmAction?.type === "complete" &&
+              "Complete this stocktake? Adjustments will be posted to inventory."}
             {confirmAction?.type === "cancel" && "Cancel this stocktake?"}
           </p>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </Button>
             <Button
               onClick={() => {
                 if (!confirmAction) return;
@@ -402,11 +467,16 @@ export default function StocktakesPage() {
                 if (confirmAction.type === "complete") completeMutation.mutate(confirmAction.id);
                 if (confirmAction.type === "cancel") cancelMutation.mutate(confirmAction.id);
               }}
-              disabled={startMutation.isPending || completeMutation.isPending || cancelMutation.isPending}
+              disabled={
+                startMutation.isPending || completeMutation.isPending || cancelMutation.isPending
+              }
             >
-              {confirmAction?.type === "start" && (startMutation.isPending ? "Starting..." : "Start")}
-              {confirmAction?.type === "complete" && (completeMutation.isPending ? "Completing..." : "Complete")}
-              {confirmAction?.type === "cancel" && (cancelMutation.isPending ? "Cancelling..." : "Cancel")}
+              {confirmAction?.type === "start" &&
+                (startMutation.isPending ? "Starting..." : "Start")}
+              {confirmAction?.type === "complete" &&
+                (completeMutation.isPending ? "Completing..." : "Complete")}
+              {confirmAction?.type === "cancel" &&
+                (cancelMutation.isPending ? "Cancelling..." : "Cancel")}
             </Button>
           </div>
         </div>

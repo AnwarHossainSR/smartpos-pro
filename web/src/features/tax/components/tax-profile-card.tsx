@@ -1,16 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { Info } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
+import { useForm } from "react-hook-form";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
 import { useTaxProfiles } from "@/features/tax/hooks";
 import type { PriceDisplay, TaxProfile } from "@/features/tax/types";
+import { ApiError, api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 /** The subset of `GET /settings/business` this card reads/writes — shares the
  *  `["business-settings"]` query key with the main Settings page so both stay in sync. */
@@ -44,7 +44,12 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
   // `values` (rather than `defaultValues` + a manual useEffect) keeps the form in sync whenever
   // the query resolves or refetches, without a setState-in-effect — same pattern the main
   // Settings page's business form uses.
-  const { register, handleSubmit, watch, formState: { isDirty } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { isDirty },
+  } = useForm<FormValues>({
     values: data?.data
       ? {
           tax_profile_id: data.data.tax_profile_id ? String(data.data.tax_profile_id) : "",
@@ -55,18 +60,23 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
   });
 
   const mutation = useMutation({
-    mutationFn: (body: { tax_profile_id: string | null; price_display: PriceDisplay; tax_number: string | null }) =>
-      api("/settings/business", { method: "PUT", body }),
+    mutationFn: (body: {
+      tax_profile_id: string | null;
+      price_display: PriceDisplay;
+      tax_number: string | null;
+    }) => api("/settings/business", { method: "PUT", body }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.businessSettings });
       toast("Tax settings saved");
     },
-    onError: (e: unknown) => toast(e instanceof ApiError ? e.message : "Could not save tax settings", "error"),
+    onError: (e: unknown) =>
+      toast(e instanceof ApiError ? e.message : "Could not save tax settings", "error"),
   });
 
   const profiles = profilesData?.data ?? [];
   const taxProfileId = watch("tax_profile_id");
-  const selectedProfile = profiles.find((p) => String(p.id) === taxProfileId) ?? data?.data.tax_profile ?? null;
+  const selectedProfile =
+    profiles.find((p) => String(p.id) === taxProfileId) ?? data?.data.tax_profile ?? null;
 
   function onSubmit(values: FormValues) {
     mutation.mutate({
@@ -93,7 +103,9 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
         <Select disabled={!canManage} {...register("tax_profile_id")}>
           <option value="">— None (no jurisdiction defaults) —</option>
           {profiles.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+            <option key={p.id} value={p.id}>
+              {p.name} ({p.code})
+            </option>
           ))}
         </Select>
       </div>
@@ -106,12 +118,16 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
           {PROFILE_INFO_ROWS.map((row) => (
             <div key={row.key} className="flex justify-between gap-3">
               <span className="text-[var(--muted)] capitalize">{row.label}</span>
-              <span className="capitalize">{String(selectedProfile[row.key]).replace(/_/g, " ")}</span>
+              <span className="capitalize">
+                {String(selectedProfile[row.key]).replace(/_/g, " ")}
+              </span>
             </div>
           ))}
           <div className="flex justify-between gap-3">
             <span className="text-[var(--muted)]">Profile price display</span>
-            <Badge tone="default" className="capitalize">{selectedProfile.price_display}</Badge>
+            <Badge tone="default" className="capitalize">
+              {selectedProfile.price_display}
+            </Badge>
           </div>
           <div className="flex justify-between gap-3">
             <span className="text-[var(--muted)]">Tax number label</span>
@@ -140,11 +156,19 @@ export function TaxProfileCard({ canManage }: { canManage: boolean }) {
 
       <div>
         <Label>{selectedProfile?.tax_number_label ?? "Tax number"}</Label>
-        <Input disabled={!canManage} {...register("tax_number")} placeholder="e.g. registration / VAT number" />
+        <Input
+          disabled={!canManage}
+          {...register("tax_number")}
+          placeholder="e.g. registration / VAT number"
+        />
       </div>
 
       {canManage && (
-        <Button type="submit" className="w-full sm:w-auto" disabled={!isDirty || mutation.isPending}>
+        <Button
+          type="submit"
+          className="w-full sm:w-auto"
+          disabled={!isDirty || mutation.isPending}
+        >
           {mutation.isPending ? "Saving…" : "Save tax settings"}
         </Button>
       )}

@@ -1,3 +1,5 @@
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -9,8 +11,6 @@ import { Select } from "@/components/ui/select";
 import { TaxGroupForm } from "@/features/tax/components/tax-group-form";
 import { useTaxGroupMutations, useTaxGroups } from "@/features/tax/hooks";
 import type { TaxGroup } from "@/features/tax/types";
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
   const list = useTaxGroups();
@@ -19,9 +19,18 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
   const [editing, setEditing] = useState<TaxGroup | null>(null);
   const [deleting, setDeleting] = useState<TaxGroup | null>(null);
 
-  const openCreate = () => { setEditing(null); setDrawerOpen(true); };
-  const openEdit = (g: TaxGroup) => { setEditing(g); setDrawerOpen(true); };
-  const closeDrawer = () => { setDrawerOpen(false); setEditing(null); };
+  const openCreate = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+  const openEdit = (g: TaxGroup) => {
+    setEditing(g);
+    setDrawerOpen(true);
+  };
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setEditing(null);
+  };
 
   const columns: DataTableColumn<TaxGroup>[] = [
     {
@@ -57,7 +66,11 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
     {
       key: "status",
       header: "Status",
-      render: (g) => <Badge tone={g.is_active ? "success" : "default"}>{g.is_active ? "active" : "inactive"}</Badge>,
+      render: (g) => (
+        <Badge tone={g.is_active ? "success" : "default"}>
+          {g.is_active ? "active" : "inactive"}
+        </Badge>
+      ),
     },
   ];
 
@@ -90,16 +103,28 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
           rowKey={(g) => g.id}
           loading={list.isLoading}
           emptyMessage={
-            list.search ? "No tax groups match your search." : "No tax groups yet. Group components (e.g. CGST + SGST) here to attach them to products."
+            list.search
+              ? "No tax groups match your search."
+              : "No tax groups yet. Group components (e.g. CGST + SGST) here to attach them to products."
           }
           actions={
             canManage
               ? (g) => (
                   <>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(g)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(g)}
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(g)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-danger)]"
+                      onClick={() => setDeleting(g)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </>
@@ -117,7 +142,12 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
         )}
       </div>
 
-      <Drawer open={drawerOpen} onClose={closeDrawer} title={editing ? `Edit: ${editing.name}` : "Add tax group"} width="max-w-xl">
+      <Drawer
+        open={drawerOpen}
+        onClose={closeDrawer}
+        title={editing ? `Edit: ${editing.name}` : "Add tax group"}
+        width="max-w-xl"
+      >
         <TaxGroupForm editing={editing} onSuccess={closeDrawer} />
       </Drawer>
 
@@ -129,7 +159,9 @@ export function TaxGroupsSection({ canManage }: { canManage: boolean }) {
         confirmLabel="Delete"
         confirmVariant="danger"
         loading={remove.isPending}
-        onConfirm={() => deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })}
+        onConfirm={() =>
+          deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
+        }
       />
     </div>
   );

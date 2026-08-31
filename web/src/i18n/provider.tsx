@@ -1,12 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { useLocaleStore } from "@/stores/locale";
 import { LOCALE_DIR, type Locale } from "@/i18n/config";
 import { I18nContext, type I18nContextValue, type Vars } from "@/i18n/context";
-import en from "@/i18n/messages/en.json";
-import de from "@/i18n/messages/de.json";
-import bn from "@/i18n/messages/bn.json";
 import ar from "@/i18n/messages/ar.json";
+import bn from "@/i18n/messages/bn.json";
+import de from "@/i18n/messages/de.json";
+import en from "@/i18n/messages/en.json";
 import ja from "@/i18n/messages/ja.json";
+import { useLocaleStore } from "@/stores/locale";
 
 const CATALOGS: Record<Locale, unknown> = { en, de, bn, ar, ja };
 

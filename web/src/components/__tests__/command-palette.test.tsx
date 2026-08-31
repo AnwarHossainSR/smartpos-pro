@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { CommandPalette } from "../ui/command-palette";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth } from "@/stores/auth";
+import { CommandPalette } from "../ui/command-palette";
 
 // The palette hides destinations the route guard would refuse, so these tests need a signed-in
 // user. The owner role implicitly holds everything, which keeps the assertions about *filtering*
@@ -21,23 +21,39 @@ afterEach(() => {
 
 describe("CommandPalette", () => {
   it("does not render when closed", () => {
-    const { container } = render(<MemoryRouter><CommandPalette open={false} onClose={vi.fn()} /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <CommandPalette open={false} onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   it("renders search input when open", () => {
-    render(<MemoryRouter><CommandPalette open={true} onClose={vi.fn()} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
     expect(screen.getByPlaceholderText(/search pages/i)).toBeInTheDocument();
   });
 
   it("shows all nav items when query is empty", () => {
-    render(<MemoryRouter><CommandPalette open={true} onClose={vi.fn()} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("POS Terminal")).toBeInTheDocument();
   });
 
   it("filters items by query", () => {
-    render(<MemoryRouter><CommandPalette open={true} onClose={vi.fn()} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
     const input = screen.getByPlaceholderText(/search pages/i);
     fireEvent.change(input, { target: { value: "account" } });
     expect(screen.getByText("Accounting")).toBeInTheDocument();
@@ -46,7 +62,11 @@ describe("CommandPalette", () => {
 
   it("calls onClose when backdrop is clicked", () => {
     const onClose = vi.fn();
-    render(<MemoryRouter><CommandPalette open={true} onClose={onClose} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={onClose} />
+      </MemoryRouter>,
+    );
     // Backdrop is the first fixed div's inner div
     const backdrop = document.querySelector(".absolute.inset-0.bg-black\\/40");
     if (backdrop) fireEvent.click(backdrop);
@@ -64,7 +84,11 @@ describe("CommandPalette", () => {
       },
     });
 
-    render(<MemoryRouter><CommandPalette open={true} onClose={vi.fn()} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={vi.fn()} />
+      </MemoryRouter>,
+    );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("POS Terminal")).toBeInTheDocument();
     expect(screen.queryByText("Accounting")).not.toBeInTheDocument();
@@ -73,7 +97,11 @@ describe("CommandPalette", () => {
 
   it("calls onClose on Escape key", () => {
     const onClose = vi.fn();
-    render(<MemoryRouter><CommandPalette open={true} onClose={onClose} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommandPalette open={true} onClose={onClose} />
+      </MemoryRouter>,
+    );
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onClose).toHaveBeenCalled();
   });

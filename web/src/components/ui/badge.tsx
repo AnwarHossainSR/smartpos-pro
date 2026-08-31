@@ -10,10 +10,18 @@ const tones: Record<Tone, string> = {
   info: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
 };
 
-export function Badge({ tone = "default", className, ...props }: { tone?: Tone } & React.HTMLAttributes<HTMLSpanElement>) {
+export function Badge({
+  tone = "default",
+  className,
+  ...props
+}: { tone?: Tone } & React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
-      className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", tones[tone], className)}
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        tones[tone],
+        className,
+      )}
       {...props}
     />
   );

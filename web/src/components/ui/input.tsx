@@ -2,7 +2,9 @@ import { cn } from "@/lib/utils";
 
 // React 19 accepts `ref` as a plain prop on function components (no forwardRef needed) — it
 // just has to be declared in the props type, since InputHTMLAttributes itself doesn't include it.
-type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { ref?: React.Ref<HTMLInputElement> };
+type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  ref?: React.Ref<HTMLInputElement>;
+};
 
 export function Input({ className, ref, ...props }: InputProps) {
   return (

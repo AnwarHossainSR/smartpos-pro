@@ -1,20 +1,12 @@
-import { useState, useCallback } from "react";
+import { Building2, Check, ChevronRight, Package, Receipt, ShoppingCart, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  Building2,
-  Package,
-  Receipt,
-  ShoppingCart,
-  Check,
-  ChevronRight,
-  X,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n/context";
-import { type PermissionSlug } from "@/lib/permissions";
+import type { PermissionSlug } from "@/lib/permissions";
 import { useAuth } from "@/stores/auth";
-import { useOnboardingState, useRecordOnboardingStep, useCompleteOnboarding } from "./hooks";
+import { useCompleteOnboarding, useOnboardingState, useRecordOnboardingStep } from "./hooks";
 
 const STEPS = ["business_profile", "first_product", "tax_setup", "register_sale"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -73,16 +65,14 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "business_profile":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.business_profile.description")}</p>
+          <p className="text-sm text-[var(--muted)]">
+            {t("onboarding.steps.business_profile.description")}
+          </p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
             {t("onboarding.steps.business_profile.action")}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/settings")}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={() => navigate("/settings")} className="w-full">
             {t("onboarding.steps.business_profile.configure")}
           </Button>
         </div>
@@ -91,16 +81,14 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "first_product":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.first_product.description")}</p>
+          <p className="text-sm text-[var(--muted)]">
+            {t("onboarding.steps.first_product.description")}
+          </p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
             {t("onboarding.steps.first_product.action")}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/products")}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={() => navigate("/products")} className="w-full">
             {t("onboarding.steps.first_product.configure")}
           </Button>
         </div>
@@ -109,16 +97,14 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "tax_setup":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.tax_setup.description")}</p>
+          <p className="text-sm text-[var(--muted)]">
+            {t("onboarding.steps.tax_setup.description")}
+          </p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
             {t("onboarding.steps.tax_setup.action")}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/settings")}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={() => navigate("/settings")} className="w-full">
             {t("onboarding.steps.tax_setup.configure")}
           </Button>
         </div>
@@ -127,16 +113,14 @@ function StepContent({ step, onComplete }: StepContentProps) {
     case "register_sale":
       return (
         <div className="space-y-4">
-          <p className="text-sm text-[var(--muted)]">{t("onboarding.steps.register_sale.description")}</p>
+          <p className="text-sm text-[var(--muted)]">
+            {t("onboarding.steps.register_sale.description")}
+          </p>
           <Button onClick={onComplete} className="w-full">
             <Check className="h-4 w-4" />
             {t("onboarding.steps.register_sale.action")}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/pos")}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={() => navigate("/pos")} className="w-full">
             {t("onboarding.steps.register_sale.configure")}
           </Button>
         </div>
@@ -234,9 +218,7 @@ export function OnboardingWizard() {
                   </div>
                   {i < visibleSteps.length - 1 && (
                     <div
-                      className={`h-px w-4 ${
-                        done ? "bg-[var(--primary)]" : "bg-[var(--border)]"
-                      }`}
+                      className={`h-px w-4 ${done ? "bg-[var(--primary)]" : "bg-[var(--border)]"}`}
                     />
                   )}
                 </div>
@@ -249,11 +231,7 @@ export function OnboardingWizard() {
           </div>
 
           <div className="mt-4 flex justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSkipConfirmOpen(true)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSkipConfirmOpen(true)}>
               {t("onboarding.skipSetup")}
             </Button>
             <Button

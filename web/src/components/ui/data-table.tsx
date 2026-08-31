@@ -1,8 +1,15 @@
-import { cn } from "@/lib/utils";
-import { errorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { errorMessage } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export interface DataTableColumn<T> {
   key: string;
@@ -46,7 +53,8 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const colSpan = columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0);
   const allKeys = data.map(rowKey);
-  const allSelected = selectable && allKeys.length > 0 && allKeys.every((k) => selectedKeys?.has(k));
+  const allSelected =
+    selectable && allKeys.length > 0 && allKeys.every((k) => selectedKeys?.has(k));
   const someSelected = selectable && allKeys.some((k) => selectedKeys?.has(k));
 
   function toggleAll() {
@@ -81,7 +89,10 @@ export function DataTable<T>({
             </TableHead>
           )}
           {columns.map((col) => (
-            <TableHead key={col.key} className={cn(col.align === "right" && "text-end", col.className)}>
+            <TableHead
+              key={col.key}
+              className={cn(col.align === "right" && "text-end", col.className)}
+            >
               {col.header}
             </TableHead>
           ))}
@@ -112,7 +123,9 @@ export function DataTable<T>({
         ) : error ? (
           <TableRow>
             <TableCell colSpan={colSpan} className="py-12 text-center">
-              <p className="text-sm text-[var(--muted)]">{errorMessage(error, "Could not load this list.")}</p>
+              <p className="text-sm text-[var(--muted)]">
+                {errorMessage(error, "Could not load this list.")}
+              </p>
               {onRetry && (
                 <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
                   Try again
@@ -143,7 +156,10 @@ export function DataTable<T>({
                   </TableCell>
                 )}
                 {columns.map((col) => (
-                  <TableCell key={col.key} className={cn(col.align === "right" && "text-end", col.className)}>
+                  <TableCell
+                    key={col.key}
+                    className={cn(col.align === "right" && "text-end", col.className)}
+                  >
                     {col.render(row)}
                   </TableCell>
                 ))}

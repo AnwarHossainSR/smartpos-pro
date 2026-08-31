@@ -5,13 +5,15 @@
  *   - At least one product exists in the catalogue
  *   - Cash register is open for the authenticated user's branch
  */
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("POS checkout happy path", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/pos");
     // Wait for POS page to be interactive
-    await expect(page.getByRole("heading", { name: /POS Terminal/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /POS Terminal/i })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("can search and add a product to the cart", async ({ page }) => {
@@ -28,7 +30,9 @@ test.describe("POS checkout happy path", () => {
     await card.click();
 
     // Cart should show the item
-    await expect(page.locator("[data-testid='cart-item'], .cart-item").first()).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator("[data-testid='cart-item'], .cart-item").first()).toBeVisible({
+      timeout: 3_000,
+    });
   });
 
   test("payment modal opens and can complete checkout", async ({ page }) => {
@@ -57,7 +61,9 @@ test.describe("POS checkout happy path", () => {
     await confirmBtn.click();
 
     // Receipt modal should appear
-    await expect(page.getByText(/receipt|thank you|sale complete/i)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/receipt|thank you|sale complete/i)).toBeVisible({
+      timeout: 8_000,
+    });
   });
 
   test("can remove an item from the cart", async ({ page }) => {

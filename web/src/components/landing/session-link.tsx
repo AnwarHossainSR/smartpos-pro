@@ -1,6 +1,6 @@
 import { Link } from "react-router";
-import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/stores/auth";
 
 /**
  * Nav call-to-action that knows whether someone is already signed in.

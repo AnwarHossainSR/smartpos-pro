@@ -1,6 +1,6 @@
+import { keepPreviousData, type QueryKey, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router";
-import { useQuery, keepPreviousData, type QueryKey } from "@tanstack/react-query";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import type { Paginated } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 
@@ -24,7 +24,9 @@ interface UseResourceListOptions<T, F extends Record<string, string>> {
   searchDelay?: number;
 }
 
-export function buildListQuery<F extends Record<string, string>>(params: ResourceListParams<F>): string {
+export function buildListQuery<F extends Record<string, string>>(
+  params: ResourceListParams<F>,
+): string {
   const qs = new URLSearchParams();
   if (params.search) qs.set("search", params.search);
   if (params.sort) qs.set("sort", params.sort);
@@ -113,10 +115,17 @@ export function useResourceList<T, F extends Record<string, string> = Record<str
     setParams({ search: debouncedSearch, page: null });
   }, [debouncedSearch, setParams]);
 
-  const setSort = useCallback((value: string | undefined) => setParams({ sort: value ?? null, page: null }), [setParams]);
-  const setPage = useCallback((value: number) => setParams({ page: value > 1 ? value : null }), [setParams]);
+  const setSort = useCallback(
+    (value: string | undefined) => setParams({ sort: value ?? null, page: null }),
+    [setParams],
+  );
+  const setPage = useCallback(
+    (value: number) => setParams({ page: value > 1 ? value : null }),
+    [setParams],
+  );
   const setFilter = useCallback(
-    (key: keyof F & string, value: string | undefined) => setParams({ [key]: value ?? null, page: null }),
+    (key: keyof F & string, value: string | undefined) =>
+      setParams({ [key]: value ?? null, page: null }),
     [setParams],
   );
   const resetFilters = useCallback(() => {

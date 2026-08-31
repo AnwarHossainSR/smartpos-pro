@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,10 +10,17 @@ import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError, errorMessage, type Paginated } from "@/lib/api";
+import { ApiError, api, errorMessage, type Paginated } from "@/lib/api";
 import { PERMISSION_MATRIX, splitSlug } from "@/lib/permissions";
 import { queryKeys } from "@/lib/query-keys";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
@@ -111,7 +118,9 @@ function ModuleSection({
           );
         })}
       </div>
-      {slugs.length === 0 && <p className="text-xs text-[var(--muted)]">{t("roles.noPermissions")}</p>}
+      {slugs.length === 0 && (
+        <p className="text-xs text-[var(--muted)]">{t("roles.noPermissions")}</p>
+      )}
     </fieldset>
   );
 }

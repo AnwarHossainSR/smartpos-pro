@@ -1,7 +1,7 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { cn, formatCurrency, formatNumber, formatDate } from "../utils";
-import { useLocaleStore } from "@/stores/locale";
+import { afterEach, describe, expect, it } from "vitest";
 import { useBusinessStore } from "@/stores/business";
+import { useLocaleStore } from "@/stores/locale";
+import { cn, formatCurrency, formatDate, formatNumber } from "../utils";
 
 describe("cn", () => {
   it("merges class names", () => {

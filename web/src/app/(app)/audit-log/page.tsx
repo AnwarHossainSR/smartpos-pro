@@ -1,16 +1,16 @@
-import { useState } from "react";
 import { Eye } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { api, type Paginated } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatDateTime } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
-import { Input, Label } from "@/components/ui/input";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { ListToolbar } from "@/components/ui/list-toolbar";
-import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/stores/auth";
 
 interface AuditLogRow {
@@ -27,8 +27,10 @@ interface AuditLogRow {
 }
 
 function actionTone(action: string): "success" | "warning" | "danger" | "default" {
-  if (action.includes("deleted") || action.includes("failed") || action.includes("revoke")) return "danger";
-  if (action.includes("override") || action.includes("discount") || action.includes("updated")) return "warning";
+  if (action.includes("deleted") || action.includes("failed") || action.includes("revoke"))
+    return "danger";
+  if (action.includes("override") || action.includes("discount") || action.includes("updated"))
+    return "warning";
   if (action.includes("created") || action.includes("login")) return "success";
   return "default";
 }
@@ -84,7 +86,11 @@ export default function AuditLogPage() {
       header: "Actor",
       render: (r) => (r.user ? r.user.name : <span className="text-[var(--muted)]">System</span>),
     },
-    { key: "ip", header: "IP", render: (r) => <span className="font-mono text-xs">{r.ip_address ?? "—"}</span> },
+    {
+      key: "ip",
+      header: "IP",
+      render: (r) => <span className="font-mono text-xs">{r.ip_address ?? "—"}</span>,
+    },
     { key: "when", header: "When", render: (r) => formatDateTime(r.created_at) },
   ];
 
@@ -96,9 +102,19 @@ export default function AuditLogPage() {
         searchPlaceholder="Filter by action (e.g. sale.price_override)…"
         filters={
           <div className="flex items-center gap-2">
-            <Input type="date" value={from} onChange={(e) => list.setFilter("from", e.target.value)} className="w-auto" />
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => list.setFilter("from", e.target.value)}
+              className="w-auto"
+            />
             <span className="text-xs text-[var(--muted)]">to</span>
-            <Input type="date" value={to} onChange={(e) => list.setFilter("to", e.target.value)} className="w-auto" />
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => list.setFilter("to", e.target.value)}
+              className="w-auto"
+            />
           </div>
         }
       />
@@ -148,7 +164,9 @@ export default function AuditLogPage() {
               <div>
                 <Label>Record</Label>
                 <p className="text-[var(--fg)]">
-                  {viewing.auditable_type ? `${viewing.auditable_type} #${viewing.auditable_id}` : "—"}
+                  {viewing.auditable_type
+                    ? `${viewing.auditable_type} #${viewing.auditable_id}`
+                    : "—"}
                 </p>
               </div>
             </div>

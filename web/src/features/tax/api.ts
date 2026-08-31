@@ -1,17 +1,17 @@
-import { api, type Paginated } from "@/lib/api";
-import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
 import type {
-  TaxRate,
-  TaxRateFormValues,
   TaxGroup,
   TaxGroupFormValues,
+  TaxProfile,
+  TaxRate,
+  TaxRateFormValues,
+  TaxReportFilters,
+  TaxReturnReport,
+  TaxSummaryReport,
   TaxZone,
   TaxZoneFormValues,
-  TaxProfile,
-  TaxSummaryReport,
-  TaxReturnReport,
-  TaxReportFilters,
 } from "@/features/tax/types";
+import { api, type Paginated } from "@/lib/api";
+import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
 
 /** Typed fetchers for the tax engine endpoints. Kept thin — hooks own caching/mutations. */
 
@@ -23,7 +23,8 @@ export const taxApi = {
   rates: {
     list: (params: ResourceListParams<TaxRateFilters>) =>
       api<Paginated<TaxRate>>(`/tax-rates?${buildListQuery(params)}`),
-    create: (data: TaxRateFormValues) => api<{ data: TaxRate }>("/tax-rates", { method: "POST", body: data }),
+    create: (data: TaxRateFormValues) =>
+      api<{ data: TaxRate }>("/tax-rates", { method: "POST", body: data }),
     update: (id: string, data: TaxRateFormValues) =>
       api<{ data: TaxRate }>(`/tax-rates/${id}`, { method: "PUT", body: data }),
     remove: (id: string) => api<void>(`/tax-rates/${id}`, { method: "DELETE" }),
@@ -32,7 +33,8 @@ export const taxApi = {
   groups: {
     list: (params: ResourceListParams<TaxGroupFilters>) =>
       api<Paginated<TaxGroup>>(`/tax-groups?${buildListQuery(params)}`),
-    create: (data: TaxGroupFormValues) => api<{ data: TaxGroup }>("/tax-groups", { method: "POST", body: data }),
+    create: (data: TaxGroupFormValues) =>
+      api<{ data: TaxGroup }>("/tax-groups", { method: "POST", body: data }),
     update: (id: string, data: TaxGroupFormValues) =>
       api<{ data: TaxGroup }>(`/tax-groups/${id}`, { method: "PUT", body: data }),
     remove: (id: string) => api<void>(`/tax-groups/${id}`, { method: "DELETE" }),
@@ -43,7 +45,8 @@ export const taxApi = {
   zones: {
     list: (params: ResourceListParams<TaxZoneFilters>) =>
       api<Paginated<TaxZone>>(`/tax-zones?${buildListQuery(params)}`),
-    create: (data: TaxZoneFormValues) => api<{ data: TaxZone }>("/tax-zones", { method: "POST", body: data }),
+    create: (data: TaxZoneFormValues) =>
+      api<{ data: TaxZone }>("/tax-zones", { method: "POST", body: data }),
     update: (id: string, data: TaxZoneFormValues) =>
       api<{ data: TaxZone }>(`/tax-zones/${id}`, { method: "PUT", body: data }),
     remove: (id: string) => api<void>(`/tax-zones/${id}`, { method: "DELETE" }),

@@ -1,15 +1,9 @@
-import { useModulesStore } from "@/stores/modules";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useModulesStore } from "@/stores/modules";
 
-export function RequireModule({
-  module,
-  children,
-}: {
-  module: string;
-  children: React.ReactNode;
-}) {
+export function RequireModule({ module, children }: { module: string; children: React.ReactNode }) {
   const isEnabled = useModulesStore((s) => s.modules[module]) ?? false;
   const loaded = useModulesStore((s) => s.loaded);
   const navigate = useNavigate();
@@ -23,11 +17,7 @@ export function RequireModule({
           <p className="text-sm text-[var(--muted)]">
             This module is not enabled for your account.
           </p>
-          <Button
-            variant="ghost"
-            className="mt-2"
-            onClick={() => navigate("/dashboard")}
-          >
+          <Button variant="ghost" className="mt-2" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </Button>
         </CardContent>

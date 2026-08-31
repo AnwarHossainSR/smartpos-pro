@@ -1,12 +1,12 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
-import { useAuth, type AuthUser } from "@/stores/auth";
-import { Link, useNavigate } from "react-router";
-import { useEffect, useState } from "react";
+import { ApiError, api } from "@/lib/api";
+import { type AuthUser, useAuth } from "@/stores/auth";
 
 interface LoginResult {
   requires_2fa?: boolean;
@@ -80,7 +80,10 @@ export default function LoginPage() {
 
   if (challengeToken) {
     return (
-      <AuthShell title="Two-factor authentication" subtitle="Enter the code from your authenticator app">
+      <AuthShell
+        title="Two-factor authentication"
+        subtitle="Enter the code from your authenticator app"
+      >
         <form onSubmit={onChallengeSubmit} className="space-y-4">
           <div>
             <Label>{useRecoveryCode ? "Recovery code" : "6-digit code"}</Label>
@@ -99,7 +102,11 @@ export default function LoginPage() {
           </Button>
           <button
             type="button"
-            onClick={() => { setUseRecoveryCode((v) => !v); setCode(""); setError(null); }}
+            onClick={() => {
+              setUseRecoveryCode((v) => !v);
+              setCode("");
+              setError(null);
+            }}
             className="w-full text-center text-xs font-medium text-[var(--primary)]"
           >
             {useRecoveryCode ? "Use an authenticator code instead" : "Use a recovery code instead"}
@@ -123,7 +130,12 @@ export default function LoginPage() {
               {t("auth.forgotPassword")}
             </Link>
           </div>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
         {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
@@ -136,7 +148,10 @@ export default function LoginPage() {
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => { setEmail("admin@demostore.com"); setPassword("password123"); }}
+          onClick={() => {
+            setEmail("admin@demostore.com");
+            setPassword("password123");
+          }}
         >
           Tenant Admin
         </Button>
@@ -145,7 +160,10 @@ export default function LoginPage() {
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => { setEmail("superadmin@smartpos.com"); setPassword("password"); }}
+          onClick={() => {
+            setEmail("superadmin@smartpos.com");
+            setPassword("password");
+          }}
         >
           Super Admin
         </Button>

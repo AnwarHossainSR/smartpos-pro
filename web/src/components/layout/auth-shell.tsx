@@ -1,5 +1,5 @@
-import { Link } from "react-router";
 import { Check } from "lucide-react";
+import { Link } from "react-router";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/context";
 
@@ -27,7 +27,9 @@ export function AuthShell({
         </Link>
 
         <div className="relative space-y-5">
-          <h2 className="max-w-sm text-3xl font-semibold leading-tight">{t("auth.marketingTitle")}</h2>
+          <h2 className="max-w-sm text-3xl font-semibold leading-tight">
+            {t("auth.marketingTitle")}
+          </h2>
           <p className="max-w-sm text-sm text-white/70">{t("auth.marketingBody")}</p>
           <ul className="space-y-2.5 pt-2 text-sm text-white/85">
             {features.map((f) => (

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
-import { api, ApiError } from "@/lib/api";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { ApiError, api } from "@/lib/api";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -70,7 +70,10 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <AuthShell title="Verify your email" subtitle={`Enter the 6-digit code sent to ${email || "your email"}`}>
+    <AuthShell
+      title="Verify your email"
+      subtitle={`Enter the 6-digit code sent to ${email || "your email"}`}
+    >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <Label>Verification code</Label>

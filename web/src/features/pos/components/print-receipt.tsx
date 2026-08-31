@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { Download, Printer, Usb, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
@@ -6,14 +7,13 @@ import { useTranslation } from "@/i18n/context";
 import { api, apiBlob } from "@/lib/api";
 import {
   connectUsbPrinter,
-  getConnectedPrinter,
   disconnectPrinter,
-  printReceipt,
-  isWebUsbAvailable,
   downloadPdfFallback,
   formatReceipt,
+  getConnectedPrinter,
+  isWebUsbAvailable,
+  printReceipt,
 } from "@/lib/escpos-printer";
-import { Printer, Download, Usb, X } from "lucide-react";
 
 interface PrintReceiptProps {
   saleId: string;
@@ -39,12 +39,7 @@ interface PrintReceiptProps {
   onSuccess?: () => void;
 }
 
-export function PrintReceipt({
-  saleId,
-  invoiceNumber,
-  saleData,
-  onSuccess,
-}: PrintReceiptProps) {
+export function PrintReceipt({ saleId, invoiceNumber, saleData, onSuccess }: PrintReceiptProps) {
   const t = useTranslation();
   const [showDialog, setShowDialog] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -86,10 +81,7 @@ export function PrintReceipt({
         data: { name: string; address?: string; phone?: string; tax_number?: string };
       }>("/settings/business");
 
-      const receiptBytes = formatReceipt(
-        { ...saleData, invoice_number: invoiceNumber },
-        business,
-      );
+      const receiptBytes = formatReceipt({ ...saleData, invoice_number: invoiceNumber }, business);
 
       const result = await printReceipt(receiptBytes);
 
@@ -125,41 +117,25 @@ export function PrintReceipt({
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setShowDialog(true)}
-        className="gap-2"
-      >
+      <Button variant="outline" onClick={() => setShowDialog(true)} className="gap-2">
         <Printer className="h-4 w-4" />
         {t("pos.printReceipt")}
       </Button>
 
-      <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        title={t("pos.printReceipt")}
-      >
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} title={t("pos.printReceipt")}>
         <div className="space-y-4">
           {!hasUsb ? (
             <div className="rounded-lg border border-[var(--border)] p-4 text-center">
               <Download className="mx-auto mb-2 h-8 w-8 text-[var(--muted)]" />
-              <p className="text-sm text-[var(--muted)]">
-                {t("pos.printNoUsb")}
-              </p>
+              <p className="text-sm text-[var(--muted)]">{t("pos.printNoUsb")}</p>
             </div>
           ) : !printer ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-[var(--border)] p-4 text-center">
                 <Usb className="mx-auto mb-2 h-8 w-8 text-[var(--muted)]" />
-                <p className="text-sm text-[var(--muted)]">
-                  {t("pos.printConnect")}
-                </p>
+                <p className="text-sm text-[var(--muted)]">{t("pos.printConnect")}</p>
               </div>
-              <Button
-                onClick={handleConnect}
-                disabled={connecting}
-                className="w-full"
-              >
+              <Button onClick={handleConnect} disabled={connecting} className="w-full">
                 {connecting ? t("common.loading") : t("pos.printConnect")}
               </Button>
             </div>
@@ -173,29 +149,17 @@ export function PrintReceipt({
                   </p>
                   <p className="text-xs text-[var(--muted)]">Connected</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDisconnect}
-                >
+                <Button variant="ghost" size="sm" onClick={handleDisconnect}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <Button
-                onClick={handlePrint}
-                disabled={printing || !saleData}
-                className="w-full"
-              >
+              <Button onClick={handlePrint} disabled={printing || !saleData} className="w-full">
                 {printing ? t("common.loading") : t("pos.printReceipt")}
               </Button>
             </div>
           )}
 
-          <Button
-            variant="outline"
-            onClick={handleDownloadPdf}
-            className="w-full"
-          >
+          <Button variant="outline" onClick={handleDownloadPdf} className="w-full">
             <Download className="mr-2 h-4 w-4" />
             {t("pos.printFallback")}
           </Button>

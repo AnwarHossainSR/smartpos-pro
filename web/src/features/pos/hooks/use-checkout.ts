@@ -1,12 +1,12 @@
-import { useCallback, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ApiError, errorMessage } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
+import { useCallback, useRef, useState } from "react";
+import { type ApprovalChallenge, approvalChallengeFrom } from "@/components/approval-challenge";
 import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/context";
-import { approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-challenge";
 import { posApi, type SaleDraft } from "@/features/pos/api";
 import type { CartItem, Payment, Sale } from "@/features/pos/types";
+import { useTranslation } from "@/i18n/context";
+import { ApiError, errorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 /** A 422's first field error ("Insufficient stock for X") says far more than its summary. */
 function validationDetail(e: unknown, fallback: string): string {
@@ -80,8 +80,15 @@ export function useCheckout({
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: ({ payments, tenderCurrency, approvalToken }: { payments: Payment[]; tenderCurrency?: string; approvalToken?: string }) =>
-      posApi.createSale(draft({ payments, tenderCurrency, approvalToken })),
+    mutationFn: ({
+      payments,
+      tenderCurrency,
+      approvalToken,
+    }: {
+      payments: Payment[];
+      tenderCurrency?: string;
+      approvalToken?: string;
+    }) => posApi.createSale(draft({ payments, tenderCurrency, approvalToken })),
     onSuccess: ({ data }) => {
       onReceipt(data);
       onSettled();
@@ -133,27 +140,37 @@ export function useCheckout({
     },
   });
 
-  const checkout = useCallback((payments: Payment[], tenderCurrency?: string) => {
-    pendingRef.current = { kind: "checkout", payments, tenderCurrency };
-    checkoutMutation.mutate({ payments, tenderCurrency });
-  }, [checkoutMutation]);
+  const checkout = useCallback(
+    (payments: Payment[], tenderCurrency?: string) => {
+      pendingRef.current = { kind: "checkout", payments, tenderCurrency };
+      checkoutMutation.mutate({ payments, tenderCurrency });
+    },
+    [checkoutMutation],
+  );
 
   const park = useCallback(() => {
     pendingRef.current = { kind: "park" };
     parkMutation.mutate(undefined);
   }, [parkMutation]);
 
-  const approve = useCallback((token: string) => {
-    const pending = pendingRef.current;
-    setChallenge(null);
-    if (!pending) return;
-    if (pending.kind === "checkout") {
-      // A manager never re-enters the tender — it is replayed exactly as confirmed.
-      checkoutMutation.mutate({ payments: pending.payments, tenderCurrency: pending.tenderCurrency, approvalToken: token });
-    } else {
-      parkMutation.mutate(token);
-    }
-  }, [checkoutMutation, parkMutation]);
+  const approve = useCallback(
+    (token: string) => {
+      const pending = pendingRef.current;
+      setChallenge(null);
+      if (!pending) return;
+      if (pending.kind === "checkout") {
+        // A manager never re-enters the tender — it is replayed exactly as confirmed.
+        checkoutMutation.mutate({
+          payments: pending.payments,
+          tenderCurrency: pending.tenderCurrency,
+          approvalToken: token,
+        });
+      } else {
+        parkMutation.mutate(token);
+      }
+    },
+    [checkoutMutation, parkMutation],
+  );
 
   return {
     checkout,

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { applySeo, formatTitle, SITE_NAME } from "@/lib/seo";
 
 function head(selector: string) {

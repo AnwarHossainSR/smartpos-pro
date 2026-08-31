@@ -10,7 +10,11 @@ const MIN_SCAN_LENGTH = 3;
 
 /** Best-effort haptic/audio confirmation — absent or blocked on most desktop tills. */
 function buzz(pattern: number | number[]) {
-  try { navigator.vibrate?.(pattern); } catch {}
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    /* ignore */
+  }
 }
 
 function beep() {
@@ -24,7 +28,9 @@ function beep() {
     gain.gain.value = 0.1;
     osc.start();
     osc.stop(ctx.currentTime + 0.08);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -37,20 +43,23 @@ export function useBarcodeScan(onFound: (product: Product, weight?: number | nul
   const lastKeystrokeRef = useRef(0);
   const bufferRef = useRef("");
 
-  const lookup = useCallback(async (code: string) => {
-    if (!code.trim()) return;
-    try {
-      const found = await posApi.barcode(code.trim());
-      if (found?.data) {
-        onFound(found.data, found.parsed_weight);
-        buzz(50);
-        beep();
+  const lookup = useCallback(
+    async (code: string) => {
+      if (!code.trim()) return;
+      try {
+        const found = await posApi.barcode(code.trim());
+        if (found?.data) {
+          onFound(found.data, found.parsed_weight);
+          buzz(50);
+          beep();
+        }
+      } catch {
+        toast(`Barcode "${code}" not found`, "error");
+        buzz([50, 30, 50]);
       }
-    } catch {
-      toast(`Barcode "${code}" not found`, "error");
-      buzz([50, 30, 50]);
-    }
-  }, [onFound]);
+    },
+    [onFound],
+  );
 
   const handleSearchKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -61,7 +70,11 @@ export function useBarcodeScan(onFound: (product: Product, weight?: number | nul
         lastKeystrokeRef.current = now;
         const scanned = bufferRef.current;
         bufferRef.current = "";
-        lookup(gap < SCANNER_KEY_GAP_MS && scanned.length >= MIN_SCAN_LENGTH ? scanned : e.currentTarget.value);
+        lookup(
+          gap < SCANNER_KEY_GAP_MS && scanned.length >= MIN_SCAN_LENGTH
+            ? scanned
+            : e.currentTarget.value,
+        );
         return;
       }
 

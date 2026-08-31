@@ -1,4 +1,12 @@
-export type { Tenant, TenantDetail, RevenueMetrics, Impersonation, PlanDistribution, PlatformUser, AuditLog } from "@/types/domain";
+export type {
+  AuditLog,
+  Impersonation,
+  PlanDistribution,
+  PlatformUser,
+  RevenueMetrics,
+  Tenant,
+  TenantDetail,
+} from "@/types/domain";
 
 export interface SuperAdminPlan {
   id: string;

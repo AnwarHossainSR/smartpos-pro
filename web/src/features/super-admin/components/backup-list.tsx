@@ -1,11 +1,11 @@
+import { CheckCircle, Database, Download, Loader2, Plus, Trash2, XCircle } from "lucide-react";
 import { useState } from "react";
-import { Database, Download, Trash2, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { useBackups, useBackupMutations } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
 import { Pagination } from "@/components/ui/pagination";
+import { useBackupMutations, useBackups } from "../hooks";
 import type { BackupLog } from "../types";
 
 function formatDate(dateString: string): string {
@@ -14,10 +14,14 @@ function formatDate(dateString: string): string {
 
 function getStatusBadge(status: string): "success" | "warning" | "danger" | "info" {
   switch (status) {
-    case "completed": return "success";
-    case "pending": return "warning";
-    case "failed": return "danger";
-    default: return "info";
+    case "completed":
+      return "success";
+    case "pending":
+      return "warning";
+    case "failed":
+      return "danger";
+    default:
+      return "info";
   }
 }
 
@@ -62,9 +66,7 @@ export function BackupList() {
     {
       key: "size",
       header: "Size",
-      render: (log) => (
-        <span className="text-sm text-[var(--muted)]">{log.size_human}</span>
-      ),
+      render: (log) => <span className="text-sm text-[var(--muted)]">{log.size_human}</span>,
     },
     {
       key: "status",
@@ -82,9 +84,7 @@ export function BackupList() {
       key: "created_by",
       header: "Created By",
       render: (log) => (
-        <span className="text-sm text-[var(--muted)]">
-          {log.created_by?.name ?? "—"}
-        </span>
+        <span className="text-sm text-[var(--muted)]">{log.created_by?.name ?? "—"}</span>
       ),
     },
     {

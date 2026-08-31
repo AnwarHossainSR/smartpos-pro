@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Clock, MessageSquare } from "lucide-react";
-import { useSupportTickets, useTicketMetrics } from "../hooks";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
-import { SupportTicketDetailModal } from "./support-ticket-detail-modal";
+import { useSupportTickets, useTicketMetrics } from "../hooks";
 import type { SupportTicket, TicketMetrics } from "../types";
+import { SupportTicketDetailModal } from "./support-ticket-detail-modal";
 
 type TicketFilters = { status: string; priority: string };
 
@@ -74,9 +74,7 @@ function MetricsCards({ metrics }: { metrics: TicketMetrics | undefined }) {
         <Card key={card.label}>
           <CardContent className="p-4">
             <CardTitle className="text-xs">{card.label}</CardTitle>
-            <p className={`mt-1 text-2xl font-semibold ${card.color}`}>
-              {card.value}
-            </p>
+            <p className={`mt-1 text-2xl font-semibold ${card.color}`}>{card.value}</p>
           </CardContent>
         </Card>
       ))}
@@ -128,9 +126,7 @@ export function SupportTicketList() {
       className: "font-medium max-w-[300px]",
       render: (t) => (
         <div className="flex items-center gap-2">
-          {t.is_sla_breached && (
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-          )}
+          {t.is_sla_breached && <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />}
           <span className="truncate">{t.subject}</span>
         </div>
       ),
@@ -240,11 +236,7 @@ export function SupportTicketList() {
           onRetry={refetch}
           emptyMessage="No support tickets found."
           actions={(t) => (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewingId(t.id)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setViewingId(t.id)}>
               View
             </Button>
           )}
@@ -258,10 +250,7 @@ export function SupportTicketList() {
           />
         )}
       </div>
-      <SupportTicketDetailModal
-        ticketId={viewingId}
-        onClose={() => setViewingId(null)}
-      />
+      <SupportTicketDetailModal ticketId={viewingId} onClose={() => setViewingId(null)} />
     </div>
   );
 }

@@ -1,9 +1,9 @@
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrinterProfileList } from "@/features/printer/components/printer-profile-list";
 import { useTranslation } from "@/i18n/context";
 import { useAuth } from "@/stores/auth";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
 
 export default function PrinterSettingsPage() {
   const { can } = useAuth();

@@ -1,30 +1,24 @@
+import { ArrowLeft, Clock, Headset, MessageSquare, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ArrowLeft,
-  Clock,
-  MessageSquare,
-  Send,
-  Headset,
-} from "lucide-react";
-import {
-  useMyTickets,
-  useMyTicket,
-  useCreateTicket,
-  useReplyToTicket,
-  useCloseTicket,
-  useReopenTicket,
-} from "@/features/support/hooks";
-import type { SupportTicket } from "@/features/super-admin/types";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/pagination";
-import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog } from "@/components/ui/dialog";
+import type { SupportTicket } from "@/features/super-admin/types";
+import {
+  useCloseTicket,
+  useCreateTicket,
+  useMyTicket,
+  useMyTickets,
+  useReopenTicket,
+  useReplyToTicket,
+} from "@/features/support/hooks";
 
 const STATUS_TONES: Record<string, "info" | "warning" | "danger" | "success" | "default"> = {
   open: "info",
@@ -96,7 +90,9 @@ function LoadingSkeleton() {
     <div className="space-y-4">
       <ListToolbar
         search=""
-        onSearchChange={() => {}}
+        onSearchChange={() => {
+          /* no-op */
+        }}
         searchPlaceholder="Search tickets\u2026"
         filters={
           <div className="flex gap-2">
@@ -260,9 +256,7 @@ function TicketList({
             </Button>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="py-12 text-center text-sm text-[var(--muted)]">
-            No tickets found.
-          </div>
+          <div className="py-12 text-center text-sm text-[var(--muted)]">No tickets found.</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {tickets.map((ticket) => (
@@ -273,9 +267,7 @@ function TicketList({
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">
-                      {ticket.subject}
-                    </span>
+                    <span className="truncate text-sm font-medium">{ticket.subject}</span>
                     <Badge tone={STATUS_TONES[ticket.status] ?? "default"}>
                       {STATUS_LABELS[ticket.status] ?? ticket.status}
                     </Badge>
@@ -428,13 +420,7 @@ function NewTicketForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function TicketDetail({
-  ticketId,
-  onBack,
-}: {
-  ticketId: string;
-  onBack: () => void;
-}) {
+function TicketDetail({ ticketId, onBack }: { ticketId: string; onBack: () => void }) {
   const [replyText, setReplyText] = useState("");
   const [closingTicket, setClosingTicket] = useState<SupportTicket | null>(null);
 
@@ -542,11 +528,7 @@ function TicketDetail({
         </div>
         <div className="flex shrink-0 gap-2">
           {isOpen ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setClosingTicket(ticket)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setClosingTicket(ticket)}>
               Close Ticket
             </Button>
           ) : (
@@ -561,9 +543,7 @@ function TicketDetail({
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="mb-2 flex items-center gap-2">
             <span className="text-sm font-medium">{ticket.user?.name ?? "You"}</span>
-            <span className="text-xs text-[var(--muted)]">
-              {formatDate(ticket.created_at)}
-            </span>
+            <span className="text-xs text-[var(--muted)]">{formatDate(ticket.created_at)}</span>
           </div>
           <p className="whitespace-pre-wrap text-sm">{ticket.message}</p>
         </div>
@@ -574,22 +554,16 @@ function TicketDetail({
             className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div className="mb-2 flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {reply.user?.name ?? "Support"}
-              </span>
+              <span className="text-sm font-medium">{reply.user?.name ?? "Support"}</span>
               <Badge tone="info">Support</Badge>
-              <span className="text-xs text-[var(--muted)]">
-                {formatDate(reply.created_at)}
-              </span>
+              <span className="text-xs text-[var(--muted)]">{formatDate(reply.created_at)}</span>
             </div>
             <p className="whitespace-pre-wrap text-sm">{reply.message}</p>
           </div>
         ))}
 
         {replies.length === 0 && (
-          <p className="py-8 text-center text-sm text-[var(--muted)]">
-            No replies yet.
-          </p>
+          <p className="py-8 text-center text-sm text-[var(--muted)]">No replies yet.</p>
         )}
       </div>
 
@@ -635,10 +609,7 @@ export default function SupportPage() {
   if (viewingTicketId) {
     return (
       <div className="max-w-5xl">
-        <TicketDetail
-          ticketId={viewingTicketId}
-          onBack={() => setViewingTicketId(null)}
-        />
+        <TicketDetail ticketId={viewingTicketId} onBack={() => setViewingTicketId(null)} />
       </div>
     );
   }
@@ -653,16 +624,10 @@ export default function SupportPage() {
       </div>
 
       <div className="flex border-b border-[var(--border)]">
-        <TabButton
-          active={activeTab === "tickets"}
-          onClick={() => setActiveTab("tickets")}
-        >
+        <TabButton active={activeTab === "tickets"} onClick={() => setActiveTab("tickets")}>
           My Tickets
         </TabButton>
-        <TabButton
-          active={activeTab === "new"}
-          onClick={() => setActiveTab("new")}
-        >
+        <TabButton active={activeTab === "new"} onClick={() => setActiveTab("new")}>
           New Ticket
         </TabButton>
       </div>
@@ -674,11 +639,7 @@ export default function SupportPage() {
         />
       )}
 
-      {activeTab === "new" && (
-        <NewTicketForm
-          onCreated={() => setActiveTab("tickets")}
-        />
-      )}
+      {activeTab === "new" && <NewTicketForm onCreated={() => setActiveTab("tickets")} />}
     </div>
   );
 }

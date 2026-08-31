@@ -1,9 +1,14 @@
-import { ActiveBadge, ResourceManager, type ResourceColumn, type ResourceRecord } from "@/components/ui/resource-manager";
+import { useState } from "react";
+import {
+  ActiveBadge,
+  type ResourceColumn,
+  ResourceManager,
+  type ResourceRecord,
+} from "@/components/ui/resource-manager";
 import { useCategories, useUnits } from "@/lib/lookups";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import type { Brand, Category, Unit } from "@/types/domain";
-import { useState } from "react";
 
 /**
  * `ResourceManager` indexes rows generically, so its records need the `ResourceRecord`
@@ -23,7 +28,11 @@ const TAB_LABELS: Record<Tab, string> = {
   units: "Units",
 };
 
-const PERMISSIONS = { create: "products.create", update: "products.update", delete: "products.delete" } as const;
+const PERMISSIONS = {
+  create: "products.create",
+  update: "products.update",
+  delete: "products.delete",
+} as const;
 
 export default function CatalogSetupPage() {
   const { can } = useAuth();
@@ -36,7 +45,11 @@ export default function CatalogSetupPage() {
   const { units } = useUnits({ enabled: canView });
 
   if (!canView) {
-    return <div className="py-16 text-center text-[var(--muted)]">You do not have access to the catalog.</div>;
+    return (
+      <div className="py-16 text-center text-[var(--muted)]">
+        You do not have access to the catalog.
+      </div>
+    );
   }
 
   const categoryColumns: ResourceColumn<CategoryRow>[] = [
@@ -122,7 +135,13 @@ export default function CatalogSetupPage() {
           permissions={PERMISSIONS}
           fields={[
             { name: "name", label: "Name", type: "text", required: true, placeholder: "Kilogram" },
-            { name: "short_name", label: "Short name", type: "text", required: true, placeholder: "kg" },
+            {
+              name: "short_name",
+              label: "Short name",
+              type: "text",
+              required: true,
+              placeholder: "kg",
+            },
             {
               name: "base_unit_id",
               label: "Base unit",

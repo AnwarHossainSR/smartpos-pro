@@ -1,27 +1,27 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Trash2 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
+import { toast } from "@/components/ui/toast";
 import { api, type Envelope, type Paginated } from "@/lib/api";
 import { useWarehouses } from "@/lib/lookups";
 import { queryKeys } from "@/lib/query-keys";
 import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Named } from "@/types/domain";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Combobox } from "@/components/ui/combobox";
-import { Drawer } from "@/components/ui/drawer";
-import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { ListToolbar } from "@/components/ui/list-toolbar";
-import { Pagination } from "@/components/ui/pagination";
-import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
+import type { Named } from "@/types/domain";
 
 interface Purchase {
   id: string;
@@ -37,7 +37,12 @@ interface Purchase {
   payments?: { method: string; amount: number }[];
 }
 
-interface Product { id: string; name: string; sku: string | null; purchase_price: number; }
+interface Product {
+  id: string;
+  name: string;
+  sku: string | null;
+  purchase_price: number;
+}
 
 const purchaseSchema = z.object({
   warehouse_id: z.string(),
@@ -46,20 +51,30 @@ const purchaseSchema = z.object({
   discount_amount: z.number().min(0).optional(),
   shipping_amount: z.number().min(0).optional(),
   note: z.string().optional(),
-  items: z.array(z.object({
-    product_id: z.string(),
-    quantity: z.number().min(0.001),
-    unit_cost: z.number().min(0),
-  })).min(1, "Add at least one item"),
-  payments: z.array(z.object({
-    method: z.string(),
-    amount: z.number().min(0),
-  })).optional(),
+  items: z
+    .array(
+      z.object({
+        product_id: z.string(),
+        quantity: z.number().min(0.001),
+        unit_cost: z.number().min(0),
+      }),
+    )
+    .min(1, "Add at least one item"),
+  payments: z
+    .array(
+      z.object({
+        method: z.string(),
+        amount: z.number().min(0),
+      }),
+    )
+    .optional(),
 });
 type PurchaseValues = z.infer<typeof purchaseSchema>;
 
 const statusColor: Record<string, "success" | "warning" | "default"> = {
-  received: "success", ordered: "warning", draft: "default",
+  received: "success",
+  ordered: "warning",
+  draft: "default",
 };
 
 function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
@@ -75,20 +90,39 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
     staleTime: 5 * 60_000,
   });
 
-  const { register, handleSubmit, control, formState: { errors }, watch } = useForm<PurchaseValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    watch,
+  } = useForm<PurchaseValues>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: { status: "received", items: [], payments: [] },
   });
 
-  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({ control, name: "items" });
-  const { fields: payFields, append: appendPay, remove: removePay } = useFieldArray({ control, name: "payments" });
+  const {
+    fields: itemFields,
+    append: appendItem,
+    remove: removeItem,
+  } = useFieldArray({ control, name: "items" });
+  const {
+    fields: payFields,
+    append: appendPay,
+    remove: removePay,
+  } = useFieldArray({ control, name: "payments" });
 
   const items = watch("items");
   const subtotal = items.reduce((s, i) => s + (i.quantity || 0) * (i.unit_cost || 0), 0);
 
   const mutation = useMutation({
-    mutationFn: (data: PurchaseValues) => api("/purchases", { method: "POST", idempotencyKey: crypto.randomUUID(), body: data }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.purchases.all }); toast("Purchase created"); onSuccess(); },
+    mutationFn: (data: PurchaseValues) =>
+      api("/purchases", { method: "POST", idempotencyKey: crypto.randomUUID(), body: data }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.purchases.all });
+      toast("Purchase created");
+      onSuccess();
+    },
   });
 
   return (
@@ -96,16 +130,24 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Warehouse *</Label>
-          <Select {...register("warehouse_id", { setValueAs: (v) => v ? String(v) : undefined })}>
+          <Select {...register("warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">— Select —</option>
-            {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
           </Select>
         </div>
         <div>
           <Label>Supplier</Label>
-          <Select {...register("supplier_id", { setValueAs: (v) => v ? String(v) : undefined })}>
+          <Select {...register("supplier_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
             <option value="">— None —</option>
-            {suppliers?.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {suppliers?.data?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
           </Select>
         </div>
       </div>
@@ -132,7 +174,11 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
             clearOnSelect
             onChange={(_id, product) => {
               if (!product) return;
-              appendItem({ product_id: product.id, quantity: 1, unit_cost: product.purchase_price });
+              appendItem({
+                product_id: product.id,
+                quantity: 1,
+                unit_cost: product.purchase_price,
+              });
               setItemNames((names) => ({ ...names, [product.id]: product.name }));
             }}
             label={(p) => p.name}
@@ -144,13 +190,41 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="space-y-2">
           {itemFields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
-              <Input className="flex-1" disabled value={itemNames[items[idx]?.product_id] ?? items[idx]?.product_id ?? ""} />
-              <Input type="number" className="w-24" step="0.001" min="0.001" {...register(`items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" />
-              <Input type="number" className="w-28" step="0.01" min="0" {...register(`items.${idx}.unit_cost`, { valueAsNumber: true })} placeholder="Cost" />
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[var(--color-danger)]" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              <Input
+                className="flex-1"
+                disabled
+                value={itemNames[items[idx]?.product_id] ?? items[idx]?.product_id ?? ""}
+              />
+              <Input
+                type="number"
+                className="w-24"
+                step="0.001"
+                min="0.001"
+                {...register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                placeholder="Qty"
+              />
+              <Input
+                type="number"
+                className="w-28"
+                step="0.01"
+                min="0"
+                {...register(`items.${idx}.unit_cost`, { valueAsNumber: true })}
+                placeholder="Cost"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-[var(--color-danger)]"
+                onClick={() => removeItem(idx)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
-          {errors.items && <p className="text-xs text-[var(--color-danger)]">Add at least one item</p>}
+          {errors.items && (
+            <p className="text-xs text-[var(--color-danger)]">Add at least one item</p>
+          )}
         </div>
         <p className="mt-2 text-end text-sm font-medium">Subtotal: {formatCurrency(subtotal)}</p>
       </div>
@@ -159,20 +233,44 @@ function PurchaseForm({ onSuccess }: { onSuccess: () => void }) {
       <div>
         <div className="mb-2 flex items-center justify-between">
           <Label>Payments</Label>
-          <Button type="button" variant="outline" size="sm" onClick={() => appendPay({ method: "cash", amount: subtotal })}>+ Add payment</Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => appendPay({ method: "cash", amount: subtotal })}
+          >
+            + Add payment
+          </Button>
         </div>
         {payFields.map((field, idx) => (
           <div key={field.id} className="flex items-center gap-2 mb-2">
             <Select className="w-36" {...register(`payments.${idx}.method`)}>
-              <option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="bank">Bank</option>
             </Select>
-            <Input type="number" step="0.01" min="0" {...register(`payments.${idx}.amount`, { valueAsNumber: true })} />
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removePay(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              {...register(`payments.${idx}.amount`, { valueAsNumber: true })}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => removePay(idx)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           </div>
         ))}
       </div>
 
-      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? "Saving…" : "Create purchase"}</Button>
+      <Button type="submit" disabled={mutation.isPending} className="w-full">
+        {mutation.isPending ? "Saving…" : "Create purchase"}
+      </Button>
     </form>
   );
 }
@@ -182,21 +280,52 @@ function PurchaseDetailModal({ purchase, onClose }: { purchase: Purchase; onClos
     <Dialog open title={`Purchase #${purchase.reference_number}`} onClose={onClose}>
       <div className="space-y-4 text-sm">
         <div className="grid grid-cols-2 gap-2">
-          <div><span className="text-[var(--muted)]">Status</span><br /><Badge tone={statusColor[purchase.status] ?? "default"}>{purchase.status}</Badge></div>
-          <div><span className="text-[var(--muted)]">Payment</span><br /><Badge tone={purchase.payment_status === "paid" ? "success" : "warning"}>{purchase.payment_status}</Badge></div>
-          <div><span className="text-[var(--muted)]">Supplier</span><br />{purchase.supplier?.name ?? "—"}</div>
-          <div><span className="text-[var(--muted)]">Date</span><br />{formatDate(purchase.purchased_at)}</div>
+          <div>
+            <span className="text-[var(--muted)]">Status</span>
+            <br />
+            <Badge tone={statusColor[purchase.status] ?? "default"}>{purchase.status}</Badge>
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Payment</span>
+            <br />
+            <Badge tone={purchase.payment_status === "paid" ? "success" : "warning"}>
+              {purchase.payment_status}
+            </Badge>
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Supplier</span>
+            <br />
+            {purchase.supplier?.name ?? "—"}
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Date</span>
+            <br />
+            {formatDate(purchase.purchased_at)}
+          </div>
         </div>
         <hr />
         {purchase.items?.map((item, i) => (
           <div key={i} className="flex justify-between">
-            <span>{item.name} × {item.quantity}</span><span>{formatCurrency(item.line_total)}</span>
+            <span>
+              {item.name} × {item.quantity}
+            </span>
+            <span>{formatCurrency(item.line_total)}</span>
           </div>
         ))}
         <hr />
-        <div className="flex justify-between font-semibold"><span>Total</span><span>{formatCurrency(purchase.total)}</span></div>
-        {purchase.due_amount > 0 && <div className="flex justify-between text-amber-600"><span>Due</span><span>{formatCurrency(purchase.due_amount)}</span></div>}
-        <Button variant="outline" onClick={onClose} className="w-full">Close</Button>
+        <div className="flex justify-between font-semibold">
+          <span>Total</span>
+          <span>{formatCurrency(purchase.total)}</span>
+        </div>
+        {purchase.due_amount > 0 && (
+          <div className="flex justify-between text-amber-600">
+            <span>Due</span>
+            <span>{formatCurrency(purchase.due_amount)}</span>
+          </div>
+        )}
+        <Button variant="outline" onClick={onClose} className="w-full">
+          Close
+        </Button>
       </div>
     </Dialog>
   );
@@ -220,12 +349,32 @@ export default function PurchasesPage() {
   });
 
   const columns: DataTableColumn<Purchase>[] = [
-    { key: "reference", header: "Reference", className: "font-mono text-xs font-medium", render: (p) => p.reference_number },
+    {
+      key: "reference",
+      header: "Reference",
+      className: "font-mono text-xs font-medium",
+      render: (p) => p.reference_number,
+    },
     { key: "supplier", header: "Supplier", render: (p) => p.supplier?.name ?? "—" },
-    { key: "date", header: "Date", className: "text-[var(--muted)]", render: (p) => formatDate(p.purchased_at) },
+    {
+      key: "date",
+      header: "Date",
+      className: "text-[var(--muted)]",
+      render: (p) => formatDate(p.purchased_at),
+    },
     { key: "total", header: "Total", align: "right", render: (p) => formatCurrency(p.total) },
-    { key: "status", header: "Status", render: (p) => <Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge> },
-    { key: "payment", header: "Payment", render: (p) => <Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge> },
+    {
+      key: "status",
+      header: "Status",
+      render: (p) => <Badge tone={statusColor[p.status] ?? "default"}>{p.status}</Badge>,
+    },
+    {
+      key: "payment",
+      header: "Payment",
+      render: (p) => (
+        <Badge tone={p.payment_status === "paid" ? "success" : "warning"}>{p.payment_status}</Badge>
+      ),
+    },
   ];
 
   return (
@@ -248,7 +397,9 @@ export default function PurchasesPage() {
           onRetry={list.refetch}
           emptyMessage="No purchases yet."
           actions={(p) => (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(p)}><Eye className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetail(p)}>
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
           )}
         />
         {list.meta && (
@@ -260,10 +411,17 @@ export default function PurchasesPage() {
           />
         )}
       </div>
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="New purchase" width="max-w-2xl">
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="New purchase"
+        width="max-w-2xl"
+      >
         <PurchaseForm onSuccess={() => setDrawerOpen(false)} />
       </Drawer>
-      {detail && purchaseDetail && <PurchaseDetailModal purchase={purchaseDetail.data} onClose={() => setDetail(null)} />}
+      {detail && purchaseDetail && (
+        <PurchaseDetailModal purchase={purchaseDetail.data} onClose={() => setDetail(null)} />
+      )}
     </div>
   );
 }

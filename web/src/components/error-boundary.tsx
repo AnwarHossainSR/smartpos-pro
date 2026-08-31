@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { errorMessage } from "@/lib/api";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
-import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import { isRouteErrorResponse, Link, useRouteError } from "react-router";
+import { Button } from "@/components/ui/button";
+import { errorMessage } from "@/lib/api";
 
 interface Described {
   title: string;

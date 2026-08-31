@@ -1,8 +1,8 @@
 import { Star } from "lucide-react";
-import { cn, formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PosViewMode } from "@/features/pos/hooks/use-pos-catalog";
 import type { Product } from "@/features/pos/types";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface ProductGridProps {
   products: Product[];
@@ -26,10 +26,18 @@ function FavoriteToggle({
 }) {
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
       className={cn("flex h-6 w-6 items-center justify-center cursor-pointer", className)}
     >
-      <Star className={cn("h-3.5 w-3.5", active ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]")} />
+      <Star
+        className={cn(
+          "h-3.5 w-3.5",
+          active ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]",
+        )}
+      />
     </button>
   );
 }
@@ -40,11 +48,22 @@ function StockLine({ product }: { product: Product }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <p className={cn("text-xs", stock <= 0 ? "text-[var(--color-danger)]" : low ? "text-amber-600" : "text-[var(--muted)]")}>
+      <p
+        className={cn(
+          "text-xs",
+          stock <= 0
+            ? "text-[var(--color-danger)]"
+            : low
+              ? "text-amber-600"
+              : "text-[var(--muted)]",
+        )}
+      >
         Stock: {stock}
       </p>
       {low && stock > 0 && (
-        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
+        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+          Low
+        </span>
       )}
     </div>
   );
@@ -63,7 +82,12 @@ export function ProductGrid({
     return (
       <div className={cn(viewMode === "grid" ? GRID_CLASS : "space-y-1")}>
         {Array.from({ length: 12 }).map((_, i) => (
-          <Skeleton key={i} className={cn(viewMode === "grid" ? "h-24 rounded-[var(--radius)]" : "h-12 rounded-[var(--radius)]")} />
+          <Skeleton
+            key={i}
+            className={cn(
+              viewMode === "grid" ? "h-24 rounded-[var(--radius)]" : "h-12 rounded-[var(--radius)]",
+            )}
+          />
         ))}
       </div>
     );
@@ -87,8 +111,15 @@ export function ProductGrid({
               <p className="text-sm font-medium truncate">{p.name}</p>
               {p.category && <p className="text-xs text-[var(--muted)]">{p.category.name}</p>}
             </div>
-            <p className="text-sm font-semibold text-[var(--primary)] shrink-0">{formatCurrency(p.selling_price)}</p>
-            <p className={cn("text-xs shrink-0", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--muted)]")}>
+            <p className="text-sm font-semibold text-[var(--primary)] shrink-0">
+              {formatCurrency(p.selling_price)}
+            </p>
+            <p
+              className={cn(
+                "text-xs shrink-0",
+                (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--muted)]",
+              )}
+            >
               Stock: {p.stock ?? 0}
             </p>
             <FavoriteToggle
@@ -123,9 +154,13 @@ export function ProductGrid({
             {p.image_url && (
               <img src={p.image_url} alt="" className="mb-2 h-16 w-full rounded object-cover" />
             )}
-            <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
+            <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">
+              {p.name}
+            </p>
             {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
-            <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
+            <p className="mt-2 font-semibold text-[var(--primary)]">
+              {formatCurrency(p.selling_price)}
+            </p>
             <StockLine product={p} />
           </button>
           <FavoriteToggle
@@ -136,7 +171,9 @@ export function ProductGrid({
         </div>
       ))}
       {products.length === 0 && (
-        <div className="col-span-4 py-12 text-center text-sm text-[var(--muted)]">No products found</div>
+        <div className="col-span-4 py-12 text-center text-sm text-[var(--muted)]">
+          No products found
+        </div>
       )}
     </div>
   );

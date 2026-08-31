@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -19,7 +19,8 @@ export function AssignPlanDialog({ open, onClose, onSubmit, loading }: AssignPla
 
   const plansQuery = useQuery({
     queryKey: queryKeys.superAdmin.plans(),
-    queryFn: () => superAdminApi.plans.list({ search: "", sort: undefined, page: 1, perPage: 200, filters: {} }),
+    queryFn: () =>
+      superAdminApi.plans.list({ search: "", sort: undefined, page: 1, perPage: 200, filters: {} }),
   });
 
   const plans: SuperAdminPlan[] = plansQuery.data?.data ?? [];

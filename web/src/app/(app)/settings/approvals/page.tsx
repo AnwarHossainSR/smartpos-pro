@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { Link } from "react-router";
 import { useState } from "react";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -67,8 +67,12 @@ function Toggle({
 function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: boolean }) {
   const qc = useQueryClient();
   const [percent, setPercent] = useState(String(policy.max_discount_percent));
-  const [amount, setAmount] = useState(policy.max_discount_amount === null ? "" : String(policy.max_discount_amount));
-  const [overrideNeedsApproval, setOverrideNeedsApproval] = useState(policy.require_approval_for_price_override);
+  const [amount, setAmount] = useState(
+    policy.max_discount_amount === null ? "" : String(policy.max_discount_amount),
+  );
+  const [overrideNeedsApproval, setOverrideNeedsApproval] = useState(
+    policy.require_approval_for_price_override,
+  );
   const [voidNeedsApproval, setVoidNeedsApproval] = useState(policy.require_approval_for_void);
 
   const mutation = useMutation({
@@ -90,8 +94,12 @@ function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: 
 
   const percentNumber = Number(percent);
   const percentInvalid =
-    percent.trim() === "" || Number.isNaN(percentNumber) || percentNumber < 0 || percentNumber > 100;
-  const amountInvalid = amount.trim() !== "" && (Number.isNaN(Number(amount)) || Number(amount) < 0);
+    percent.trim() === "" ||
+    Number.isNaN(percentNumber) ||
+    percentNumber < 0 ||
+    percentNumber > 100;
+  const amountInvalid =
+    amount.trim() !== "" && (Number.isNaN(Number(amount)) || Number(amount) < 0);
 
   return (
     <>
@@ -111,7 +119,9 @@ function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: 
             Measured against the basket at catalogue prices. 100 means no limit.
           </p>
           {percentInvalid && (
-            <p className="mt-1 text-xs text-[var(--color-danger)]">Enter a number between 0 and 100.</p>
+            <p className="mt-1 text-xs text-[var(--color-danger)]">
+              Enter a number between 0 and 100.
+            </p>
           )}
         </div>
         <div>
@@ -129,7 +139,9 @@ function PolicyForm({ policy, canManage }: { policy: ApprovalPolicy; canManage: 
             Optional hard ceiling in your currency. Leave blank for none.
           </p>
           {amountInvalid && (
-            <p className="mt-1 text-xs text-[var(--color-danger)]">Enter a positive amount, or leave blank.</p>
+            <p className="mt-1 text-xs text-[var(--color-danger)]">
+              Enter a positive amount, or leave blank.
+            </p>
           )}
         </div>
       </div>

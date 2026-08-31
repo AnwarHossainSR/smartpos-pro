@@ -1,15 +1,15 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Loader2, Shield, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { usePlans } from "@/lib/lookups";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency } from "@/lib/utils";
-import { toast } from "@/components/ui/toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 function CheckoutContent() {
   const navigate = useNavigate();
@@ -129,7 +129,8 @@ function CheckoutContent() {
             <div>
               <p className="font-medium">Secure Checkout</p>
               <p className="text-sm text-[var(--muted)]">
-                Your plan activates immediately and renews at {formatCurrency(plan.price)}/month. Upgrade or cancel anytime.
+                Your plan activates immediately and renews at {formatCurrency(plan.price)}/month.
+                Upgrade or cancel anytime.
               </p>
             </div>
             <Button

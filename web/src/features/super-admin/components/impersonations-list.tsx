@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StopCircle } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { queryKeys } from "@/lib/query-keys";
 import { superAdminApi } from "../api";
 import { useImpersonationMutations } from "../hooks";
-import { queryKeys } from "@/lib/query-keys";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog } from "@/components/ui/dialog";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import type { Impersonation } from "../types";
 
 export function ImpersonationsList() {
@@ -33,9 +33,7 @@ export function ImpersonationsList() {
       render: (row) => (
         <>
           {row.targetUser?.name ?? "—"}
-          <span className="block text-xs text-[var(--muted)]">
-            {row.targetUser?.email ?? ""}
-          </span>
+          <span className="block text-xs text-[var(--muted)]">{row.targetUser?.email ?? ""}</span>
         </>
       ),
     },
@@ -45,9 +43,7 @@ export function ImpersonationsList() {
       render: (row) => (
         <>
           {row.superAdmin?.name ?? "—"}
-          <span className="block text-xs text-[var(--muted)]">
-            {row.superAdmin?.email ?? ""}
-          </span>
+          <span className="block text-xs text-[var(--muted)]">{row.superAdmin?.email ?? ""}</span>
         </>
       ),
     },

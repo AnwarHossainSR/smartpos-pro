@@ -1,3 +1,5 @@
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -5,8 +7,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { useAuth } from "@/stores/auth";
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { usePlanMutations, usePlans } from "../hooks";
 import type { SuperAdminPlan } from "../types";
 import { CreatePlanDialog } from "./create-plan-dialog";
@@ -147,10 +147,7 @@ export function PlanList() {
         onClose={() => setEditing(null)}
         onSubmit={(data) => {
           if (!editing) return;
-          mutations.update.mutate(
-            { id: editing.id, data },
-            { onSuccess: () => setEditing(null) },
-          );
+          mutations.update.mutate({ id: editing.id, data }, { onSuccess: () => setEditing(null) });
         }}
         loading={mutations.update.isPending}
       />

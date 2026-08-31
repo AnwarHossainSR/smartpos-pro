@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { X } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
@@ -18,17 +18,16 @@ export function Drawer({ open, onClose, title, children, width = "max-w-lg" }: D
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
           "relative ml-auto flex h-full w-full flex-col bg-[var(--surface)] shadow-xl",
@@ -41,9 +40,7 @@ export function Drawer({ open, onClose, title, children, width = "max-w-lg" }: D
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>
   );

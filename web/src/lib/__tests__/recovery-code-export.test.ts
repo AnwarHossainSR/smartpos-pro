@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { exportRecoveryCodesAsCsv, exportRecoveryCodesAsPdf } from "../recovery-code-export";
 
 describe("exportRecoveryCodesAsCsv", () => {
@@ -13,7 +13,10 @@ describe("exportRecoveryCodesAsCsv", () => {
     revokeObjectURLSpy = vi.fn();
     createElementSpy = vi.fn(() => ({ click: clickSpy }));
 
-    vi.stubGlobal("URL", { createObjectURL: createObjectURLSpy, revokeObjectURL: revokeObjectURLSpy });
+    vi.stubGlobal("URL", {
+      createObjectURL: createObjectURLSpy,
+      revokeObjectURL: revokeObjectURLSpy,
+    });
     vi.stubGlobal("document", { createElement: createElementSpy });
   });
 
