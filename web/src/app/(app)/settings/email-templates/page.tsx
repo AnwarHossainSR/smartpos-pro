@@ -1,3 +1,7 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, RotateCcw, Send } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,14 +9,10 @@ import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, errorMessage, type Envelope } from "@/lib/api";
+import { api, type Envelope, errorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAuth } from "@/stores/auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RotateCcw, Send } from "lucide-react";
-import { Link } from "react-router";
-import { useState } from "react";
 
 interface EmailTemplate {
   key: string;
@@ -39,7 +39,11 @@ export default function EmailTemplatesPage() {
   });
 
   if (!can("settings.update")) {
-    return <div className="py-16 text-center text-[var(--muted)]">{t("emailTemplates.noPermission")}</div>;
+    return (
+      <div className="py-16 text-center text-[var(--muted)]">
+        {t("emailTemplates.noPermission")}
+      </div>
+    );
   }
 
   const templates = data?.data ?? [];
@@ -69,7 +73,9 @@ export default function EmailTemplatesPage() {
                   type="button"
                   onClick={() => setActiveKey(tpl.key)}
                   className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-start text-sm transition-colors ${
-                    tpl.key === active?.key ? "bg-[var(--surface-2)] font-medium" : "hover:bg-[var(--surface-2)]"
+                    tpl.key === active?.key
+                      ? "bg-[var(--surface-2)] font-medium"
+                      : "hover:bg-[var(--surface-2)]"
                   }`}
                 >
                   <span className="min-w-0 truncate">{tpl.name}</span>
@@ -111,7 +117,8 @@ function TemplateEditor({ template }: { template: EmailTemplate }) {
   });
 
   const save = useMutation({
-    mutationFn: () => api(`/email-templates/${template.key}`, { method: "PUT", body: { subject, body } }),
+    mutationFn: () =>
+      api(`/email-templates/${template.key}`, { method: "PUT", body: { subject, body } }),
     onSuccess: () => {
       toast(t("emailTemplates.saved"));
       qc.invalidateQueries({ queryKey: queryKeys.emailTemplates.lists() });
@@ -203,7 +210,11 @@ function TemplateEditor({ template }: { template: EmailTemplate }) {
                 placeholder="you@example.com"
               />
             </div>
-            <Button variant="outline" onClick={() => sendTest.mutate()} disabled={!testEmail || sendTest.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => sendTest.mutate()}
+              disabled={!testEmail || sendTest.isPending}
+            >
               <Send className="h-4 w-4" /> {t("emailTemplates.sendTest")}
             </Button>
           </div>

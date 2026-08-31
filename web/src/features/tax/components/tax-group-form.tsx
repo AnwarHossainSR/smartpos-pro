@@ -1,12 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { useAllTaxRates, useTaxGroupMutations } from "@/features/tax/hooks";
 import type { TaxGroup, TaxRate } from "@/features/tax/types";
 
@@ -24,7 +24,13 @@ type FormValues = z.infer<typeof schema>;
  * reorderable list (up/down, no drag-and-drop dependency needed) rather than checkboxes.
  * `priority` sent to the API is just the resulting array index.
  */
-export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null; onSuccess: () => void }) {
+export function TaxGroupForm({
+  editing,
+  onSuccess,
+}: {
+  editing?: TaxGroup | null;
+  onSuccess: () => void;
+}) {
   const { create, update } = useTaxGroupMutations();
   const { data: allRates } = useAllTaxRates();
   const isEdit = !!editing;
@@ -34,15 +40,26 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
   );
   const [pickerValue, setPickerValue] = useState("");
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: editing
-      ? { name: editing.name, code: editing.code ?? "", is_default: editing.is_default, is_active: editing.is_active }
+      ? {
+          name: editing.name,
+          code: editing.code ?? "",
+          is_default: editing.is_default,
+          is_active: editing.is_active,
+        }
       : { name: "", code: "", is_default: false, is_active: true },
   });
 
   const pending = create.isPending || update.isPending;
-  const availableRates = (allRates?.data ?? []).filter((r) => !components.some((c) => c.id === r.id));
+  const availableRates = (allRates?.data ?? []).filter(
+    (r) => !components.some((c) => c.id === r.id),
+  );
 
   function addComponent() {
     const rate = availableRates.find((r) => String(r.id) === pickerValue);
@@ -71,8 +88,12 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
       code: values.code || undefined,
       rates: components.map((c, i) => ({ tax_rate_id: c.id, priority: i })),
     };
-    const mutation = isEdit ? update.mutateAsync({ id: editing!.id, data: payload }) : create.mutateAsync(payload);
-    mutation.then(onSuccess).catch(() => {});
+    const mutation = isEdit
+      ? update.mutateAsync({ id: editing!.id, data: payload })
+      : create.mutateAsync(payload);
+    mutation.then(onSuccess).catch(() => {
+      /* ignore */
+    });
   }
 
   return (
@@ -80,7 +101,9 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
       <div>
         <Label>Name *</Label>
         <Input {...register("name")} placeholder="e.g. Standard GST (CGST + SGST)" />
-        {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+        {errors.name && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -96,7 +119,11 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" className="h-4 w-4 accent-[var(--primary)]" {...register("is_default")} />
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-[var(--primary)]"
+          {...register("is_default")}
+        />
         Default group for new products
       </label>
 
@@ -118,9 +145,13 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
                 key={c.id}
                 className="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm"
               >
-                <span className="w-5 shrink-0 text-center text-xs text-[var(--muted)]">{i + 1}</span>
+                <span className="w-5 shrink-0 text-center text-xs text-[var(--muted)]">
+                  {i + 1}
+                </span>
                 <span className="flex-1 truncate font-medium">{c.name}</span>
-                <span className="text-xs text-[var(--muted)]">{c.type === "percentage" ? `${c.rate}%` : c.rate.toFixed(2)}</span>
+                <span className="text-xs text-[var(--muted)]">
+                  {c.type === "percentage" ? `${c.rate}%` : c.rate.toFixed(2)}
+                </span>
                 {c.is_compound && <Badge tone="info">compound</Badge>}
                 <div className="flex items-center gap-0.5">
                   <button
@@ -157,13 +188,22 @@ export function TaxGroupForm({ editing, onSuccess }: { editing?: TaxGroup | null
 
         {components.some((c) => c.is_compound) && (
           <p className="text-xs text-[var(--muted)]">
-            Compound components apply to the base plus every component listed above them — check the order.
+            Compound components apply to the base plus every component listed above them — check the
+            order.
           </p>
         )}
 
         <div className="flex gap-2">
-          <Select value={pickerValue} onChange={(e) => setPickerValue(e.target.value)} className="flex-1">
-            <option value="">{availableRates.length === 0 ? "No more rates available" : "Select a tax rate to add…"}</option>
+          <Select
+            value={pickerValue}
+            onChange={(e) => setPickerValue(e.target.value)}
+            className="flex-1"
+          >
+            <option value="">
+              {availableRates.length === 0
+                ? "No more rates available"
+                : "Select a tax rate to add…"}
+            </option>
             {availableRates.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name} ({r.type === "percentage" ? `${r.rate}%` : r.rate.toFixed(2)})

@@ -1,15 +1,15 @@
+import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Link, useLocation } from "react-router";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/i18n/context";
-import { NAV_GROUPS, SUPER_ADMIN_NAV_GROUPS, type NavGroup } from "@/lib/nav";
+import { NAV_GROUPS, type NavGroup, SUPER_ADMIN_NAV_GROUPS } from "@/lib/nav";
 import { permissionsForPathname } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { hasPermission, useAuth } from "@/stores/auth";
 import { useBusinessStore } from "@/stores/business";
 import { useModulesStore } from "@/stores/modules";
 import { useSidebarStore } from "@/stores/sidebar";
-import { ChevronRight, Headset, PanelLeftClose, PanelLeftOpen, Sparkles, X } from "lucide-react";
-import { Link, useLocation } from "react-router";
-import { useEffect, useMemo } from "react";
 
 /**
  * The nav mirrors the route guard: an entry is shown only when its destination would let the
@@ -84,9 +84,9 @@ function SidebarGroup({
           const label = t(`nav.${key}`);
 
           return (
-              <Link
-                key={href}
-                to={href}
+            <Link
+              key={href}
+              to={href}
               onClick={onClose}
               title={label}
               aria-current={active ? "page" : undefined}
@@ -103,10 +103,7 @@ function SidebarGroup({
               )}
 
               <Icon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  !active && "opacity-80 group-hover:opacity-100",
-                )}
+                className={cn("h-5 w-5 shrink-0", !active && "opacity-80 group-hover:opacity-100")}
               />
             </Link>
           );
@@ -169,9 +166,7 @@ function SidebarGroup({
         <GroupIcon
           className={cn(
             "h-4 w-4 shrink-0 transition-colors",
-            hasActiveChild
-              ? "text-[var(--sidebar-active)]"
-              : "text-[var(--sidebar-muted)]/60",
+            hasActiveChild ? "text-[var(--sidebar-active)]" : "text-[var(--sidebar-muted)]/60",
           )}
         />
 
@@ -190,16 +185,13 @@ function SidebarGroup({
       <div
         className={cn(
           "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-          isExpanded
-            ? "grid-rows-[1fr] opacity-100"
-            : "grid-rows-[0fr] opacity-0",
+          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="overflow-hidden">
           <div className="space-y-0.5 border-s border-white/[0.06] ms-[22px] ps-3 pb-1">
             {group.items.map(({ href, key, icon: Icon }) => {
-              const active =
-                pathname === href || pathname.startsWith(href + "/");
+              const active = pathname === href || pathname.startsWith(href + "/");
               const label = t(`nav.${key}`);
 
               return (
@@ -310,7 +302,10 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
       </div>
       <div className="mx-4 border-b border-white/10" />
 
-      <nav aria-label={t("nav.primary")} className="scrollbar-on-hover flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+      <nav
+        aria-label={t("nav.primary")}
+        className="scrollbar-on-hover flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4"
+      >
         {groups.map((group) => (
           <SidebarGroup
             key={group.key}
@@ -369,7 +364,9 @@ function SidebarContent({ onClose, collapsed }: { onClose?: () => void; collapse
         {!collapsed && (
           <div className="min-w-0 flex-1 leading-tight">
             <div className="truncate text-sm font-semibold">{user?.name}</div>
-            <div className="truncate text-xs text-[var(--sidebar-muted)]">{user?.is_super_admin ? "Super Admin" : (user?.roles?.[0] ?? "member")}</div>
+            <div className="truncate text-xs text-[var(--sidebar-muted)]">
+              {user?.is_super_admin ? "Super Admin" : (user?.roles?.[0] ?? "member")}
+            </div>
           </div>
         )}
       </div>

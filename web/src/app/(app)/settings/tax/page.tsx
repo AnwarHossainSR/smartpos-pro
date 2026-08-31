@@ -1,3 +1,6 @@
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaxGroupsSection } from "@/features/tax/components/tax-groups-section";
 import { TaxProfileCard } from "@/features/tax/components/tax-profile-card";
@@ -5,9 +8,6 @@ import { TaxRatesSection } from "@/features/tax/components/tax-rates-section";
 import { TaxZonesSection } from "@/features/tax/components/tax-zones-section";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
-import { useState } from "react";
 
 type Tab = "rates" | "groups" | "zones";
 
@@ -61,7 +61,9 @@ function TaxSettingsBody() {
                 </button>
               ))}
             </div>
-            <p className="-mt-2 mb-4 text-xs text-[var(--muted)]">{TABS.find((t) => t.id === tab)?.hint}</p>
+            <p className="-mt-2 mb-4 text-xs text-[var(--muted)]">
+              {TABS.find((t) => t.id === tab)?.hint}
+            </p>
 
             {tab === "rates" && <TaxRatesSection canManage={canManage} />}
             {tab === "groups" && <TaxGroupsSection canManage={canManage} />}
@@ -71,17 +73,31 @@ function TaxSettingsBody() {
 
         <div className="space-y-5">
           <Card>
-            <CardHeader><CardTitle>Jurisdiction & display</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Jurisdiction & display</CardTitle>
+            </CardHeader>
             <CardContent>
               <TaxProfileCard canManage={canManage} />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>How this fits together</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>How this fits together</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-2 text-sm text-[var(--muted)]">
-              <p>1. Create <strong className="text-[var(--fg)]">tax rates</strong> — single components like CGST 9% or VAT 15%.</p>
-              <p>2. Combine rates into a <strong className="text-[var(--fg)]">tax group</strong>, ordered so compound components apply last.</p>
-              <p>3. Assign a group to each product, or map a <strong className="text-[var(--fg)]">tax zone</strong> so the right group applies automatically by jurisdiction.</p>
+              <p>
+                1. Create <strong className="text-[var(--fg)]">tax rates</strong> — single
+                components like CGST 9% or VAT 15%.
+              </p>
+              <p>
+                2. Combine rates into a <strong className="text-[var(--fg)]">tax group</strong>,
+                ordered so compound components apply last.
+              </p>
+              <p>
+                3. Assign a group to each product, or map a{" "}
+                <strong className="text-[var(--fg)]">tax zone</strong> so the right group applies
+                automatically by jurisdiction.
+              </p>
             </CardContent>
           </Card>
         </div>

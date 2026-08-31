@@ -1,4 +1,7 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Cable, Pencil, Plus, Printer, Trash2, Usb, Wifi } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
@@ -6,12 +9,9 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import { api, errorMessage, type Envelope } from "@/lib/api";
+import { api, type Envelope, errorMessage } from "@/lib/api";
 import { connectUsbPrinter, getConnectedPrinter, isWebUsbAvailable } from "@/lib/escpos-printer";
 import { queryKeys } from "@/lib/query-keys";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Printer, Plus, Pencil, Trash2, Usb, Wifi, Cable } from "lucide-react";
-import { useForm } from "react-hook-form";
 
 interface PrinterProfile {
   id: string;
@@ -45,14 +45,17 @@ export function PrinterProfileList() {
       setDeleting(null);
     },
     // Leaves the confirm dialog open on failure otherwise.
-    onError: (e: unknown) => { setDeleting(null); toast(errorMessage(e), "error"); },
+    onError: (e: unknown) => {
+      setDeleting(null);
+      toast(errorMessage(e), "error");
+    },
   });
 
   const handleTestPrint = useCallback(async () => {
     setTesting(true);
     try {
       if (isWebUsbAvailable()) {
-        const printer = getConnectedPrinter() ?? await connectUsbPrinter();
+        const printer = getConnectedPrinter() ?? (await connectUsbPrinter());
         if (printer) {
           toast(t("settings.printer.testSent"));
         } else {
@@ -81,7 +84,14 @@ export function PrinterProfileList() {
         <p className="text-sm text-[var(--muted)]">
           {profiles.length} {profiles.length === 1 ? "printer" : "printers"} configured
         </p>
-        <Button size="sm" onClick={() => { setEditing(null); setShowForm(true); }} className="gap-1">
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditing(null);
+            setShowForm(true);
+          }}
+          className="gap-1"
+        >
           <Plus className="h-4 w-4" /> {t("settings.printer.add")}
         </Button>
       </div>
@@ -102,14 +112,24 @@ export function PrinterProfileList() {
         <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center">
           <Printer className="mx-auto mb-3 h-8 w-8 text-[var(--muted)]" />
           <p className="text-sm text-[var(--muted)]">{t("settings.printer.none")}</p>
-          <Button size="sm" className="mt-3" onClick={() => { setEditing(null); setShowForm(true); }}>
+          <Button
+            size="sm"
+            className="mt-3"
+            onClick={() => {
+              setEditing(null);
+              setShowForm(true);
+            }}
+          >
             {t("settings.printer.add")}
           </Button>
         </div>
       ) : (
         <div className="space-y-2">
           {profiles.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-lg border border-[var(--border)] p-3">
+            <div
+              key={p.id}
+              className="flex items-center gap-3 rounded-lg border border-[var(--border)] p-3"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded bg-[var(--surface-2)]">
                 {connIcon(p.connection_type)}
               </div>
@@ -122,10 +142,22 @@ export function PrinterProfileList() {
                 </p>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm" onClick={() => { setEditing(p); setShowForm(true); }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditing(p);
+                    setShowForm(true);
+                  }}
+                >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="text-[var(--color-danger)]" onClick={() => setDeleting(p)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[var(--color-danger)]"
+                  onClick={() => setDeleting(p)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -141,7 +173,10 @@ export function PrinterProfileList() {
       <PrinterProfileForm
         open={showForm}
         profile={editing}
-        onClose={() => { setShowForm(false); setEditing(null); }}
+        onClose={() => {
+          setShowForm(false);
+          setEditing(null);
+        }}
       />
 
       <Dialog
@@ -170,7 +205,13 @@ function PrinterProfileForm({
   const t = useTranslation();
   const qc = useQueryClient();
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Partial<PrinterProfile>>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<Partial<PrinterProfile>>({
     defaultValues: profile ?? {
       name: "",
       connection_type: "usb",
@@ -197,12 +238,18 @@ function PrinterProfileForm({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} title={profile ? t("common.edit") : t("settings.printer.add")}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={profile ? t("common.edit") : t("settings.printer.add")}
+    >
       <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
         <div>
           <Label>{t("settings.printer.name")} *</Label>
           <Input {...register("name", { required: true })} />
-          {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+          )}
         </div>
         <div>
           <Label>{t("settings.printer.type")} *</Label>
@@ -242,8 +289,12 @@ function PrinterProfileForm({
           </label>
         </div>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
-          <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? t("common.saving") : t("common.save")}</Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? t("common.saving") : t("common.save")}
+          </Button>
         </div>
       </form>
     </Dialog>

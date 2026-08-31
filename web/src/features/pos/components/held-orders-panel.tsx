@@ -1,22 +1,28 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Clock, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Trash2, RotateCcw } from "lucide-react";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import type { Product } from "@/app/(app)/pos/page";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useTranslation } from "@/i18n/context";
-import type { Product } from "@/app/(app)/pos/page";
+import { ApiError, api, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
 
 export interface HeldSale {
   id: string;
   reference: string;
   invoice_number: string;
   customer: { id: string; name: string } | null;
-  items: { name: string; quantity: number; unit_price: number; line_total: number; product_id: string }[];
+  items: {
+    name: string;
+    quantity: number;
+    unit_price: number;
+    line_total: number;
+    product_id: string;
+  }[];
   total: number;
   sold_at: string;
   status: string;
@@ -42,8 +48,7 @@ export function HeldOrdersPanel({ open, onClose, onResume }: HeldOrdersPanelProp
 
   const { data, isLoading } = useQuery<Paginated<HeldSale>>({
     queryKey: queryKeys.heldSales.list(),
-    queryFn: () =>
-      api<Paginated<HeldSale>>("/sales?status=held&per_page=20&sort=-sold_at"),
+    queryFn: () => api<Paginated<HeldSale>>("/sales?status=held&per_page=20&sort=-sold_at"),
     enabled: open,
   });
 
@@ -85,8 +90,7 @@ export function HeldOrdersPanel({ open, onClose, onResume }: HeldOrdersPanelProp
   });
 
   const discardMutation = useMutation({
-    mutationFn: (saleId: string) =>
-      api(`/sales/${saleId}/void`, { method: "POST" }),
+    mutationFn: (saleId: string) => api(`/sales/${saleId}/void`, { method: "POST" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.heldSales.all });
       qc.invalidateQueries({ queryKey: queryKeys.sales.all });

@@ -1,15 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { useResourceList } from "@/lib/use-resource-list";
 import { toast } from "@/components/ui/toast";
 import { taxApi } from "@/features/tax/api";
 import type {
-  TaxRateFormValues,
   TaxGroupFormValues,
-  TaxZoneFormValues,
+  TaxRateFormValues,
   TaxReportFilters,
+  TaxZoneFormValues,
 } from "@/features/tax/types";
+import { ApiError } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useResourceList } from "@/lib/use-resource-list";
 
 function errorMessage(e: unknown, fallback: string): string {
   return e instanceof ApiError ? e.message : fallback;
@@ -32,13 +32,20 @@ export function useTaxRateMutations() {
 
   const create = useMutation({
     mutationFn: (data: TaxRateFormValues) => taxApi.rates.create(data),
-    onSuccess: () => { invalidate(); toast("Tax rate created"); },
+    onSuccess: () => {
+      invalidate();
+      toast("Tax rate created");
+    },
     onError: (e) => toast(errorMessage(e, "Could not create tax rate"), "error"),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TaxRateFormValues }) => taxApi.rates.update(id, data),
-    onSuccess: () => { invalidate(); toast("Tax rate updated"); },
+    mutationFn: ({ id, data }: { id: string; data: TaxRateFormValues }) =>
+      taxApi.rates.update(id, data),
+    onSuccess: () => {
+      invalidate();
+      toast("Tax rate updated");
+    },
     onError: (e) => toast(errorMessage(e, "Could not update tax rate"), "error"),
   });
 
@@ -80,7 +87,8 @@ export function useAllTaxGroups() {
 export function useAllTaxRates() {
   return useQuery({
     queryKey: queryKeys.taxRates.list({ all: true }),
-    queryFn: () => taxApi.rates.list({ search: "", sort: "name", page: 1, perPage: 200, filters: {} }),
+    queryFn: () =>
+      taxApi.rates.list({ search: "", sort: "name", page: 1, perPage: 200, filters: {} }),
     staleTime: 60_000,
   });
 }
@@ -91,13 +99,20 @@ export function useTaxGroupMutations() {
 
   const create = useMutation({
     mutationFn: (data: TaxGroupFormValues) => taxApi.groups.create(data),
-    onSuccess: () => { invalidate(); toast("Tax group created"); },
+    onSuccess: () => {
+      invalidate();
+      toast("Tax group created");
+    },
     onError: (e) => toast(errorMessage(e, "Could not create tax group"), "error"),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TaxGroupFormValues }) => taxApi.groups.update(id, data),
-    onSuccess: () => { invalidate(); toast("Tax group updated"); },
+    mutationFn: ({ id, data }: { id: string; data: TaxGroupFormValues }) =>
+      taxApi.groups.update(id, data),
+    onSuccess: () => {
+      invalidate();
+      toast("Tax group updated");
+    },
     onError: (e) => toast(errorMessage(e, "Could not update tax group"), "error"),
   });
 
@@ -108,7 +123,14 @@ export function useTaxGroupMutations() {
       qc.invalidateQueries({ queryKey: queryKeys.taxZones.all });
       toast("Tax group deleted");
     },
-    onError: (e) => toast(errorMessage(e, "Could not delete tax group — it may still be assigned to products or zones"), "error"),
+    onError: (e) =>
+      toast(
+        errorMessage(
+          e,
+          "Could not delete tax group — it may still be assigned to products or zones",
+        ),
+        "error",
+      ),
   });
 
   return { create, update, remove };
@@ -131,19 +153,29 @@ export function useTaxZoneMutations() {
 
   const create = useMutation({
     mutationFn: (data: TaxZoneFormValues) => taxApi.zones.create(data),
-    onSuccess: () => { invalidate(); toast("Tax zone created"); },
+    onSuccess: () => {
+      invalidate();
+      toast("Tax zone created");
+    },
     onError: (e) => toast(errorMessage(e, "Could not create tax zone"), "error"),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: TaxZoneFormValues }) => taxApi.zones.update(id, data),
-    onSuccess: () => { invalidate(); toast("Tax zone updated"); },
+    mutationFn: ({ id, data }: { id: string; data: TaxZoneFormValues }) =>
+      taxApi.zones.update(id, data),
+    onSuccess: () => {
+      invalidate();
+      toast("Tax zone updated");
+    },
     onError: (e) => toast(errorMessage(e, "Could not update tax zone"), "error"),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => taxApi.zones.remove(id),
-    onSuccess: () => { invalidate(); toast("Tax zone deleted"); },
+    onSuccess: () => {
+      invalidate();
+      toast("Tax zone deleted");
+    },
     onError: (e) => toast(errorMessage(e, "Could not delete tax zone"), "error"),
   });
 

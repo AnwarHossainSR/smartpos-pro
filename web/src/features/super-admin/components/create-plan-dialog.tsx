@@ -42,7 +42,10 @@ export function CreatePlanDialog({ open, onClose, onSubmit, loading }: CreatePla
     setForm((prev) => ({
       ...prev,
       name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+      slug: name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, ""),
     }));
   };
 

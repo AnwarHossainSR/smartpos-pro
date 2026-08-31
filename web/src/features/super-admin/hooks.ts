@@ -1,9 +1,9 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "@/components/ui/toast";
 import { queryKeys } from "@/lib/query-keys";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useModulesStore } from "@/stores/modules";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addInternalNote,
   getEnabledModules,
@@ -110,7 +110,10 @@ export function useUserMutations() {
 }
 
 export function useAuditLogs() {
-  return useResourceList<AuditLog, { action: string; tenant_id: string; user_id: string; from: string; to: string }>({
+  return useResourceList<
+    AuditLog,
+    { action: string; tenant_id: string; user_id: string; from: string; to: string }
+  >({
     queryKey: queryKeys.superAdmin.audit(),
     queryFn: superAdminApi.audit.list,
     defaultSort: "-created_at",
@@ -202,8 +205,13 @@ export function usePlanMutations() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof superAdminApi.plans.update>[1] }) =>
-      superAdminApi.plans.update(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof superAdminApi.plans.update>[1];
+    }) => superAdminApi.plans.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.superAdmin.plans() });
       toast("Plan updated", "success");

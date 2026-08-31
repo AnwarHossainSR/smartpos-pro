@@ -21,7 +21,14 @@ export function Logo({ size = 32, className, markOnly }: LogoProps) {
       aria-label="SmartPOS"
     >
       <defs>
-        <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+        <linearGradient
+          id={gradientId}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1="0"
+          x2="32"
+          y2="32"
+        >
           <stop offset="0" stopColor="var(--primary)" />
           <stop offset="1" stopColor="var(--primary-hover)" />
         </linearGradient>

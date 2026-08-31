@@ -1,25 +1,25 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { api, type Paginated } from "@/lib/api";
-import { useWarehouses } from "@/lib/lookups";
-import { queryKeys } from "@/lib/query-keys";
-import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
-import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
+import { api, type Paginated } from "@/lib/api";
+import { useWarehouses } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
+import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
+import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 
 interface InventoryBalance {
@@ -51,7 +51,13 @@ type AdjustValues = z.infer<typeof adjustSchema>;
 function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
   const { warehouses } = useWarehouses();
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<AdjustValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<AdjustValues>({
     resolver: zodResolver(adjustSchema),
     defaultValues: { direction: "in", quantity: 0 },
   });
@@ -81,16 +87,24 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
           placeholder="Search product…"
           emptyLabel="No products match"
         />
-        {errors.product_id && <p className="mt-1 text-xs text-[var(--color-danger)]">Select a product</p>}
+        {errors.product_id && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">Select a product</p>
+        )}
       </div>
 
       <div>
         <Label>Warehouse *</Label>
         <Select {...register("warehouse_id", { setValueAs: (v) => (v ? String(v) : undefined) })}>
           <option value="">— Select —</option>
-          {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          {warehouses.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.name}
+            </option>
+          ))}
         </Select>
-        {errors.warehouse_id && <p className="mt-1 text-xs text-[var(--color-danger)]">Select a warehouse</p>}
+        {errors.warehouse_id && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">Select a warehouse</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -103,14 +117,27 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         <div>
           <Label>Quantity *</Label>
-          <Input type="number" step="0.001" min="0.001" {...register("quantity", { valueAsNumber: true })} />
-          {errors.quantity && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.quantity.message}</p>}
+          <Input
+            type="number"
+            step="0.001"
+            min="0.001"
+            {...register("quantity", { valueAsNumber: true })}
+          />
+          {errors.quantity && (
+            <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.quantity.message}</p>
+          )}
         </div>
       </div>
 
       <div>
         <Label>Unit cost</Label>
-        <Input type="number" step="0.01" min="0" {...register("unit_cost", { valueAsNumber: true })} placeholder="0.00" />
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          {...register("unit_cost", { valueAsNumber: true })}
+          placeholder="0.00"
+        />
       </div>
 
       <div>
@@ -126,16 +153,27 @@ function AdjustForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 const columns: DataTableColumn<InventoryBalance>[] = [
-  { key: "product", header: "Product", render: (b) => <span className="font-medium">{b.product.name}</span> },
+  {
+    key: "product",
+    header: "Product",
+    render: (b) => <span className="font-medium">{b.product.name}</span>,
+  },
   {
     key: "sku",
     header: "SKU",
-    render: (b) => <span className="font-mono text-xs text-[var(--muted)]">{b.product.sku ?? "—"}</span>,
+    render: (b) => (
+      <span className="font-mono text-xs text-[var(--muted)]">{b.product.sku ?? "—"}</span>
+    ),
   },
   { key: "warehouse", header: "Warehouse", render: (b) => b.warehouse.name },
   { key: "quantity", header: "Qty", align: "right", render: (b) => b.quantity },
   { key: "available", header: "Available", align: "right", render: (b) => b.available_quantity },
-  { key: "cost", header: "Avg cost", align: "right", render: (b) => formatCurrency(b.average_cost) },
+  {
+    key: "cost",
+    header: "Avg cost",
+    align: "right",
+    render: (b) => formatCurrency(b.average_cost),
+  },
   {
     key: "value",
     header: "Value",
@@ -158,7 +196,8 @@ export default function InventoryPage() {
 
   const list = useResourceList<InventoryBalance, { low_stock: string }>({
     queryKey: queryKeys.inventory.lists(),
-    queryFn: (params) => api<Paginated<InventoryBalance>>(`/inventory/balances?${buildListQuery(params)}`),
+    queryFn: (params) =>
+      api<Paginated<InventoryBalance>>(`/inventory/balances?${buildListQuery(params)}`),
     perPage: 25,
     filterKeys: ["low_stock"] as const,
   });

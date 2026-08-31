@@ -115,14 +115,25 @@ describe("EAN-13 tables", () => {
   // R is the bitwise complement of L, and G is R reversed. Re-deriving the three tables from
   // one another catches a transcription slip in any of the thirty patterns.
   const L = [
-    "0001101", "0011001", "0010011", "0111101", "0100011",
-    "0110001", "0101111", "0111011", "0110111", "0001011",
+    "0001101",
+    "0011001",
+    "0010011",
+    "0111101",
+    "0100011",
+    "0110001",
+    "0101111",
+    "0111011",
+    "0110111",
+    "0001011",
   ];
 
   it("derives the encoder's own G and R patterns from the L patterns", () => {
     for (let digit = 0; digit <= 9; digit++) {
       const d = String(digit).repeat(11);
-      const r = L[digit].split("").map((bit) => (bit === "1" ? "0" : "1")).join("");
+      const r = L[digit]
+        .split("")
+        .map((bit) => (bit === "1" ? "0" : "1"))
+        .join("");
       const g = r.split("").reverse().join("");
 
       // Lead digit 0 means parity LLLLLL, so the first left-hand group is the L pattern and
@@ -142,10 +153,18 @@ describe("EAN-13 tables", () => {
     const modules = encodeEan13("7111111111111".slice(0, 12)).modules;
     const group = (n: number) => modules.slice(3 + n * 7, 10 + n * 7);
     const l1 = L[1];
-    const r1 = l1.split("").map((bit) => (bit === "1" ? "0" : "1")).join("");
+    const r1 = l1
+      .split("")
+      .map((bit) => (bit === "1" ? "0" : "1"))
+      .join("");
     const g1 = r1.split("").reverse().join("");
     expect([group(0), group(1), group(2), group(3), group(4), group(5)]).toEqual([
-      l1, g1, l1, g1, l1, g1,
+      l1,
+      g1,
+      l1,
+      g1,
+      l1,
+      g1,
     ]);
   });
 });
@@ -170,9 +189,19 @@ describe("encodeEan13", () => {
     // 101 | 9L 0G 1G 2L 3L 4G | 01010 | 1R 2R 3R 4R 5R 7R | 101 — parity LGGLLG for lead digit 5.
     const expected =
       "101" +
-      "0001011" + "0100111" + "0110011" + "0010011" + "0111101" + "0011101" +
+      "0001011" +
+      "0100111" +
+      "0110011" +
+      "0010011" +
+      "0111101" +
+      "0011101" +
       "01010" +
-      "1100110" + "1101100" + "1000010" + "1011100" + "1001110" + "1000100" +
+      "1100110" +
+      "1101100" +
+      "1000010" +
+      "1011100" +
+      "1001110" +
+      "1000100" +
       "101";
     const encoded = encodeEan13("5901234123457");
     expect(encoded.modules).toBe(expected);
@@ -289,7 +318,9 @@ describe("layoutBarcode", () => {
     expect(layout.texts).toHaveLength(1);
     expect(layout.texts[0].text).toBe("SKU-0042");
     expect(layout.texts[0].x).toBe(25);
-    expect(layoutBarcode(code, { widthMm: 50, heightMm: 12, showText: false }).texts).toHaveLength(0);
+    expect(layoutBarcode(code, { widthMm: 50, heightMm: 12, showText: false }).texts).toHaveLength(
+      0,
+    );
   });
 
   it("reports the module width so callers can refuse to print an unscannable symbol", () => {
@@ -322,16 +353,35 @@ describe("barcodeSvg", () => {
    --------------------------------------------------------------------------- */
 
 const EAN_L_TABLE = [
-  "0001101", "0011001", "0010011", "0111101", "0100011",
-  "0110001", "0101111", "0111011", "0110111", "0001011",
+  "0001101",
+  "0011001",
+  "0010011",
+  "0111101",
+  "0100011",
+  "0110001",
+  "0101111",
+  "0111011",
+  "0110111",
+  "0001011",
 ];
 const EAN_R_TABLE = EAN_L_TABLE.map((bits) =>
-  bits.split("").map((bit) => (bit === "1" ? "0" : "1")).join(""),
+  bits
+    .split("")
+    .map((bit) => (bit === "1" ? "0" : "1"))
+    .join(""),
 );
 const EAN_G_TABLE = EAN_R_TABLE.map((bits) => bits.split("").reverse().join(""));
 const EAN_PARITY_TABLE = [
-  "LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG",
-  "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL",
+  "LLLLLL",
+  "LLGLGG",
+  "LLGGLG",
+  "LLGGGL",
+  "LGLLGG",
+  "LGGLLG",
+  "LGGGLL",
+  "LGLGLG",
+  "LGLGGL",
+  "LGGLGL",
 ];
 
 function decodeEan13(modules: string): string {

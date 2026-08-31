@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
-import { api, ApiError } from "@/lib/api";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/context";
+import { ApiError, api } from "@/lib/api";
 
 export default function ResetPasswordPage() {
   const t = useTranslation();
@@ -61,7 +61,13 @@ export default function ResetPasswordPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label>{t("auth.newPassword")}</Label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoFocus
+            />
           </div>
           <div>
             <Label>{t("auth.confirmPassword")}</Label>
@@ -74,7 +80,8 @@ export default function ResetPasswordPage() {
           </div>
           {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading && <Spinner />} {loading ? t("auth.resettingPassword") : t("auth.resetPassword")}
+            {loading && <Spinner />}{" "}
+            {loading ? t("auth.resettingPassword") : t("auth.resetPassword")}
           </Button>
         </form>
       )}

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/toast";
+import { posApi } from "@/features/pos/api";
+import type { Customer } from "@/features/pos/types";
+import { useTranslation } from "@/i18n/context";
 import { ApiError } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { toast } from "@/components/ui/toast";
-import { useTranslation } from "@/i18n/context";
-import { posApi } from "@/features/pos/api";
-import type { Customer } from "@/features/pos/types";
 
 /**
  * Customer lookup at the till: type a name or phone, pick a match, or create one inline.
@@ -50,9 +50,10 @@ export function useCreateCustomer(onCreated: (customer: Customer) => void) {
     },
     onError: (e: unknown) => {
       // A 422 here is almost always "phone already taken" — the field error names which one.
-      const detail = e instanceof ApiError
-        ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message
-        : "Could not create customer";
+      const detail =
+        e instanceof ApiError
+          ? (Object.values(e.errors ?? {})[0]?.[0] ?? e.message)
+          : "Could not create customer";
       toast(detail, "error");
     },
   });

@@ -167,13 +167,15 @@ html[data-theme="rose"] {
    `data-lang` the I18nProvider sets on <html>, so only the active language's font applies
    (and its file only downloads once the browser actually needs those glyphs). */
 [data-lang="bn"] {
-  --font-sans: var(--font-noto-bengali), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    var(--font-noto-bengali), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 [data-lang="ja"] {
   --font-sans: var(--font-noto-jp), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 [data-lang="ar"] {
-  --font-sans: var(--font-noto-arabic), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    var(--font-noto-arabic), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -192,8 +194,14 @@ button {
 }
 
 /* Subtle scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
 
 /* Hairline scrollbar that only paints its thumb while the element is hovered. The track keeps
    its width at all times (transparent thumb rather than `scrollbar-width: none`) so revealing it
@@ -205,10 +213,20 @@ button {
 .scrollbar-on-hover:hover {
   scrollbar-color: rgb(255 255 255 / 0.22) transparent;
 }
-.scrollbar-on-hover::-webkit-scrollbar { width: 4px; height: 4px; }
-.scrollbar-on-hover::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-on-hover::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
-.scrollbar-on-hover:hover::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.22); }
+.scrollbar-on-hover::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.scrollbar-on-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-on-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.22);
+}
 
 /* ---- Landing page: thermal-receipt hero ----
    The receipt is the signature device; these rules only apply inside it. */

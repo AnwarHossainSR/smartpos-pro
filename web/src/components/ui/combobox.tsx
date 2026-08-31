@@ -1,10 +1,10 @@
+import { type QueryKey, useQuery } from "@tanstack/react-query";
+import { Check, ChevronDown, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { api, type Paginated } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { useQuery, type QueryKey } from "@tanstack/react-query";
-import { Check, ChevronDown, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
 
 interface ComboboxProps<T extends { id: string }> {
   endpoint: string;
@@ -122,7 +122,12 @@ export function Combobox<T extends { id: string }>({
         <div className="absolute end-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
           {isFetching && <Spinner className="h-3.5 w-3.5" />}
           {(selected || term) && !disabled && (
-            <button type="button" onClick={clear} aria-label="Clear" className="text-[var(--muted)] hover:text-[var(--fg)]">
+            <button
+              type="button"
+              onClick={clear}
+              aria-label="Clear"
+              className="text-[var(--muted)] hover:text-[var(--fg)]"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           )}

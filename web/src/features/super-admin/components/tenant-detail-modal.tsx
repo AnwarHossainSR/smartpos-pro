@@ -1,16 +1,24 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, ToggleLeft, ToggleRight, X } from "lucide-react";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, X, ToggleLeft, ToggleRight } from "lucide-react";
-import { superAdminApi } from "../api";
-import { queryKeys } from "@/lib/query-keys";
-import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+import { queryKeys } from "@/lib/query-keys";
+import { superAdminApi } from "../api";
+import { useTenantModuleOverrides, useUpdateTenantModules } from "../hooks";
 import type { TenantDetail } from "../types";
 import { EditTenantDialog, type EditTenantFormData } from "./edit-tenant-dialog";
-import { useTenantModuleOverrides, useUpdateTenantModules } from "../hooks";
 
-const TABS = ["Overview", "Businesses", "Users", "Products", "Sales", "Subscription", "Modules"] as const;
+const TABS = [
+  "Overview",
+  "Businesses",
+  "Users",
+  "Products",
+  "Sales",
+  "Subscription",
+  "Modules",
+] as const;
 type Tab = (typeof TABS)[number];
 
 function fmt(amount: number, currency = "USD") {
@@ -83,20 +91,26 @@ function Overview({ d, onEdit }: { d: TenantDetail; onEdit?: () => void }) {
         <Row
           label="Created"
           value={new Date(d.created_at).toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         />
         <Row
           label="Updated"
           value={new Date(d.updated_at).toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         />
         {d.trial_ends_at && (
           <Row
             label="Trial Ends"
             value={new Date(d.trial_ends_at).toLocaleDateString("en-US", {
-              year: "numeric", month: "long", day: "numeric",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           />
         )}
@@ -137,7 +151,9 @@ function Users({ d }: { d: TenantDetail }) {
           </div>
           <div className="flex items-center gap-2">
             {u.roles.map((r) => (
-              <Badge key={r} tone="info">{r}</Badge>
+              <Badge key={r} tone="info">
+                {r}
+              </Badge>
             ))}
             <Badge tone={u.status === "active" ? "success" : "danger"}>{u.status}</Badge>
           </div>
@@ -216,7 +232,9 @@ function Subscription({ d }: { d: TenantDetail }) {
           <Row
             label="Trial Ends"
             value={new Date(s.trial_ends_at).toLocaleDateString("en-US", {
-              year: "numeric", month: "long", day: "numeric",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           />
         )}
@@ -224,14 +242,18 @@ function Subscription({ d }: { d: TenantDetail }) {
           <Row
             label="Period Ends"
             value={new Date(s.current_period_ends_at).toLocaleDateString("en-US", {
-              year: "numeric", month: "long", day: "numeric",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           />
         )}
         <Row
           label="Subscribed"
           value={new Date(s.created_at).toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         />
       </div>
@@ -257,14 +279,16 @@ function Modules({ d }: { d: TenantDetail }) {
   }
 
   if (Object.keys(tenantModules).length === 0) {
-    return <p className="text-sm text-[var(--muted)]">No module overrides for this tenant. Modules follow global platform settings.</p>;
+    return (
+      <p className="text-sm text-[var(--muted)]">
+        No module overrides for this tenant. Modules follow global platform settings.
+      </p>
+    );
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-[var(--muted)]">
-        Per-tenant module overrides for this tenant.
-      </p>
+      <p className="text-sm text-[var(--muted)]">Per-tenant module overrides for this tenant.</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Object.entries(tenantModules).map(([key, enabled]) => (
           <div
@@ -280,9 +304,7 @@ function Modules({ d }: { d: TenantDetail }) {
           </div>
         ))}
       </div>
-      {updateTenantModules.isPending && (
-        <p className="text-xs text-[var(--muted)]">Updating...</p>
-      )}
+      {updateTenantModules.isPending && <p className="text-xs text-[var(--muted)]">Updating...</p>}
     </div>
   );
 }
@@ -314,8 +336,7 @@ export function TenantDetailModal({ tenantId, onClose }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditTenantFormData) =>
-      superAdminApi.tenants.update(tenantId!, data),
+    mutationFn: (data: EditTenantFormData) => superAdminApi.tenants.update(tenantId!, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.superAdmin.tenantDetail(tenantId ?? undefined) });
       toast("Tenant updated", "success");
@@ -337,9 +358,7 @@ export function TenantDetailModal({ tenantId, onClose }: Props) {
             <h2 className="text-base font-semibold">
               {detail?.name ?? query.data?.data?.name ?? "Tenant"}
             </h2>
-            {detail && (
-              <p className="text-xs text-[var(--muted)]">{detail.slug}</p>
-            )}
+            {detail && <p className="text-xs text-[var(--muted)]">{detail.slug}</p>}
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -372,7 +391,10 @@ export function TenantDetailModal({ tenantId, onClose }: Props) {
           ) : query.isError ? (
             <p className="text-sm text-[var(--color-danger)]">Failed to load tenant details.</p>
           ) : detail ? (
-            <TabContent d={detail} onEdit={tab === "Overview" ? () => setEditing(true) : undefined} />
+            <TabContent
+              d={detail}
+              onEdit={tab === "Overview" ? () => setEditing(true) : undefined}
+            />
           ) : (
             <p className="text-sm text-[var(--muted)]">No data.</p>
           )}
@@ -380,7 +402,7 @@ export function TenantDetailModal({ tenantId, onClose }: Props) {
       </div>
       <EditTenantDialog
         key={detail?.id}
-        tenant={editing ? detail ?? null : null}
+        tenant={editing ? (detail ?? null) : null}
         onClose={() => setEditing(false)}
         onSubmit={(data) => updateMutation.mutate(data)}
         loading={updateMutation.isPending}

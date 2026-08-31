@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/toast";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  getMyTickets,
-  getMyTicket,
-  createTicket,
-  replyToTicket,
   closeTicket,
+  createTicket,
+  getMyTicket,
+  getMyTickets,
   reopenTicket,
+  replyToTicket,
 } from "./api";
 
 export function useMyTickets(params?: Record<string, string | number | undefined>) {
@@ -44,8 +44,7 @@ export function useCreateTicket() {
 export function useReplyToTicket() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, message }: { id: string; message: string }) =>
-      replyToTicket(id, message),
+    mutationFn: ({ id, message }: { id: string; message: string }) => replyToTicket(id, message),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.support.all });
       toast("Reply sent", "success");

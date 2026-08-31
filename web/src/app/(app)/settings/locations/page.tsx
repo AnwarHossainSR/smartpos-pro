@@ -1,10 +1,15 @@
-import { ActiveBadge, ResourceManager, type ResourceColumn, type ResourceRecord } from "@/components/ui/resource-manager";
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router";
+import {
+  ActiveBadge,
+  type ResourceColumn,
+  ResourceManager,
+  type ResourceRecord,
+} from "@/components/ui/resource-manager";
 import { useBranches } from "@/lib/lookups";
 import { useAuth } from "@/stores/auth";
 import type { Branch, Warehouse } from "@/types/domain";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
-import { useState } from "react";
 
 /**
  * `ResourceManager` needs an index signature to read arbitrary form fields off a row;
@@ -27,7 +32,11 @@ export default function LocationsPage() {
   const { branches } = useBranches({ enabled: can("branches.view") });
 
   if (!can("branches.view") && !can("warehouses.view")) {
-    return <div className="py-16 text-center text-[var(--muted)]">You do not have access to locations.</div>;
+    return (
+      <div className="py-16 text-center text-[var(--muted)]">
+        You do not have access to locations.
+      </div>
+    );
   }
 
   const branchColumns: ResourceColumn<BranchRow>[] = [
@@ -76,7 +85,13 @@ export default function LocationsPage() {
           queryKey="branches"
           singular="Branch"
           columns={branchColumns}
-          permissions={{ create: "branches.create", update: "branches.update", delete: "branches.delete" } as const}
+          permissions={
+            {
+              create: "branches.create",
+              update: "branches.update",
+              delete: "branches.delete",
+            } as const
+          }
           fields={[
             { name: "name", label: "Name", type: "text", required: true },
             { name: "code", label: "Code", type: "text", placeholder: "BR-01" },
@@ -94,7 +109,13 @@ export default function LocationsPage() {
           queryKey="warehouses"
           singular="Warehouse"
           columns={warehouseColumns}
-          permissions={{ create: "warehouses.create", update: "warehouses.update", delete: "warehouses.delete" } as const}
+          permissions={
+            {
+              create: "warehouses.create",
+              update: "warehouses.update",
+              delete: "warehouses.delete",
+            } as const
+          }
           fields={[
             { name: "name", label: "Name", type: "text", required: true },
             { name: "code", label: "Code", type: "text", placeholder: "WH-01" },

@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
-import { api, ApiError } from "@/lib/api";
-import { useAuth, type AuthUser } from "@/stores/auth";
+import { Link, useNavigate } from "react-router";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useTranslation } from "@/i18n/context";
+import { ApiError, api } from "@/lib/api";
+import { type AuthUser, useAuth } from "@/stores/auth";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -69,7 +69,12 @@ export default function RegisterPage() {
           </div>
           <div>
             <Label>{t("auth.confirmPassword")}</Label>
-            <Input type="password" value={form.password_confirmation} onChange={set("password_confirmation")} required />
+            <Input
+              type="password"
+              value={form.password_confirmation}
+              onChange={set("password_confirmation")}
+              required
+            />
           </div>
         </div>
         {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}

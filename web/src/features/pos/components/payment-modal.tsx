@@ -1,3 +1,5 @@
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
@@ -8,8 +10,6 @@ import { round2 } from "@/features/pos/totals";
 import type { Payment } from "@/features/pos/types";
 import { useTranslation } from "@/i18n/context";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, X } from "lucide-react";
-import { useState } from "react";
 
 const PAYMENT_METHODS = [
   { value: "cash", label: "Cash" },
@@ -30,7 +30,11 @@ const CURRENCIES = [
   { code: "AED", name: "UAE Dirham" },
 ];
 
-interface PaymentRow { id: string; method: string; amount: string; }
+interface PaymentRow {
+  id: string;
+  method: string;
+  amount: string;
+}
 let paymentRowSeq = 0;
 
 /** Split tender: the checkout endpoint already accepts a `payments` array (e.g. part cash,
@@ -51,7 +55,9 @@ export function PaymentModal({
   baseCurrency?: string;
 }) {
   const t = useTranslation();
-  const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) }]);
+  const [rows, setRows] = useState<PaymentRow[]>(() => [
+    { id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) },
+  ]);
   const [tenderCurrency, setTenderCurrency] = useState<string>("");
   const tenderAmount = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
@@ -61,9 +67,17 @@ export function PaymentModal({
   const remaining = round2(total - tenderAmount);
 
   const addRow = () =>
-    setRows((prev) => [...prev, { id: String(++paymentRowSeq), method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
+    setRows((prev) => [
+      ...prev,
+      {
+        id: String(++paymentRowSeq),
+        method: "cash",
+        amount: remaining > 0 ? remaining.toFixed(2) : "0",
+      },
+    ]);
 
-  const removeRow = (id: string) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+  const removeRow = (id: string) =>
+    setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
   const updateRow = (id: string, patch: Partial<Omit<PaymentRow, "id">>) =>
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
@@ -71,7 +85,10 @@ export function PaymentModal({
     const payments = rows
       .map((r) => ({ method: r.method, amount: round2(parseFloat(r.amount) || 0) }))
       .filter((p) => p.amount > 0);
-    if (payments.length === 0) { toast("Enter a valid amount", "error"); return; }
+    if (payments.length === 0) {
+      toast("Enter a valid amount", "error");
+      return;
+    }
     onConfirm(payments, tenderCurrency || undefined);
   };
 
@@ -80,7 +97,12 @@ export function PaymentModal({
       <div className="space-y-4">
         <div>
           <Label>Amount due</Label>
-          <p className="text-2xl font-bold">{formatCurrency(total)} {baseCurrency && <span className="text-sm font-normal text-[var(--muted)]">{baseCurrency}</span>}</p>
+          <p className="text-2xl font-bold">
+            {formatCurrency(total)}{" "}
+            {baseCurrency && (
+              <span className="text-sm font-normal text-[var(--muted)]">{baseCurrency}</span>
+            )}
+          </p>
           {isForeign && (
             <p className="text-sm text-[var(--muted)]">
               ~ {formatCurrency(round2(total))} {effectiveCurrency}
@@ -90,13 +112,14 @@ export function PaymentModal({
 
         <div>
           <Label>{t("currency.tender")}</Label>
-          <Select
-            value={tenderCurrency}
-            onChange={(e) => setTenderCurrency(e.target.value)}
-          >
-            <option value="">{baseCurrency || "USD"} ({t("currency.base")})</option>
+          <Select value={tenderCurrency} onChange={(e) => setTenderCurrency(e.target.value)}>
+            <option value="">
+              {baseCurrency || "USD"} ({t("currency.base")})
+            </option>
             {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
-              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+              <option key={c.code} value={c.code}>
+                {c.code} — {c.name}
+              </option>
             ))}
           </Select>
         </div>
@@ -110,7 +133,11 @@ export function PaymentModal({
                   value={row.method}
                   onChange={(e) => updateRow(row.id, { method: e.target.value })}
                 >
-                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
                 </Select>
                 <Input
                   type="number"
@@ -120,7 +147,12 @@ export function PaymentModal({
                   autoFocus={i === 0}
                 />
                 {rows.length > 1 && (
-                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-[var(--color-danger)]"
+                    onClick={() => removeRow(row.id)}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 )}
@@ -137,13 +169,17 @@ export function PaymentModal({
         </div>
 
         {remaining > 0.001 ? (
-          <p className="text-sm text-amber-600">Remaining: {formatCurrency(remaining)} (recorded as due if you confirm now)</p>
+          <p className="text-sm text-amber-600">
+            Remaining: {formatCurrency(remaining)} (recorded as due if you confirm now)
+          </p>
         ) : remaining < -0.001 ? (
           <p className="text-sm text-green-600">Change: {formatCurrency(-remaining)}</p>
         ) : null}
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={loading} className="flex-1">
             {loading ? "Processing…" : "Confirm payment"}
           </Button>

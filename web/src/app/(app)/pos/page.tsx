@@ -1,30 +1,41 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ShoppingCart, Plus, Minus, X, User, FileText, Pause, UserPlus, Star } from "lucide-react";
-import { api, apiBlob, ApiError, type Paginated } from "@/lib/api";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
-import { queryKeys } from "@/lib/query-keys";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  FileText,
+  Minus,
+  Pause,
+  Plus,
+  Search,
+  ShoppingCart,
+  Star,
+  User,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ApprovalChallenge, approvalChallengeFrom } from "@/components/approval-challenge";
+import { ApprovalPinDialog } from "@/components/approval-pin-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
-import { useAuth } from "@/stores/auth";
-import { useTranslation } from "@/i18n/context";
-import { QuantityPopover } from "@/features/pos/components/quantity-popover";
+import { CategoryTabs } from "@/features/pos/components/category-tabs";
+import { type HeldCartItem, HeldOrdersPanel } from "@/features/pos/components/held-orders-panel";
 import { PaymentNumpad } from "@/features/pos/components/payment-numpad";
+import { QuantityPopover } from "@/features/pos/components/quantity-popover";
+import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
+import { ViewToggle } from "@/features/pos/components/view-toggle";
+import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
 import { calculateLineTax, mergeTaxComponents, type TaxComponentResult } from "@/features/tax/calc";
 import type { PriceDisplay, TaxGroup } from "@/features/tax/types";
-import { usePosShortcuts } from "@/features/pos/hooks/use-pos-shortcuts";
-import { ShortcutsOverlay } from "@/features/pos/components/shortcuts-overlay";
-import { HeldOrdersPanel, type HeldCartItem } from "@/features/pos/components/held-orders-panel";
-import { CategoryTabs } from "@/features/pos/components/category-tabs";
-import { approvalChallengeFrom, type ApprovalChallenge } from "@/components/approval-challenge";
-import { ApprovalPinDialog } from "@/components/approval-pin-dialog";
-import { ViewToggle } from "@/features/pos/components/view-toggle";
+import { useTranslation } from "@/i18n/context";
+import { ApiError, api, apiBlob, type Paginated } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { cn, formatCurrency, formatDateTime, openPdfBlob } from "@/lib/utils";
+import { useAuth } from "@/stores/auth";
 
 /* ---- types ---- */
 export interface Product {
@@ -117,7 +128,11 @@ function lineTotals({ product, qty, unit_price, discount }: CartItem, priceDispl
 
   if (product.tax_group?.rates?.length) {
     const result = calculateLineTax(taxable, qty, product.tax_group.rates, priceDisplay);
-    return { net: result.net, tax: result.tax, components: result.components as TaxComponentResult[] };
+    return {
+      net: result.net,
+      tax: result.tax,
+      components: result.components as TaxComponentResult[],
+    };
   }
 
   const rate = product.tax_rate ?? 0;
@@ -126,7 +141,18 @@ function lineTotals({ product, qty, unit_price, discount }: CartItem, priceDispl
     : round2(taxable * (rate / 100));
   const net = product.tax_inclusive ? round2(taxable - tax) : round2(taxable);
   const components: TaxComponentResult[] =
-    tax > 0 ? [{ name: "Tax", rate, type: "percentage", is_compound: false, base_amount: net, amount: tax }] : [];
+    tax > 0
+      ? [
+          {
+            name: "Tax",
+            rate,
+            type: "percentage",
+            is_compound: false,
+            base_amount: net,
+            amount: tax,
+          },
+        ]
+      : [];
 
   return { net, tax, components };
 }
@@ -139,8 +165,16 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
   // sale returns do — see the `taxes` comment on SaleResult above); falls back to the single
   // blended `tax_amount` line so the receipt still works against the current `/sales` response.
   const taxComponents = mergeTaxComponents(
-    sale.items?.map((item) =>
-      item.taxes?.map((t) => ({ name: t.name, rate: t.rate, type: "percentage" as const, is_compound: false, base_amount: 0, amount: t.amount })) ?? [],
+    sale.items?.map(
+      (item) =>
+        item.taxes?.map((t) => ({
+          name: t.name,
+          rate: t.rate,
+          type: "percentage" as const,
+          is_compound: false,
+          base_amount: 0,
+          amount: t.amount,
+        })) ?? [],
     ) ?? [],
   );
 
@@ -167,7 +201,9 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
         <div className="space-y-1">
           {sale.items?.map((item, i) => (
             <div key={i} className="flex justify-between">
-              <span className="flex-1 truncate">{item.name} × {item.quantity}</span>
+              <span className="flex-1 truncate">
+                {item.name} × {item.quantity}
+              </span>
               <span className="ms-4 font-medium">{formatCurrency(item.line_total)}</span>
             </div>
           ))}
@@ -177,48 +213,67 @@ function ReceiptModal({ sale, onClose }: { sale: SaleResult["data"]; onClose: ()
           {sale.tax_amount > 0 && (
             <>
               <div className="flex justify-between text-[var(--muted)]">
-                <span>Subtotal</span><span>{formatCurrency(sale.subtotal)}</span>
+                <span>Subtotal</span>
+                <span>{formatCurrency(sale.subtotal)}</span>
               </div>
               {taxComponents.length > 0 ? (
                 taxComponents.map((c) => (
-                  <div key={`${c.name}@${c.rate}`} className="flex justify-between text-[var(--muted)]">
-                    <span>{c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}</span><span>{formatCurrency(c.amount)}</span>
+                  <div
+                    key={`${c.name}@${c.rate}`}
+                    className="flex justify-between text-[var(--muted)]"
+                  >
+                    <span>
+                      {c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}
+                    </span>
+                    <span>{formatCurrency(c.amount)}</span>
                   </div>
                 ))
               ) : (
                 <div className="flex justify-between text-[var(--muted)]">
-                  <span>Tax</span><span>{formatCurrency(sale.tax_amount)}</span>
+                  <span>Tax</span>
+                  <span>{formatCurrency(sale.tax_amount)}</span>
                 </div>
               )}
             </>
           )}
           <div className="flex justify-between font-semibold">
-            <span>Total</span><span>{formatCurrency(sale.total)}</span>
+            <span>Total</span>
+            <span>{formatCurrency(sale.total)}</span>
           </div>
           {sale.payments?.map((p, i) => (
             <div key={i} className="flex justify-between text-[var(--muted)]">
-              <span className="capitalize">{p.method}</span><span>{formatCurrency(p.amount)}</span>
+              <span className="capitalize">{p.method}</span>
+              <span>{formatCurrency(p.amount)}</span>
             </div>
           ))}
           {sale.change_amount > 0 && (
             <div className="flex justify-between text-green-600 text-2xl font-bold">
-              <span>Change</span><span>{formatCurrency(sale.change_amount)}</span>
+              <span>Change</span>
+              <span>{formatCurrency(sale.change_amount)}</span>
             </div>
           )}
           {sale.due_amount > 0 && (
             <div className="flex justify-between text-amber-600">
-              <span>Due</span><span>{formatCurrency(sale.due_amount)}</span>
+              <span>Due</span>
+              <span>{formatCurrency(sale.due_amount)}</span>
             </div>
           )}
         </div>
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1" onClick={viewInvoice} disabled={loadingInvoice}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={viewInvoice}
+            disabled={loadingInvoice}
+          >
             <FileText className="h-4 w-4" /> {loadingInvoice ? "Loading…" : "View invoice"}
           </Button>
           <Button variant="outline" className="flex-1" onClick={() => window.print()}>
             Print receipt
           </Button>
-          <Button className="flex-1" onClick={onClose}>New sale</Button>
+          <Button className="flex-1" onClick={onClose}>
+            New sale
+          </Button>
         </div>
       </div>
     </Dialog>
@@ -244,7 +299,11 @@ const CURRENCIES = [
   { code: "AED", name: "UAE Dirham" },
 ];
 
-interface PaymentRow { id: string; method: string; amount: string; }
+interface PaymentRow {
+  id: string;
+  method: string;
+  amount: string;
+}
 let paymentRowSeq = 0;
 
 /** Split tender: the checkout endpoint already accepts a `payments` array (e.g. part cash,
@@ -259,13 +318,20 @@ function PaymentModal({
   baseCurrency,
 }: {
   total: number;
-  onConfirm: (payments: { method: string; amount: number }[], tenderCurrency?: string, fxRate?: number, tenderAmount?: number) => void;
+  onConfirm: (
+    payments: { method: string; amount: number }[],
+    tenderCurrency?: string,
+    fxRate?: number,
+    tenderAmount?: number,
+  ) => void;
   onClose: () => void;
   loading: boolean;
   baseCurrency?: string;
 }) {
   const t = useTranslation();
-  const [rows, setRows] = useState<PaymentRow[]>(() => [{ id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) }]);
+  const [rows, setRows] = useState<PaymentRow[]>(() => [
+    { id: String(++paymentRowSeq), method: "cash", amount: total.toFixed(2) },
+  ]);
   const [tenderCurrency, setTenderCurrency] = useState<string>("");
   const tenderAmount = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
@@ -273,10 +339,18 @@ function PaymentModal({
   const isForeign = tenderCurrency && tenderCurrency !== (baseCurrency || "USD");
 
   const addRow = () =>
-    setRows((prev) => [...prev, { id: String(++paymentRowSeq), method: "cash", amount: remaining > 0 ? remaining.toFixed(2) : "0" }]);
+    setRows((prev) => [
+      ...prev,
+      {
+        id: String(++paymentRowSeq),
+        method: "cash",
+        amount: remaining > 0 ? remaining.toFixed(2) : "0",
+      },
+    ]);
 
   const remaining = round2(total - tenderAmount);
-  const removeRow = (id: string) => setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+  const removeRow = (id: string) =>
+    setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
   const updateRow = (id: string, patch: Partial<Omit<PaymentRow, "id">>) =>
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
@@ -284,7 +358,10 @@ function PaymentModal({
     const payments = rows
       .map((r) => ({ method: r.method, amount: round2(parseFloat(r.amount) || 0) }))
       .filter((p) => p.amount > 0);
-    if (payments.length === 0) { toast("Enter a valid amount", "error"); return; }
+    if (payments.length === 0) {
+      toast("Enter a valid amount", "error");
+      return;
+    }
     onConfirm(payments, tenderCurrency || undefined);
   };
 
@@ -293,7 +370,12 @@ function PaymentModal({
       <div className="space-y-4">
         <div>
           <Label>Amount due</Label>
-          <p className="text-2xl font-bold">{formatCurrency(total)} {baseCurrency && <span className="text-sm font-normal text-[var(--muted)]">{baseCurrency}</span>}</p>
+          <p className="text-2xl font-bold">
+            {formatCurrency(total)}{" "}
+            {baseCurrency && (
+              <span className="text-sm font-normal text-[var(--muted)]">{baseCurrency}</span>
+            )}
+          </p>
           {isForeign && (
             <p className="text-sm text-[var(--muted)]">
               ~ {formatCurrency(round2(total))} {effectiveCurrency}
@@ -303,13 +385,14 @@ function PaymentModal({
 
         <div>
           <Label>{t("currency.tender")}</Label>
-          <Select
-            value={tenderCurrency}
-            onChange={(e) => setTenderCurrency(e.target.value)}
-          >
-            <option value="">{baseCurrency || "USD"} ({t("currency.base")})</option>
+          <Select value={tenderCurrency} onChange={(e) => setTenderCurrency(e.target.value)}>
+            <option value="">
+              {baseCurrency || "USD"} ({t("currency.base")})
+            </option>
             {CURRENCIES.filter((c) => c.code !== (baseCurrency || "USD")).map((c) => (
-              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+              <option key={c.code} value={c.code}>
+                {c.code} — {c.name}
+              </option>
             ))}
           </Select>
         </div>
@@ -323,7 +406,11 @@ function PaymentModal({
                   value={row.method}
                   onChange={(e) => updateRow(row.id, { method: e.target.value })}
                 >
-                  {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
                 </Select>
                 <Input
                   type="number"
@@ -333,7 +420,12 @@ function PaymentModal({
                   autoFocus={i === 0}
                 />
                 {rows.length > 1 && (
-                  <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-[var(--color-danger)]" onClick={() => removeRow(row.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-[var(--color-danger)]"
+                    onClick={() => removeRow(row.id)}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
                 )}
@@ -350,13 +442,17 @@ function PaymentModal({
         </div>
 
         {remaining > 0.001 ? (
-          <p className="text-sm text-amber-600">Remaining: {formatCurrency(remaining)} (recorded as due if you confirm now)</p>
+          <p className="text-sm text-amber-600">
+            Remaining: {formatCurrency(remaining)} (recorded as due if you confirm now)
+          </p>
         ) : remaining < -0.001 ? (
           <p className="text-sm text-green-600">Change: {formatCurrency(-remaining)}</p>
         ) : null}
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={loading} className="flex-1">
             {loading ? "Processing…" : "Confirm payment"}
           </Button>
@@ -403,13 +499,21 @@ export default function POSPage() {
   });
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     if (typeof window !== "undefined") {
-      try { return new Set(JSON.parse(localStorage.getItem("pos-favorites") ?? "[]")); } catch { return new Set(); }
+      try {
+        return new Set(JSON.parse(localStorage.getItem("pos-favorites") ?? "[]"));
+      } catch {
+        return new Set();
+      }
     }
     return new Set();
   });
 
-  useEffect(() => { localStorage.setItem("pos-view-mode", viewMode); }, [viewMode]);
-  useEffect(() => { localStorage.setItem("pos-favorites", JSON.stringify([...favorites])); }, [favorites]);
+  useEffect(() => {
+    localStorage.setItem("pos-view-mode", viewMode);
+  }, [viewMode]);
+  useEffect(() => {
+    localStorage.setItem("pos-favorites", JSON.stringify([...favorites]));
+  }, [favorites]);
 
   const toggleFavorite = useCallback((productId: string) => {
     setFavorites((prev) => {
@@ -425,7 +529,8 @@ export default function POSPage() {
     queryFn: () => {
       const params = new URLSearchParams({ per_page: "50", is_active: "true" });
       if (debouncedSearch) params.set("search", debouncedSearch);
-      if (activeCategoryId && activeCategoryId !== "__favorites__") params.set("category_id", activeCategoryId);
+      if (activeCategoryId && activeCategoryId !== "__favorites__")
+        params.set("category_id", activeCategoryId);
       return api<Paginated<Product>>(`/products?${params.toString()}`);
     },
     staleTime: 15_000,
@@ -444,7 +549,10 @@ export default function POSPage() {
 
   const { data: customersData } = useQuery<Paginated<Customer>>({
     queryKey: ["pos-customers", debouncedCustomerSearch],
-    queryFn: () => api<Paginated<Customer>>(`/customers?search=${encodeURIComponent(debouncedCustomerSearch)}&per_page=10`),
+    queryFn: () =>
+      api<Paginated<Customer>>(
+        `/customers?search=${encodeURIComponent(debouncedCustomerSearch)}&per_page=10`,
+      ),
     enabled: debouncedCustomerSearch.length > 0,
   });
 
@@ -457,7 +565,8 @@ export default function POSPage() {
   // cache hit in practice rather than an extra request just for the POS screen.
   const { data: businessSettings } = useQuery({
     queryKey: queryKeys.businessSettings,
-    queryFn: () => api<{ data: { price_display: PriceDisplay; currency?: string } }>("/settings/business"),
+    queryFn: () =>
+      api<{ data: { price_display: PriceDisplay; currency?: string } }>("/settings/business"),
   });
   const priceDisplay: PriceDisplay = businessSettings?.data?.price_display ?? "exclusive";
 
@@ -504,7 +613,10 @@ export default function POSPage() {
       toast(t("pos.customerSearch.created"), "success");
     },
     onError: (e: unknown) => {
-      const detail = e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Could not create customer";
+      const detail =
+        e instanceof ApiError
+          ? (Object.values(e.errors ?? {})[0]?.[0] ?? e.message)
+          : "Could not create customer";
       toast(detail, "error");
     },
   });
@@ -517,40 +629,59 @@ export default function POSPage() {
           i.product.id === product.id && i.weight === weight ? { ...i, qty: i.qty + 1 } : i,
         );
       }
-      const unitPrice = product.is_weighed && weight && product.price_per_unit
-        ? product.price_per_unit
-        : product.selling_price;
-      return [...prev, { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null }];
+      const unitPrice =
+        product.is_weighed && weight && product.price_per_unit
+          ? product.price_per_unit
+          : product.selling_price;
+      return [
+        ...prev,
+        { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null },
+      ];
     });
   }, []);
 
   /** Enter in the search box first tries an exact barcode match (what a scanner "types" +
    *  Enter looks like) before falling back to the live text search already wired to `search`. */
-  const tryBarcodeLookup = useCallback(async (code: string) => {
-    if (!code.trim()) return;
-    try {
-      const found = await api<{ data: Product; parsed_weight?: number | null }>(`/products/barcode/${encodeURIComponent(code.trim())}`);
-      if (found?.data) {
-        addToCart(found.data, found.parsed_weight);
-        setSearch("");
-        try { navigator.vibrate?.(50); } catch {}
+  const tryBarcodeLookup = useCallback(
+    async (code: string) => {
+      if (!code.trim()) return;
+      try {
+        const found = await api<{ data: Product; parsed_weight?: number | null }>(
+          `/products/barcode/${encodeURIComponent(code.trim())}`,
+        );
+        if (found?.data) {
+          addToCart(found.data, found.parsed_weight);
+          setSearch("");
+          try {
+            navigator.vibrate?.(50);
+          } catch {
+            /* ignore */
+          }
+          try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 1200;
+            gain.gain.value = 0.1;
+            osc.start();
+            osc.stop(ctx.currentTime + 0.08);
+          } catch {
+            /* ignore */
+          }
+        }
+      } catch {
+        toast(`Barcode "${code}" not found`, "error");
         try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 1200;
-          gain.gain.value = 0.1;
-          osc.start();
-          osc.stop(ctx.currentTime + 0.08);
-        } catch {}
+          navigator.vibrate?.([50, 30, 50]);
+        } catch {
+          /* ignore */
+        }
       }
-    } catch {
-      toast(`Barcode "${code}" not found`, "error");
-      try { navigator.vibrate?.([50, 30, 50]); } catch {}
-    }
-  }, [addToCart]);
+    },
+    [addToCart],
+  );
 
   const voidLastLine = useCallback(() => {
     setCart((prev) => {
@@ -572,28 +703,82 @@ export default function POSPage() {
     toast("Cart cleared");
   }, [cart.length]);
 
-  const handlers = useMemo(() => ({
-    focusSearch: () => searchInputRef.current?.focus(),
-    holdSale,
-    openPayment: () => {
-      if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+  const parkMutation = useMutation({
+    mutationFn: (approvalToken?: string) => {
+      const idempotencyKey = crypto.randomUUID();
+      return api("/sales", {
+        method: "POST",
+        idempotencyKey,
+        body: {
+          branch_id: user?.branch_id,
+          warehouse_id: defaultWarehouse?.id,
+          customer_id: customerId,
+          status: "held",
+          items: cart.map((i) => ({
+            product_id: i.product.id,
+            quantity: i.qty,
+            unit_price: i.unit_price,
+            discount_amount: i.discount * i.qty,
+          })),
+          payments: [],
+          approval_token: approvalToken ?? null,
+        },
+      });
     },
-    voidLastLine,
-    closeModal: () => {
-      if (showPayment) setShowPayment(false);
-      if (receipt) setReceipt(null);
+    onSuccess: () => {
+      setCart([]);
+      setCustomerId(null);
+      setCustomerSearch("");
+      setChallenge(null);
+      qc.invalidateQueries({ queryKey: queryKeys.heldSales.all });
+      qc.invalidateQueries({ queryKey: queryKeys.sales.all });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["pos-products"] });
+      toast(t("pos.parkSuccess"), "success");
     },
-    clearCart,
-    confirmPayment: () => {},
-    toggleHelp: () => setShowHelp((v) => !v),
-  }), [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart]);
+    onError: (e: unknown) => {
+      const needsApproval = approvalChallengeFrom(e);
+      if (needsApproval) {
+        setChallenge(needsApproval);
+        return;
+      }
+      const detail = e instanceof ApiError ? e.message : "Could not park sale";
+      toast(detail, "error");
+    },
+  });
 
-  const shortcutState = useMemo(() => ({
-    cartEmpty: cart.length === 0,
-    showPayment,
-    showReceipt: !!receipt,
-    showHelp,
-  }), [cart.length, showPayment, receipt, showHelp]);
+  const handlers = useMemo(
+    () => ({
+      focusSearch: () => searchInputRef.current?.focus(),
+      holdSale,
+      openPayment: () => {
+        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
+      },
+      voidLastLine,
+      closeModal: () => {
+        if (showPayment) setShowPayment(false);
+        if (receipt) setReceipt(null);
+      },
+      clearCart,
+      parkSale: () => parkMutation.mutate(undefined),
+      confirmPayment: () => {
+        /* no-op */
+      },
+      toggleHelp: () => setShowHelp((v) => !v),
+    }),
+    [cart.length, showPayment, receipt, holdSale, voidLastLine, clearCart, parkMutation],
+  );
+
+  const shortcutState = useMemo(
+    () => ({
+      cartEmpty: cart.length === 0,
+      showPayment,
+      showReceipt: !!receipt,
+      showHelp,
+      showHeld,
+    }),
+    [cart.length, showPayment, receipt, showHelp, showHeld],
+  );
 
   usePosShortcuts(handlers, shortcutState);
 
@@ -609,9 +794,13 @@ export default function POSPage() {
     }
   };
   const updatePrice = (id: string, unit_price: number) =>
-    setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, unit_price: Math.max(0, unit_price) } : i)));
+    setCart((prev) =>
+      prev.map((i) => (i.product.id === id ? { ...i, unit_price: Math.max(0, unit_price) } : i)),
+    );
   const updateDiscount = (id: string, discount: number) =>
-    setCart((prev) => prev.map((i) => (i.product.id === id ? { ...i, discount: Math.max(0, discount) } : i)));
+    setCart((prev) =>
+      prev.map((i) => (i.product.id === id ? { ...i, discount: Math.max(0, discount) } : i)),
+    );
 
   const removeItem = (id: string) => setCart((prev) => prev.filter((i) => i.product.id !== id));
 
@@ -632,7 +821,15 @@ export default function POSPage() {
   }, [cart, priceDisplay]);
 
   const checkoutMutation = useMutation({
-    mutationFn: ({ payments, approvalToken, tenderCurrency }: { payments: { method: string; amount: number }[]; approvalToken?: string; tenderCurrency?: string }) => {
+    mutationFn: ({
+      payments,
+      approvalToken,
+      tenderCurrency,
+    }: {
+      payments: { method: string; amount: number }[];
+      approvalToken?: string;
+      tenderCurrency?: string;
+    }) => {
       const idempotencyKey = crypto.randomUUID();
       return api<SaleResult>("/sales", {
         method: "POST",
@@ -683,92 +880,27 @@ export default function POSPage() {
         qc.invalidateQueries({ queryKey: ["pos-products"] });
         return;
       }
-      const detail = e instanceof ApiError ? Object.values(e.errors ?? {})[0]?.[0] ?? e.message : "Checkout failed";
+      const detail =
+        e instanceof ApiError
+          ? (Object.values(e.errors ?? {})[0]?.[0] ?? e.message)
+          : "Checkout failed";
       toast(detail, "error");
     },
   });
 
-  const parkMutation = useMutation({
-    mutationFn: (approvalToken?: string) => {
-      const idempotencyKey = crypto.randomUUID();
-      return api("/sales", {
-        method: "POST",
-        idempotencyKey,
-        body: {
-          branch_id: user?.branch_id,
-          warehouse_id: defaultWarehouse?.id,
-          customer_id: customerId,
-          status: "held",
-          items: cart.map((i) => ({
-            product_id: i.product.id,
-            quantity: i.qty,
-            unit_price: i.unit_price,
-            discount_amount: i.discount * i.qty,
-          })),
-          payments: [],
-          approval_token: approvalToken ?? null,
-        },
-      });
-    },
-    onSuccess: () => {
-      setCart([]);
-      setCustomerId(null);
-      setCustomerSearch("");
-      setChallenge(null);
-      qc.invalidateQueries({ queryKey: queryKeys.heldSales.all });
-      qc.invalidateQueries({ queryKey: queryKeys.sales.all });
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["pos-products"] });
-      toast(t("pos.parkSuccess"), "success");
-    },
-    onError: (e: unknown) => {
-      const needsApproval = approvalChallengeFrom(e);
-      if (needsApproval) {
-        setChallenge(needsApproval);
-        return;
-      }
-      const detail = e instanceof ApiError ? e.message : "Could not park sale";
-      toast(detail, "error");
-    },
-  });
-
-  const handleResume = useCallback(
-    (items: HeldCartItem[], cid: string | null) => {
-      setCart(items.map((i) => ({ product: i.product, qty: i.qty, unit_price: i.unit_price, discount: i.discount })));
-      setCustomerId(cid);
-      setCustomerSearch("");
-      setShowHeld(false);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "F2") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-      if (e.key === "F4") {
-        e.preventDefault();
-        if (cart.length > 0 && !showPayment && !receipt && !showHeld) parkMutation.mutate(undefined);
-        return;
-      }
-      if (e.key === "F9") {
-        e.preventDefault();
-        if (cart.length > 0 && !showPayment && !receipt) setShowPayment(true);
-        return;
-      }
-
-      const active = document.activeElement;
-      const isTypingElsewhere = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
-      if (!isTypingElsewhere && !showPayment && !receipt && !showHeld && /^[a-zA-Z0-9]$/.test(e.key)) {
-        searchInputRef.current?.focus();
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cart.length, showPayment, receipt, showHeld, parkMutation]);
+  const handleResume = useCallback((items: HeldCartItem[], cid: string | null) => {
+    setCart(
+      items.map((i) => ({
+        product: i.product,
+        qty: i.qty,
+        unit_price: i.unit_price,
+        discount: i.discount,
+      })),
+    );
+    setCustomerId(cid);
+    setCustomerSearch("");
+    setShowHeld(false);
+  }, []);
 
   return (
     <div className="flex h-full gap-4 overflow-hidden">
@@ -825,9 +957,22 @@ export default function POSPage() {
 
         <div className="flex-1 overflow-y-auto">
           {productsLoading ? (
-            <div className={cn(viewMode === "grid" ? "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" : "space-y-1")}>
+            <div
+              className={cn(
+                viewMode === "grid"
+                  ? "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
+                  : "space-y-1",
+              )}
+            >
               {Array.from({ length: 12 }).map((_, i) => (
-                <Skeleton key={i} className={cn(viewMode === "grid" ? "h-24 rounded-[var(--radius)]" : "h-12 rounded-[var(--radius)]")} />
+                <Skeleton
+                  key={i}
+                  className={cn(
+                    viewMode === "grid"
+                      ? "h-24 rounded-[var(--radius)]"
+                      : "h-12 rounded-[var(--radius)]",
+                  )}
+                />
               ))}
             </div>
           ) : viewMode === "grid" ? (
@@ -846,25 +991,58 @@ export default function POSPage() {
                     )}
                   >
                     {p.image_url && (
-                      <img src={p.image_url} alt="" className="mb-2 h-16 w-full rounded object-cover" />
+                      <img
+                        src={p.image_url}
+                        alt=""
+                        className="mb-2 h-16 w-full rounded object-cover"
+                      />
                     )}
-                    <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">{p.name}</p>
-                    {p.category && <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>}
-                    <p className="mt-2 font-semibold text-[var(--primary)]">{formatCurrency(p.selling_price)}</p>
+                    <p className="line-clamp-2 text-sm font-medium transition-colors group-enabled:group-hover:text-[var(--primary)]">
+                      {p.name}
+                    </p>
+                    {p.category && (
+                      <p className="mt-0.5 text-xs text-[var(--muted)]">{p.category.name}</p>
+                    )}
+                    <p className="mt-2 font-semibold text-[var(--primary)]">
+                      {formatCurrency(p.selling_price)}
+                    </p>
                     <div className="flex items-center gap-1.5">
-                      <p className={cn("text-xs", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : (p.min_stock_level && (p.stock ?? 0) <= p.min_stock_level) ? "text-amber-600" : "text-[var(--muted)]")}>
+                      <p
+                        className={cn(
+                          "text-xs",
+                          (p.stock ?? 0) <= 0
+                            ? "text-[var(--color-danger)]"
+                            : p.min_stock_level && (p.stock ?? 0) <= p.min_stock_level
+                              ? "text-amber-600"
+                              : "text-[var(--muted)]",
+                        )}
+                      >
                         Stock: {p.stock ?? 0}
                       </p>
-                      {(p.min_stock_level ?? 0) > 0 && (p.stock ?? 0) <= (p.min_stock_level ?? 0) && (p.stock ?? 0) > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
-                      )}
+                      {(p.min_stock_level ?? 0) > 0 &&
+                        (p.stock ?? 0) <= (p.min_stock_level ?? 0) &&
+                        (p.stock ?? 0) > 0 && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                            Low
+                          </span>
+                        )}
                     </div>
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(p.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p.id);
+                    }}
                     className="absolute top-1.5 right-1.5 h-6 w-6 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer bg-[var(--surface)]/80"
                   >
-                    <Star className={cn("h-3.5 w-3.5", favorites.has(p.id) ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]")} />
+                    <Star
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        favorites.has(p.id)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-[var(--muted)]",
+                      )}
+                    />
                   </button>
                 </div>
               ))}
@@ -877,9 +1055,17 @@ export default function POSPage() {
           ) : (
             <div className="space-y-1">
               {displayedProducts.map((p) => (
-                <div key={p.id} className="relative group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 cursor-pointer transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]" onClick={() => addToCart(p)}>
+                <div
+                  key={p.id}
+                  className="relative group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2 cursor-pointer transition-colors hover:border-[var(--primary)] hover:bg-[var(--surface-2)]"
+                  onClick={() => addToCart(p)}
+                >
                   {p.image_url ? (
-                    <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
+                    <img
+                      src={p.image_url}
+                      alt=""
+                      className="h-10 w-10 rounded object-cover shrink-0"
+                    />
                   ) : (
                     <div className="h-10 w-10 rounded bg-[var(--surface-2)] shrink-0" />
                   )}
@@ -887,15 +1073,32 @@ export default function POSPage() {
                     <p className="text-sm font-medium truncate">{p.name}</p>
                     {p.category && <p className="text-xs text-[var(--muted)]">{p.category.name}</p>}
                   </div>
-                  <p className="text-sm font-semibold text-[var(--primary)] shrink-0">{formatCurrency(p.selling_price)}</p>
-                  <p className={cn("text-xs shrink-0", (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--muted)]")}>
+                  <p className="text-sm font-semibold text-[var(--primary)] shrink-0">
+                    {formatCurrency(p.selling_price)}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-xs shrink-0",
+                      (p.stock ?? 0) <= 0 ? "text-[var(--color-danger)]" : "text-[var(--muted)]",
+                    )}
+                  >
                     Stock: {p.stock ?? 0}
                   </p>
                   <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(p.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(p.id);
+                    }}
                     className="h-6 w-6 flex items-center justify-center shrink-0 cursor-pointer"
                   >
-                    <Star className={cn("h-3.5 w-3.5", favorites.has(p.id) ? "fill-amber-400 text-amber-400" : "text-[var(--muted)]")} />
+                    <Star
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        favorites.has(p.id)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-[var(--muted)]",
+                      )}
+                    />
                   </button>
                 </div>
               ))}
@@ -910,7 +1113,9 @@ export default function POSPage() {
       </div>
 
       {/* Right: cart */}
-      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+      <div className="flex w-80 shrink-0 flex-col rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
+        {" "}
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <button
             onClick={() => setShowHeld(true)}
             className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
@@ -923,29 +1128,41 @@ export default function POSPage() {
           <div className="flex items-center gap-2 font-semibold">
             <ShoppingCart className="h-4 w-4" />
             Cart
-            {cart.length > 0 && (
-              <Badge tone="info">{cart.reduce((s, i) => s + i.qty, 0)}</Badge>
-            )}
+            {cart.length > 0 && <Badge tone="info">{cart.reduce((s, i) => s + i.qty, 0)}</Badge>}
           </div>
           {cart.length > 0 && (
-            <button onClick={() => setCart([])} className="cursor-pointer text-xs text-[var(--muted)] transition-colors hover:text-[var(--color-danger)]">
+            <button
+              onClick={() => setCart([])}
+              className="cursor-pointer text-xs text-[var(--muted)] transition-colors hover:text-[var(--color-danger)]"
+            >
               Clear
             </button>
           )}
         </div>
-
         {/* Customer selector */}
         <div className="border-b border-[var(--border)] p-3">
           <div className="relative">
             <User className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <Input
               className="ps-8 h-8 text-xs"
-              placeholder={selectedCustomer ? selectedCustomer.name : t("pos.customerSearch.placeholder")}
+              placeholder={
+                selectedCustomer ? selectedCustomer.name : t("pos.customerSearch.placeholder")
+              }
               value={selectedCustomer ? selectedCustomer.name : customerSearch}
-              onChange={(e) => { setCustomerSearch(e.target.value); setCustomerId(null); setShowCreateCustomer(false); }}
+              onChange={(e) => {
+                setCustomerSearch(e.target.value);
+                setCustomerId(null);
+                setShowCreateCustomer(false);
+              }}
             />
             {customerId && (
-              <button className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer" onClick={() => { setCustomerId(null); setCustomerSearch(""); }}>
+              <button
+                className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                onClick={() => {
+                  setCustomerId(null);
+                  setCustomerSearch("");
+                }}
+              >
                 <X className="h-3.5 w-3.5 text-[var(--muted)]" />
               </button>
             )}
@@ -953,42 +1170,59 @@ export default function POSPage() {
           {selectedCustomer && (
             <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
               {loyaltyPoints > 0 && (
-                <Badge tone="info" className="text-[10px]">{loyaltyPoints} {t("pos.customerSearch.points")}</Badge>
+                <Badge tone="info" className="text-[10px]">
+                  {loyaltyPoints} {t("pos.customerSearch.points")}
+                </Badge>
               )}
               {selectedCustomer.balance_due > 0 && (
-                <Badge tone="warning" className="text-[10px]">{t("pos.customerSearch.owing")}</Badge>
+                <Badge tone="warning" className="text-[10px]">
+                  {t("pos.customerSearch.owing")}
+                </Badge>
               )}
             </div>
           )}
-          {customerSearch && !customerId && customersData?.data && customersData.data.length > 0 && (
-            <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
-              {customersData.data.map((c) => (
+          {customerSearch &&
+            !customerId &&
+            customersData?.data &&
+            customersData.data.length > 0 && (
+              <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+                {customersData.data.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setCustomerId(c.id);
+                      setCustomerSearch("");
+                      setShowCreateCustomer(false);
+                    }}
+                    className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
+                  >
+                    {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          {customerSearch &&
+            !customerId &&
+            customersData?.data &&
+            customersData.data.length === 0 &&
+            !showCreateCustomer && (
+              <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
+                <p className="px-3 py-2 text-xs text-[var(--muted)]">
+                  {t("pos.customerSearch.noMatch")}
+                </p>
                 <button
-                  key={c.id}
-                  onClick={() => { setCustomerId(c.id); setCustomerSearch(""); setShowCreateCustomer(false); }}
-                  className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
+                  onClick={() => {
+                    setShowCreateCustomer(true);
+                    setNewCustomerName(customerSearch);
+                    setNewCustomerPhone("");
+                  }}
+                  className="w-full cursor-pointer border-t border-[var(--border)] px-3 py-2 text-start text-sm font-medium text-[var(--primary)] transition-colors hover:bg-[var(--surface-2)]"
                 >
-                  {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
+                  <UserPlus className="inline h-3.5 w-3.5 me-1" />
+                  {t("pos.customerSearch.create")} &ldquo;{customerSearch}&rdquo;
                 </button>
-              ))}
-            </div>
-          )}
-          {customerSearch && !customerId && customersData?.data && customersData.data.length === 0 && !showCreateCustomer && (
-            <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
-              <p className="px-3 py-2 text-xs text-[var(--muted)]">{t("pos.customerSearch.noMatch")}</p>
-              <button
-                onClick={() => {
-                  setShowCreateCustomer(true);
-                  setNewCustomerName(customerSearch);
-                  setNewCustomerPhone("");
-                }}
-                className="w-full cursor-pointer border-t border-[var(--border)] px-3 py-2 text-start text-sm font-medium text-[var(--primary)] transition-colors hover:bg-[var(--surface-2)]"
-              >
-                <UserPlus className="inline h-3.5 w-3.5 me-1" />
-                {t("pos.customerSearch.create")} &ldquo;{customerSearch}&rdquo;
-              </button>
-            </div>
-          )}
+              </div>
+            )}
           {showCreateCustomer && (
             <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg space-y-2">
               <Input
@@ -1011,13 +1245,19 @@ export default function POSPage() {
                   disabled={!newCustomerName.trim() || createCustomerMutation.isPending}
                   onClick={() => createCustomerMutation.mutate()}
                 >
-                  {createCustomerMutation.isPending ? t("common.saving") : t("pos.customerSearch.create")}
+                  {createCustomerMutation.isPending
+                    ? t("common.saving")
+                    : t("pos.customerSearch.create")}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs"
-                  onClick={() => { setShowCreateCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
+                  onClick={() => {
+                    setShowCreateCustomer(false);
+                    setNewCustomerName("");
+                    setNewCustomerPhone("");
+                  }}
                 >
                   {t("common.cancel")}
                 </Button>
@@ -1025,7 +1265,6 @@ export default function POSPage() {
             </div>
           )}
         </div>
-
         {/* Cart items */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {cart.length === 0 ? (
@@ -1045,22 +1284,36 @@ export default function POSPage() {
                   </button>
                 </div>
                 {item.weight != null && (
-                  <p className="text-xs text-[var(--muted)]">{t("pos.weight")}: {item.weight.toFixed(3)} {item.product.weight_unit}</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    {t("pos.weight")}: {item.weight.toFixed(3)} {item.product.weight_unit}
+                  </p>
                 )}
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty - 1)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => updateQty(item.product.id, item.qty - 1)}
+                    >
                       <Minus className="h-3 w-3" />
                     </Button>
                     <QuantityPopover
                       value={item.qty}
                       onChange={(qty) => updateQty(item.product.id, qty)}
                     />
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, item.qty + 1)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => updateQty(item.product.id, item.qty + 1)}
+                    >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
-                  <span className="text-sm font-semibold">{formatCurrency(item.unit_price * item.qty)}</span>
+                  <span className="text-sm font-semibold">
+                    {formatCurrency(item.unit_price * item.qty)}
+                  </span>
                 </div>
                 {priceDisplay === "inclusive" && item.product.tax_rate > 0 && (
                   <div className="mt-0.5 text-xs text-[var(--muted)] text-end">
@@ -1101,7 +1354,6 @@ export default function POSPage() {
             ))
           )}
         </div>
-
         {/* Cart footer */}
         <div className="sticky bottom-0 border-t border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
           <div className="flex justify-between text-sm">
@@ -1113,7 +1365,9 @@ export default function POSPage() {
               products (see lineTotals() above). */}
           {cartTaxComponents.map((c) => (
             <div key={`${c.name}@${c.rate}`} className="flex justify-between text-sm">
-              <span className="text-[var(--muted)]">{c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}</span>
+              <span className="text-[var(--muted)]">
+                {c.name} {c.rate > 0 ? `(${c.rate}%)` : ""}
+              </span>
               <span>{formatCurrency(c.amount)}</span>
             </div>
           ))}
@@ -1125,7 +1379,9 @@ export default function POSPage() {
             <Button
               variant="outline"
               className="flex-1"
-              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id || parkMutation.isPending}
+              disabled={
+                cart.length === 0 || !defaultWarehouse || !user?.branch_id || parkMutation.isPending
+              }
               onClick={() => parkMutation.mutate(undefined)}
             >
               <Pause className="h-4 w-4" />
@@ -1133,14 +1389,21 @@ export default function POSPage() {
             </Button>
             <Button
               className="flex-1"
-              disabled={cart.length === 0 || !defaultWarehouse || !user?.branch_id || checkoutMutation.isPending}
+              disabled={
+                cart.length === 0 ||
+                !defaultWarehouse ||
+                !user?.branch_id ||
+                checkoutMutation.isPending
+              }
               onClick={() => setShowPayment(true)}
             >
               {t("pos.checkout")} · {formatCurrency(cartTotal)}
             </Button>
           </div>
           {!defaultWarehouse && (
-            <p className="text-xs text-center text-[var(--color-danger)]">No warehouse configured</p>
+            <p className="text-xs text-center text-[var(--color-danger)]">
+              No warehouse configured
+            </p>
           )}
         </div>
       </div>
@@ -1158,12 +1421,7 @@ export default function POSPage() {
         />
       )}
 
-      {receipt && (
-        <ReceiptModal
-          sale={receipt}
-          onClose={() => setReceipt(null)}
-        />
-      )}
+      {receipt && <ReceiptModal sale={receipt} onClose={() => setReceipt(null)} />}
 
       <ApprovalPinDialog
         challenge={challenge}
@@ -1181,11 +1439,7 @@ export default function POSPage() {
       />
 
       <ShortcutsOverlay open={showHelp} onClose={() => setShowHelp(false)} />
-      <HeldOrdersPanel
-        open={showHeld}
-        onClose={() => setShowHeld(false)}
-        onResume={handleResume}
-      />
+      <HeldOrdersPanel open={showHeld} onClose={() => setShowHeld(false)} onResume={handleResume} />
     </div>
   );
 }

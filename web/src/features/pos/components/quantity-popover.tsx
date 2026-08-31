@@ -1,7 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Numpad } from "@/components/ui/numpad";
 import { useIsTouchDevice } from "@/components/ui/use-is-touch-device";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useRef, useState } from "react";
 
 interface QuantityPopoverProps {
   value: number;
@@ -50,7 +50,10 @@ export function QuantityPopover({ value, onChange, min = 1 }: QuantityPopoverPro
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => { setBuffer(String(value)); setOpen(true); }}
+        onClick={() => {
+          setBuffer(String(value));
+          setOpen(true);
+        }}
         className="w-8 text-center text-sm tabular-nums cursor-pointer hover:bg-[var(--surface-2)] rounded px-1 py-0.5 transition-colors"
       >
         {value}

@@ -1,12 +1,19 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Printer } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Printer } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { portalFetch, usePortalToken } from "@/lib/portal";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -34,10 +41,14 @@ interface InvoiceDetail {
 
 function statusBadge(status: string) {
   switch (status) {
-    case "paid": return <Badge tone="success">Paid</Badge>;
-    case "partial": return <Badge tone="warning">Partial</Badge>;
-    case "unpaid": return <Badge tone="danger">Unpaid</Badge>;
-    default: return <Badge>{status}</Badge>;
+    case "paid":
+      return <Badge tone="success">Paid</Badge>;
+    case "partial":
+      return <Badge tone="warning">Partial</Badge>;
+    case "unpaid":
+      return <Badge tone="danger">Unpaid</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
   }
 }
 
@@ -53,14 +64,16 @@ export default function PortalInvoiceDetailPage() {
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: queryKeys.portal.invoice(id),
-    queryFn: () => portalFetch<{ data: InvoiceDetail }>(`/portal/invoices/${id}`).then((r) => r.data),
+    queryFn: () =>
+      portalFetch<{ data: InvoiceDetail }>(`/portal/invoices/${id}`).then((r) => r.data),
     enabled: ready,
   });
 
   const payMutation = useMutation({
-    mutationFn: () => portalFetch<{ session_id: string }>(`/portal/pay/${id}`, {
-      method: "POST",
-    }),
+    mutationFn: () =>
+      portalFetch<{ session_id: string }>(`/portal/pay/${id}`, {
+        method: "POST",
+      }),
     onSuccess: (res) => {
       window.location.href = `https://checkout.stripe.com/pay/${res.session_id}`;
     },
@@ -117,10 +130,18 @@ export default function PortalInvoiceDetailPage() {
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.discount_amount)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.tax_amount)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(item.line_total)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.unit_price)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.discount_amount)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.tax_amount)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.line_total)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -153,7 +174,9 @@ export default function PortalInvoiceDetailPage() {
                   onClick={() => payMutation.mutate()}
                   disabled={payMutation.isPending}
                 >
-                  {payMutation.isPending ? "Redirecting..." : `Pay Now — ${formatCurrency(invoice.due_amount)}`}
+                  {payMutation.isPending
+                    ? "Redirecting..."
+                    : `Pay Now — ${formatCurrency(invoice.due_amount)}`}
                 </Button>
               </div>
             )}

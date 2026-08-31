@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
-import { api } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
+import { useTranslation } from "@/i18n/context";
+import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
 import { useThemeStore } from "@/stores/theme";
-import { useTranslation } from "@/i18n/context";
 
 /**
  * Wait this long after the *last* change before persisting, so a user cycling through the

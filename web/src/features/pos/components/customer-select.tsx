@@ -1,10 +1,14 @@
-import { useState } from "react";
 import { User, UserPlus, X } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  useCreateCustomer,
+  useCustomerLoyalty,
+  useCustomerSearch,
+} from "@/features/pos/hooks/use-pos-customers";
 import { useTranslation } from "@/i18n/context";
-import { useCreateCustomer, useCustomerLoyalty, useCustomerSearch } from "@/features/pos/hooks/use-pos-customers";
 
 interface CustomerSelectProps {
   customerId: string | null;
@@ -14,7 +18,12 @@ interface CustomerSelectProps {
 }
 
 /** Attach a customer to the sale — search, pick, or create one without leaving the till. */
-export function CustomerSelect({ customerId, search, onSearchChange, onSelect }: CustomerSelectProps) {
+export function CustomerSelect({
+  customerId,
+  search,
+  onSearchChange,
+  onSelect,
+}: CustomerSelectProps) {
   const t = useTranslation();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -44,12 +53,19 @@ export function CustomerSelect({ customerId, search, onSearchChange, onSelect }:
           className="ps-8 h-8 text-xs"
           placeholder={selected ? selected.name : t("pos.customerSearch.placeholder")}
           value={selected ? selected.name : search}
-          onChange={(e) => { onSearchChange(e.target.value); onSelect(null); setShowCreate(false); }}
+          onChange={(e) => {
+            onSearchChange(e.target.value);
+            onSelect(null);
+            setShowCreate(false);
+          }}
         />
         {customerId && (
           <button
             className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-            onClick={() => { onSelect(null); onSearchChange(""); }}
+            onClick={() => {
+              onSelect(null);
+              onSearchChange("");
+            }}
           >
             <X className="h-3.5 w-3.5 text-[var(--muted)]" />
           </button>
@@ -59,10 +75,14 @@ export function CustomerSelect({ customerId, search, onSearchChange, onSelect }:
       {selected && (
         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
           {loyaltyPoints > 0 && (
-            <Badge tone="info" className="text-[10px]">{loyaltyPoints} {t("pos.customerSearch.points")}</Badge>
+            <Badge tone="info" className="text-[10px]">
+              {loyaltyPoints} {t("pos.customerSearch.points")}
+            </Badge>
           )}
           {selected.balance_due > 0 && (
-            <Badge tone="warning" className="text-[10px]">{t("pos.customerSearch.owing")}</Badge>
+            <Badge tone="warning" className="text-[10px]">
+              {t("pos.customerSearch.owing")}
+            </Badge>
           )}
         </div>
       )}
@@ -72,7 +92,11 @@ export function CustomerSelect({ customerId, search, onSearchChange, onSelect }:
           {results.map((c) => (
             <button
               key={c.id}
-              onClick={() => { onSelect(c.id); onSearchChange(""); setShowCreate(false); }}
+              onClick={() => {
+                onSelect(c.id);
+                onSearchChange("");
+                setShowCreate(false);
+              }}
               className="w-full cursor-pointer px-3 py-2 text-start text-sm transition-colors hover:bg-[var(--surface-2)]"
             >
               {c.name} {c.phone && <span className="text-[var(--muted)]">· {c.phone}</span>}
@@ -85,7 +109,11 @@ export function CustomerSelect({ customerId, search, onSearchChange, onSelect }:
         <div className="mt-1 rounded border border-[var(--border)] bg-[var(--surface)] shadow-lg">
           <p className="px-3 py-2 text-xs text-[var(--muted)]">{t("pos.customerSearch.noMatch")}</p>
           <button
-            onClick={() => { setShowCreate(true); setNewName(search); setNewPhone(""); }}
+            onClick={() => {
+              setShowCreate(true);
+              setNewName(search);
+              setNewPhone("");
+            }}
             className="w-full cursor-pointer border-t border-[var(--border)] px-3 py-2 text-start text-sm font-medium text-[var(--primary)] transition-colors hover:bg-[var(--surface-2)]"
           >
             <UserPlus className="inline h-3.5 w-3.5 me-1" />

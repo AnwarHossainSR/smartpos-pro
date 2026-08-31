@@ -1,8 +1,8 @@
-import { api, apiUpload, errorMessage } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageOff, Loader2, Trash2, Upload } from "lucide-react";
 import { useCallback, useId, useRef, useState } from "react";
+import { api, apiUpload, errorMessage } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
 import { toast } from "./toast";
@@ -166,9 +166,7 @@ export function MediaField({
           className={cn(
             "relative flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius)] border-2 border-dashed transition-colors",
             box,
-            disabled
-              ? "cursor-not-allowed border-[var(--border)] opacity-60"
-              : "cursor-pointer",
+            disabled ? "cursor-not-allowed border-[var(--border)] opacity-60" : "cursor-pointer",
             dragging
               ? "border-[var(--primary)] bg-[var(--primary)]/5"
               : "border-[var(--border)] hover:border-[var(--primary)]/50",

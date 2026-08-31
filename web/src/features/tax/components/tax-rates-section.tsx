@@ -1,15 +1,15 @@
-import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Drawer } from "@/components/ui/drawer";
-import { Dialog } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
+import { Drawer } from "@/components/ui/drawer";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
-import { useTaxRateMutations, useTaxRates } from "@/features/tax/hooks";
+import { Select } from "@/components/ui/select";
 import { TaxRateForm } from "@/features/tax/components/tax-rate-form";
+import { useTaxRateMutations, useTaxRates } from "@/features/tax/hooks";
 import type { TaxRate } from "@/features/tax/types";
 
 export function TaxRatesSection({ canManage }: { canManage: boolean }) {
@@ -19,28 +19,54 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
   const [editing, setEditing] = useState<TaxRate | null>(null);
   const [deleting, setDeleting] = useState<TaxRate | null>(null);
 
-  const openCreate = () => { setEditing(null); setDrawerOpen(true); };
-  const openEdit = (r: TaxRate) => { setEditing(r); setDrawerOpen(true); };
-  const closeDrawer = () => { setDrawerOpen(false); setEditing(null); };
+  const openCreate = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+  const openEdit = (r: TaxRate) => {
+    setEditing(r);
+    setDrawerOpen(true);
+  };
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setEditing(null);
+  };
 
   const columns: DataTableColumn<TaxRate>[] = [
     { key: "name", header: "Name", render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "code", header: "Code", render: (r) => <span className="font-mono text-xs text-[var(--muted)]">{r.code ?? "—"}</span> },
+    {
+      key: "code",
+      header: "Code",
+      render: (r) => <span className="font-mono text-xs text-[var(--muted)]">{r.code ?? "—"}</span>,
+    },
     {
       key: "rate",
       header: "Rate",
       align: "right",
-      render: (r) => <span className="font-medium">{r.type === "percentage" ? `${r.rate}%` : r.rate.toFixed(2)}</span>,
+      render: (r) => (
+        <span className="font-medium">
+          {r.type === "percentage" ? `${r.rate}%` : r.rate.toFixed(2)}
+        </span>
+      ),
     },
     {
       key: "compound",
       header: "Compound",
-      render: (r) => (r.is_compound ? <Badge tone="info">Compound</Badge> : <span className="text-[var(--muted)]">—</span>),
+      render: (r) =>
+        r.is_compound ? (
+          <Badge tone="info">Compound</Badge>
+        ) : (
+          <span className="text-[var(--muted)]">—</span>
+        ),
     },
     {
       key: "status",
       header: "Status",
-      render: (r) => <Badge tone={r.is_active ? "success" : "default"}>{r.is_active ? "active" : "inactive"}</Badge>,
+      render: (r) => (
+        <Badge tone={r.is_active ? "success" : "default"}>
+          {r.is_active ? "active" : "inactive"}
+        </Badge>
+      ),
     },
   ];
 
@@ -72,15 +98,29 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
           data={list.data}
           rowKey={(r) => r.id}
           loading={list.isLoading}
-          emptyMessage={list.search ? "No tax rates match your search." : "No tax rates yet. Components like CGST, SGST, or VAT live here."}
+          emptyMessage={
+            list.search
+              ? "No tax rates match your search."
+              : "No tax rates yet. Components like CGST, SGST, or VAT live here."
+          }
           actions={
             canManage
               ? (r) => (
                   <>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(r)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(r)}
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--color-danger)]" onClick={() => setDeleting(r)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[var(--color-danger)]"
+                      onClick={() => setDeleting(r)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </>
@@ -98,7 +138,11 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
         )}
       </div>
 
-      <Drawer open={drawerOpen} onClose={closeDrawer} title={editing ? `Edit: ${editing.name}` : "Add tax rate"}>
+      <Drawer
+        open={drawerOpen}
+        onClose={closeDrawer}
+        title={editing ? `Edit: ${editing.name}` : "Add tax rate"}
+      >
         <TaxRateForm editing={editing} onSuccess={closeDrawer} />
       </Drawer>
 
@@ -110,7 +154,9 @@ export function TaxRatesSection({ canManage }: { canManage: boolean }) {
         confirmLabel="Delete"
         confirmVariant="danger"
         loading={remove.isPending}
-        onConfirm={() => deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })}
+        onConfirm={() =>
+          deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
+        }
       />
     </div>
   );

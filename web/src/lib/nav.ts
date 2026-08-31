@@ -33,7 +33,7 @@ import {
   UserCog,
   Users,
   UsersRound,
-  Wallet
+  Wallet,
 } from "lucide-react";
 
 export interface NavItem {
@@ -88,7 +88,12 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/purchases", key: "purchases", icon: Truck, module: "inventory" },
       { href: "/suppliers", key: "suppliers", icon: Truck, module: "inventory" },
-      { href: "/reorder-suggestions", key: "reorderSuggestions", icon: AlertTriangle, module: "inventory" },
+      {
+        href: "/reorder-suggestions",
+        key: "reorderSuggestions",
+        icon: AlertTriangle,
+        module: "inventory",
+      },
     ],
   },
   {
@@ -137,17 +142,61 @@ export const NAV_GROUPS: NavGroup[] = [
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 export const SUPER_ADMIN_NAV_GROUPS: NavGroup[] = [
-  { key: "superAdminDashboard", groupIcon: Shield, items: [{ href: "/super-admin", key: "superAdminDashboard", icon: LayoutDashboard }] },
-  { key: "superAdminTenants", groupIcon: Shield, items: [{ href: "/super-admin/tenants", key: "tenants", icon: Building2 }] },
-  { key: "superAdminPlans", groupIcon: Shield, items: [{ href: "/super-admin/plans", key: "plans", icon: CreditCard }] },
-  { key: "superAdminUsers", groupIcon: Shield, items: [{ href: "/super-admin/users", key: "users", icon: UserCog }] },
-  { key: "superAdminRevenue", groupIcon: Shield, items: [{ href: "/super-admin/revenue", key: "revenue", icon: DollarSign }] },
-  { key: "superAdminImpersonations", groupIcon: Shield, items: [{ href: "/super-admin/impersonations", key: "impersonations", icon: Users }] },
-  { key: "superAdminAudit", groupIcon: Shield, items: [{ href: "/super-admin/audit", key: "auditLogs", icon: ScrollText }] },
-  { key: "superAdminSupport", groupIcon: Shield, items: [{ href: "/super-admin/support-tickets", key: "supportTickets", icon: Headset }] },
-  { key: "superAdminHealth", groupIcon: Shield, items: [{ href: "/super-admin/health", key: "health", icon: Activity }] },
-  { key: "superAdminSettings", groupIcon: Shield, items: [{ href: "/super-admin/settings", key: "platformSettings", icon: Settings }] },
-  { key: "superAdminBackups", groupIcon: Shield, items: [{ href: "/super-admin/backups", key: "databaseBackups", icon: Database }] },
+  {
+    key: "superAdminDashboard",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin", key: "superAdminDashboard", icon: LayoutDashboard }],
+  },
+  {
+    key: "superAdminTenants",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/tenants", key: "tenants", icon: Building2 }],
+  },
+  {
+    key: "superAdminPlans",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/plans", key: "plans", icon: CreditCard }],
+  },
+  {
+    key: "superAdminUsers",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/users", key: "users", icon: UserCog }],
+  },
+  {
+    key: "superAdminRevenue",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/revenue", key: "revenue", icon: DollarSign }],
+  },
+  {
+    key: "superAdminImpersonations",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/impersonations", key: "impersonations", icon: Users }],
+  },
+  {
+    key: "superAdminAudit",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/audit", key: "auditLogs", icon: ScrollText }],
+  },
+  {
+    key: "superAdminSupport",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/support-tickets", key: "supportTickets", icon: Headset }],
+  },
+  {
+    key: "superAdminHealth",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/health", key: "health", icon: Activity }],
+  },
+  {
+    key: "superAdminSettings",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/settings", key: "platformSettings", icon: Settings }],
+  },
+  {
+    key: "superAdminBackups",
+    groupIcon: Shield,
+    items: [{ href: "/super-admin/backups", key: "databaseBackups", icon: Database }],
+  },
 ];
 
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = SUPER_ADMIN_NAV_GROUPS.flatMap((g) => g.items);
@@ -157,7 +206,9 @@ export const ALL_NAV_ITEMS: NavItem[] = [...NAV_ITEMS, ...SUPER_ADMIN_NAV_ITEMS]
 
 /** Looks up the `nav.*` i18n key for the route a pathname belongs to. */
 export function navKeyForPathname(pathname: string): string | undefined {
-  return ALL_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.key;
+  return ALL_NAV_ITEMS.find(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  )?.key;
 }
 
 export function superAdminNavKeyForPathname(pathname: string): string | undefined {

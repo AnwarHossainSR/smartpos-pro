@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "react-router";
-import { Button } from "@/components/ui/button";
-import { SessionLink } from "@/components/landing/session-link";
-import { useAuth } from "@/stores/auth";
 import { useEffect } from "react";
+import { Link, useNavigate } from "react-router";
+import { SessionLink } from "@/components/landing/session-link";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/stores/auth";
 
 /** The hero receipt. Each row prints in sequence, like paper leaving a printer. */
 const receipt = [
@@ -16,7 +16,11 @@ const receipt = [
 /** Modules a shop actually gets, in the order they show up in the sidebar. */
 const modules = [
   { name: "POS terminal", detail: "Barcode, split tender, held carts, offline queue", tag: "pos" },
-  { name: "Inventory", detail: "Per-branch stock, transfers, adjustments, reorder points", tag: "stock" },
+  {
+    name: "Inventory",
+    detail: "Per-branch stock, transfers, adjustments, reorder points",
+    tag: "stock",
+  },
   { name: "Purchasing", detail: "Suppliers, purchase orders, goods receipt, returns", tag: "buy" },
   { name: "Accounting", detail: "Double-entry journals, ledgers, trial balance", tag: "books" },
   { name: "Reports", detail: "Sales, margin, stock valuation, cash position", tag: "data" },
@@ -60,9 +64,8 @@ export default function Home() {
               Run the whole shop from one counter.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-[var(--muted)] text-pretty">
-              Sell, restock, pay suppliers, and close the books in the same system. Every
-              branch reports to one set of numbers, so you stop reconciling spreadsheets at
-              midnight.
+              Sell, restock, pay suppliers, and close the books in the same system. Every branch
+              reports to one set of numbers, so you stop reconciling spreadsheets at midnight.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">

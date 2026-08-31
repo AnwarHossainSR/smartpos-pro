@@ -7,7 +7,12 @@ interface CategoryTabsProps {
   favoritesCount?: number;
 }
 
-export function CategoryTabs({ categories, activeCategoryId, onSelect, favoritesCount = 0 }: CategoryTabsProps) {
+export function CategoryTabs({
+  categories,
+  activeCategoryId,
+  onSelect,
+  favoritesCount = 0,
+}: CategoryTabsProps) {
   return (
     <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
       <button

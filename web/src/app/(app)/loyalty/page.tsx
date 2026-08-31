@@ -1,25 +1,37 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Drawer } from "@/components/ui/drawer";
+import { Input, Label } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/components/ui/toast";
 import { api, errorMessage, type Paginated } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { buildListQuery, useResourceList } from "@/lib/use-resource-list";
 import { formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Drawer } from "@/components/ui/drawer";
-import { Pagination } from "@/components/ui/pagination";
-import { Select } from "@/components/ui/select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/stores/auth";
 
-interface Customer { id: string; name: string; phone: string | null; loyalty_points: number; }
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  loyalty_points: number;
+}
 interface Coupon {
   id: string;
   code: string;
@@ -46,35 +58,82 @@ type CouponValues = z.infer<typeof couponSchema>;
 
 function CouponForm({ onSuccess }: { onSuccess: () => void }) {
   const qc = useQueryClient();
-  const { register, handleSubmit, formState: { errors } } = useForm<CouponValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CouponValues>({
     resolver: zodResolver(couponSchema),
     defaultValues: { type: "percentage", value: 10, min_order_amount: 0 },
   });
   const mutation = useMutation({
     mutationFn: (d: CouponValues) => api("/coupons", { method: "POST", body: d }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.coupons.all }); toast("Coupon created"); onSuccess(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.coupons.all });
+      toast("Coupon created");
+      onSuccess();
+    },
   });
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-      <div><Label>Code *</Label><Input {...register("code")} placeholder="SUMMER20" />{errors.code && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.code.message}</p>}</div>
+      <div>
+        <Label>Code *</Label>
+        <Input {...register("code")} placeholder="SUMMER20" />
+        {errors.code && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.code.message}</p>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Type</Label>
+        <div>
+          <Label>Type</Label>
           <Select {...register("type")}>
             <option value="percentage">Percentage %</option>
             <option value="fixed">Fixed amount</option>
           </Select>
         </div>
-        <div><Label>Value *</Label><Input type="number" step="0.01" min="0.01" {...register("value", { valueAsNumber: true })} /></div>
+        <div>
+          <Label>Value *</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register("value", { valueAsNumber: true })}
+          />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Min order</Label><Input type="number" step="0.01" min="0" {...register("min_order_amount", { valueAsNumber: true })} /></div>
-        <div><Label>Max uses</Label><Input type="number" min="1" {...register("max_uses", { valueAsNumber: true })} placeholder="Unlimited" /></div>
+        <div>
+          <Label>Min order</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            {...register("min_order_amount", { valueAsNumber: true })}
+          />
+        </div>
+        <div>
+          <Label>Max uses</Label>
+          <Input
+            type="number"
+            min="1"
+            {...register("max_uses", { valueAsNumber: true })}
+            placeholder="Unlimited"
+          />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Valid from</Label><Input type="date" {...register("valid_from")} /></div>
-        <div><Label>Valid until</Label><Input type="date" {...register("valid_until")} /></div>
+        <div>
+          <Label>Valid from</Label>
+          <Input type="date" {...register("valid_from")} />
+        </div>
+        <div>
+          <Label>Valid until</Label>
+          <Input type="date" {...register("valid_until")} />
+        </div>
       </div>
-      <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? "Creating…" : "Create coupon"}</Button>
+      <Button type="submit" disabled={mutation.isPending} className="w-full">
+        {mutation.isPending ? "Creating…" : "Create coupon"}
+      </Button>
     </form>
   );
 }
@@ -105,12 +164,21 @@ export default function LoyaltyPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        {tab === "coupons" && can("coupons.create") && <Button size="sm" onClick={() => setDrawerOpen(true)}>+ New coupon</Button>}
+        {tab === "coupons" && can("coupons.create") && (
+          <Button size="sm" onClick={() => setDrawerOpen(true)}>
+            + New coupon
+          </Button>
+        )}
       </div>
 
       <div className="flex gap-2">
         {(["coupons", "points"] as Tab[]).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? "primary" : "outline"} onClick={() => setTab(t)}>
+          <Button
+            key={t}
+            size="sm"
+            variant={tab === t ? "primary" : "outline"}
+            onClick={() => setTab(t)}
+          >
             {t === "coupons" ? "Coupons" : "Loyalty points"}
           </Button>
         ))}
@@ -119,35 +187,102 @@ export default function LoyaltyPage() {
       <div className="relative">
         <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
         {tab === "coupons" ? (
-          <Input className="ps-9" placeholder="Search coupons…" value={coupons.searchInput} onChange={(e) => coupons.setSearch(e.target.value)} />
+          <Input
+            className="ps-9"
+            placeholder="Search coupons…"
+            value={coupons.searchInput}
+            onChange={(e) => coupons.setSearch(e.target.value)}
+          />
         ) : (
-          <Input className="ps-9" placeholder="Search customers…" value={customers.searchInput} onChange={(e) => customers.setSearch(e.target.value)} />
+          <Input
+            className="ps-9"
+            placeholder="Search customers…"
+            value={customers.searchInput}
+            onChange={(e) => customers.setSearch(e.target.value)}
+          />
         )}
       </div>
 
       {tab === "coupons" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Type</TableHead><TableHead>Value</TableHead><TableHead>Min order</TableHead><TableHead>Uses</TableHead><TableHead>Valid until</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Code</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Min order</TableHead>
+                <TableHead>Uses</TableHead>
+                <TableHead>Valid until</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
-              {coupons.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 7 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                : coupons.isError ? <TableRow><TableCell colSpan={7} className="py-8 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(coupons.error, "Could not load coupons.")}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => coupons.refetch()}>Try again</Button></TableCell></TableRow>
-                : coupons.isEmpty ? <TableRow><TableCell colSpan={7} className="py-8 text-center text-[var(--muted)]">{coupons.isFiltered ? "No coupons match that search." : "No coupons yet."}</TableCell></TableRow>
-                : coupons.data.map((c) => (
+              {coupons.isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 7 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : coupons.isError ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center">
+                    <p className="text-sm text-[var(--muted)]">
+                      {errorMessage(coupons.error, "Could not load coupons.")}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => coupons.refetch()}
+                    >
+                      Try again
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ) : coupons.isEmpty ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-[var(--muted)]">
+                    {coupons.isFiltered ? "No coupons match that search." : "No coupons yet."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                coupons.data.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                     <TableCell>{c.type}</TableCell>
-                    <TableCell>{c.type === "percentage" ? `${c.value}%` : formatCurrency(c.value)}</TableCell>
-                    <TableCell>{c.min_order_amount > 0 ? formatCurrency(c.min_order_amount) : "—"}</TableCell>
-                    <TableCell>{c.used_count}{c.max_uses ? ` / ${c.max_uses}` : ""}</TableCell>
+                    <TableCell>
+                      {c.type === "percentage" ? `${c.value}%` : formatCurrency(c.value)}
+                    </TableCell>
+                    <TableCell>
+                      {c.min_order_amount > 0 ? formatCurrency(c.min_order_amount) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {c.used_count}
+                      {c.max_uses ? ` / ${c.max_uses}` : ""}
+                    </TableCell>
                     <TableCell>{c.valid_until ?? "—"}</TableCell>
-                    <TableCell><Badge tone={c.is_active ? "success" : "default"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
+                    <TableCell>
+                      <Badge tone={c.is_active ? "success" : "default"}>
+                        {c.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                ))}
+                ))
+              )}
             </TableBody>
           </Table>
           {coupons.meta && (
-            <Pagination page={coupons.page} lastPage={coupons.lastPage} onPageChange={coupons.setPage} label={`Page ${coupons.meta.current_page} of ${coupons.meta.last_page}`} />
+            <Pagination
+              page={coupons.page}
+              lastPage={coupons.lastPage}
+              onPageChange={coupons.setPage}
+              label={`Page ${coupons.meta.current_page} of ${coupons.meta.last_page}`}
+            />
           )}
         </div>
       )}
@@ -155,22 +290,64 @@ export default function LoyaltyPage() {
       {tab === "points" && (
         <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]">
           <Table>
-            <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-end">Loyalty points</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Customer</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead className="text-end">Loyalty points</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
-              {customers.isLoading ? Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{Array.from({ length: 3 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4" /></TableCell>)}</TableRow>)
-                : customers.isError ? <TableRow><TableCell colSpan={3} className="py-8 text-center"><p className="text-sm text-[var(--muted)]">{errorMessage(customers.error, "Could not load customers.")}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => customers.refetch()}>Try again</Button></TableCell></TableRow>
-                : customers.isEmpty ? <TableRow><TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">No customers found.</TableCell></TableRow>
-                : customers.data.map((c) => (
+              {customers.isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 3 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : customers.isError ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-8 text-center">
+                    <p className="text-sm text-[var(--muted)]">
+                      {errorMessage(customers.error, "Could not load customers.")}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => customers.refetch()}
+                    >
+                      Try again
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ) : customers.isEmpty ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-8 text-center text-[var(--muted)]">
+                    No customers found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                customers.data.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.phone ?? "—"}</TableCell>
                     <TableCell className="text-end font-semibold">{c.loyalty_points} pts</TableCell>
                   </TableRow>
-                ))}
+                ))
+              )}
             </TableBody>
           </Table>
           {customers.meta && (
-            <Pagination page={customers.page} lastPage={customers.lastPage} onPageChange={customers.setPage} label={`Page ${customers.meta.current_page} of ${customers.meta.last_page}`} />
+            <Pagination
+              page={customers.page}
+              lastPage={customers.lastPage}
+              onPageChange={customers.setPage}
+              label={`Page ${customers.meta.current_page} of ${customers.meta.last_page}`}
+            />
           )}
         </div>
       )}

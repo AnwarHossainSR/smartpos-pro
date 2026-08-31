@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useAuth } from "@/stores/auth";
 import { api } from "@/lib/api";
+import { useAuth } from "@/stores/auth";
 
 /**
  * Landing page for impersonation. The super-admin's tenant-list opens a new tab
@@ -24,10 +24,9 @@ export default function ImpersonatePage() {
 
     async function run() {
       try {
-        const res = await api<{ data: { user: import("@/stores/auth").AuthUser } }>(
-          "/auth/me",
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        const res = await api<{ data: { user: import("@/stores/auth").AuthUser } }>("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (cancelled) return;
         setImpersonateAuth(token as string, res.data.user);
@@ -40,7 +39,9 @@ export default function ImpersonatePage() {
 
     run();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [params, navigate, setImpersonateAuth]);
 
   return (

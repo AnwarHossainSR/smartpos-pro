@@ -1,0 +1,30 @@
+{
+  "editor.defaultFormatter": "biome.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.fixAll": "always"
+  },
+  "files.insertFinalNewline": true,
+  "[css]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biome.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biome.biome"
+  }
+}

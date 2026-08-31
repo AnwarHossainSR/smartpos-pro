@@ -1,3 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -7,15 +10,19 @@ import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
-import { api, ApiError, type Paginated } from "@/lib/api";
-import { type PermissionSlug } from "@/lib/permissions";
+import { ApiError, api, type Paginated } from "@/lib/api";
+import type { PermissionSlug } from "@/lib/permissions";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAuth } from "@/stores/auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 export interface ResourceRecord {
   id: string;
@@ -57,7 +64,11 @@ function initialForm(fields: ResourceField[], row?: ResourceRecord): FormState {
   for (const field of fields) {
     const value = row?.[field.name];
     state[field.name] =
-      field.type === "checkbox" ? value !== false : value === null || value === undefined ? "" : String(value);
+      field.type === "checkbox"
+        ? value !== false
+        : value === null || value === undefined
+          ? ""
+          : String(value);
   }
   return state;
 }
@@ -127,7 +138,10 @@ export function ResourceManager<T extends ResourceRecord>({
     },
     onError: (e: unknown) => {
       if (e instanceof ApiError && e.errors) setFieldErrors(e.errors);
-      toast(e instanceof ApiError ? e.message : `Could not save the ${singular.toLowerCase()}`, "error");
+      toast(
+        e instanceof ApiError ? e.message : `Could not save the ${singular.toLowerCase()}`,
+        "error",
+      );
     },
   });
 
@@ -169,7 +183,10 @@ export function ResourceManager<T extends ResourceRecord>({
           <TableHeader>
             <TableRow>
               {columns.map((column) => (
-                <TableHead key={column.header} className={column.align === "end" ? "text-end" : undefined}>
+                <TableHead
+                  key={column.header}
+                  className={column.align === "end" ? "text-end" : undefined}
+                >
                   {column.header}
                 </TableHead>
               ))}
@@ -188,7 +205,10 @@ export function ResourceManager<T extends ResourceRecord>({
 
             {!isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} className="py-10 text-center text-[var(--muted)]">
+                <TableCell
+                  colSpan={columns.length + 1}
+                  className="py-10 text-center text-[var(--muted)]"
+                >
                   {emptyLabel ?? `No ${singular.toLowerCase()} yet`}
                 </TableCell>
               </TableRow>
@@ -197,7 +217,10 @@ export function ResourceManager<T extends ResourceRecord>({
             {rows.map((row) => (
               <TableRow key={row.id}>
                 {columns.map((column) => (
-                  <TableCell key={column.header} className={column.align === "end" ? "text-end" : undefined}>
+                  <TableCell
+                    key={column.header}
+                    className={column.align === "end" ? "text-end" : undefined}
+                  >
                     {column.cell(row)}
                   </TableCell>
                 ))}

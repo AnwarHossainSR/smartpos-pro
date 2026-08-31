@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { hasPermission, useAuth, type AuthUser } from "../auth";
+import { beforeEach, describe, expect, it } from "vitest";
+import { type AuthUser, hasPermission, useAuth } from "../auth";
 
 beforeEach(() => {
   useAuth.setState({ token: null, user: null });

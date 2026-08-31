@@ -38,9 +38,7 @@ function lookup<T>(key: readonly unknown[], path: string, { enabled = true }: Lo
 }
 
 export function useWarehouses(options?: LookupOptions) {
-  const query = useQuery(
-    lookup<Warehouse>(queryKeys.warehouses.options(), "/warehouses", options),
-  );
+  const query = useQuery(lookup<Warehouse>(queryKeys.warehouses.options(), "/warehouses", options));
   return { ...query, warehouses: query.data?.data ?? [] };
 }
 
@@ -77,13 +75,13 @@ export function useUnits(options?: LookupOptions) {
 }
 
 export function useRoles(options?: LookupOptions) {
-  const query = useQuery(
-    lookup<Role>(queryKeys.roles.options(), "/roles?per_page=50", options),
-  );
+  const query = useQuery(lookup<Role>(queryKeys.roles.options(), "/roles?per_page=50", options));
   return { ...query, roles: query.data?.data ?? [] };
 }
 
 export function usePlans(options?: LookupOptions) {
-  const query = useQuery(lookup<Plan>(queryKeys.subscription.plans(), "/subscription/plans", options));
+  const query = useQuery(
+    lookup<Plan>(queryKeys.subscription.plans(), "/subscription/plans", options),
+  );
   return { ...query, plans: query.data?.data ?? [] };
 }

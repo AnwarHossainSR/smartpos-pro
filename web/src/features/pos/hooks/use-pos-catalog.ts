@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
-import { useCategories } from "@/lib/lookups";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import type { Category } from "@/types/domain";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FAVORITES_CATEGORY_ID, posApi } from "@/features/pos/api";
 import type { Product } from "@/features/pos/types";
+import { useCategories } from "@/lib/lookups";
+import { queryKeys } from "@/lib/query-keys";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import type { Category } from "@/types/domain";
 
 export type PosViewMode = "grid" | "list";
 
@@ -56,8 +56,12 @@ export function usePosCatalog(): PosCatalog {
   );
   const [favorites, setFavorites] = useState<Set<string>>(readFavorites);
 
-  useEffect(() => { localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode); }, [viewMode]);
-  useEffect(() => { localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favorites])); }, [favorites]);
+  useEffect(() => {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+  }, [viewMode]);
+  useEffect(() => {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favorites]));
+  }, [favorites]);
 
   const toggleFavorite = useCallback((productId: string) => {
     setFavorites((prev) => {

@@ -21,6 +21,10 @@
 /build
 /dist
 
+# playwright / pwa artifacts
+/playwright-report
+/dev-dist
+
 # misc
 .DS_Store
 *.pem

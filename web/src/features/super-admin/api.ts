@@ -1,17 +1,17 @@
 import { api, type Paginated } from "@/lib/api";
 import { buildListQuery, type ResourceListParams } from "@/lib/use-resource-list";
 import type {
+  AuditLog,
+  BackupLog,
+  Impersonation,
+  PlatformSettings,
+  PlatformUser,
+  RevenueMetrics,
+  SuperAdminPlan,
+  SupportTicket,
+  SystemHealth,
   Tenant,
   TenantDetail,
-  RevenueMetrics,
-  Impersonation,
-  PlatformUser,
-  AuditLog,
-  SystemHealth,
-  SuperAdminPlan,
-  PlatformSettings,
-  BackupLog,
-  SupportTicket,
   TicketMetrics,
 } from "./types";
 
@@ -23,8 +23,7 @@ export const superAdminApi = {
   tenants: {
     list: (params: ResourceListParams<TenantFilters>) =>
       api<Paginated<Tenant>>(`/super/tenants?${buildListQuery(params)}`),
-    detail: (id: string) =>
-      api<{ data: TenantDetail }>(`/super/tenants/${id}`),
+    detail: (id: string) => api<{ data: TenantDetail }>(`/super/tenants/${id}`),
     create: (data: {
       tenant_name: string;
       slug: string;
@@ -43,46 +42,56 @@ export const superAdminApi = {
       api<{ data: Tenant }>(`/super/tenants/${id}/suspend`, { method: "POST" }),
     activate: (id: string) =>
       api<{ data: Tenant }>(`/super/tenants/${id}/activate`, { method: "POST" }),
-    update: (id: string, data: { name?: string; plan?: string; trial_ends_at?: string | null; base_currency?: string }) =>
+    update: (
+      id: string,
+      data: { name?: string; plan?: string; trial_ends_at?: string | null; base_currency?: string },
+    ) =>
       api<{ data: Tenant }>(`/super/tenants/${id}`, {
         method: "PUT",
         body: data,
       }),
-    remove: (id: string) =>
-      api<void>(`/super/tenants/${id}`, { method: "DELETE" }),
+    remove: (id: string) => api<void>(`/super/tenants/${id}`, { method: "DELETE" }),
     impersonate: (id: string, reason: string) =>
-      api<{ data: { impersonation_id: string; token: string; tenant: { id: string; name: string }; user: { id: string; name: string; email: string }; expires_at: string } }>(
-        `/super/tenants/${id}/impersonate`,
-        { method: "POST", body: { reason } },
-      ),
+      api<{
+        data: {
+          impersonation_id: string;
+          token: string;
+          tenant: { id: string; name: string };
+          user: { id: string; name: string; email: string };
+          expires_at: string;
+        };
+      }>(`/super/tenants/${id}/impersonate`, { method: "POST", body: { reason } }),
   },
   revenue: {
-    metrics: (days = 30) =>
-      api<{ data: RevenueMetrics }>(`/super/metrics/revenue?days=${days}`),
+    metrics: (days = 30) => api<{ data: RevenueMetrics }>(`/super/metrics/revenue?days=${days}`),
   },
   impersonations: {
-    list: () =>
-      api<{ data: Impersonation[] }>("/super/impersonations"),
+    list: () => api<{ data: Impersonation[] }>("/super/impersonations"),
     revoke: (id: string) =>
       api<{ message: string }>(`/super/impersonation/${id}/revoke`, { method: "POST" }),
   },
   users: {
     list: (params: ResourceListParams<UserFilters>) =>
       api<Paginated<PlatformUser>>(`/super/users?${buildListQuery(params)}`),
-    detail: (id: string) =>
-      api<{ data: PlatformUser }>(`/super/users/${id}`),
+    detail: (id: string) => api<{ data: PlatformUser }>(`/super/users/${id}`),
     toggleStatus: (id: string, status: string) =>
       api<{ data: PlatformUser }>(`/super/users/${id}/status`, { method: "PUT", body: { status } }),
     forceLogout: (id: string) =>
       api<{ message: string }>(`/super/users/${id}/force-logout`, { method: "POST" }),
   },
   audit: {
-    list: (params: ResourceListParams<{ action: string; tenant_id: string; user_id: string; from: string; to: string }>) =>
-      api<Paginated<AuditLog>>(`/super/audit-logs?${buildListQuery(params)}`),
+    list: (
+      params: ResourceListParams<{
+        action: string;
+        tenant_id: string;
+        user_id: string;
+        from: string;
+        to: string;
+      }>,
+    ) => api<Paginated<AuditLog>>(`/super/audit-logs?${buildListQuery(params)}`),
   },
   health: {
-    get: () =>
-      api<{ data: SystemHealth }>("/super/health"),
+    get: () => api<{ data: SystemHealth }>("/super/health"),
   },
   plans: {
     list: (params: ResourceListParams<Record<string, string>>) =>
@@ -96,8 +105,7 @@ export const superAdminApi = {
       limits?: Record<string, unknown>;
       features?: string[];
       is_active?: boolean;
-    }) =>
-      api<{ data: SuperAdminPlan }>("/super/plans", { method: "POST", body: data }),
+    }) => api<{ data: SuperAdminPlan }>("/super/plans", { method: "POST", body: data }),
     update: (
       id: string,
       data: {
@@ -110,14 +118,11 @@ export const superAdminApi = {
         features?: string[];
         is_active?: boolean;
       },
-    ) =>
-      api<{ data: SuperAdminPlan }>(`/super/plans/${id}`, { method: "PUT", body: data }),
-    delete: (id: string) =>
-      api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
+    ) => api<{ data: SuperAdminPlan }>(`/super/plans/${id}`, { method: "PUT", body: data }),
+    delete: (id: string) => api<{ message: string }>(`/super/plans/${id}`, { method: "DELETE" }),
   },
   settings: {
-    get: () =>
-      api<{ data: PlatformSettings }>("/super/settings"),
+    get: () => api<{ data: PlatformSettings }>("/super/settings"),
     update: (settings: Partial<PlatformSettings>) =>
       api<{ data: PlatformSettings }>("/super/settings", {
         method: "PUT",
@@ -134,14 +139,12 @@ export const superAdminApi = {
   backups: {
     list: (params: ResourceListParams<Record<string, string>>) =>
       api<Paginated<BackupLog>>(`/super/backups?${buildListQuery(params)}`),
-    create: () =>
-      api<{ data: BackupLog }>("/super/backups", { method: "POST" }),
+    create: () => api<{ data: BackupLog }>("/super/backups", { method: "POST" }),
     download: (id: string) =>
       api<{ data: { url: string; filename: string; expires_at: string } }>(
         `/super/backups/${id}/download`,
       ),
-    remove: (id: string) =>
-      api<void>(`/super/backups/${id}`, { method: "DELETE" }),
+    remove: (id: string) => api<void>(`/super/backups/${id}`, { method: "DELETE" }),
   },
 };
 

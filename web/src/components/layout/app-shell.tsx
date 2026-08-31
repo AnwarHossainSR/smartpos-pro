@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, LogOut } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
-import { useAuth, type AuthUser } from "@/stores/auth";
-import { useLocaleStore } from "@/stores/locale";
-import { useBusinessStore } from "@/stores/business";
-import { useModulesStore } from "@/stores/modules";
-import { useSyncBusinessSettings } from "@/lib/hooks";
-import { queryKeys } from "@/lib/query-keys";
-import { navKeyForPathname } from "@/lib/nav";
-import { permissionsForPathname } from "@/lib/permissions";
-import { RequirePermission } from "@/components/require-permission";
-import { Sidebar } from "@/components/layout/sidebar";
+import { LogOut, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
+import { RequirePermission } from "@/components/require-permission";
 import { ThemeSync } from "@/components/theme-sync";
-import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { OnboardingWizard } from "@/features/onboarding";
 import { useTranslation } from "@/i18n/context";
+import { ApiError, api } from "@/lib/api";
+import { useSyncBusinessSettings } from "@/lib/hooks";
+import { navKeyForPathname } from "@/lib/nav";
+import { permissionsForPathname } from "@/lib/permissions";
+import { queryKeys } from "@/lib/query-keys";
+import { type AuthUser, useAuth } from "@/stores/auth";
+import { useBusinessStore } from "@/stores/business";
+import { useLocaleStore } from "@/stores/locale";
+import { useModulesStore } from "@/stores/modules";
 
 function isTenantSuspendedError(error: unknown): boolean {
   if (!(error instanceof ApiError) || error.status !== 403) return false;
@@ -51,8 +51,8 @@ function ProfileUnavailableScreen() {
       <ShieldAlert className="h-10 w-10 text-[var(--color-danger)]" />
       <h1 className="text-lg font-semibold">Could not load your profile</h1>
       <p className="max-w-sm text-sm text-[var(--muted)]">
-        We could not reach the server to confirm who you are. Check your connection and reload,
-        or sign in again.
+        We could not reach the server to confirm who you are. Check your connection and reload, or
+        sign in again.
       </p>
       <div className="flex gap-2">
         <Button variant="outline" onClick={() => window.location.reload()}>
@@ -171,7 +171,10 @@ export function AppShell() {
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
                     <div className="h-[18px] w-[18px] animate-pulse rounded bg-white/10" />
-                    <div className="h-4 flex-1 animate-pulse rounded bg-white/10" style={{ maxWidth: `${60 + (i % 3) * 15}%` }} />
+                    <div
+                      className="h-4 flex-1 animate-pulse rounded bg-white/10"
+                      style={{ maxWidth: `${60 + (i % 3) * 15}%` }}
+                    />
                   </div>
                 ))}
               </div>

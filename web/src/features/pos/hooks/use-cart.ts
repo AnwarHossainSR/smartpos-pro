@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
-import { mergeTaxComponents } from "@/features/tax/calc";
-import type { PriceDisplay } from "@/features/tax/types";
 import { lineTotals, round2, type TaxSummaryRow } from "@/features/pos/totals";
 import type { CartItem, Product } from "@/features/pos/types";
+import { mergeTaxComponents } from "@/features/tax/calc";
+import type { PriceDisplay } from "@/features/tax/types";
 
 export interface Cart {
   items: CartItem[];
@@ -42,10 +42,14 @@ export function useCart(priceDisplay: PriceDisplay): Cart {
           i.product.id === product.id && i.weight === weight ? { ...i, qty: i.qty + 1 } : i,
         );
       }
-      const unitPrice = product.is_weighed && weight && product.price_per_unit
-        ? product.price_per_unit
-        : product.selling_price;
-      return [...prev, { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null }];
+      const unitPrice =
+        product.is_weighed && weight && product.price_per_unit
+          ? product.price_per_unit
+          : product.selling_price;
+      return [
+        ...prev,
+        { product, qty: 1, unit_price: unitPrice, discount: 0, weight: weight ?? null },
+      ];
     });
   }, []);
 
@@ -59,7 +63,9 @@ export function useCart(priceDisplay: PriceDisplay): Cart {
 
   const setUnitPrice = useCallback((productId: string, unitPrice: number) => {
     setItems((prev) =>
-      prev.map((i) => (i.product.id === productId ? { ...i, unit_price: Math.max(0, unitPrice) } : i)),
+      prev.map((i) =>
+        i.product.id === productId ? { ...i, unit_price: Math.max(0, unitPrice) } : i,
+      ),
     );
   }, []);
 

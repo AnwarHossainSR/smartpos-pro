@@ -57,7 +57,8 @@ export function ApprovalPinCard() {
   });
 
   const clearMutation = useMutation({
-    mutationFn: () => api("/auth/approval-pin", { method: "DELETE", body: { current_password: password } }),
+    mutationFn: () =>
+      api("/auth/approval-pin", { method: "DELETE", body: { current_password: password } }),
     onSuccess: async () => {
       setClearing(false);
       reset();
@@ -85,7 +86,14 @@ export function ApprovalPinCard() {
         </p>
 
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={hasPin ? "outline" : "primary"} onClick={() => { reset(); setSetting(true); }}>
+          <Button
+            size="sm"
+            variant={hasPin ? "outline" : "primary"}
+            onClick={() => {
+              reset();
+              setSetting(true);
+            }}
+          >
             {hasPin ? "Change PIN" : "Set a PIN"}
           </Button>
           {hasPin && (
@@ -93,7 +101,10 @@ export function ApprovalPinCard() {
               size="sm"
               variant="ghost"
               className="text-[var(--color-danger)]"
-              onClick={() => { reset(); setClearing(true); }}
+              onClick={() => {
+                reset();
+                setClearing(true);
+              }}
             >
               <ShieldOff className="h-3.5 w-3.5" />
               Remove
@@ -104,14 +115,22 @@ export function ApprovalPinCard() {
 
       <Dialog
         open={setting}
-        onClose={() => { setSetting(false); reset(); }}
+        onClose={() => {
+          setSetting(false);
+          reset();
+        }}
         title={hasPin ? "Change your approval PIN" : "Set your approval PIN"}
         description="4 to 8 digits. Confirm with your account password."
       >
         <div className="space-y-3">
           <div>
             <Label>Current password</Label>
-            <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <div>
             <Label>New PIN</Label>
@@ -134,12 +153,21 @@ export function ApprovalPinCard() {
             />
             {pin.length > 0 && !pinValid && (
               <p className="mt-1 text-xs text-[var(--color-danger)]">
-                {/^\d{4,8}$/.test(pin) ? "The two PINs don't match." : "The PIN must be 4 to 8 digits."}
+                {/^\d{4,8}$/.test(pin)
+                  ? "The two PINs don't match."
+                  : "The PIN must be 4 to 8 digits."}
               </p>
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => { setSetting(false); reset(); }} disabled={saveMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSetting(false);
+                reset();
+              }}
+              disabled={saveMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
@@ -154,17 +182,32 @@ export function ApprovalPinCard() {
 
       <Dialog
         open={clearing}
-        onClose={() => { setClearing(false); reset(); }}
+        onClose={() => {
+          setClearing(false);
+          reset();
+        }}
         title="Remove your approval PIN"
         description="You will no longer be able to authorise till actions until you set a new one."
       >
         <div className="space-y-3">
           <div>
             <Label>Current password</Label>
-            <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => { setClearing(false); reset(); }} disabled={clearMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setClearing(false);
+                reset();
+              }}
+              disabled={clearMutation.isPending}
+            >
               Cancel
             </Button>
             <Button

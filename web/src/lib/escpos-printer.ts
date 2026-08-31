@@ -26,9 +26,7 @@ export async function connectUsbPrinter(): Promise<UsbPrinter | null> {
     const iface = device.configuration!.interfaces[0];
     await device.claimInterface(iface.interfaceNumber);
 
-    const endpoint = iface.alternate.endpoints.find(
-      (e) => e.direction === "out",
-    );
+    const endpoint = iface.alternate.endpoints.find((e) => e.direction === "out");
 
     if (!endpoint) {
       await device.close();
@@ -52,7 +50,9 @@ export function getConnectedPrinter(): UsbPrinter | null {
 
 export function disconnectPrinter(): void {
   if (connectedPrinter) {
-    connectedPrinter.device.close().catch(() => {});
+    connectedPrinter.device.close().catch(() => {
+      /* ignore */
+    });
     connectedPrinter = null;
   }
 }
@@ -64,10 +64,7 @@ export async function print(data: Uint8Array): Promise<boolean> {
     const chunkSize = 64;
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
-      await connectedPrinter.device.transferOut(
-        connectedPrinter.endpointNumber,
-        chunk,
-      );
+      await connectedPrinter.device.transferOut(connectedPrinter.endpointNumber, chunk);
     }
     return true;
   } catch {
@@ -108,5 +105,5 @@ export function downloadPdfFallback(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export { formatReceipt };
 export type { UsbPrinter };
+export { formatReceipt };

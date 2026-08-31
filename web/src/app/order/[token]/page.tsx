@@ -1,12 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/i18n/context";
-import { api, ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 
 interface OrderStatus {
   invoice_number: string | null;
@@ -22,7 +22,12 @@ interface OrderStatus {
   paid_amount: number;
   due_amount: number;
   items: { name: string; quantity: number; unit_price: number; line_total: number }[];
-  seller: { name: string | null; phone: string | null; email: string | null; branch: string | null };
+  seller: {
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+    branch: string | null;
+  };
 }
 
 const PAYMENT_TONE: Record<string, "success" | "warning" | "danger"> = {
@@ -108,7 +113,9 @@ export default function OrderStatusPage() {
             {order.discount_amount > 0 && (
               <Row label={t("orderStatus.discount")} value={`− ${money(order.discount_amount)}`} />
             )}
-            {order.tax_amount > 0 && <Row label={t("orderStatus.tax")} value={money(order.tax_amount)} />}
+            {order.tax_amount > 0 && (
+              <Row label={t("orderStatus.tax")} value={money(order.tax_amount)} />
+            )}
             {order.shipping_amount > 0 && (
               <Row label={t("orderStatus.shipping")} value={money(order.shipping_amount)} />
             )}

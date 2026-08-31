@@ -1,10 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { MediaField } from "@/components/ui/media-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Envelope } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/stores/auth";
-import { useQuery } from "@tanstack/react-query";
 
 /** One resolved slot as `GET /settings/business` returns it. */
 interface MediaSlot {

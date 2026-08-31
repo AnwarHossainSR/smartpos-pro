@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
-import { superAdminApi } from "../api";
+import { useState } from "react";
 import { StatCard } from "@/components/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryKeys } from "@/lib/query-keys";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { superAdminApi } from "../api";
 
 const PERIODS = [
   { label: "7d", days: 7 },
@@ -56,11 +56,7 @@ export function RevenueDashboard() {
           loading={isLoading}
           tone="success"
         />
-        <StatCard
-          label="Active Tenants"
-          value={m?.active_tenants ?? 0}
-          loading={isLoading}
-        />
+        <StatCard label="Active Tenants" value={m?.active_tenants ?? 0} loading={isLoading} />
         <StatCard
           label="Suspended Tenants"
           value={m?.suspended_tenants ?? 0}
@@ -132,9 +128,7 @@ export function RevenueDashboard() {
                   className="flex items-center justify-between rounded-lg border border-[var(--border)] p-3"
                 >
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">
-                      {sub.plan?.name ?? "No plan"}
-                    </span>
+                    <span className="text-sm font-medium">{sub.plan?.name ?? "No plan"}</span>
                     <span className="text-xs text-[var(--muted)]">
                       {formatDateTime(sub.created_at)}
                     </span>

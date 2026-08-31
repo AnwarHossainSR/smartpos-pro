@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import QRCode from "qrcode";
 import { ShieldCheck, ShieldOff } from "lucide-react";
-import { api, errorMessage } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { exportRecoveryCodesAsCsv, exportRecoveryCodesAsPdf } from "@/lib/recovery-code-export";
-import { useAuth } from "@/stores/auth";
+import QRCode from "qrcode";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Label } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { api, errorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { exportRecoveryCodesAsCsv, exportRecoveryCodesAsPdf } from "@/lib/recovery-code-export";
+import { useAuth } from "@/stores/auth";
 
 export function TwoFactorCard() {
   const user = useAuth((s) => s.user);
@@ -29,7 +29,9 @@ export function TwoFactorCard() {
 
   useEffect(() => {
     if (otpauthUrl) {
-      QRCode.toDataURL(otpauthUrl, { width: 200 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
+      QRCode.toDataURL(otpauthUrl, { width: 200 })
+        .then(setQrDataUrl)
+        .catch(() => setQrDataUrl(null));
     }
   }, [otpauthUrl]);
 
@@ -42,7 +44,10 @@ export function TwoFactorCard() {
   const refetchUser = () => qc.refetchQueries({ queryKey: queryKeys.me });
 
   const enableMutation = useMutation({
-    mutationFn: () => api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", { method: "POST" }),
+    mutationFn: () =>
+      api<{ data: { secret: string; otpauth_url: string } }>("/auth/2fa/enable", {
+        method: "POST",
+      }),
     onSuccess: (res) => {
       setSecret(res.data.secret);
       setOtpauthUrl(res.data.otpauth_url);
@@ -51,7 +56,11 @@ export function TwoFactorCard() {
   });
 
   const confirmMutation = useMutation({
-    mutationFn: () => api<{ data: { recovery_codes: string[] } }>("/auth/2fa/confirm", { method: "POST", body: { code } }),
+    mutationFn: () =>
+      api<{ data: { recovery_codes: string[] } }>("/auth/2fa/confirm", {
+        method: "POST",
+        body: { code },
+      }),
     onSuccess: async (res) => {
       setRecoveryCodes(res.data.recovery_codes);
       setEnrolling(false);
@@ -109,12 +118,21 @@ export function TwoFactorCard() {
             <Button variant="outline" size="sm" onClick={() => setRegenerating(true)}>
               Regenerate recovery codes
             </Button>
-            <Button variant="outline" size="sm" className="text-[var(--color-danger)]" onClick={() => setDisabling(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[var(--color-danger)]"
+              onClick={() => setDisabling(true)}
+            >
               Disable
             </Button>
           </div>
         ) : (
-          <Button size="sm" onClick={() => enableMutation.mutate()} disabled={enableMutation.isPending}>
+          <Button
+            size="sm"
+            onClick={() => enableMutation.mutate()}
+            disabled={enableMutation.isPending}
+          >
             Enable two-factor authentication
           </Button>
         )}
@@ -153,7 +171,10 @@ export function TwoFactorCard() {
 
       <Dialog
         open={disabling}
-        onClose={() => { setDisabling(false); setPassword(""); }}
+        onClose={() => {
+          setDisabling(false);
+          setPassword("");
+        }}
         title="Disable two-factor authentication"
         description="Enter your password to confirm."
         confirmLabel="Disable"
@@ -163,13 +184,21 @@ export function TwoFactorCard() {
       >
         <div>
           <Label>Password</Label>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
         </div>
       </Dialog>
 
       <Dialog
         open={regenerating}
-        onClose={() => { setRegenerating(false); setPassword(""); }}
+        onClose={() => {
+          setRegenerating(false);
+          setPassword("");
+        }}
         title="Regenerate recovery codes"
         description="This invalidates your existing recovery codes. Enter your password to confirm."
         confirmLabel="Regenerate"
@@ -179,7 +208,12 @@ export function TwoFactorCard() {
       >
         <div>
           <Label>Password</Label>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
         </div>
       </Dialog>
 

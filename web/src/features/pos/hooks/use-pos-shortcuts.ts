@@ -31,16 +31,14 @@ export interface PosShortcutState {
  * Every shortcut is inert while a modal owns the screen, so a cashier typing into the
  * payment or held-orders dialog can never park or void the basket behind it.
  */
-export function usePosShortcuts(
-  handlers: PosShortcutHandlers,
-  state: PosShortcutState,
-) {
+export function usePosShortcuts(handlers: PosShortcutHandlers, state: PosShortcutState) {
   useEffect(() => {
     const modalOpen = state.showPayment || state.showReceipt || state.showHeld;
 
     function onKeyDown(e: KeyboardEvent) {
       const active = document.activeElement;
-      const isTyping = active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+      const isTyping =
+        active instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
 
       if (e.key === "F2") {
         e.preventDefault();

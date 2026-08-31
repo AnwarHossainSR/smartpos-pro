@@ -1,14 +1,14 @@
+import { ChevronDown, ChevronUp, Eye, Filter, X } from "lucide-react";
 import { useState } from "react";
-import { Eye, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
-import { useAuditLogs } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog } from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { useAuditLogs } from "../hooks";
 import type { AuditLog } from "../types";
 
 function formatAction(action: string): string {

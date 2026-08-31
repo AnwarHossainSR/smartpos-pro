@@ -1,10 +1,10 @@
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeliveryLog } from "@/features/webhooks/components/delivery-log";
 import { WebhookList } from "@/features/webhooks/components/webhook-list";
 import { useTranslation } from "@/i18n/context";
 import { useAuth } from "@/stores/auth";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
 
 export default function WebhooksPage() {
   const { can } = useAuth();

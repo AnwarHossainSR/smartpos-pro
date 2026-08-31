@@ -1,11 +1,11 @@
+import { useMutation } from "@tanstack/react-query";
+import { Delete, ShieldCheck } from "lucide-react";
+import { useRef, useState } from "react";
 import type { ApprovalAction, ApprovalChallenge } from "@/components/approval-challenge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { api, errorMessage } from "@/lib/api";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
-import { Delete, ShieldCheck } from "lucide-react";
-import { useRef, useState } from "react";
 
 const TITLES: Record<ApprovalAction, string> = {
   discount: "Manager approval — discount",
@@ -135,7 +135,10 @@ function PinChallengeForm({
             placeholder="••••"
           />
           <p
-            className={cn("mt-1.5 min-h-[1rem] text-xs", error ? "text-[var(--color-danger)]" : "text-[var(--muted)]")}
+            className={cn(
+              "mt-1.5 min-h-[1rem] text-xs",
+              error ? "text-[var(--color-danger)]" : "text-[var(--muted)]",
+            )}
             role={error ? "alert" : undefined}
           >
             {error ?? "4 to 8 digits"}
@@ -155,7 +158,10 @@ function PinChallengeForm({
           ))}
           <button
             type="button"
-            onClick={() => { setPin(""); setError(null); }}
+            onClick={() => {
+              setPin("");
+              setError(null);
+            }}
             className="h-12 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] text-sm font-medium text-[var(--muted)] transition-colors active:scale-95 active:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
           >
             Clear
@@ -178,10 +184,19 @@ function PinChallengeForm({
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={mutation.isPending}
+          >
             Cancel
           </Button>
-          <Button className="flex-1" onClick={submit} disabled={pin.length < 4 || mutation.isPending}>
+          <Button
+            className="flex-1"
+            onClick={submit}
+            disabled={pin.length < 4 || mutation.isPending}
+          >
             <ShieldCheck className="h-4 w-4" />
             {mutation.isPending ? "Checking…" : "Approve"}
           </Button>

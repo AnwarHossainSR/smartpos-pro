@@ -1,13 +1,17 @@
-import { useEffect, type RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { type RefObject, useEffect } from "react";
 import { api } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { useBusinessStore, type MediaSlot } from "@/stores/business";
-import { useThemeStore } from "@/stores/theme";
 import type { Palette } from "@/lib/palettes";
+import { queryKeys } from "@/lib/query-keys";
+import { type MediaSlot, useBusinessStore } from "@/stores/business";
+import { useThemeStore } from "@/stores/theme";
 
 /** Calls `onOutside` on any pointerdown outside `ref`'s element, only while `active` is true. */
-export function useClickOutside(ref: RefObject<HTMLElement | null>, onOutside: () => void, active: boolean) {
+export function useClickOutside(
+  ref: RefObject<HTMLElement | null>,
+  onOutside: () => void,
+  active: boolean,
+) {
   useEffect(() => {
     if (!active) return;
     function onClick(e: MouseEvent) {

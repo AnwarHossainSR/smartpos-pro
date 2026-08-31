@@ -1,14 +1,14 @@
+import { Ban, LogOut, Play, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { Ban, Play, LogOut, ShieldCheck } from "lucide-react";
-import { useUsers, useUserMutations } from "../hooks";
-import { useAuth } from "@/stores/auth";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { Dialog } from "@/components/ui/dialog";
 import { ListToolbar } from "@/components/ui/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { useAuth } from "@/stores/auth";
+import { useUserMutations, useUsers } from "../hooks";
 import type { PlatformUser } from "../types";
 
 export function UsersList() {
@@ -30,7 +30,9 @@ export function UsersList() {
         <>
           {u.name}
           {u.is_super_admin && (
-            <Badge tone="info" className="ml-2">Super Admin</Badge>
+            <Badge tone="info" className="ml-2">
+              Super Admin
+            </Badge>
           )}
         </>
       ),
@@ -56,7 +58,9 @@ export function UsersList() {
       key: "status",
       header: "Status",
       render: (u) => (
-        <Badge tone={u.status === "active" ? "success" : u.status === "suspended" ? "danger" : "warning"}>
+        <Badge
+          tone={u.status === "active" ? "success" : u.status === "suspended" ? "danger" : "warning"}
+        >
           {u.status}
         </Badge>
       ),
@@ -68,10 +72,14 @@ export function UsersList() {
         u.roles && u.roles.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {u.roles.slice(0, 3).map((role) => (
-              <Badge key={role} tone="info" className="text-xs">{role}</Badge>
+              <Badge key={role} tone="info" className="text-xs">
+                {role}
+              </Badge>
             ))}
             {u.roles.length > 3 && (
-              <Badge tone="info" className="text-xs">+{u.roles.length - 3}</Badge>
+              <Badge tone="info" className="text-xs">
+                +{u.roles.length - 3}
+              </Badge>
             )}
           </div>
         ) : (
@@ -81,10 +89,7 @@ export function UsersList() {
     {
       key: "last_login_at",
       header: "Last Login",
-      render: (u) =>
-        u.last_login_at
-          ? new Date(u.last_login_at).toLocaleDateString()
-          : "Never",
+      render: (u) => (u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : "Never"),
     },
   ];
 
@@ -99,10 +104,7 @@ export function UsersList() {
             className="w-40"
             value={(list.filters as Record<string, string>).status ?? ""}
             onChange={(e) =>
-              list.setFilter(
-                "status" as never,
-                e.target.value || (undefined as never),
-              )
+              list.setFilter("status" as never, e.target.value || (undefined as never))
             }
           >
             <option value="">All statuses</option>

@@ -1,13 +1,36 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  AlertTriangle,
+  BarChart3,
+  Barcode,
+  Bell,
+  BookOpen,
+  Boxes,
+  Building2,
+  ClipboardList,
+  CreditCard,
+  Crown,
+  Gift,
+  Layers,
+  LayoutDashboard,
+  LifeBuoy,
+  Mail,
+  Package,
+  Percent,
+  Receipt,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  ShoppingCart,
+  Truck,
+  UserCog,
+  Users,
+  Wallet,
+  Webhook,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { permissionsForPathname } from "@/lib/permissions";
 import { hasPermission, useAuth } from "@/stores/auth";
-import {
-  LayoutDashboard, ShoppingCart, Package, Boxes, Receipt, Users, Truck,
-  Wallet, BarChart3, Settings, BookOpen, CreditCard, UserCog, Gift, Crown, Bell,
-  Layers, Building2, Mail, Percent, Webhook, ScrollText, LifeBuoy, Barcode, ShieldCheck,
-  ClipboardList, AlertTriangle,
-} from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -20,7 +43,12 @@ const items: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "POS Terminal", href: "/pos", icon: ShoppingCart, keywords: "point of sale checkout" },
   { label: "Products", href: "/products", icon: Package, keywords: "catalog items sku" },
-  { label: "Print barcode labels", href: "/products/labels", icon: Barcode, keywords: "label sheet price tag shelf edge barcode print ean13 code128 avery" },
+  {
+    label: "Print barcode labels",
+    href: "/products/labels",
+    icon: Barcode,
+    keywords: "label sheet price tag shelf edge barcode print ean13 code128 avery",
+  },
   { label: "Inventory", href: "/inventory", icon: Boxes, keywords: "stock balance" },
   { label: "Sales", href: "/sales", icon: Receipt, keywords: "orders transactions" },
   { label: "Purchases", href: "/purchases", icon: Truck, keywords: "purchase orders suppliers" },
@@ -35,14 +63,49 @@ const items: NavItem[] = [
   { label: "Subscription", href: "/subscription", icon: Crown, keywords: "plan billing" },
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Settings", href: "/settings", icon: Settings },
-  { label: "Categories & brands", href: "/catalog", icon: Layers, keywords: "category brand unit catalog setup" },
-  { label: "Branches & warehouses", href: "/settings/locations", icon: Building2, keywords: "branch warehouse location store" },
-  { label: "Email templates", href: "/settings/email-templates", icon: Mail, keywords: "email template message" },
-  { label: "Approval limits", href: "/settings/approvals", icon: ShieldCheck, keywords: "manager pin supervisor discount limit override void approval" },
-  { label: "Tax settings", href: "/settings/tax", icon: Percent, keywords: "vat gst tax rate group" },
+  {
+    label: "Categories & brands",
+    href: "/catalog",
+    icon: Layers,
+    keywords: "category brand unit catalog setup",
+  },
+  {
+    label: "Branches & warehouses",
+    href: "/settings/locations",
+    icon: Building2,
+    keywords: "branch warehouse location store",
+  },
+  {
+    label: "Email templates",
+    href: "/settings/email-templates",
+    icon: Mail,
+    keywords: "email template message",
+  },
+  {
+    label: "Approval limits",
+    href: "/settings/approvals",
+    icon: ShieldCheck,
+    keywords: "manager pin supervisor discount limit override void approval",
+  },
+  {
+    label: "Tax settings",
+    href: "/settings/tax",
+    icon: Percent,
+    keywords: "vat gst tax rate group",
+  },
   { label: "Webhooks", href: "/settings/webhooks", icon: Webhook, keywords: "integration events" },
-  { label: "Stocktakes", href: "/stocktakes", icon: ClipboardList, keywords: "count cycle count stock take variance" },
-  { label: "Reorder suggestions", href: "/reorder-suggestions", icon: AlertTriangle, keywords: "restock low stock replenish purchase" },
+  {
+    label: "Stocktakes",
+    href: "/stocktakes",
+    icon: ClipboardList,
+    keywords: "count cycle count stock take variance",
+  },
+  {
+    label: "Reorder suggestions",
+    href: "/reorder-suggestions",
+    icon: AlertTriangle,
+    keywords: "restock low stock replenish purchase",
+  },
   { label: "Audit log", href: "/audit-log", icon: ScrollText, keywords: "history changes" },
   { label: "Support", href: "/support", icon: LifeBuoy, keywords: "help ticket" },
   { label: "Tax report", href: "/reports/tax", icon: Percent, keywords: "vat return filing" },
@@ -115,9 +178,18 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     function onKey(e: KeyboardEvent) {
       if (!open) return;
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowDown") { e.preventDefault(); setIndex((i) => Math.min(i + 1, filtered.length - 1)); }
-      if (e.key === "ArrowUp") { e.preventDefault(); setIndex((i) => Math.max(i - 1, 0)); }
-      if (e.key === "Enter") { e.preventDefault(); if (filtered[index]) onNavigate(filtered[index].href); }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setIndex((i) => Math.min(i + 1, filtered.length - 1));
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setIndex((i) => Math.max(i - 1, 0));
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (filtered[index]) onNavigate(filtered[index].href);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -146,7 +218,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 <li key={it.href}>
                   <button
                     className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-start transition-colors ${
-                      i === index ? "bg-[var(--primary)] text-[var(--primary-fg)]" : "hover:bg-[var(--surface-2)]"
+                      i === index
+                        ? "bg-[var(--primary)] text-[var(--primary-fg)]"
+                        : "hover:bg-[var(--surface-2)]"
                     }`}
                     onMouseEnter={() => setIndex(i)}
                     onClick={() => onNavigate(it.href)}
@@ -160,9 +234,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           )}
         </ul>
         <div className="border-t border-[var(--border)] px-4 py-2 text-xs text-[var(--muted)] flex gap-4">
-          <span><kbd className="font-mono">↑↓</kbd> navigate</span>
-          <span><kbd className="font-mono">↵</kbd> open</span>
-          <span><kbd className="font-mono">Esc</kbd> close</span>
+          <span>
+            <kbd className="font-mono">↑↓</kbd> navigate
+          </span>
+          <span>
+            <kbd className="font-mono">↵</kbd> open
+          </span>
+          <span>
+            <kbd className="font-mono">Esc</kbd> close
+          </span>
         </div>
       </div>
     </div>

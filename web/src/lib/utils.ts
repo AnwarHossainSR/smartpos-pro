@@ -1,7 +1,7 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { useLocaleStore } from "@/stores/locale";
 import { useBusinessStore } from "@/stores/business";
+import { useLocaleStore } from "@/stores/locale";
 
 /** Merge conditional class names, resolving Tailwind conflicts. */
 export function cn(...inputs: ClassValue[]) {
@@ -24,7 +24,9 @@ function numericLocale(): string {
  *  recorded in a different currency than the tenant's current setting. */
 export function formatCurrency(value: number, currency?: string) {
   const cur = currency ?? useBusinessStore.getState().currency;
-  return new Intl.NumberFormat(numericLocale(), { style: "currency", currency: cur }).format(value ?? 0);
+  return new Intl.NumberFormat(numericLocale(), { style: "currency", currency: cur }).format(
+    value ?? 0,
+  );
 }
 
 export function formatNumber(value: number) {
@@ -42,7 +44,10 @@ export function formatDateTime(value: string | number | Date | null | undefined)
   if (value == null) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(numericLocale(), { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat(numericLocale(), {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
 /** Opens a fetched PDF blob in a new tab — the browser's built-in viewer handles print/save. */
@@ -72,7 +77,10 @@ export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
     const s = String(v ?? "");
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => escape(r[h])).join(",")),
+  ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

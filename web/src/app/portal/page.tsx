@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { Spinner } from "@/components/ui/spinner";
 import { api, errorMessage } from "@/lib/api";
-import { useState } from "react";
 
 export default function PortalLoginPage() {
   const [email, setEmail] = useState("");
@@ -35,7 +35,8 @@ export default function PortalLoginPage() {
           <Logo size={44} className="mx-auto mb-4" />
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            We sent a sign-in link to <strong>{email}</strong>. Click the link to access your account.
+            We sent a sign-in link to <strong>{email}</strong>. Click the link to access your
+            account.
           </p>
         </div>
       </div>

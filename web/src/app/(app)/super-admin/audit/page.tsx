@@ -5,9 +5,7 @@ export default function AuditLogsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Audit Logs</h1>
-        <p className="text-[var(--muted)]">
-          Platform-wide audit trail of admin actions.
-        </p>
+        <p className="text-[var(--muted)]">Platform-wide audit trail of admin actions.</p>
       </div>
       <AuditLogList />
     </div>

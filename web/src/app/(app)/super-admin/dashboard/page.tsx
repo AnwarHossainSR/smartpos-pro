@@ -1,18 +1,18 @@
+import { useQuery } from "@tanstack/react-query";
+import { Activity, CreditCard, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, Activity, CreditCard } from "lucide-react";
-import { queryKeys } from "@/lib/query-keys";
-import { superAdminApi } from "@/features/super-admin";
-import { useUsers, useTenantMutations } from "@/features/super-admin/hooks";
 import { StatCard } from "@/components/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { superAdminApi } from "@/features/super-admin";
 import { CreateTenantDialog } from "@/features/super-admin/components/create-tenant-dialog";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { useTenantMutations, useUsers } from "@/features/super-admin/hooks";
 import type { AuditLog } from "@/features/super-admin/types";
+import { queryKeys } from "@/lib/query-keys";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 function formatAction(action: string): string {
   return action
@@ -41,7 +41,14 @@ export default function SuperAdminDashboardPage() {
 
   const { data: auditData, isLoading: auditLoading } = useQuery({
     queryKey: ["super-admin", "dashboard-audit"],
-    queryFn: () => superAdminApi.audit.list({ search: "", sort: "-created_at", page: 1, perPage: 10, filters: {} }),
+    queryFn: () =>
+      superAdminApi.audit.list({
+        search: "",
+        sort: "-created_at",
+        page: 1,
+        perPage: 10,
+        filters: {},
+      }),
   });
 
   const m = metricsData?.data;
@@ -51,10 +58,28 @@ export default function SuperAdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Tenants" value={formatNumber(totalTenants)} loading={metricsLoading} />
-        <StatCard label="Active Tenants" value={formatNumber(m?.active_tenants ?? 0)} loading={metricsLoading} tone="success" />
-        <StatCard label="Total Users" value={formatNumber(totalUsers)} loading={userList.isLoading} />
-        <StatCard label="MRR" value={formatCurrency(m?.total_mrr ?? 0)} loading={metricsLoading} tone="success" />
+        <StatCard
+          label="Total Tenants"
+          value={formatNumber(totalTenants)}
+          loading={metricsLoading}
+        />
+        <StatCard
+          label="Active Tenants"
+          value={formatNumber(m?.active_tenants ?? 0)}
+          loading={metricsLoading}
+          tone="success"
+        />
+        <StatCard
+          label="Total Users"
+          value={formatNumber(totalUsers)}
+          loading={userList.isLoading}
+        />
+        <StatCard
+          label="MRR"
+          value={formatCurrency(m?.total_mrr ?? 0)}
+          loading={metricsLoading}
+          tone="success"
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -129,7 +154,9 @@ export default function SuperAdminDashboardPage() {
                       <span className="text-sm font-medium">{plan.plan_name}</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-[var(--muted)]">{formatNumber(plan.count)} tenants</span>
+                      <span className="text-[var(--muted)]">
+                        {formatNumber(plan.count)} tenants
+                      </span>
                       <span className="font-medium">{formatCurrency(plan.mrr)}</span>
                     </div>
                   </div>

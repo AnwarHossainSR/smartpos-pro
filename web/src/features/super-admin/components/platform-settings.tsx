@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { usePlatformSettings, useTenantModuleOverrides, useUpdateTenantModules } from "../hooks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Save, Settings, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePlatformSettings, useTenantModuleOverrides, useUpdateTenantModules } from "../hooks";
 
 const MODULE_LABELS: Record<string, string> = {
   pos: "Point of Sale",
@@ -33,12 +33,8 @@ interface SettingsFormProps {
 
 function SettingsForm({ settings, onSave, isPending }: SettingsFormProps) {
   const [modules, setModules] = useState(settings.modules);
-  const [maintenanceMode, setMaintenanceMode] = useState(
-    settings.maintenance_mode,
-  );
-  const [registrationEnabled, setRegistrationEnabled] = useState(
-    settings.registration_enabled,
-  );
+  const [maintenanceMode, setMaintenanceMode] = useState(settings.maintenance_mode);
+  const [registrationEnabled, setRegistrationEnabled] = useState(settings.registration_enabled);
 
   const handleSave = () => {
     onSave({
@@ -76,9 +72,7 @@ function SettingsForm({ settings, onSave, isPending }: SettingsFormProps) {
               <button
                 key={key}
                 type="button"
-                onClick={() =>
-                  setModules((prev) => ({ ...prev, [key]: !prev[key] }))
-                }
+                onClick={() => setModules((prev) => ({ ...prev, [key]: !prev[key] }))}
                 className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--border)] p-3 transition-colors hover:bg-[var(--surface-2)]"
               >
                 <span className="text-sm font-medium">{label}</span>
@@ -105,10 +99,7 @@ function SettingsForm({ settings, onSave, isPending }: SettingsFormProps) {
                 Temporarily disable access for all tenants
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setMaintenanceMode(!maintenanceMode)}
-            >
+            <button type="button" onClick={() => setMaintenanceMode(!maintenanceMode)}>
               {maintenanceMode ? (
                 <ToggleRight className="h-6 w-6 text-[var(--danger)]" />
               ) : (
@@ -120,14 +111,9 @@ function SettingsForm({ settings, onSave, isPending }: SettingsFormProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">New Registration</p>
-              <p className="text-xs text-[var(--muted)]">
-                Allow new tenants to register
-              </p>
+              <p className="text-xs text-[var(--muted)]">Allow new tenants to register</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setRegistrationEnabled(!registrationEnabled)}
-            >
+            <button type="button" onClick={() => setRegistrationEnabled(!registrationEnabled)}>
               {registrationEnabled ? (
                 <ToggleRight className="h-6 w-6 text-[var(--success)]" />
               ) : (
@@ -172,7 +158,7 @@ export function PlatformSettings() {
   }
 
   const allModules = settings.modules;
-  const selectedModules = selectedTenant ? overrides[selectedTenant] ?? {} : null;
+  const selectedModules = selectedTenant ? (overrides[selectedTenant] ?? {}) : null;
 
   return (
     <div className="space-y-6">
@@ -209,7 +195,9 @@ export function PlatformSettings() {
                     <button
                       key={tenantId}
                       type="button"
-                      onClick={() => setSelectedTenant(selectedTenant === tenantId ? null : tenantId)}
+                      onClick={() =>
+                        setSelectedTenant(selectedTenant === tenantId ? null : tenantId)
+                      }
                       className={`flex items-center justify-between rounded-[var(--radius)] border p-3 text-left transition-colors ${
                         selectedTenant === tenantId
                           ? "border-[var(--primary)] bg-[var(--primary)]/5"

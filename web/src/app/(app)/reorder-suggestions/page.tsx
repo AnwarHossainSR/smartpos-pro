@@ -1,3 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, Package } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -10,9 +13,6 @@ import { useWarehouses } from "@/lib/lookups";
 import { queryKeys } from "@/lib/query-keys";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Package } from "lucide-react";
-import { useMemo, useState } from "react";
 
 interface ReorderSuggestion {
   product: {
@@ -58,7 +58,14 @@ export default function ReorderSuggestionsPage() {
   const { warehouses } = useWarehouses({ enabled: can("reorder-suggestions.create") });
 
   const createMutation = useMutation({
-    mutationFn: (items: Array<{ product_id: string; quantity: number; unit_cost: number; supplier_id: string }>) =>
+    mutationFn: (
+      items: Array<{
+        product_id: string;
+        quantity: number;
+        unit_cost: number;
+        supplier_id: string;
+      }>,
+    ) =>
       api<DraftPoResponse>("/reorder-suggestions/create-draft-po", {
         method: "POST",
         body: { items, warehouse_id: warehouseId },
@@ -79,10 +86,11 @@ export default function ReorderSuggestionsPage() {
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
     if (!term) return suggestions;
-    return suggestions.filter((s) =>
-      s.product.name.toLowerCase().includes(term) ||
-      s.product.sku?.toLowerCase().includes(term) ||
-      s.supplier?.name.toLowerCase().includes(term)
+    return suggestions.filter(
+      (s) =>
+        s.product.name.toLowerCase().includes(term) ||
+        s.product.sku?.toLowerCase().includes(term) ||
+        s.supplier?.name.toLowerCase().includes(term),
     );
   }, [suggestions, search]);
 
@@ -100,12 +108,14 @@ export default function ReorderSuggestionsPage() {
       return;
     }
 
-    const items = selectedItems.map((s) => ({
-      product_id: s.product.id,
-      quantity: editingQty[s.product.id] ?? s.suggested_qty,
-      unit_cost: s.product.purchase_price,
-      supplier_id: s.supplier?.id ?? "",
-    })).filter((item) => item.supplier_id);
+    const items = selectedItems
+      .map((s) => ({
+        product_id: s.product.id,
+        quantity: editingQty[s.product.id] ?? s.suggested_qty,
+        unit_cost: s.product.purchase_price,
+        supplier_id: s.supplier?.id ?? "",
+      }))
+      .filter((item) => item.supplier_id);
 
     if (items.length === 0) {
       toast("Selected items must have a supplier", "error");
@@ -122,7 +132,9 @@ export default function ReorderSuggestionsPage() {
       render: (s) => (
         <span className="font-medium">
           {s.product.name}
-          {s.product.sku && <span className="ms-2 text-xs text-[var(--muted)]">{s.product.sku}</span>}
+          {s.product.sku && (
+            <span className="ms-2 text-xs text-[var(--muted)]">{s.product.sku}</span>
+          )}
         </span>
       ),
     },
@@ -199,11 +211,15 @@ export default function ReorderSuggestionsPage() {
               >
                 <option value="">{t("reorder.warehouse") ?? "Warehouse"}</option>
                 {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>{w.name}</option>
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
                 ))}
               </Select>
               <Button size="sm" onClick={handleCreateDraftPo} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "..." : t("reorder.create_draft") + ` (${selected.size})`}
+                {createMutation.isPending
+                  ? "..."
+                  : t("reorder.create_draft") + ` (${selected.size})`}
               </Button>
             </div>
           ) : undefined

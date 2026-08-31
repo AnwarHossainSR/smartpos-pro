@@ -1,6 +1,6 @@
+import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -78,10 +78,10 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (!id.includes("node_modules")) return;
-          if (/[\/]node_modules[\/](react|react-dom|react-is|scheduler)[\/]/.test(id)) return "react";
+          if (/[/]node_modules[/](react|react-dom|react-is|scheduler)[/]/.test(id)) return "react";
           if (id.includes("react-router")) return "router";
           if (id.includes("@tanstack")) return "query";
-          if (/react-hook-form|@hookform|[\/]zod[\/]/.test(id)) return "forms";
+          if (/react-hook-form|@hookform|[/]zod[/]/.test(id)) return "forms";
         },
       },
     },

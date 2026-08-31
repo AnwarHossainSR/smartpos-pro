@@ -1,7 +1,7 @@
-import { api, type Envelope, type Paginated } from "@/lib/api";
+import type { Customer, Payment, Product, Sale } from "@/features/pos/types";
 import type { DiningTable } from "@/features/tables/types";
 import type { PriceDisplay } from "@/features/tax/types";
-import type { Customer, Payment, Product, Sale } from "@/features/pos/types";
+import { api, type Envelope, type Paginated } from "@/lib/api";
 
 /** Typed fetchers for the till. Kept thin — the hooks in `hooks/` own caching and cache keys. */
 
@@ -61,7 +61,8 @@ export const posApi = {
   createCustomer: (body: { name: string; phone?: string }) =>
     api<Envelope<Customer>>("/customers", { method: "POST", body }),
 
-  loyalty: (customerId: string) => api<Envelope<{ points: number }>>(`/customers/${customerId}/loyalty`),
+  loyalty: (customerId: string) =>
+    api<Envelope<{ points: number }>>(`/customers/${customerId}/loyalty`),
 
   // `api()` already targets /api/v1 — a "/v1/…" path here would resolve to /api/v1/v1/….
   tables: () => api<Paginated<DiningTable>>("/tables"),

@@ -1,5 +1,5 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -17,14 +17,32 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-export function TaxRateForm({ editing, onSuccess }: { editing?: TaxRate | null; onSuccess: () => void }) {
+export function TaxRateForm({
+  editing,
+  onSuccess,
+}: {
+  editing?: TaxRate | null;
+  onSuccess: () => void;
+}) {
   const { create, update } = useTaxRateMutations();
   const isEdit = !!editing;
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: editing
-      ? { name: editing.name, code: editing.code ?? "", rate: editing.rate, type: editing.type, is_compound: editing.is_compound, is_active: editing.is_active }
+      ? {
+          name: editing.name,
+          code: editing.code ?? "",
+          rate: editing.rate,
+          type: editing.type,
+          is_compound: editing.is_compound,
+          is_active: editing.is_active,
+        }
       : { name: "", code: "", rate: 0, type: "percentage", is_compound: false, is_active: true },
   });
 
@@ -33,8 +51,12 @@ export function TaxRateForm({ editing, onSuccess }: { editing?: TaxRate | null; 
 
   function onSubmit(values: FormValues) {
     const payload = { ...values, code: values.code || undefined };
-    const mutation = isEdit ? update.mutateAsync({ id: editing!.id, data: payload }) : create.mutateAsync(payload);
-    mutation.then(onSuccess).catch(() => {});
+    const mutation = isEdit
+      ? update.mutateAsync({ id: editing!.id, data: payload })
+      : create.mutateAsync(payload);
+    mutation.then(onSuccess).catch(() => {
+      /* ignore */
+    });
   }
 
   return (
@@ -42,7 +64,9 @@ export function TaxRateForm({ editing, onSuccess }: { editing?: TaxRate | null; 
       <div>
         <Label>Name *</Label>
         <Input {...register("name")} placeholder="e.g. CGST 9%" />
-        {errors.name && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>}
+        {errors.name && (
+          <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.name.message}</p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -67,17 +91,28 @@ export function TaxRateForm({ editing, onSuccess }: { editing?: TaxRate | null; 
         </div>
         <div>
           <Label>Rate {type === "percentage" ? "(%)" : "(flat, per unit)"} *</Label>
-          <Input type="number" step="0.0001" min="0" {...register("rate", { valueAsNumber: true })} />
-          {errors.rate && <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.rate.message}</p>}
+          <Input
+            type="number"
+            step="0.0001"
+            min="0"
+            {...register("rate", { valueAsNumber: true })}
+          />
+          {errors.rate && (
+            <p className="mt-1 text-xs text-[var(--color-danger)]">{errors.rate.message}</p>
+          )}
         </div>
       </div>
       <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--primary)]" {...register("is_compound")} />
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+          {...register("is_compound")}
+        />
         <span>
           Compound component
           <span className="block text-xs text-[var(--muted)]">
-            Applies on top of the components before it in a group (e.g. PST calculated on GST), not on the
-            product price alone.
+            Applies on top of the components before it in a group (e.g. PST calculated on GST), not
+            on the product price alone.
           </span>
         </span>
       </label>

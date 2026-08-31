@@ -1,31 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Printer, RotateCw, Trash2, TriangleAlert } from "lucide-react";
-import { api, type Paginated } from "@/lib/api";
-import { queryKeys } from "@/lib/query-keys";
-import { MIN_MODULE_MM } from "@/lib/barcode";
-import { formatCurrency } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
-import { Input, Label as FieldLabel } from "@/components/ui/input";
+import { Label as FieldLabel, Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api, type Paginated } from "@/lib/api";
+import { MIN_MODULE_MM } from "@/lib/barcode";
+import { queryKeys } from "@/lib/query-keys";
+import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
-import { Label as LabelPreview, LabelSheet, type LabelOptions } from "./label-sheet";
 import { narrowestModuleMm, paginateLabels } from "./label-layout";
+import { type LabelOptions, Label as LabelPreview, LabelSheet } from "./label-sheet";
 import {
   DEFAULT_SHEET_ID,
-  LABEL_TEMPLATES,
-  PAGE_HEIGHT_MM,
-  PAGE_WIDTH_MM,
-  SHEET_PRESETS,
   expandRows,
-  labelsPerSheet,
-  sheetPreset,
+  LABEL_TEMPLATES,
   type LabelProduct,
   type LabelRow,
   type LabelTemplateId,
+  labelsPerSheet,
+  PAGE_HEIGHT_MM,
+  PAGE_WIDTH_MM,
+  SHEET_PRESETS,
+  sheetPreset,
 } from "./label-templates";
 
 /** Past this many labels the preview gets heavy enough to be worth a word of warning. */
@@ -249,11 +249,16 @@ export default function LabelPrintingPage() {
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.product.id} className="border-b border-[var(--border)] last:border-0">
+                    <tr
+                      key={row.product.id}
+                      className="border-b border-[var(--border)] last:border-0"
+                    >
                       <td className="px-4 py-2">
                         <div className="font-medium">{row.product.name}</div>
                         {row.product.sku && (
-                          <div className="font-mono text-xs text-[var(--muted)]">{row.product.sku}</div>
+                          <div className="font-mono text-xs text-[var(--muted)]">
+                            {row.product.sku}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-2 font-mono text-xs">
@@ -265,14 +270,18 @@ export default function LabelPrintingPage() {
                           <span className="text-[var(--color-danger)]">none</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-end">{formatCurrency(row.product.selling_price)}</td>
+                      <td className="px-4 py-2 text-end">
+                        {formatCurrency(row.product.selling_price)}
+                      </td>
                       <td className="px-4 py-2 text-end">
                         <Input
                           type="number"
                           min={1}
                           max={MAX_QUANTITY}
                           value={row.quantity}
-                          onChange={(event) => setQuantity(row.product.id, Number(event.target.value))}
+                          onChange={(event) =>
+                            setQuantity(row.product.id, Number(event.target.value))
+                          }
                           aria-label={`Labels for ${row.product.name}`}
                           className="ms-auto h-8 w-20 text-end"
                         />
@@ -293,7 +302,10 @@ export default function LabelPrintingPage() {
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-[var(--border)]">
-                    <td colSpan={3} className="px-4 py-2 text-xs uppercase tracking-wide text-[var(--muted)]">
+                    <td
+                      colSpan={3}
+                      className="px-4 py-2 text-xs uppercase tracking-wide text-[var(--muted)]"
+                    >
                       Total
                     </td>
                     <td className="px-4 py-2 text-end font-medium">{totalLabels}</td>
@@ -452,27 +464,27 @@ export default function LabelPrintingPage() {
           className="overflow-x-auto rounded-[var(--radius)] bg-[var(--surface-2)] p-4"
         >
           {firstProduct && (
-          <div
-            data-print-hide
-            className="mx-auto mb-4 w-fit rounded-[var(--radius)] border border-[var(--border)] bg-white p-4"
-          >
             <div
-              style={{
-                width: `${preset.labelWidthMm * oneUpScale}mm`,
-                height: `${preset.labelHeightMm * oneUpScale}mm`,
-              }}
+              data-print-hide
+              className="mx-auto mb-4 w-fit rounded-[var(--radius)] border border-[var(--border)] bg-white p-4"
             >
               <div
                 style={{
-                  transform: `scale(${oneUpScale})`,
-                  transformOrigin: "top left",
-                  width: `${preset.labelWidthMm}mm`,
+                  width: `${preset.labelWidthMm * oneUpScale}mm`,
+                  height: `${preset.labelHeightMm * oneUpScale}mm`,
                 }}
               >
-                <LabelPreview product={firstProduct} preset={preset} options={options} />
+                <div
+                  style={{
+                    transform: `scale(${oneUpScale})`,
+                    transformOrigin: "top left",
+                    width: `${preset.labelWidthMm}mm`,
+                  }}
+                >
+                  <LabelPreview product={firstProduct} preset={preset} options={options} />
+                </div>
               </div>
             </div>
-          </div>
           )}
           <div
             className="mx-auto"

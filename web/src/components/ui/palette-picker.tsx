@@ -1,13 +1,19 @@
 import { PALETTES } from "@/lib/palettes";
-import { useThemeStore } from "@/stores/theme";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/stores/theme";
 
 export function PalettePicker({ className, compact }: { className?: string; compact?: boolean }) {
   const palette = useThemeStore((s) => s.palette);
   const setPalette = useThemeStore((s) => s.setPalette);
 
   return (
-    <div className={cn("grid gap-2", compact ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-6", className)}>
+    <div
+      className={cn(
+        "grid gap-2",
+        compact ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-6",
+        className,
+      )}
+    >
       {PALETTES.map((p) => {
         const active = palette === p.id;
         return (

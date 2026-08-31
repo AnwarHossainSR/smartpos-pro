@@ -1,15 +1,29 @@
-import { ArrowRight, Check, Crown, CreditCard, HeadphonesIcon, Lock, RefreshCw, ShieldCheck, TrendingUp, Rocket, Briefcase, X, Zap } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  Briefcase,
+  Check,
+  CreditCard,
+  Crown,
+  HeadphonesIcon,
+  Lock,
+  RefreshCw,
+  Rocket,
+  ShieldCheck,
+  TrendingUp,
+  X,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { usePlans } from "@/lib/lookups";
 import { queryKeys } from "@/lib/query-keys";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import type { Plan } from "@/types/domain";
 
 interface Subscription {
@@ -32,9 +46,21 @@ const PLAN_ICONS: Record<string, typeof Rocket> = {
 };
 
 const PLAN_COLORS: Record<string, { bg: string; text: string; button: string }> = {
-  starter: { bg: "bg-emerald-100", text: "text-emerald-600", button: "bg-emerald-500 hover:bg-emerald-600" },
-  professional: { bg: "bg-violet-100", text: "text-violet-600", button: "bg-violet-500 hover:bg-violet-600" },
-  business: { bg: "bg-orange-100", text: "text-orange-600", button: "bg-orange-500 hover:bg-orange-600" },
+  starter: {
+    bg: "bg-emerald-100",
+    text: "text-emerald-600",
+    button: "bg-emerald-500 hover:bg-emerald-600",
+  },
+  professional: {
+    bg: "bg-violet-100",
+    text: "text-violet-600",
+    button: "bg-violet-500 hover:bg-violet-600",
+  },
+  business: {
+    bg: "bg-orange-100",
+    text: "text-orange-600",
+    button: "bg-orange-500 hover:bg-orange-600",
+  },
 };
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
@@ -64,10 +90,15 @@ export default function SubscriptionPage() {
   // Shared with the checkout screen — one key, so navigating there doesn't refetch the plans.
   const { plans: allPlans, isLoading: plansLoading, error: plansError } = usePlans();
 
-  const { data: subData, isLoading: subLoading, error: subError } = useQuery<{ data: SubscriptionResponse }>({
+  const {
+    data: subData,
+    isLoading: subLoading,
+    error: subError,
+  } = useQuery<{ data: SubscriptionResponse }>({
     queryKey: queryKeys.subscription.current(),
     queryFn: () => api<{ data: SubscriptionResponse }>("/subscription"),
-    retry: (failureCount, err) => !(err instanceof ApiError && err.status === 403) && failureCount < 3,
+    retry: (failureCount, err) =>
+      !(err instanceof ApiError && err.status === 403) && failureCount < 3,
   });
 
   const sub = subData?.data.subscription;
@@ -160,9 +191,7 @@ export default function SubscriptionPage() {
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold">
-          Upgrade{" "}
-          <span className="text-[var(--primary)]">Your</span>{" "}
-          Plan
+          Upgrade <span className="text-[var(--primary)]">Your</span> Plan
         </h1>
         <p className="mt-2 text-[var(--muted)]">
           Unlock more features, higher limits, and the tools you need to grow.
@@ -181,7 +210,9 @@ export default function SubscriptionPage() {
 
       {/* Monthly / Yearly toggle */}
       <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm ${!isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}>
+        <span
+          className={`text-sm ${!isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}
+        >
           Billed monthly
         </span>
         <button
@@ -196,7 +227,9 @@ export default function SubscriptionPage() {
             }`}
           />
         </button>
-        <span className={`text-sm ${isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}>
+        <span
+          className={`text-sm ${isYearly ? "font-medium text-[var(--fg)]" : "text-[var(--muted)]"}`}
+        >
           Billed yearly
         </span>
         {isYearly && (
@@ -241,7 +274,9 @@ export default function SubscriptionPage() {
                 )}
 
                 <div className="p-6">
-                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${colors.bg} ${colors.text} transition-transform duration-300 group-hover:scale-110`}>
+                  <div
+                    className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${colors.bg} ${colors.text} transition-transform duration-300 group-hover:scale-110`}
+                  >
                     <Icon className="h-6 w-6" />
                   </div>
 
@@ -251,9 +286,7 @@ export default function SubscriptionPage() {
                   </p>
 
                   <div className="mt-5 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">
-                      {formatCurrency(displayPrice)}
-                    </span>
+                    <span className="text-3xl font-bold">{formatCurrency(displayPrice)}</span>
                     <span className="text-sm text-[var(--muted)]">/month</span>
                   </div>
 

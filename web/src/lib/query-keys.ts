@@ -135,7 +135,8 @@ export const queryKeys = {
   registers: {
     all: ["registers"] as const,
     list: () => ["registers", "list"] as const,
-    session: (registerId: string | undefined) => ["registers", "session", registerId ?? ""] as const,
+    session: (registerId: string | undefined) =>
+      ["registers", "session", registerId ?? ""] as const,
     sessionDetail: (sessionId: string | undefined) =>
       ["registers", "session-detail", sessionId ?? ""] as const,
   },

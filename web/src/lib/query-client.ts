@@ -1,6 +1,6 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
-import { ApiError, errorMessage } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
+import { ApiError, errorMessage } from "@/lib/api";
 
 /**
  * Retrying a 4xx is pointless — the request was rejected on its merits (validation, a

@@ -1,6 +1,6 @@
+import type { CartItem } from "@/features/pos/types";
 import { calculateLineTax, type TaxComponentResult } from "@/features/tax/calc";
 import type { PriceDisplay } from "@/features/tax/types";
-import type { CartItem } from "@/features/pos/types";
 
 export const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -23,7 +23,11 @@ export function lineTotals(
 
   if (product.tax_group?.rates?.length) {
     const result = calculateLineTax(taxable, qty, product.tax_group.rates, priceDisplay);
-    return { net: result.net, tax: result.tax, components: result.components as TaxComponentResult[] };
+    return {
+      net: result.net,
+      tax: result.tax,
+      components: result.components as TaxComponentResult[],
+    };
   }
 
   const rate = product.tax_rate ?? 0;
@@ -32,7 +36,18 @@ export function lineTotals(
     : round2(taxable * (rate / 100));
   const net = product.tax_inclusive ? round2(taxable - tax) : round2(taxable);
   const components: TaxComponentResult[] =
-    tax > 0 ? [{ name: "Tax", rate, type: "percentage", is_compound: false, base_amount: net, amount: tax }] : [];
+    tax > 0
+      ? [
+          {
+            name: "Tax",
+            rate,
+            type: "percentage",
+            is_compound: false,
+            base_amount: net,
+            amount: tax,
+          },
+        ]
+      : [];
 
   return { net, tax, components };
 }
