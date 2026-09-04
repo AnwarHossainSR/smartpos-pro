@@ -7,16 +7,44 @@ use App\Models\InventoryBalance;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Support\Tenancy\TenantContext;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
+    /**
+     * How long a rendered dashboard stays warm. The summary fans out into ~13
+     * separate aggregate queries (several of them full joins over
+     * inventory_balances), and the dashboard is the landing page every user hits
+     * on login — so without this a shift change means every terminal in the shop
+     * recomputes the same numbers within seconds of each other. A minute of
+     * staleness on a headline KPI is not meaningful to a shopkeeper; the POS
+     * screens that must be exact do not read this.
+     */
+    private const SUMMARY_TTL = 60;
+
     public function getSummary(Request $request): array
     {
         $from = $request->date('from') ?? now()->startOfDay();
         $to = $request->date('to') ?? now()->endOfDay();
 
+        // Keyed by tenant *and* range: the cache must never serve one tenant's
+        // numbers to another, and the range is client-supplied.
+        $key = sprintf(
+            'dashboard:summary:%s:%s:%s',
+            app(TenantContext::class)->id(),
+            $from->timestamp,
+            $to->timestamp,
+        );
+
+        return cache()->remember($key, self::SUMMARY_TTL, fn () => $this->computeSummary($from, $to));
+    }
+
+    /** @return array<string, mixed> */
+    private function computeSummary(CarbonInterface $from, CarbonInterface $to): array
+    {
         $salesInRange = Sale::query()
             ->where('status', 'completed')
             ->whereBetween('sold_at', [$from, $to])
