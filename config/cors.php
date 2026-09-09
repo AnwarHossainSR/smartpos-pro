@@ -26,7 +26,10 @@ return [
 
     'exposed_headers' => ['Retry-After', 'Idempotent-Replayed'],
 
-    'max_age' => 0,
+    // Let the browser cache the preflight for a day. At 0 every cross-origin
+    // call from the SPA pays for an extra OPTIONS round trip first, which on a
+    // POS terminal on shop wifi is a visible tax on every single request.
+    'max_age' => 86400,
 
     'supports_credentials' => false,
 

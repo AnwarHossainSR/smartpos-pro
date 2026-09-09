@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\InventoryController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\ModuleController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PosApprovalController;
 use App\Http\Controllers\Api\V1\PosController;
@@ -68,6 +69,11 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
+
+        // Modules — enabled modules for the current tenant.
+        // Must stay ahead of the `{module}/export` wildcard below, which would
+        // otherwise not match it but sits on the same prefix.
+        Route::get('modules', ModuleController::class);
 
         Route::get('{module}/export', [ExportController::class, 'index'])
             ->where('module', 'products|inventory|sales|purchases|customers|suppliers|reports|accounting');
@@ -248,11 +254,13 @@ Route::prefix('v1')->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
         Route::delete('users/{user}/approval-pin', [ApprovalPinController::class, 'clearForUser'])->middleware('permission:users.update');
 
-        Route::post('shifts/clock-in', [ShiftController::class, 'clockIn'])->middleware('permission:shifts.view');
-        Route::post('shifts/clock-out', [ShiftController::class, 'clockOut'])->middleware('permission:shifts.view');
+        // `shifts.manage` is the self-scoped clock-in/out grant (see PermissionCatalog);
+        // `shifts.view` only covers reading a timesheet.
+        Route::post('shifts/clock-in', [ShiftController::class, 'clockIn'])->middleware('permission:shifts.manage');
+        Route::post('shifts/clock-out', [ShiftController::class, 'clockOut'])->middleware('permission:shifts.manage');
         Route::get('shifts/me', [ShiftController::class, 'me'])->middleware('permission:shifts.view');
         Route::get('shifts', [ShiftController::class, 'index'])->middleware('permission:shifts.view');
-        Route::get('reports/shifts', [ShiftController::class, 'report'])->middleware(['permission:reports.view', 'throttle:reports']);
+        Route::get('reports/shifts', [ShiftController::class, 'report'])->middleware(['permission:shifts.view', 'throttle:reports']);
 
         Route::get('permissions', [RoleController::class, 'permissions'])->middleware('permission:roles.view');
         Route::get('roles', [RoleController::class, 'index'])->middleware('permission:roles.view');
